@@ -19,23 +19,25 @@ const RATE_GROUPS = [
 
 const DEFAULT_TYPE = Object.keys(RATES)[0];
 
-interface VoucherItem { type: string; amount: string; }
-interface SavedItem { type: string; amount: number; rate: number; payment: number; }
+interface VoucherItem { type: string; amount: string; isGift: boolean; }
+interface SavedItem { type: string; amount: number; rate: number; payment: number; isGift: boolean; }
 
 interface ReservationEntry {
   id: number; name: string; phone: string; date: string; time: string;
-  location: string; isGift: boolean; items: SavedItem[]; totalPayment: number;
+  location: string; items: SavedItem[]; totalPayment: number;
 }
 interface UrgentEntry {
   id: number; phone: string; date: string; time: string;
-  location: string; isGift: boolean; items: SavedItem[]; totalPayment: number;
+  location: string; items: SavedItem[]; totalPayment: number;
 }
 
 function formatKRW(n: number) { return n.toLocaleString("ko-KR") + "원"; }
 
-function computeItem(item: VoucherItem, deduct: number): { amountNum: number; rate: number; payment: number } {
+// baseDeduct: extra deduction applied on top (e.g. 0.01 for urgent)
+function computeItem(item: VoucherItem, baseDeduct: number): { amountNum: number; rate: number; payment: number } {
   const amountNum = parseFloat(item.amount) || 0;
-  const rate = Math.max(0, (RATES[item.type] ?? 0) - deduct);
+  const giftDeduct = item.isGift ? 0.01 : 0;
+  const rate = Math.max(0, (RATES[item.type] ?? 0) - baseDeduct - giftDeduct);
   return { amountNum, rate, payment: Math.floor(amountNum * rate) };
 }
 
@@ -87,38 +89,37 @@ function TypeSelectInline({ value, onChange, accent = "indigo" }: { value: strin
 
 // Multi-item voucher editor
 function VoucherItems({
-  items, errors, onChange, onAdd, onRemove, deduct, accent = "indigo", isGift, onGiftChange, isUrgent,
+  items, errors, onChange, onToggleGift, onAdd, onRemove, baseDeduct, accent = "indigo",
 }: {
   items: VoucherItem[];
   errors: string[];
-  onChange: (idx: number, field: keyof VoucherItem, val: string) => void;
+  onChange: (idx: number, field: "type" | "amount", val: string) => void;
+  onToggleGift: (idx: number) => void;
   onAdd: () => void;
   onRemove: (idx: number) => void;
-  deduct: number;
+  baseDeduct: number;
   accent?: string;
-  isGift: boolean;
-  onGiftChange: (v: boolean) => void;
-  isUrgent?: boolean;
 }) {
-  const totalPayment = items.reduce((sum, item) => sum + computeItem(item, deduct).payment, 0);
+  const totalPayment = items.reduce((sum, item) => sum + computeItem(item, baseDeduct).payment, 0);
   const totalFace = items.reduce((sum, item) => sum + (parseFloat(item.amount) || 0), 0);
   const hasAnyAmount = items.some((item) => (parseFloat(item.amount) || 0) > 0);
+  const cl = accent === "rose"
+    ? { bg: "bg-rose-50", border: "border-rose-100", text: "text-rose-500", textDark: "text-rose-600", dashed: "border-rose-200 text-rose-400 hover:bg-rose-50" }
+    : { bg: "bg-indigo-50", border: "border-indigo-100", text: "text-indigo-500", textDark: "text-indigo-600", dashed: "border-indigo-200 text-indigo-400 hover:bg-indigo-50" };
 
   return (
     <div className="space-y-2">
-      <div className="flex items-center justify-between">
-        <label className="block text-[13px] font-semibold text-slate-500 tracking-wide uppercase">
-          상품권 종류 &amp; 금액 <span className="text-rose-400 normal-case tracking-normal">*</span>
-        </label>
-        <GiftCheckbox checked={isGift} onChange={onGiftChange} />
-      </div>
+      <label className="block text-[13px] font-semibold text-slate-500 tracking-wide uppercase">
+        상품권 종류 &amp; 금액 <span className="text-rose-400 normal-case tracking-normal">*</span>
+      </label>
 
       <div className="space-y-2">
         {items.map((item, idx) => {
-          const { amountNum, rate, payment } = computeItem(item, deduct);
+          const { amountNum, rate, payment } = computeItem(item, baseDeduct);
           return (
             <div key={idx} className="rounded-2xl border border-slate-200 bg-slate-50 overflow-hidden">
-              <div className="flex items-center gap-2 px-3 pt-3 pb-2">
+              {/* Row 1: type select + remove */}
+              <div className="flex items-center gap-2 px-3 pt-3 pb-1.5">
                 <TypeSelectInline value={item.type} onChange={(v) => onChange(idx, "type", v)} accent={accent} />
                 {items.length > 1 && (
                   <button type="button" onClick={() => onRemove(idx)}
@@ -127,23 +128,40 @@ function VoucherItems({
                   </button>
                 )}
               </div>
+              {/* Row 2: amount input + gift checkbox */}
+              <div className="px-3 pb-1.5 flex items-center gap-2">
+                <div className="flex-1 min-w-0">
+                  <input
+                    type="number"
+                    value={item.amount}
+                    onChange={(e) => onChange(idx, "amount", e.target.value)}
+                    placeholder="금액 입력 (원)"
+                    min="0"
+                    step="10000"
+                    className={`w-full px-3 py-2.5 rounded-xl border text-[14px] text-slate-800 outline-none transition-all duration-150 placeholder:text-slate-300
+                      ${errors[idx] ? "border-rose-300 bg-rose-50" : "border-slate-200 bg-white"}`}
+                  />
+                </div>
+                <label className="flex items-center gap-1.5 cursor-pointer select-none flex-shrink-0 px-2 py-2.5 rounded-xl border border-slate-200 bg-white"
+                  onClick={() => onToggleGift(idx)}>
+                  <div className={`w-4 h-4 rounded flex items-center justify-center border-2 transition-all duration-150 flex-shrink-0
+                    ${item.isGift ? "bg-violet-500 border-violet-500" : "bg-white border-slate-300"}`}>
+                    {item.isGift && <svg width="9" height="8" viewBox="0 0 11 9" fill="none"><path d="M1 4l3 3 6-6" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" /></svg>}
+                  </div>
+                  <span className={`text-[12px] font-semibold whitespace-nowrap transition-colors ${item.isGift ? "text-violet-600" : "text-slate-400"}`}>증정용</span>
+                  {item.isGift && <span className="text-[10px] bg-violet-100 text-violet-500 font-bold px-1 py-0.5 rounded-full">-1%</span>}
+                </label>
+              </div>
+              {/* Row 3: error + payment preview */}
               <div className="px-3 pb-3 space-y-1.5">
-                <input
-                  type="number"
-                  value={item.amount}
-                  onChange={(e) => onChange(idx, "amount", e.target.value)}
-                  placeholder="금액 입력 (원)"
-                  min="0"
-                  step="10000"
-                  className={`w-full px-3 py-2.5 rounded-xl border text-[14px] text-slate-800 outline-none transition-all duration-150 placeholder:text-slate-300
-                    ${errors[idx] ? "border-rose-300 bg-rose-50" : "border-slate-200 bg-white"}`}
-                />
                 {errors[idx] && <p className="text-[11px] text-rose-500">⚠ {errors[idx]}</p>}
                 {amountNum > 0 && (
-                  <div className={`flex items-center justify-between px-3 py-2 rounded-xl text-[12px] font-semibold
-                    ${accent === "rose" ? "bg-rose-50 text-rose-500" : "bg-indigo-50 text-indigo-500"}`}>
-                    <span>요율 {Math.round(rate * 100)}%</span>
-                    <span className="font-black text-[14px]">{formatKRW(payment)}</span>
+                  <div className={`flex items-center justify-between px-3 py-2 rounded-xl text-[12px] font-semibold ${cl.bg} ${cl.text}`}>
+                    <span className="flex items-center gap-1.5">
+                      요율 {Math.round(rate * 100)}%
+                      {item.isGift && <span className="text-[10px] bg-violet-100 text-violet-500 font-bold px-1.5 py-0.5 rounded-full">증정 -1%</span>}
+                    </span>
+                    <span className={`font-black text-[15px] ${cl.textDark}`}>{formatKRW(payment)}</span>
                   </div>
                 )}
               </div>
@@ -153,37 +171,23 @@ function VoucherItems({
       </div>
 
       <button type="button" onClick={onAdd}
-        className={`w-full py-2.5 rounded-2xl border-2 border-dashed text-[13px] font-bold transition-all duration-150 active:scale-95 flex items-center justify-center gap-1.5
-          ${accent === "rose" ? "border-rose-200 text-rose-400 hover:bg-rose-50" : "border-indigo-200 text-indigo-400 hover:bg-indigo-50"}`}>
+        className={`w-full py-2.5 rounded-2xl border-2 border-dashed text-[13px] font-bold transition-all duration-150 active:scale-95 flex items-center justify-center gap-1.5 ${cl.dashed}`}>
         <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M7 2v10M2 7h10" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" /></svg>
         권종 추가
       </button>
 
-      {hasAnyAmount && items.length > 1 && (
-        <div className={`flex items-center justify-between px-4 py-3 rounded-2xl border font-semibold
-          ${accent === "rose" ? "bg-rose-50 border-rose-100" : "bg-indigo-50 border-indigo-100"}`}>
+      {hasAnyAmount && (
+        <div className={`flex items-center justify-between px-4 py-3 rounded-2xl border ${cl.bg} ${cl.border}`}>
           <div className="space-y-0.5">
-            <p className={`text-[11px] ${accent === "rose" ? "text-rose-400" : "text-indigo-400"}`}>총 액면가</p>
-            <p className={`text-[13px] ${accent === "rose" ? "text-rose-500" : "text-indigo-500"}`}>{formatKRW(totalFace)}</p>
+            <p className={`text-[11px] ${cl.text}`}>총 액면가</p>
+            <p className={`text-[13px] font-semibold ${cl.text}`}>{formatKRW(totalFace)}</p>
           </div>
           <div className="text-right space-y-0.5">
-            <p className={`text-[11px] ${accent === "rose" ? "text-rose-400" : "text-indigo-400"}`}>합산 입금받을 금액</p>
-            <p className={`text-[20px] font-black tabular-nums ${accent === "rose" ? "text-rose-600" : "text-indigo-600"}`}>{formatKRW(totalPayment)}</p>
+            <p className={`text-[11px] ${cl.text}`}>{items.length > 1 ? "합산 입금받을 금액" : "입금받을 금액"}</p>
+            <p className={`text-[20px] font-black tabular-nums ${cl.textDark}`}>{formatKRW(totalPayment)}</p>
           </div>
         </div>
       )}
-
-      {hasAnyAmount && items.length === 1 && (() => {
-        const { amountNum: a, rate: r, payment: p } = computeItem(items[0], deduct);
-        if (a <= 0) return null;
-        return (
-          <div className={`flex items-center justify-between px-4 py-3 rounded-2xl border
-            ${accent === "rose" ? "bg-rose-50 border-rose-100" : "bg-indigo-50 border-indigo-100"}`}>
-            <span className={`text-[13px] font-semibold ${accent === "rose" ? "text-rose-500" : "text-indigo-500"}`}>입금받을 금액</span>
-            <span className={`text-[18px] font-black tabular-nums ${accent === "rose" ? "text-rose-600" : "text-indigo-600"}`}>{formatKRW(p)}</span>
-          </div>
-        );
-      })()}
     </div>
   );
 }
@@ -195,22 +199,20 @@ function HomePage({ onGoUrgent }: { onGoUrgent: () => void }) {
   const [date, setDate] = useState("");
   const [time, setTime] = useState("");
   const [location, setLocation] = useState("");
-  const [items, setItems] = useState<VoucherItem[]>([{ type: DEFAULT_TYPE, amount: "" }]);
-  const [isGift, setIsGift] = useState(false);
+  const [items, setItems] = useState<VoucherItem[]>([{ type: DEFAULT_TYPE, amount: "", isGift: false }]);
   const [fieldErrors, setFieldErrors] = useState<{ name?: string; phone?: string; date?: string; time?: string; location?: string }>({});
   const [itemErrors, setItemErrors] = useState<string[]>([""]);
   const [submissions, setSubmissions] = useState<ReservationEntry[]>([]);
   const [toast, setToast] = useState(false);
   const [counter, setCounter] = useState(0);
 
-  const deduct = isGift ? 0.01 : 0;
-
-  function addItem() { setItems((p) => [...p, { type: DEFAULT_TYPE, amount: "" }]); setItemErrors((p) => [...p, ""]); }
+  function addItem() { setItems((p) => [...p, { type: DEFAULT_TYPE, amount: "", isGift: false }]); setItemErrors((p) => [...p, ""]); }
   function removeItem(idx: number) { setItems((p) => p.filter((_, i) => i !== idx)); setItemErrors((p) => p.filter((_, i) => i !== idx)); }
-  function updateItem(idx: number, field: keyof VoucherItem, val: string) {
+  function updateItem(idx: number, field: "type" | "amount", val: string) {
     setItems((p) => p.map((it, i) => i === idx ? { ...it, [field]: val } : it));
     setItemErrors((p) => p.map((e, i) => i === idx ? "" : e));
   }
+  function toggleGift(idx: number) { setItems((p) => p.map((it, i) => i === idx ? { ...it, isGift: !it.isGift } : it)); }
 
   function validate() {
     const fe: typeof fieldErrors = {};
@@ -231,13 +233,13 @@ function HomePage({ onGoUrgent }: { onGoUrgent: () => void }) {
     const id = counter + 1;
     setCounter(id);
     const savedItems: SavedItem[] = items.map((item) => {
-      const { amountNum, rate, payment } = computeItem(item, deduct);
-      return { type: item.type, amount: amountNum, rate, payment };
+      const { amountNum, rate, payment } = computeItem(item, 0);
+      return { type: item.type, amount: amountNum, rate, payment, isGift: item.isGift };
     });
     const totalPayment = savedItems.reduce((s, it) => s + it.payment, 0);
-    setSubmissions((p) => [{ id, name, phone, date, time, location, isGift, items: savedItems, totalPayment }, ...p]);
+    setSubmissions((p) => [{ id, name, phone, date, time, location, items: savedItems, totalPayment }, ...p]);
     setName(""); setPhone(""); setDate(""); setTime(""); setLocation("");
-    setItems([{ type: DEFAULT_TYPE, amount: "" }]); setIsGift(false); setItemErrors([""]);
+    setItems([{ type: DEFAULT_TYPE, amount: "", isGift: false }]); setItemErrors([""]);
     setToast(true); setTimeout(() => setToast(false), 3000);
   }
 
@@ -298,7 +300,7 @@ function HomePage({ onGoUrgent }: { onGoUrgent: () => void }) {
               <input type="text" value={location} onChange={(e) => { setLocation(e.target.value); setFieldErrors((p) => ({ ...p, location: "" })); }} placeholder="예: 강남구 역삼동" className={inputCls(!!fieldErrors.location)} />
               <p className="text-[12px] text-slate-400 mt-1.5 flex items-start gap-1"><span className="mt-0.5 flex-shrink-0">ℹ️</span>주정차가 가능한 장소로 입력해 주세요</p>
             </Field>
-            <VoucherItems items={items} errors={itemErrors} onChange={updateItem} onAdd={addItem} onRemove={removeItem} deduct={deduct} isGift={isGift} onGiftChange={setIsGift} />
+            <VoucherItems items={items} errors={itemErrors} onChange={updateItem} onToggleGift={toggleGift} onAdd={addItem} onRemove={removeItem} baseDeduct={0} />
             <button type="submit" className="w-full py-4 rounded-2xl text-white text-[15px] font-bold transition-all duration-150 active:scale-95" style={{ background: "linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%)" }}>
               예약 신청하기
             </button>
@@ -352,7 +354,6 @@ function SubmissionCard({ entry, accent }: { entry: ReservationEntry | UrgentEnt
           <div>
             <p className={`text-[15px] font-bold text-slate-800 flex items-center gap-1.5`}>
               {isRes ? (entry as ReservationEntry).name : (entry as UrgentEntry).phone}
-              {entry.isGift && <span className="text-[10px] bg-violet-100 text-violet-500 font-bold px-1.5 py-0.5 rounded-full">증정용</span>}
               {accent === "rose" && <span className="text-[10px] bg-rose-100 text-rose-500 font-bold px-1.5 py-0.5 rounded-full">긴급</span>}
             </p>
             <p className="text-[12px] text-slate-400">{isRes ? (entry as ReservationEntry).phone : "긴급 판매"}</p>
@@ -375,14 +376,17 @@ function SubmissionCard({ entry, accent }: { entry: ReservationEntry | UrgentEnt
       {/* Item breakdown */}
       <div className="space-y-1.5 mb-3">
         {entry.items.map((it, i) => (
-          <div key={i} className={`flex items-center justify-between px-3 py-2 rounded-xl text-[12px] ${ac.bg}`}>
-            <div>
-              <span className="font-semibold text-slate-700">{it.type.split(" ")[0]}</span>
-              <span className={`ml-2 ${ac.text}`}>{Math.round(it.rate * 100)}%</span>
-            </div>
-            <div className="text-right">
-              <span className="text-slate-400 mr-2">{formatKRW(it.amount)}</span>
-              <span className={`font-black ${ac.text}`}>{formatKRW(it.payment)}</span>
+          <div key={i} className={`px-3 py-2 rounded-xl text-[12px] ${ac.bg}`}>
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-1.5">
+                <span className="font-semibold text-slate-700">{it.type.split(" ")[0]}</span>
+                <span className={`${ac.text}`}>{Math.round(it.rate * 100)}%</span>
+                {it.isGift && <span className="text-[10px] bg-violet-100 text-violet-500 font-bold px-1.5 py-0.5 rounded-full">증정용</span>}
+              </div>
+              <div className="text-right">
+                <span className="text-slate-400 mr-2">{formatKRW(it.amount)}</span>
+                <span className={`font-black ${ac.text}`}>{formatKRW(it.payment)}</span>
+              </div>
             </div>
           </div>
         ))}
@@ -408,22 +412,20 @@ function UrgentPage({ onBack }: { onBack: () => void }) {
   const [date, setDate] = useState("");
   const [time, setTime] = useState("");
   const [location, setLocation] = useState("");
-  const [items, setItems] = useState<VoucherItem[]>([{ type: DEFAULT_TYPE, amount: "" }]);
-  const [isGift, setIsGift] = useState(false);
+  const [items, setItems] = useState<VoucherItem[]>([{ type: DEFAULT_TYPE, amount: "", isGift: false }]);
   const [fieldErrors, setFieldErrors] = useState<{ phone?: string; date?: string; time?: string; location?: string }>({});
   const [itemErrors, setItemErrors] = useState<string[]>([""]);
   const [submissions, setSubmissions] = useState<UrgentEntry[]>([]);
   const [toast, setToast] = useState(false);
   const [counter, setCounter] = useState(0);
 
-  const deduct = 0.01 + (isGift ? 0.01 : 0); // urgent always -1%, gift adds -1%
-
-  function addItem() { setItems((p) => [...p, { type: DEFAULT_TYPE, amount: "" }]); setItemErrors((p) => [...p, ""]); }
+  function addItem() { setItems((p) => [...p, { type: DEFAULT_TYPE, amount: "", isGift: false }]); setItemErrors((p) => [...p, ""]); }
   function removeItem(idx: number) { setItems((p) => p.filter((_, i) => i !== idx)); setItemErrors((p) => p.filter((_, i) => i !== idx)); }
-  function updateItem(idx: number, field: keyof VoucherItem, val: string) {
+  function updateItem(idx: number, field: "type" | "amount", val: string) {
     setItems((p) => p.map((it, i) => i === idx ? { ...it, [field]: val } : it));
     setItemErrors((p) => p.map((e, i) => i === idx ? "" : e));
   }
+  function toggleGift(idx: number) { setItems((p) => p.map((it, i) => i === idx ? { ...it, isGift: !it.isGift } : it)); }
 
   function validate() {
     const fe: typeof fieldErrors = {};
@@ -443,13 +445,13 @@ function UrgentPage({ onBack }: { onBack: () => void }) {
     const id = counter + 1;
     setCounter(id);
     const savedItems: SavedItem[] = items.map((item) => {
-      const { amountNum, rate, payment } = computeItem(item, deduct);
-      return { type: item.type, amount: amountNum, rate, payment };
+      const { amountNum, rate, payment } = computeItem(item, 0.01); // urgent baseDeduct = 0.01
+      return { type: item.type, amount: amountNum, rate, payment, isGift: item.isGift };
     });
     const totalPayment = savedItems.reduce((s, it) => s + it.payment, 0);
-    setSubmissions((p) => [{ id, phone, date, time, location, isGift, items: savedItems, totalPayment }, ...p]);
+    setSubmissions((p) => [{ id, phone, date, time, location, items: savedItems, totalPayment }, ...p]);
     setPhone(""); setDate(""); setTime(""); setLocation("");
-    setItems([{ type: DEFAULT_TYPE, amount: "" }]); setIsGift(false); setItemErrors([""]);
+    setItems([{ type: DEFAULT_TYPE, amount: "", isGift: false }]); setItemErrors([""]);
     setToast(true); setTimeout(() => setToast(false), 3000);
   }
 
@@ -498,7 +500,7 @@ function UrgentPage({ onBack }: { onBack: () => void }) {
               <input type="text" value={location} onChange={(e) => { setLocation(e.target.value); setFieldErrors((p) => ({ ...p, location: "" })); }} placeholder="예: 강남구 역삼동" className={inputCls(!!fieldErrors.location, "rose")} />
               <p className="text-[12px] text-slate-400 mt-1.5 flex items-start gap-1"><span className="mt-0.5 flex-shrink-0">ℹ️</span>주정차 가능한 곳으로 입력 바랍니다</p>
             </Field>
-            <VoucherItems items={items} errors={itemErrors} onChange={updateItem} onAdd={addItem} onRemove={removeItem} deduct={deduct} accent="rose" isGift={isGift} onGiftChange={setIsGift} isUrgent />
+            <VoucherItems items={items} errors={itemErrors} onChange={updateItem} onToggleGift={toggleGift} onAdd={addItem} onRemove={removeItem} baseDeduct={0.01} accent="rose" />
             <button type="submit" className="w-full py-4 rounded-2xl text-white text-[15px] font-bold transition-all duration-150 active:scale-95 flex items-center justify-center gap-2" style={{ background: "linear-gradient(135deg, #f43f5e 0%, #e11d48 100%)" }}>
               <span>🚨</span> 긴급 판매 요청하기
             </button>
