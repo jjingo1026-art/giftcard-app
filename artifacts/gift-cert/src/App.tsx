@@ -241,7 +241,7 @@ export default function App() {
               />
               <p className="text-[12px] text-slate-400 mt-1.5 flex items-start gap-1">
                 <span className="mt-0.5 flex-shrink-0">ℹ️</span>
-                아파트의 경우 동까지만 입력 가능합니다
+                주정차가 가능한 장소로 입력해 주세요
               </p>
             </Field>
 
