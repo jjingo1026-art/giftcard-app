@@ -5,13 +5,14 @@ const RATES: Record<string, number> = {
   "롯데 (Lotte)": 0.95,
   "현대 (Hyundai)": 0.95,
   "주유권 (Fuel)": 0.95,
+  "국민관광상품권 (Tourism)": 0.95,
   "갤러리아 (Galleria)": 0.94,
   "컬쳐랜드 (Cultureland)": 0.90,
   "도서문화상품권 (BooknLife)": 0.90,
 };
 
 const RATE_GROUPS = [
-  { label: "신세계 / 롯데 / 현대 / 주유권", sublabel: "Shinsegae · Lotte · Hyundai · Fuel", rate: 95, color: "#6366f1" },
+  { label: "신세계 / 롯데 / 현대 / 주유권 / 국민관광상품권", sublabel: "Shinsegae · Lotte · Hyundai · Fuel · Tourism", rate: 95, color: "#6366f1" },
   { label: "갤러리아", sublabel: "Galleria", rate: 94, color: "#8b5cf6" },
   { label: "컬쳐랜드 / 도서문화상품권", sublabel: "Cultureland · BooknLife", rate: 90, color: "#a78bfa" },
 ];
