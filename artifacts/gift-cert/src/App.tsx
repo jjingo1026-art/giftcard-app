@@ -4,13 +4,14 @@ const RATES: Record<string, number> = {
   "신세계 (Shinsegae)": 0.95,
   "롯데 (Lotte)": 0.95,
   "현대 (Hyundai)": 0.95,
+  "주유권 (Fuel)": 0.95,
   "갤러리아 (Galleria)": 0.94,
   "컬쳐랜드 (Cultureland)": 0.90,
   "도서문화상품권 (BooknLife)": 0.90,
 };
 
 const RATE_GROUPS = [
-  { label: "신세계 / 롯데 / 현대", sublabel: "Shinsegae · Lotte · Hyundai", rate: 95, color: "#6366f1" },
+  { label: "신세계 / 롯데 / 현대 / 주유권", sublabel: "Shinsegae · Lotte · Hyundai · Fuel", rate: 95, color: "#6366f1" },
   { label: "갤러리아", sublabel: "Galleria", rate: 94, color: "#8b5cf6" },
   { label: "컬쳐랜드 / 도서문화상품권", sublabel: "Cultureland · BooknLife", rate: 90, color: "#a78bfa" },
 ];
@@ -80,6 +81,7 @@ export default function App() {
   const [submissions, setSubmissions] = useState<Submission[]>([]);
   const [errors, setErrors] = useState<Partial<Record<keyof FormData, string>>>({});
   const [toastVisible, setToastVisible] = useState(false);
+  const [urgentAlert, setUrgentAlert] = useState(false);
   const [counter, setCounter] = useState(0);
 
   const amountNum = parseFloat(form.amount.replace(/,/g, "")) || 0;
@@ -373,6 +375,35 @@ export default function App() {
             })}
           </div>
         )}
+        {/* Urgent Sale Section */}
+        <div className="bg-white rounded-3xl shadow-sm border border-rose-100 overflow-hidden">
+          <div className="px-5 pt-5 pb-3 flex items-center justify-between">
+            <div>
+              <h2 className="text-[15px] font-bold text-slate-800">긴급 판매 요청</h2>
+              <p className="text-[12px] text-slate-400 mt-0.5">Urgent Sale Request</p>
+            </div>
+            <div className="w-8 h-8 bg-rose-50 rounded-xl flex items-center justify-center text-base">🚨</div>
+          </div>
+          <div className="px-5 pb-5 space-y-3">
+            {urgentAlert && (
+              <div className="flex items-start gap-2.5 px-4 py-3 bg-rose-50 border border-rose-100 rounded-2xl">
+                <span className="text-base flex-shrink-0 mt-0.5">📞</span>
+                <p className="text-[13px] text-rose-600 font-medium leading-relaxed">
+                  긴급 판매는 별도로 문의해 주세요
+                </p>
+              </div>
+            )}
+            <button
+              type="button"
+              onClick={() => setUrgentAlert(true)}
+              className="w-full py-4 rounded-2xl text-white text-[15px] font-bold transition-all duration-150 active:scale-95 flex items-center justify-center gap-2"
+              style={{ background: "linear-gradient(135deg, #f43f5e 0%, #e11d48 100%)" }}
+            >
+              <span>🚨</span> 긴급 판매 요청
+            </button>
+          </div>
+        </div>
+
       </div>
     </div>
   );
