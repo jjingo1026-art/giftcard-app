@@ -30,6 +30,8 @@ interface FormData {
 interface Submission extends FormData {
   payment: number;
   id: number;
+  isGift: boolean;
+  appliedRate: number;
 }
 
 function formatKRW(amount: number) {
@@ -81,12 +83,14 @@ export default function App() {
   });
   const [submissions, setSubmissions] = useState<Submission[]>([]);
   const [errors, setErrors] = useState<Partial<Record<keyof FormData, string>>>({});
+  const [isGift, setIsGift] = useState(false);
   const [toastVisible, setToastVisible] = useState(false);
   const [urgentAlert, setUrgentAlert] = useState(false);
   const [counter, setCounter] = useState(0);
 
   const amountNum = parseFloat(form.amount.replace(/,/g, "")) || 0;
-  const rate = RATES[form.type] ?? 0;
+  const baseRate = RATES[form.type] ?? 0;
+  const rate = isGift ? baseRate - 0.01 : baseRate;
   const payment = Math.floor(amountNum * rate);
 
   function handleChange(e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) {
@@ -112,8 +116,9 @@ export default function App() {
     if (!validate()) return;
     const newId = counter + 1;
     setCounter(newId);
-    setSubmissions((prev) => [{ ...form, payment, id: newId }, ...prev]);
+    setSubmissions((prev) => [{ ...form, payment, id: newId, isGift, appliedRate: rate }, ...prev]);
     setForm({ name: "", phone: "", date: "", time: "", location: "", type: Object.keys(RATES)[0], amount: "" });
+    setIsGift(false);
     setToastVisible(true);
     setTimeout(() => setToastVisible(false), 3000);
   }
@@ -248,7 +253,35 @@ export default function App() {
               </p>
             </Field>
 
-            <Field label="상품권 종류" required>
+            <div className="space-y-1.5">
+              <div className="flex items-center justify-between">
+                <label className="block text-[13px] font-semibold text-slate-500 tracking-wide uppercase">
+                  상품권 종류 <span className="text-rose-400 normal-case tracking-normal">*</span>
+                </label>
+                <label className="flex items-center gap-2 cursor-pointer select-none">
+                  <div className="relative">
+                    <input
+                      type="checkbox"
+                      checked={isGift}
+                      onChange={(e) => setIsGift(e.target.checked)}
+                      className="sr-only peer"
+                    />
+                    <div className={`w-5 h-5 rounded-md border-2 flex items-center justify-center transition-all duration-150 ${isGift ? "bg-violet-500 border-violet-500" : "bg-white border-slate-300"}`}>
+                      {isGift && (
+                        <svg width="11" height="9" viewBox="0 0 11 9" fill="none">
+                          <path d="M1 4l3 3 6-6" stroke="white" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/>
+                        </svg>
+                      )}
+                    </div>
+                  </div>
+                  <span className={`text-[13px] font-semibold transition-colors ${isGift ? "text-violet-600" : "text-slate-400"}`}>
+                    증정용
+                  </span>
+                  {isGift && (
+                    <span className="text-[11px] bg-violet-100 text-violet-500 font-bold px-2 py-0.5 rounded-full">-1%</span>
+                  )}
+                </label>
+              </div>
               <div className="relative">
                 <select
                   name="type"
@@ -266,7 +299,7 @@ export default function App() {
                   </svg>
                 </div>
               </div>
-            </Field>
+            </div>
 
             <Field label="금액 (원)" required error={errors.amount}>
               <input
@@ -292,7 +325,10 @@ export default function App() {
                       <p className="text-white text-[16px] font-semibold">{formatKRW(amountNum)}</p>
                     </div>
                     <div className="text-right">
-                      <p className="text-white/70 text-[13px] mb-0.5">요율 {Math.round(rate * 100)}% 적용</p>
+                      <p className="text-white/70 text-[13px] mb-0.5 flex items-center justify-end gap-1.5">
+                        요율 {Math.round(rate * 100)}% 적용
+                        {isGift && <span className="bg-white/20 text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full">증정용 -1%</span>}
+                      </p>
                       <p className="text-white text-[26px] font-black tabular-nums leading-none">{formatKRW(payment)}</p>
                     </div>
                   </div>
@@ -318,8 +354,8 @@ export default function App() {
               <span className="text-[12px] text-slate-400">최신순</span>
             </div>
             {submissions.map((s, i) => {
-              const sRate = RATES[s.type];
-              const rateColor = sRate === 0.95 ? "#6366f1" : sRate === 0.94 ? "#8b5cf6" : "#a78bfa";
+              const sRate = s.appliedRate;
+              const rateColor = sRate >= 0.95 ? "#6366f1" : sRate >= 0.94 ? "#8b5cf6" : "#a78bfa";
               return (
                 <div key={i} className="bg-white rounded-3xl shadow-sm border border-slate-100 px-5 py-4">
                   <div className="flex items-start justify-between mb-3">
@@ -331,7 +367,12 @@ export default function App() {
                         {s.id}
                       </div>
                       <div>
-                        <p className="text-[15px] font-bold text-slate-800">{s.name}</p>
+                        <p className="text-[15px] font-bold text-slate-800 flex items-center gap-1.5">
+                          {s.name}
+                          {s.isGift && (
+                            <span className="text-[10px] bg-violet-100 text-violet-500 font-bold px-1.5 py-0.5 rounded-full">증정용</span>
+                          )}
+                        </p>
                         <p className="text-[12px] text-slate-400">{s.phone}</p>
                       </div>
                     </div>
