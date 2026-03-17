@@ -1,0 +1,31 @@
+kind = "web"
+previewPath = "/"
+title = "Gift Certificate Reservation"
+version = "1.0.0"
+id = "artifacts/gift-cert"
+router = "path"
+
+[[integratedSkills]]
+name = "react-vite"
+version = "1.0.0"
+
+[[services]]
+localPort = 23724
+name = "web"
+paths = ["/"]
+
+[services.development]
+run = "pnpm --filter @workspace/gift-cert run dev"
+
+[services.env]
+PORT = "23724"
+BASE_PATH = "/"
+
+[services.production]
+build = ["pnpm", "--filter", "@workspace/gift-cert", "run", "build"]
+publicDir = "artifacts/gift-cert/dist/public"
+serve = "static"
+
+[[services.production.rewrites]]
+from = "/*"
+to = "/index.html"
