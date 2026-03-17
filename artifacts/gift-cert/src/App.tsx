@@ -300,9 +300,19 @@ function HomePage({ onGoUrgent }: { onGoUrgent: () => void }) {
               </div>
               <TypeSelect value={form.type} onChange={(v) => setForm((p) => ({ ...p, type: v }))} />
             </div>
-            <Field label="금액 (원)" required error={errors.amount}>
+            <div className="space-y-1.5">
+              <label className="block text-[13px] font-semibold text-slate-500 tracking-wide uppercase">
+                금액 (원) <span className="text-rose-400 normal-case tracking-normal">*</span>
+              </label>
               <input type="number" name="amount" value={form.amount} onChange={handleChange} placeholder="예: 100000" min="0" step="10000" className={inputClass(!!errors.amount)} />
-            </Field>
+              {errors.amount && <p className="text-[12px] text-rose-500 flex items-center gap-1"><span>⚠</span> {errors.amount}</p>}
+              {amountNum > 0 && (
+                <div className="flex items-center justify-between px-4 py-3 rounded-2xl bg-indigo-50 border border-indigo-100">
+                  <span className="text-[13px] text-indigo-500 font-semibold">입금받을 금액</span>
+                  <span className="text-[18px] font-black text-indigo-600 tabular-nums">{formatKRW(payment)}</span>
+                </div>
+              )}
+            </div>
             {amountNum > 0 && (
               <PaymentPreview amountNum={amountNum} rate={rate} isGift={isGift} gradient="linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%)" />
             )}
@@ -509,9 +519,19 @@ function UrgentPage({ onBack }: { onBack: () => void }) {
               </div>
               <TypeSelect value={form.type} onChange={(v) => setForm((p) => ({ ...p, type: v }))} accent="rose" />
             </div>
-            <Field label="금액 (원)" required error={errors.amount}>
+            <div className="space-y-1.5">
+              <label className="block text-[13px] font-semibold text-slate-500 tracking-wide uppercase">
+                금액 (원) <span className="text-rose-400 normal-case tracking-normal">*</span>
+              </label>
               <input type="number" name="amount" value={form.amount} onChange={handleChange} placeholder="예: 100000" min="0" step="10000" className={inputClass(!!errors.amount, "rose")} />
-            </Field>
+              {errors.amount && <p className="text-[12px] text-rose-500 flex items-center gap-1"><span>⚠</span> {errors.amount}</p>}
+              {amountNum > 0 && (
+                <div className="flex items-center justify-between px-4 py-3 rounded-2xl bg-rose-50 border border-rose-100">
+                  <span className="text-[13px] text-rose-500 font-semibold">입금받을 금액</span>
+                  <span className="text-[18px] font-black text-rose-600 tabular-nums">{formatKRW(payment)}</span>
+                </div>
+              )}
+            </div>
             {amountNum > 0 && (
               <PaymentPreview amountNum={amountNum} rate={rate} isGift={isGift} isUrgent gradient="linear-gradient(135deg, #f43f5e 0%, #e11d48 100%)" />
             )}
