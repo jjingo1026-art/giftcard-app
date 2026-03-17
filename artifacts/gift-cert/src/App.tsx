@@ -12,7 +12,7 @@ const RATES: Record<string, number> = {
 };
 
 const RATE_GROUPS = [
-  { label: "신세계 / 롯데 / 현대 / 주유권 / 국민관광상품권", sublabel: "Shinsegae · Lotte · Hyundai · Fuel · Tourism", rate: 95, color: "#6366f1" },
+  { label: "신세계 / 롯데 / 현대\n주유권 / 국민관광상품권", sublabel: "Shinsegae · Lotte · Hyundai · Fuel · Tourism", rate: 95, color: "#6366f1" },
   { label: "갤러리아", sublabel: "Galleria", rate: 94, color: "#8b5cf6" },
   { label: "컬쳐랜드 / 도서문화상품권", sublabel: "Cultureland · BooknLife", rate: 90, color: "#a78bfa" },
 ];
@@ -165,7 +165,7 @@ export default function App() {
                 style={{ backgroundColor: g.color + "0d" }}
               >
                 <div>
-                  <p className="text-[14px] font-semibold text-slate-700">{g.label}</p>
+                  <p className="text-[14px] font-semibold text-slate-700 whitespace-pre-line">{g.label}</p>
                   <p className="text-[11px] text-slate-400 mt-0.5">{g.sublabel}</p>
                 </div>
                 <div
