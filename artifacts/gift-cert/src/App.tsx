@@ -20,6 +20,7 @@ interface FormData {
   phone: string;
   date: string;
   time: string;
+  location: string;
   type: string;
   amount: string;
 }
@@ -72,6 +73,7 @@ export default function App() {
     phone: "",
     date: "",
     time: "",
+    location: "",
     type: Object.keys(RATES)[0],
     amount: "",
   });
@@ -96,6 +98,7 @@ export default function App() {
     if (!form.phone.trim()) newErrors.phone = "연락처를 입력해주세요";
     if (!form.date) newErrors.date = "날짜 선택";
     if (!form.time) newErrors.time = "시간 선택";
+    if (!form.location.trim()) newErrors.location = "거래 장소를 입력해주세요";
     if (!form.amount || amountNum <= 0) newErrors.amount = "금액을 입력해주세요";
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
@@ -107,7 +110,7 @@ export default function App() {
     const newId = counter + 1;
     setCounter(newId);
     setSubmissions((prev) => [{ ...form, payment, id: newId }, ...prev]);
-    setForm({ name: "", phone: "", date: "", time: "", type: Object.keys(RATES)[0], amount: "" });
+    setForm({ name: "", phone: "", date: "", time: "", location: "", type: Object.keys(RATES)[0], amount: "" });
     setToastVisible(true);
     setTimeout(() => setToastVisible(false), 3000);
   }
@@ -207,7 +210,7 @@ export default function App() {
             </Field>
 
             <div className="grid grid-cols-2 gap-3">
-              <Field label="날짜" required error={errors.date}>
+              <Field label="예약 날짜" required error={errors.date}>
                 <input
                   type="date"
                   name="date"
@@ -216,7 +219,7 @@ export default function App() {
                   className={inputClass(!!errors.date)}
                 />
               </Field>
-              <Field label="시간" required error={errors.time}>
+              <Field label="예약 시간" required error={errors.time}>
                 <input
                   type="time"
                   name="time"
@@ -226,6 +229,21 @@ export default function App() {
                 />
               </Field>
             </div>
+
+            <Field label="거래 장소" required error={errors.location}>
+              <input
+                type="text"
+                name="location"
+                value={form.location}
+                onChange={handleChange}
+                placeholder="예: 강남구 역삼동"
+                className={inputClass(!!errors.location)}
+              />
+              <p className="text-[12px] text-slate-400 mt-1.5 flex items-start gap-1">
+                <span className="mt-0.5 flex-shrink-0">ℹ️</span>
+                아파트의 경우 동까지만 입력 가능합니다
+              </p>
+            </Field>
 
             <Field label="상품권 종류" required>
               <div className="relative">
@@ -324,12 +342,16 @@ export default function App() {
 
                   <div className="grid grid-cols-2 gap-2 mb-3">
                     <div className="bg-slate-50 rounded-xl px-3 py-2">
-                      <p className="text-[10px] text-slate-400 font-semibold uppercase tracking-wide">날짜 · 시간</p>
+                      <p className="text-[10px] text-slate-400 font-semibold uppercase tracking-wide">예약 날짜 · 예약 시간</p>
                       <p className="text-[13px] text-slate-700 font-semibold mt-0.5">{s.date} {s.time}</p>
                     </div>
                     <div className="bg-slate-50 rounded-xl px-3 py-2">
                       <p className="text-[10px] text-slate-400 font-semibold uppercase tracking-wide">상품권</p>
                       <p className="text-[12px] text-slate-700 font-semibold mt-0.5 truncate">{s.type.split(" ")[0]}</p>
+                    </div>
+                    <div className="bg-slate-50 rounded-xl px-3 py-2 col-span-2">
+                      <p className="text-[10px] text-slate-400 font-semibold uppercase tracking-wide">거래 장소</p>
+                      <p className="text-[13px] text-slate-700 font-semibold mt-0.5">{s.location}</p>
                     </div>
                   </div>
 
