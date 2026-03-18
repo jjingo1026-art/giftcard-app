@@ -123,6 +123,13 @@ export default function ReservationCheck() {
                 </p>
               )}
             </div>
+            <a
+              href={`/chat.html?id=${reservation.id}`}
+              className="flex items-center justify-center gap-2 w-full py-3.5 rounded-xl text-white text-[14px] font-bold transition-all active:scale-95"
+              style={{ background: "linear-gradient(135deg,#6366f1,#8b5cf6)" }}
+            >
+              💬 상담하기
+            </a>
           </div>
         )}
 
@@ -183,7 +190,7 @@ export default function ReservationCheck() {
                   className="flex items-center justify-center gap-2 w-full py-3.5 rounded-xl text-white text-[14px] font-bold transition-all active:scale-95"
                   style={{ background: "linear-gradient(135deg,#6366f1,#8b5cf6)" }}
                 >
-                  💬 채팅하기
+                  💬 상담하기
                 </a>
               </div>
             )}
