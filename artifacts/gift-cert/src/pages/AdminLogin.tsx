@@ -41,7 +41,7 @@ export default function AdminLogin() {
       const data = await res.json();
       if (res.ok && data.token) {
         setAdminToken(data.token);
-        navigate("/admin/dashboard");
+        location.href = "/admin/dashboard.html";
       } else {
         setError(data.error ?? "아이디 또는 비밀번호가 올바르지 않습니다.");
         setPw("");
