@@ -13,6 +13,7 @@ import CustomerChat from "./pages/CustomerChat";
 import Notice from "./pages/Notice";
 import Terms from "./pages/Terms";
 import ReservationPage from "./pages/ReservationPage";
+import ReservationCheck from "./pages/ReservationCheck";
 import "./index.css";
 
 const base = import.meta.env.BASE_URL.replace(/\/$/, "");
@@ -42,6 +43,8 @@ createRoot(document.getElementById("root")!).render(
       <Route path="/reservation.html" component={ReservationPage} />
       <Route path="/chat" component={CustomerChat} />
       <Route path="/chat.html" component={CustomerChat} />
+      <Route path="/check" component={ReservationCheck} />
+      <Route path="/check.html" component={ReservationCheck} />
       <Route path="/staff/login" component={StaffLogin} />
       <Route path="/staff/login.html" component={StaffLogin} />
       <Route path="/staff/register" component={StaffRegister} />
