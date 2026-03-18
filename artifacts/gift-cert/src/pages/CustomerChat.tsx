@@ -59,7 +59,7 @@ export default function CustomerChat() {
       <header className="bg-white border-b border-slate-100 sticky top-0 z-40 shadow-sm">
         <div className="max-w-2xl mx-auto px-4 py-3.5 flex items-center gap-3">
           <button onClick={() => history.back()} className="text-slate-400 hover:text-slate-600">←</button>
-          <h1 className="text-[16px] font-bold text-slate-800">채팅 · 예약 #{reservationId}</h1>
+          <h1 className="text-[16px] font-bold text-slate-800">상담 채팅 · 예약 #{reservationId}</h1>
         </div>
       </header>
 
