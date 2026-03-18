@@ -12,6 +12,7 @@ interface Reservation {
   amount?: number;
   totalPayment: number;
   status: string;
+  assignedStaffId?: number;
 }
 
 interface StaffGroup {
@@ -25,21 +26,37 @@ function fmt(n?: number | null) {
   return n.toLocaleString("ko-KR") + "원";
 }
 
+const STATUS_CHIP: Record<string, string> = {
+  assigned:  "bg-blue-100 text-blue-700",
+  completed: "bg-emerald-100 text-emerald-700",
+};
+const STATUS_LABEL: Record<string, string> = {
+  assigned:  "진행중",
+  completed: "완료",
+};
+
 function ReservationCard({ r }: { r: Reservation }) {
   return (
     <div
       onClick={() => { location.href = `/admin/detail.html?id=${r.id}`; }}
-      className="bg-white rounded-xl border border-slate-100 shadow-sm px-4 py-3 cursor-pointer hover:border-indigo-200 hover:bg-indigo-50/30 transition-all active:scale-[0.99]"
+      className="bg-white rounded-xl border border-slate-100 shadow-sm px-4 py-3.5 cursor-pointer hover:border-indigo-200 hover:bg-indigo-50/30 transition-all active:scale-[0.99]"
     >
+      {/* 상단: 날짜·시간 + 상태 배지 */}
+      <div className="flex items-center justify-between mb-2">
+        <p className="text-[12px] text-slate-400 font-medium">
+          {r.date ? `📅 ${r.date} ${r.time ?? ""}` : `#${r.id}`}
+        </p>
+        <span className={`text-[11px] font-bold px-2.5 py-0.5 rounded-full ${STATUS_CHIP[r.status] ?? "bg-slate-100 text-slate-500"}`}>
+          {STATUS_LABEL[r.status] ?? r.status}
+        </span>
+      </div>
+      {/* 하단: 이름 + 금액 */}
       <div className="flex items-center justify-between">
         <div>
           <p className="text-[14px] font-bold text-slate-800">{r.name ?? r.phone}</p>
-          {r.giftcardType && <p className="text-[12px] text-slate-400 mt-0.5">{r.giftcardType}</p>}
+          {r.giftcardType && <p className="text-[11px] text-slate-400 mt-0.5">{r.giftcardType}</p>}
         </div>
-        <div className="text-right">
-          <p className="text-[14px] font-black text-indigo-600">{fmt(r.amount || r.totalPayment)}</p>
-          {r.date && <p className="text-[11px] text-slate-400 mt-0.5">{r.date} {r.time ?? ""}</p>}
-        </div>
+        <p className="text-[14px] font-black text-indigo-600">{fmt(r.amount || r.totalPayment)}</p>
       </div>
     </div>
   );
