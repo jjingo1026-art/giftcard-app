@@ -11,14 +11,14 @@ const RATES: Record<string, number> = {
 };
 const RATE_KEYS = Object.keys(RATES);
 
-const OPTION_LABELS: Record<string, string> = {
-  "신세계백화점상품권":  "신세계백화점상품권",
-  "롯데백화점상품권":    "롯데백화점상품권",
-  "현대백화점상품권":    "현대백화점상품권",
-  "갤러리아백화점상품권":"갤러리아백화점상품권",
-  "지류문화상품권":      "지류문화상품권 (컬쳐랜드, 북앤라이프, 문화상품권)",
-  "주유권":             "주유권 (SK, GS, 현대, S-OIL)",
-};
+const CARD_OPTIONS = [
+  { key: "신세계백화점상품권",   label: "신세계백화점상품권",   sub: "" },
+  { key: "롯데백화점상품권",     label: "롯데백화점상품권",     sub: "" },
+  { key: "현대백화점상품권",     label: "현대백화점상품권",     sub: "" },
+  { key: "갤러리아백화점상품권", label: "갤러리아백화점상품권", sub: "" },
+  { key: "지류문화상품권",       label: "지류문화상품권",       sub: "컬쳐랜드, 북앤라이프, 문화상품권" },
+  { key: "주유권",               label: "주유권",               sub: "SK, GS, 현대, S-OIL" },
+];
 
 const KOREAN_BANKS = [
   "KB국민은행","신한은행","우리은행","하나은행","IBK기업은행",
@@ -45,7 +45,13 @@ export default function ReservationPage() {
   const [bank, setBank]       = useState(KOREAN_BANKS[0]);
   const [acct, setAcct]       = useState("");
   const [holder, setHolder]   = useState("");
+  const [selectedType, setSelectedType] = useState(getDefaultType());
   const [items, setItems]     = useState<Item[]>([{ type: getDefaultType(), amount: "", isGift: false }]);
+
+  function selectType(type: string) {
+    setSelectedType(type);
+    setItems(p => p.map(it => ({ ...it, type })));
+  }
   const [errors, setErrors]   = useState<Record<string, string>>({});
   const [toast, setToast]     = useState(false);
 
@@ -154,28 +160,46 @@ export default function ReservationPage() {
             {errors.loc && <p className="text-[12px] text-rose-500">⚠ {errors.loc}</p>}
           </div>
 
-          {/* 상품권 항목 */}
+          {/* 상품권 선택 카드 */}
           <div className="space-y-2">
-            <label className="block text-[13px] font-semibold text-slate-500 uppercase tracking-wide">상품권 종류 &amp; 금액 <span className="text-rose-400 normal-case">*</span></label>
+            <label className="block text-[13px] font-semibold text-slate-500 uppercase tracking-wide">상품권 선택 <span className="text-rose-400 normal-case">*</span></label>
+            <div className="grid grid-cols-2 gap-2">
+              {CARD_OPTIONS.map((opt) => {
+                const active = selectedType === opt.key;
+                return (
+                  <div
+                    key={opt.key}
+                    onClick={() => selectType(opt.key)}
+                    className={`cursor-pointer rounded-2xl border-2 px-3 py-3 text-center transition-all active:scale-[0.97] ${
+                      active
+                        ? "border-indigo-500 bg-indigo-50 text-indigo-700"
+                        : "border-slate-200 bg-slate-50 text-slate-600 hover:border-indigo-200 hover:bg-indigo-50/40"
+                    }`}
+                  >
+                    <p className="text-[13px] font-bold leading-snug">{opt.label}</p>
+                    {opt.sub && <p className="text-[11px] mt-0.5 opacity-60">({opt.sub})</p>}
+                    {active && <p className="text-[10px] font-bold mt-1 text-indigo-500">✓ 선택됨</p>}
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+
+          {/* 금액 입력 */}
+          <div className="space-y-2">
+            <label className="block text-[13px] font-semibold text-slate-500 uppercase tracking-wide">금액 <span className="text-rose-400 normal-case">*</span></label>
             {items.map((it, i) => {
               const n = parseFloat(it.amount) || 0;
-              const r = Math.max(0, (RATES[it.type] ?? 0) - (it.isGift ? 0.01 : 0));
+              const r = Math.max(0, (RATES[selectedType] ?? 0) - (it.isGift ? 0.01 : 0));
               const pay = Math.floor(n * r);
               return (
                 <div key={i} className="rounded-2xl border border-slate-200 bg-slate-50 p-3 space-y-2">
-                  <div className="flex gap-2">
-                    <select
-                      value={it.type}
-                      onChange={e => setItems(p => p.map((x, j) => j === i ? { ...x, type: e.target.value } : x))}
-                      className="flex-1 px-3 py-2.5 rounded-xl border border-slate-200 bg-white text-[14px] text-slate-700 outline-none"
-                    >
-                      {RATE_KEYS.map(k => <option key={k} value={k}>{OPTION_LABELS[k] ?? k}</option>)}
-                    </select>
-                    {items.length > 1 && (
+                  {items.length > 1 && (
+                    <div className="flex justify-end">
                       <button type="button" onClick={() => setItems(p => p.filter((_, j) => j !== i))}
-                        className="w-8 h-8 flex items-center justify-center rounded-xl bg-rose-100 text-rose-400 flex-shrink-0 mt-0.5">✕</button>
-                    )}
-                  </div>
+                        className="w-7 h-7 flex items-center justify-center rounded-xl bg-rose-100 text-rose-400 text-[13px]">✕</button>
+                    </div>
+                  )}
                   <div className="flex gap-2 items-center">
                     <input
                       type="number" value={it.amount} min="0" step="10000"
