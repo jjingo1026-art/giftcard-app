@@ -132,7 +132,7 @@ export default function StaffDetail() {
                   {!isMine && <p className="text-[11px] font-bold mb-0.5 opacity-60">{m.senderName}</p>}
                   <p>{m.message}</p>
                   <p className={`text-[10px] mt-0.5 ${isMine ? "text-indigo-200" : "text-slate-400"}`}>
-                    {new Date(m.time).toLocaleTimeString("ko-KR", { hour: "2-digit", minute: "2-digit" })}
+                    {new Date(m.time).toLocaleTimeString()}
                   </p>
                 </div>
               </div>
