@@ -26,6 +26,12 @@ const STATUS_LABELS: Record<string, { label: string; color: string }> = {
   cancelled: { label: "취소",     color: "bg-slate-100 text-slate-500" },
 };
 
+const statusText: Record<string, string> = {
+  pending:   "🟡 예약",
+  assigned:  "🟠 배정",
+  completed: "🟢 완료",
+};
+
 function formatKRW(n: number) { return n.toLocaleString("ko-KR") + "원"; }
 
 export default function AdminDashboard() {
@@ -179,7 +185,7 @@ export default function AdminDashboard() {
                 className="bg-white rounded-2xl border border-slate-100 shadow-sm px-4 py-3.5 cursor-pointer hover:border-indigo-200 hover:bg-indigo-50/30 transition-colors active:scale-[0.99]"
               >
                 <p className="text-[14px] font-semibold text-slate-800">
-                  🕒 {r.time ?? "—"} | 👤 {r.name ?? r.phone} | 💰 {formatKRW(r.totalPayment)}
+                  🕒 {r.time ?? "—"} | 👤 {r.name ?? r.phone} | 💰 {formatKRW(r.totalPayment)} | {statusText[r.status] ?? r.status}
                 </p>
               </div>
             ))}
