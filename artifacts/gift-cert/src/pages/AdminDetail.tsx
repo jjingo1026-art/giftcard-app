@@ -70,9 +70,9 @@ export default function AdminDetail() {
         headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
         body: JSON.stringify({ status }),
       });
-      if (res.ok) {
-        const updated = await res.json();
-        setEntry(updated);
+      const data = await res.json();
+      if (data.success) {
+        setEntry((prev) => prev ? { ...prev, status } : prev);
         showToast("변경 완료");
       }
     } finally { setSaving(false); }

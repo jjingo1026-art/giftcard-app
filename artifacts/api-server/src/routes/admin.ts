@@ -62,13 +62,11 @@ router.post("/reservations/:id/status", requireAuth, async (req, res) => {
     res.status(400).json({ error: "유효하지 않은 상태값입니다.", allowed });
     return;
   }
-  const [updated] = await db
+  await db
     .update(reservationsTable)
     .set({ status })
-    .where(eq(reservationsTable.id, id))
-    .returning();
-  if (!updated) { res.status(404).json({ error: "접수 정보를 찾을 수 없습니다." }); return; }
-  res.json(updated);
+    .where(eq(reservationsTable.id, id));
+  res.json({ success: true });
 });
 
 router.post("/reservations/:id/assign", requireAuth, async (req, res) => {
