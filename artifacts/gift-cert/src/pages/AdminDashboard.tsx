@@ -175,7 +175,7 @@ export default function AdminDashboard() {
             .map((r) => (
               <div
                 key={r.id}
-                onClick={() => navigate(`/admin/detail/${r.id}`)}
+                onClick={() => { location.href = `/admin/detail.html?id=${r.id}`; }}
                 className="bg-white rounded-2xl border border-slate-100 shadow-sm px-4 py-3.5 cursor-pointer hover:border-indigo-200 hover:bg-indigo-50/30 transition-colors active:scale-[0.99]"
               >
                 <p className="text-[14px] font-semibold text-slate-800">
