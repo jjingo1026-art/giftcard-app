@@ -9,6 +9,7 @@ export default function StaffApprove() {
   const [list, setList] = useState<StaffMember[]>([]);
   const [loading, setLoading] = useState(true);
   const [approving, setApproving] = useState<number | null>(null);
+  const [rejecting, setRejecting] = useState<number | null>(null);
 
   const token = getAdminToken();
   if (!token) { navigate("/admin/login"); return null; }
@@ -32,6 +33,16 @@ export default function StaffApprove() {
       headers: { Authorization: `Bearer ${token}` },
     });
     setApproving(null);
+    load();
+  }
+
+  async function reject(id: number) {
+    setRejecting(id);
+    await fetch(`/api/admin/staff/${id}/reject`, {
+      method: "POST",
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    setRejecting(null);
     load();
   }
 
@@ -71,13 +82,22 @@ export default function StaffApprove() {
                 <p className="text-[14px] font-semibold text-slate-800">{s.name}</p>
                 <p className="text-[12px] text-slate-400 mt-0.5">{s.phone}</p>
               </div>
-              <button
-                onClick={() => approve(s.id)}
-                disabled={approving === s.id}
-                className="px-4 py-2 rounded-xl bg-emerald-500 text-white text-[13px] font-bold hover:bg-emerald-600 transition-colors active:scale-95 disabled:opacity-60"
-              >
-                {approving === s.id ? "처리 중..." : "승인"}
-              </button>
+              <div className="flex gap-2">
+                <button
+                  onClick={() => reject(s.id)}
+                  disabled={rejecting === s.id}
+                  className="px-4 py-2 rounded-xl bg-rose-100 text-rose-500 text-[13px] font-bold hover:bg-rose-200 transition-colors active:scale-95 disabled:opacity-60"
+                >
+                  {rejecting === s.id ? "처리 중..." : "거절"}
+                </button>
+                <button
+                  onClick={() => approve(s.id)}
+                  disabled={approving === s.id}
+                  className="px-4 py-2 rounded-xl bg-emerald-500 text-white text-[13px] font-bold hover:bg-emerald-600 transition-colors active:scale-95 disabled:opacity-60"
+                >
+                  {approving === s.id ? "처리 중..." : "승인"}
+                </button>
+              </div>
             </div>
           ))}
         </div>
