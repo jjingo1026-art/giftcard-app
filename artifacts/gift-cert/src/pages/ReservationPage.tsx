@@ -93,11 +93,11 @@ export default function ReservationPage() {
       const res = await fetch("/api/reservations", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ kind: "reservation", name, phone, date, time, location: loc, items: savedItems, totalPayment, bankName: bank, accountNumber: acct, accountHolder: holder }),
+        body: JSON.stringify({ kind: "reservation", name, phone, date, time, location: loc, items: savedItems, totalPayment, bankName: bank, accountNumber: acct, accountHolder: holder, giftcardType: selectedType }),
       });
       if (res.ok) { const d = await res.json(); id = d.id; }
     } catch {}
-    saveEntry({ kind: "reservation", id, createdAt: new Date().toISOString(), name, phone, date, time, location: loc, items: savedItems, totalPayment, bankName: bank, accountNumber: acct, accountHolder: holder });
+    saveEntry({ kind: "reservation", id, createdAt: new Date().toISOString(), name, phone, date, time, location: loc, items: savedItems, totalPayment, bankName: bank, accountNumber: acct, accountHolder: holder, giftcardType: selectedType });
     setToast(true);
     setTimeout(() => { setToast(false); location.href = "/"; }, 2500);
   }
