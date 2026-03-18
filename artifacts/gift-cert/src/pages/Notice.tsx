@@ -47,10 +47,10 @@ const NOTICE_DATA: Record<string, { title: string; sub?: string; rate: number; d
   },
   "주유권": {
     title: "주유권",
-    sub: "SK · GS · 현대 · OIL뱅크",
+    sub: "SK · GS · 현대 · S-OIL",
     rate: 95,
     desc: [
-      "SK, GS, 현대오일뱅크, OIL뱅크 주유소에서 사용 가능합니다.",
+      "SK, GS, 현대, S-OIL 주유소에서 사용 가능합니다.",
       "유효기간 확인 후 매입합니다.",
       "액면가의 95%로 매입합니다.",
     ],

@@ -11,6 +11,15 @@ const RATES: Record<string, number> = {
 };
 const RATE_KEYS = Object.keys(RATES);
 
+const OPTION_LABELS: Record<string, string> = {
+  "신세계백화점상품권":  "신세계백화점상품권",
+  "롯데백화점상품권":    "롯데백화점상품권",
+  "현대백화점상품권":    "현대백화점상품권",
+  "갤러리아백화점상품권":"갤러리아백화점상품권",
+  "지류문화상품권":      "지류문화상품권 (컬쳐랜드, 북앤라이프, 문화상품권)",
+  "주유권":             "주유권 (SK, GS, 현대, S-OIL)",
+};
+
 const KOREAN_BANKS = [
   "KB국민은행","신한은행","우리은행","하나은행","IBK기업은행",
   "NH농협은행","SC제일은행","씨티은행","카카오뱅크","케이뱅크",
@@ -160,7 +169,7 @@ export default function ReservationPage() {
                       onChange={e => setItems(p => p.map((x, j) => j === i ? { ...x, type: e.target.value } : x))}
                       className="flex-1 px-3 py-2.5 rounded-xl border border-slate-200 bg-white text-[14px] text-slate-700 outline-none"
                     >
-                      {RATE_KEYS.map(k => <option key={k} value={k}>{k}</option>)}
+                      {RATE_KEYS.map(k => <option key={k} value={k}>{OPTION_LABELS[k] ?? k}</option>)}
                     </select>
                     {items.length > 1 && (
                       <button type="button" onClick={() => setItems(p => p.filter((_, j) => j !== i))}
