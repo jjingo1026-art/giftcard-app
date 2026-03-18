@@ -89,9 +89,9 @@ router.post("/reservations/:id/assign", requireAuth, async (req, res) => {
   }
   await db
     .update(reservationsTable)
-    .set({ assignedTo: member.name, status: "assigned" })
+    .set({ assignedStaffId: member.id, assignedTo: member.name, status: "assigned" })
     .where(eq(reservationsTable.id, id));
-  res.json({ success: true, assignedTo: member.name });
+  res.json({ success: true });
 });
 
 export default router;

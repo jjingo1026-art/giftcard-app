@@ -96,8 +96,8 @@ export default function AdminDetail() {
       });
       const data = await res.json();
       if (data.success) {
-        setEntry((prev) => prev ? { ...prev, status: "assigned", assignedTo: data.assignedTo } : prev);
-        showToast(`${data.assignedTo} 배정 완료`);
+        setEntry((prev) => prev ? { ...prev, status: "assigned", assignedTo: member.name } : prev);
+        showToast(`${member.name} 배정 완료`);
       }
     } finally { setSaving(false); }
   }
