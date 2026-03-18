@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect } from "react";
 import { useLocation, useParams } from "wouter";
 import { getAdminToken, clearAdminToken } from "./AdminLogin";
 
@@ -43,8 +43,7 @@ export default function AdminDetail() {
   const [saving, setSaving] = useState(false);
   const [toast, setToast] = useState<string | null>(null);
   const [staffList, setStaffList] = useState<StaffMember[]>([]);
-  const [showStaffPicker, setShowStaffPicker] = useState(false);
-  const pickerRef = useRef<HTMLDivElement>(null);
+  const [selectedStaffId, setSelectedStaffId] = useState("");
 
   const token = getAdminToken();
   if (!token) { navigate("/admin/login"); return null; }
@@ -84,20 +83,21 @@ export default function AdminDetail() {
     } finally { setSaving(false); }
   }
 
-  async function assignStaff(member: StaffMember) {
-    if (!entry || saving) return;
-    setShowStaffPicker(false);
+  async function assign() {
+    if (!entry || saving || !selectedStaffId) return;
+    const staffId = parseInt(selectedStaffId);
+    const member = staffList.find((s) => s.id === staffId);
     setSaving(true);
     try {
       const res = await fetch(`/api/admin/reservations/${entry.id}/assign`, {
         method: "POST",
         headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
-        body: JSON.stringify({ staffId: member.id }),
+        body: JSON.stringify({ staffId }),
       });
       const data = await res.json();
       if (data.success) {
-        setEntry((prev) => prev ? { ...prev, status: "assigned", assignedTo: member.name } : prev);
-        showToast(`${member.name} 배정 완료`);
+        setEntry((prev) => prev ? { ...prev, status: "assigned", assignedTo: member?.name ?? "" } : prev);
+        showToast("배정 완료");
       }
     } finally { setSaving(false); }
   }
@@ -199,44 +199,38 @@ export default function AdminDetail() {
           </div>
         </div>
 
-        {/* Action buttons */}
-        <div className="flex gap-3 pb-6">
-          {/* 직원배정 — opens staff picker */}
-          <div className="flex-1 relative" ref={pickerRef}>
+        {/* Staff select + assign */}
+        <div className="bg-white rounded-2xl border border-slate-100 shadow-sm px-5 py-4 space-y-3">
+          <h2 className="text-[12px] font-bold text-slate-400 uppercase tracking-wide">직원 배정</h2>
+          <div className="flex gap-2">
+            <select
+              id="staffSelect"
+              value={selectedStaffId}
+              onChange={(e) => setSelectedStaffId(e.target.value)}
+              className="flex-1 px-3 py-2.5 rounded-xl border border-slate-200 text-[14px] text-slate-700 outline-none focus:border-indigo-400 bg-white"
+            >
+              <option value="">직원 선택</option>
+              {staffList.map((s) => (
+                <option key={s.id} value={String(s.id)}>{s.name}</option>
+              ))}
+            </select>
             <button
-              onClick={() => setShowStaffPicker((v) => !v)}
-              disabled={saving || entry.status === "assigned"}
-              className="w-full py-3.5 rounded-2xl text-white text-[15px] font-bold transition-all active:scale-95 disabled:opacity-40"
+              onClick={assign}
+              disabled={saving || !selectedStaffId}
+              className="px-5 py-2.5 rounded-xl text-white text-[14px] font-bold transition-all active:scale-95 disabled:opacity-40 whitespace-nowrap"
               style={{ background: "linear-gradient(135deg,#3b82f6,#6366f1)" }}
             >
-              직원배정
+              직원 배정
             </button>
-            {showStaffPicker && (
-              <div className="absolute bottom-full left-0 right-0 mb-2 bg-white rounded-2xl border border-slate-100 shadow-xl overflow-hidden z-30">
-                <p className="text-[11px] font-bold text-slate-400 uppercase tracking-wide px-4 pt-3 pb-1">직원 선택</p>
-                {staffList.map((s) => (
-                  <button
-                    key={s.id}
-                    onClick={() => assignStaff(s)}
-                    className="w-full text-left px-4 py-3 hover:bg-indigo-50 border-b border-slate-50 last:border-0 transition-colors"
-                  >
-                    <p className="text-[14px] font-semibold text-slate-800">{s.name}</p>
-                    <p className="text-[11px] text-slate-400">{s.phone}</p>
-                  </button>
-                ))}
-                <button
-                  onClick={() => setShowStaffPicker(false)}
-                  className="w-full text-center text-[12px] text-slate-400 py-2.5 hover:bg-slate-50 transition-colors"
-                >
-                  취소
-                </button>
-              </div>
-            )}
           </div>
+        </div>
+
+        {/* 매입완료 */}
+        <div className="pb-6">
           <button
             onClick={() => setStatus("completed")}
             disabled={saving || entry.status === "completed"}
-            className="flex-1 py-3.5 rounded-2xl text-white text-[15px] font-bold transition-all active:scale-95 disabled:opacity-40"
+            className="w-full py-3.5 rounded-2xl text-white text-[15px] font-bold transition-all active:scale-95 disabled:opacity-40"
             style={{ background: "linear-gradient(135deg,#10b981,#059669)" }}
           >
             매입완료
