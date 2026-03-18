@@ -13,10 +13,16 @@ const RATES: Record<string, number> = {
 };
 
 const RATE_GROUPS = [
-  { label: "신세계 / 롯데 / 현대\n주유권 / 국민관광상품권", sublabel: "Shinsegae · Lotte · Hyundai · Fuel · Tourism", rate: 95, color: "#6366f1" },
-  { label: "갤러리아", sublabel: "Galleria", rate: 94, color: "#8b5cf6" },
-  { label: "컬쳐랜드 / 도서문화상품권", sublabel: "Cultureland · BooknLife", rate: 90, color: "#a78bfa" },
+  { label: "신세계", rate: 95, color: "#6366f1" },
+  { label: "롯데",   rate: 95, color: "#8b5cf6" },
+  { label: "현대",   rate: 95, color: "#a78bfa" },
+  { label: "갤러리아", rate: 94, color: "#7c3aed" },
+  { label: "컬쳐랜드", rate: 90, color: "#c084fc" },
 ];
+
+function goNotice(brand: string) {
+  alert(`${brand} 상품권 매입율 안내 페이지 준비 중입니다.`);
+}
 
 const DEFAULT_TYPE = Object.keys(RATES)[0];
 
@@ -287,14 +293,19 @@ function HomePage({ onGoUrgent }: { onGoUrgent: () => void }) {
         {/* Rates */}
         <div className="bg-white rounded-3xl shadow-sm border border-slate-100 overflow-hidden">
           <div className="px-5 pt-5 pb-3 flex items-center justify-between">
-            <div><h2 className="text-[15px] font-bold text-slate-800">적용 요율</h2><p className="text-[12px] text-slate-400 mt-0.5">Exchange Rates</p></div>
+            <div><h2 className="text-[15px] font-bold text-slate-800">상품권 시세</h2><p className="text-[12px] text-slate-400 mt-0.5">Exchange Rates</p></div>
             <div className="w-8 h-8 bg-indigo-50 rounded-xl flex items-center justify-center">💳</div>
           </div>
-          <div className="px-5 pb-5 space-y-2.5">
+          <div className="px-5 pb-5 space-y-2">
             {RATE_GROUPS.map((g) => (
-              <div key={g.label} className="flex items-center justify-between p-4 rounded-2xl" style={{ backgroundColor: g.color + "0d" }}>
-                <div><p className="text-[14px] font-semibold text-slate-700 whitespace-pre-line">{g.label}</p><p className="text-[11px] text-slate-400 mt-0.5">{g.sublabel}</p></div>
-                <div className="text-[22px] font-black tabular-nums" style={{ color: g.color }}>{g.rate}%</div>
+              <div
+                key={g.label}
+                onClick={() => goNotice(g.label)}
+                className="flex items-center justify-between px-4 py-3.5 rounded-2xl cursor-pointer active:scale-[0.98] transition-all"
+                style={{ backgroundColor: g.color + "12" }}
+              >
+                <span className="text-[15px] font-semibold text-slate-700">{g.label}</span>
+                <span className="text-[20px] font-black tabular-nums" style={{ color: g.color }}>{g.rate}%</span>
               </div>
             ))}
           </div>
