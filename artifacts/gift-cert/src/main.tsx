@@ -12,8 +12,11 @@ createRoot(document.getElementById("root")!).render(
   <Router base={base}>
     <Switch>
       <Route path="/admin/login" component={AdminLogin} />
+      <Route path="/admin/login.html" component={AdminLogin} />
       <Route path="/admin/dashboard" component={AdminDashboard} />
+      <Route path="/admin/dashboard.html" component={AdminDashboard} />
       <Route path="/admin/detail/:id" component={AdminDetail} />
+      <Route path="/admin/detail.html" component={AdminDetail} />
       <Route component={App} />
     </Switch>
   </Router>

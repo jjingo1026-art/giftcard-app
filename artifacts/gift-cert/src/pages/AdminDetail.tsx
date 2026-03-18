@@ -38,6 +38,8 @@ function Row({ label, value }: { label: string; value?: string | null }) {
 export default function AdminDetail() {
   const [, navigate] = useLocation();
   const params = useParams<{ id: string }>();
+  const queryId = new URLSearchParams(window.location.search).get("id");
+  const resolvedId = params.id ?? queryId ?? "";
   const [entry, setEntry] = useState<Reservation | null>(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -52,7 +54,7 @@ export default function AdminDetail() {
     setLoading(true);
     try {
       const [resEntry, resStaff] = await Promise.all([
-        fetch(`/api/admin/reservations/${params.id}`, { headers: { Authorization: `Bearer ${token}` } }),
+        fetch(`/api/admin/reservations/${resolvedId}`, { headers: { Authorization: `Bearer ${token}` } }),
         fetch(`/api/admin/staff`, { headers: { Authorization: `Bearer ${token}` } }),
       ]);
       if (resEntry.status === 401) { clearAdminToken(); navigate("/admin/login"); return; }
