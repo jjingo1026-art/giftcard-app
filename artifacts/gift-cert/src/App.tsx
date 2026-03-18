@@ -13,11 +13,12 @@ const RATES: Record<string, number> = {
 };
 
 const RATE_GROUPS = [
-  { label: "신세계", rate: 95, color: "#6366f1" },
-  { label: "롯데",   rate: 95, color: "#8b5cf6" },
-  { label: "현대",   rate: 95, color: "#a78bfa" },
-  { label: "갤러리아", rate: 94, color: "#7c3aed" },
-  { label: "컬쳐랜드", rate: 90, color: "#c084fc" },
+  { label: "신세계백화점상품권", sub: "", rate: 95, color: "#6366f1" },
+  { label: "롯데백화점상품권",   sub: "", rate: 95, color: "#8b5cf6" },
+  { label: "현대백화점상품권",   sub: "", rate: 95, color: "#a78bfa" },
+  { label: "갤러리아백화점상품권", sub: "", rate: 94, color: "#7c3aed" },
+  { label: "지류문화상품권", sub: "컬쳐랜드 · 북앤라이프 · 문화상품권", rate: 90, color: "#c084fc" },
+  { label: "주유권", sub: "SK · GS · 현대 · OIL뱅크", rate: 95, color: "#6366f1" },
 ];
 
 function goNotice(brand: string) {
@@ -304,8 +305,11 @@ function HomePage({ onGoUrgent }: { onGoUrgent: () => void }) {
                 className="flex items-center justify-between px-4 py-3.5 rounded-2xl cursor-pointer active:scale-[0.98] transition-all"
                 style={{ backgroundColor: g.color + "12" }}
               >
-                <span className="text-[15px] font-semibold text-slate-700">{g.label}</span>
-                <span className="text-[20px] font-black tabular-nums" style={{ color: g.color }}>{g.rate}%</span>
+                <div>
+                  <p className="text-[14px] font-semibold text-slate-700">{g.label}</p>
+                  {g.sub && <p className="text-[11px] text-slate-400 mt-0.5">{g.sub}</p>}
+                </div>
+                <span className="text-[20px] font-black tabular-nums flex-shrink-0 ml-3" style={{ color: g.color }}>{g.rate}%</span>
               </div>
             ))}
           </div>
