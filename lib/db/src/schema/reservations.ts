@@ -16,6 +16,8 @@ export const reservationsTable = pgTable("reservations", {
   bankName: text("bank_name").notNull(),
   accountNumber: text("account_number").notNull(),
   accountHolder: text("account_holder").notNull(),
+  giftcardType: text("giftcard_type"),
+  amount: integer("amount"),
   status: text("status").notNull().default("pending"),
   assignedTo: text("assigned_to"),
   assignedStaffId: integer("assigned_staff_id"),

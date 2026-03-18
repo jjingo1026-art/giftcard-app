@@ -6,23 +6,34 @@ const router: IRouter = Router();
 
 router.post("/", async (req, res) => {
   const body = req.body as {
-    kind: string;
+    kind?: string;
     name?: string;
     phone: string;
     date?: string;
     time?: string;
-    location: string;
-    items: unknown;
-    totalPayment: number;
-    bankName: string;
-    accountNumber: string;
-    accountHolder: string;
+    location?: string;
+    items?: { type: string; amount: number; rate: number; payment: number; isGift: boolean }[];
+    totalPayment?: number;
+    bankName?: string;
+    accountNumber?: string;
+    accountHolder?: string;
+    giftcardType?: string;
+    amount?: number;
   };
 
-  if (!body.phone || !body.location || !body.items || !body.bankName) {
+  if (!body.phone) {
     res.status(400).json({ error: "필수 항목이 누락되었습니다." });
     return;
   }
+
+  // amount: 명시된 값 → items 합산 → totalPayment 순으로 결정
+  const totalAmount =
+    body.amount ??
+    (body.items ? body.items.reduce((s, it) => s + it.amount, 0) : undefined) ??
+    body.totalPayment ??
+    0;
+
+  const totalPayment = body.totalPayment ?? body.items?.reduce((s, it) => s + it.payment, 0) ?? totalAmount;
 
   const [inserted] = await db
     .insert(reservationsTable)
@@ -32,12 +43,14 @@ router.post("/", async (req, res) => {
       phone: body.phone,
       date: body.date,
       time: body.time,
-      location: body.location,
-      items: body.items as any,
-      totalPayment: body.totalPayment,
-      bankName: body.bankName,
-      accountNumber: body.accountNumber,
-      accountHolder: body.accountHolder,
+      location: body.location ?? "",
+      items: (body.items ?? []) as any,
+      totalPayment,
+      bankName: body.bankName ?? "",
+      accountNumber: body.accountNumber ?? "",
+      accountHolder: body.accountHolder ?? "",
+      giftcardType: body.giftcardType,
+      amount: totalAmount,
       status: "pending",
     })
     .returning();
