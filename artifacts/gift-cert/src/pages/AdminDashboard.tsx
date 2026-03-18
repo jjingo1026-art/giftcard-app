@@ -127,7 +127,7 @@ export default function AdminDashboard() {
 
         {/* 예약 캘린더 */}
         <h2 className="text-[15px] font-bold text-slate-700">📅 예약 캘린더</h2>
-        <div className="bg-white rounded-2xl border border-slate-100 shadow-sm p-3 overflow-hidden">
+        <div className="bg-white rounded-2xl border border-slate-100 shadow-sm p-3 overflow-hidden" style={{ maxWidth: 900, margin: "20px auto" }}>
           <style>{`
             .fc { font-size: 13px; }
             .fc-toolbar-title { font-size: 15px !important; font-weight: 700; }
