@@ -34,6 +34,8 @@ const statusText: Record<string, string> = {
 
 function formatKRW(n: number) { return n.toLocaleString("ko-KR") + "원"; }
 
+interface StaffSummary { id: number; name: string; assigned: number; completed: number; }
+
 export default function AdminDashboard() {
   const [, navigate] = useLocation();
   const [dateFilter, setDateFilter] = useState("");
@@ -41,6 +43,7 @@ export default function AdminDashboard() {
   const [entries, setEntries] = useState<Reservation[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  const [staffSummary, setStaffSummary] = useState<StaffSummary[]>([]);
 
   const token = getAdminToken();
   if (!token) { navigate("/admin/login"); return null; }
@@ -52,6 +55,11 @@ export default function AdminDashboard() {
       .then((data) => { setAllEntries(data); setEntries(data); })
       .catch(() => setError("데이터를 불러올 수 없습니다."))
       .finally(() => setLoading(false));
+
+    fetch("/api/admin/staff-summary", { headers: { Authorization: `Bearer ${token}` } })
+      .then((r) => r.json())
+      .then(setStaffSummary)
+      .catch(() => {});
   }, []);
 
   const today = new Date().toISOString().split("T")[0];
@@ -135,6 +143,31 @@ export default function AdminDashboard() {
             </div>
           ))}
         </div>
+
+        {/* 매입담당자 현황 */}
+        {staffSummary.length > 0 && (
+          <>
+            <h2 className="text-[15px] font-bold text-slate-700">👨‍🔧 매입담당자 현황</h2>
+            <div className="grid grid-cols-1 gap-2">
+              {staffSummary.map((s) => (
+                <div
+                  key={s.id}
+                  onClick={() => { location.href = "/admin/staff/view.html"; }}
+                  className="bg-white rounded-2xl border border-slate-100 shadow-sm px-4 py-3.5 flex items-center justify-between cursor-pointer hover:border-indigo-200 hover:bg-indigo-50/30 transition-all active:scale-[0.99]"
+                >
+                  <div className="flex items-center gap-3">
+                    <div className="w-9 h-9 rounded-full bg-indigo-100 flex items-center justify-center text-[16px]">👨‍🔧</div>
+                    <p className="text-[14px] font-bold text-slate-800">{s.name}</p>
+                  </div>
+                  <div className="flex items-center gap-2 text-[12px] font-bold">
+                    <span className="bg-blue-50 text-blue-600 px-2.5 py-1 rounded-full">진행 {s.assigned}건</span>
+                    <span className="bg-emerald-50 text-emerald-600 px-2.5 py-1 rounded-full">완료 {s.completed}건</span>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </>
+        )}
 
         {/* 예약 캘린더 */}
         <h2 className="text-[15px] font-bold text-slate-700">📅 예약 캘린더</h2>
