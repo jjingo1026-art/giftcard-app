@@ -118,6 +118,24 @@ router.post("/staff/register", (req, res) => {
   res.json({ success: true, message: "신청 완료 (승인 대기)" });
 });
 
+// 관리자용: 특정 매입담당자의 예약 조회 (status 필터 옵션)
+router.get("/staff/:staffId/reservations", requireAuth, async (req, res) => {
+  const staffId = Number(req.params.staffId);
+  const { status } = req.query as { status?: string };
+
+  const rows = await db
+    .select()
+    .from(reservationsTable)
+    .orderBy(desc(reservationsTable.createdAt));
+
+  let result = rows.filter((r) => r.assignedStaffId === staffId);
+  if (status) {
+    result = result.filter((r) => r.status === status);
+  }
+
+  res.json(result);
+});
+
 // 관리자용: 매입담당자별 예약 조회 (assigned / completed)
 router.get("/staff/reservations", requireAuth, async (req, res) => {
   const rows = await db
