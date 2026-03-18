@@ -26,7 +26,7 @@ export default function StaffRegister() {
         setMsg(data.message);
         setName(""); setPhone(""); setPw("");
       } else {
-        setError(data.error ?? "오류가 발생했습니다.");
+        setError(data.message ?? data.error ?? "오류가 발생했습니다.");
       }
     } catch {
       setError("서버에 연결할 수 없습니다.");

@@ -86,6 +86,10 @@ router.post("/staff/register", (req, res) => {
     res.status(400).json({ success: false, error: "name, phone, password는 필수입니다." });
     return;
   }
+  if (staff.find((s) => s.phone === phone)) {
+    res.json({ success: false, message: "이미 등록됨" });
+    return;
+  }
   const newStaff = { id: Date.now(), name, phone, password, status: "pending" };
   staff.push(newStaff);
   res.json({ success: true, message: "신청 완료 (승인 대기)" });
