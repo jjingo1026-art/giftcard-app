@@ -22,7 +22,7 @@ export default function CustomerChat() {
   useEffect(() => {
     if (!reservationId) return;
     loadChat();
-    const interval = setInterval(loadChat, 3000);
+    const interval = setInterval(loadChat, 2000);
     return () => clearInterval(interval);
   }, []);
 
