@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useLocation } from "wouter";
 import { getAdminToken, clearAdminToken } from "./AdminLogin";
 
@@ -24,17 +24,38 @@ const STATUS_LABELS: Record<string, { label: string; color: string }> = {
 };
 
 function formatKRW(n: number) { return n.toLocaleString("ko-KR") + "원"; }
+function todayStr() {
+  const d = new Date();
+  return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}-${String(d.getDate()).padStart(2,"0")}`;
+}
 
 export default function AdminDashboard() {
   const [, navigate] = useLocation();
   const [dateFilter, setDateFilter] = useState("");
   const [entries, setEntries] = useState<Reservation[]>([]);
+  const [allEntries, setAllEntries] = useState<Reservation[]>([]);
   const [loaded, setLoaded] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
   const token = getAdminToken();
   if (!token) { navigate("/admin/login"); return null; }
+
+  // 통계용: 전체 예약 자동 로드
+  useEffect(() => {
+    fetch("/api/admin/reservations", { headers: { Authorization: `Bearer ${token}` } })
+      .then((r) => { if (r.status === 401) { clearAdminToken(); navigate("/admin/login"); } return r.json(); })
+      .then(setAllEntries)
+      .catch(() => {});
+  }, []);
+
+  const today = todayStr();
+  const stats = {
+    total:     allEntries.length,
+    today:     allEntries.filter((r) => r.date === today).length,
+    assigned:  allEntries.filter((r) => r.status === "assigned").length,
+    completed: allEntries.filter((r) => r.status === "completed").length,
+  };
 
   async function loadReservations() {
     setLoading(true);
@@ -45,7 +66,9 @@ export default function AdminDashboard() {
         : `/api/admin/reservations`;
       const res = await fetch(url, { headers: { Authorization: `Bearer ${token}` } });
       if (res.status === 401) { clearAdminToken(); navigate("/admin/login"); return; }
-      setEntries(await res.json());
+      const data = await res.json();
+      setEntries(data);
+      setAllEntries(data.length && !dateFilter ? data : allEntries);
       setLoaded(true);
     } catch {
       setError("데이터를 불러올 수 없습니다.");
@@ -58,10 +81,7 @@ export default function AdminDashboard() {
     <div className="min-h-screen bg-slate-50">
       <header className="bg-white border-b border-slate-100 sticky top-0 z-40 shadow-sm">
         <div className="max-w-2xl mx-auto px-4 py-3.5 flex items-center justify-between">
-          <div>
-            <h1 className="text-[16px] font-bold text-slate-800">예약 관리 대시보드</h1>
-            {loaded && <p className="text-[11px] text-slate-400 mt-0.5">총 {entries.length}건</p>}
-          </div>
+          <h1 className="text-[16px] font-bold text-slate-800">관리자 대시보드</h1>
           <button
             onClick={() => { clearAdminToken(); navigate("/admin/login"); }}
             className="text-[12px] text-slate-400 hover:text-rose-500 font-semibold transition-colors px-3 py-1.5 rounded-xl hover:bg-rose-50"
@@ -72,6 +92,26 @@ export default function AdminDashboard() {
       </header>
 
       <div className="max-w-2xl mx-auto px-4 py-4 space-y-3">
+        {/* 통계 요약 */}
+        <div className="grid grid-cols-2 gap-2">
+          {[
+            { label: "전체 예약",  id: "total",     value: stats.total,     color: "text-slate-700" },
+            { label: "오늘 예약",  id: "today",     value: stats.today,     color: "text-indigo-600" },
+            { label: "직원 배정",  id: "assigned",  value: stats.assigned,  color: "text-blue-600" },
+            { label: "매입 완료",  id: "completed", value: stats.completed, color: "text-emerald-600" },
+          ].map(({ label, id, value, color }) => (
+            <div key={id} className="bg-white rounded-2xl border border-slate-100 shadow-sm px-4 py-3">
+              <p className="text-[11px] text-slate-400 font-medium">{label}</p>
+              <p id={id} className={`text-[24px] font-black mt-0.5 ${color}`}>{value}</p>
+            </div>
+          ))}
+        </div>
+
+        <hr className="border-slate-100" />
+
+        {/* 예약 리스트 */}
+        <p className="text-[13px] font-bold text-slate-500">예약 리스트</p>
+
         {/* Date filter + 조회 button */}
         <div className="flex gap-2">
           <input
@@ -91,20 +131,14 @@ export default function AdminDashboard() {
           </button>
         </div>
 
-        {/* States */}
-        {error && (
-          <div className="py-8 text-center text-rose-500 text-[13px]">{error}</div>
-        )}
+        {error && <div className="py-8 text-center text-rose-500 text-[13px]">{error}</div>}
         {!loaded && !loading && !error && (
-          <div className="py-16 text-center text-slate-300 text-[13px]">
-            날짜를 선택하거나 그냥 조회하세요
-          </div>
+          <div className="py-10 text-center text-slate-300 text-[13px]">날짜를 선택하거나 그냥 조회하세요</div>
         )}
         {loaded && !loading && entries.length === 0 && (
-          <div className="py-16 text-center text-slate-400 text-[13px]">해당 날짜의 접수 내역이 없습니다</div>
+          <div className="py-10 text-center text-slate-400 text-[13px]">접수 내역이 없습니다</div>
         )}
 
-        {/* List — r.date r.time / r.name (r.status) + 상세 */}
         <div id="list" className="space-y-2">
           {entries.map((r) => {
             const st = STATUS_LABELS[r.status] ?? { label: r.status, color: "bg-slate-100 text-slate-500" };
