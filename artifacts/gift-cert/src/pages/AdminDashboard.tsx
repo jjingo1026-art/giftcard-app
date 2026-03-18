@@ -234,12 +234,21 @@ export default function AdminDashboard() {
                   {grouped[time].map((r) => (
                     <div
                       key={r.id}
-                      onClick={() => { location.href = `/admin/detail.html?id=${r.id}`; }}
-                      className="bg-white rounded-2xl border border-slate-100 shadow-sm px-4 py-3.5 cursor-pointer hover:border-indigo-200 hover:bg-indigo-50/30 transition-colors active:scale-[0.99]"
+                      className="bg-white rounded-2xl border border-slate-100 shadow-sm px-4 py-3.5 flex items-center justify-between gap-2 hover:border-indigo-200 hover:bg-indigo-50/30 transition-colors"
                     >
-                      <p className="text-[14px] font-semibold text-slate-800">
+                      <p
+                        onClick={() => { location.href = `/admin/detail.html?id=${r.id}`; }}
+                        className="text-[14px] font-semibold text-slate-800 cursor-pointer flex-1 min-w-0 truncate"
+                      >
                         👤 {r.name ?? r.phone} | 💰 {formatKRW(r.totalPayment)} | {statusText[r.status]}
                       </p>
+                      <a
+                        href={`/admin/chat.html?id=${r.id}`}
+                        onClick={(e) => e.stopPropagation()}
+                        className="flex-shrink-0 text-[12px] font-bold text-indigo-500 bg-indigo-50 hover:bg-indigo-100 px-3 py-1.5 rounded-xl transition-colors active:scale-95 whitespace-nowrap"
+                      >
+                        💬 채팅
+                      </a>
                     </div>
                   ))}
                 </div>
