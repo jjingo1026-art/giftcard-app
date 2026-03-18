@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useLocation, useParams } from "wouter";
 import { getAdminToken, clearAdminToken } from "./AdminLogin";
 
@@ -10,6 +10,7 @@ interface Reservation {
   bankName: string; accountNumber: string; accountHolder: string;
   status: string; assignedTo?: string | null;
 }
+interface StaffMember { id: number; name: string; phone: string; }
 
 const STATUS_LABELS: Record<string, { label: string; color: string }> = {
   pending:   { label: "예약완료", color: "bg-amber-100 text-amber-700" },
@@ -41,6 +42,9 @@ export default function AdminDetail() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [toast, setToast] = useState<string | null>(null);
+  const [staffList, setStaffList] = useState<StaffMember[]>([]);
+  const [showStaffPicker, setShowStaffPicker] = useState(false);
+  const pickerRef = useRef<HTMLDivElement>(null);
 
   const token = getAdminToken();
   if (!token) { navigate("/admin/login"); return null; }
@@ -48,12 +52,14 @@ export default function AdminDetail() {
   async function load() {
     setLoading(true);
     try {
-      const res = await fetch(`/api/admin/reservations/${params.id}`, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
-      if (res.status === 401) { clearAdminToken(); navigate("/admin/login"); return; }
-      if (res.status === 404) { navigate("/admin/dashboard"); return; }
-      setEntry(await res.json());
+      const [resEntry, resStaff] = await Promise.all([
+        fetch(`/api/admin/reservations/${params.id}`, { headers: { Authorization: `Bearer ${token}` } }),
+        fetch(`/api/admin/staff`, { headers: { Authorization: `Bearer ${token}` } }),
+      ]);
+      if (resEntry.status === 401) { clearAdminToken(); navigate("/admin/login"); return; }
+      if (resEntry.status === 404) { navigate("/admin/dashboard"); return; }
+      setEntry(await resEntry.json());
+      if (resStaff.ok) setStaffList(await resStaff.json());
     } finally {
       setLoading(false);
     }
@@ -74,6 +80,24 @@ export default function AdminDetail() {
       if (data.success) {
         setEntry((prev) => prev ? { ...prev, status } : prev);
         showToast("변경 완료");
+      }
+    } finally { setSaving(false); }
+  }
+
+  async function assignStaff(member: StaffMember) {
+    if (!entry || saving) return;
+    setShowStaffPicker(false);
+    setSaving(true);
+    try {
+      const res = await fetch(`/api/admin/reservations/${entry.id}/assign`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+        body: JSON.stringify({ staffId: member.id }),
+      });
+      const data = await res.json();
+      if (data.success) {
+        setEntry((prev) => prev ? { ...prev, status: "assigned", assignedTo: data.assignedTo } : prev);
+        showToast(`${data.assignedTo} 배정 완료`);
       }
     } finally { setSaving(false); }
   }
@@ -177,14 +201,38 @@ export default function AdminDetail() {
 
         {/* Action buttons */}
         <div className="flex gap-3 pb-6">
-          <button
-            onClick={() => setStatus("assigned")}
-            disabled={saving || entry.status === "assigned"}
-            className="flex-1 py-3.5 rounded-2xl text-white text-[15px] font-bold transition-all active:scale-95 disabled:opacity-40"
-            style={{ background: "linear-gradient(135deg,#3b82f6,#6366f1)" }}
-          >
-            직원배정
-          </button>
+          {/* 직원배정 — opens staff picker */}
+          <div className="flex-1 relative" ref={pickerRef}>
+            <button
+              onClick={() => setShowStaffPicker((v) => !v)}
+              disabled={saving || entry.status === "assigned"}
+              className="w-full py-3.5 rounded-2xl text-white text-[15px] font-bold transition-all active:scale-95 disabled:opacity-40"
+              style={{ background: "linear-gradient(135deg,#3b82f6,#6366f1)" }}
+            >
+              직원배정
+            </button>
+            {showStaffPicker && (
+              <div className="absolute bottom-full left-0 right-0 mb-2 bg-white rounded-2xl border border-slate-100 shadow-xl overflow-hidden z-30">
+                <p className="text-[11px] font-bold text-slate-400 uppercase tracking-wide px-4 pt-3 pb-1">직원 선택</p>
+                {staffList.map((s) => (
+                  <button
+                    key={s.id}
+                    onClick={() => assignStaff(s)}
+                    className="w-full text-left px-4 py-3 hover:bg-indigo-50 border-b border-slate-50 last:border-0 transition-colors"
+                  >
+                    <p className="text-[14px] font-semibold text-slate-800">{s.name}</p>
+                    <p className="text-[11px] text-slate-400">{s.phone}</p>
+                  </button>
+                ))}
+                <button
+                  onClick={() => setShowStaffPicker(false)}
+                  className="w-full text-center text-[12px] text-slate-400 py-2.5 hover:bg-slate-50 transition-colors"
+                >
+                  취소
+                </button>
+              </div>
+            )}
+          </div>
           <button
             onClick={() => setStatus("completed")}
             disabled={saving || entry.status === "completed"}

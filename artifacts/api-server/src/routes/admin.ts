@@ -10,6 +10,11 @@ const ADMIN_ID = process.env.ADMIN_ID ?? "admin";
 const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD ?? "1234";
 const tokens = new Map<string, number>();
 
+const staff = [
+  { id: 1, name: "홍길동", phone: "010-1111-2222" },
+  { id: 2, name: "김철수", phone: "010-3333-4444" },
+];
+
 function requireAuth(req: any, res: any, next: any) {
   const auth = req.headers.authorization ?? "";
   const token = auth.startsWith("Bearer ") ? auth.slice(7) : "";
@@ -31,6 +36,10 @@ router.post("/login", async (req, res) => {
   const expiresAt = Date.now() + 1000 * 60 * 60 * 8;
   tokens.set(token, expiresAt);
   res.json({ token, expiresAt });
+});
+
+router.get("/staff", requireAuth, (_req, res) => {
+  res.json(staff);
 });
 
 router.get("/reservations", requireAuth, async (req, res) => {
@@ -72,18 +81,17 @@ router.post("/reservations/:id/status", requireAuth, async (req, res) => {
 router.post("/reservations/:id/assign", requireAuth, async (req, res) => {
   const id = parseInt(req.params.id);
   if (isNaN(id)) { res.status(400).json({ error: "잘못된 ID" }); return; }
-  const { assignedTo } = req.body as { assignedTo?: string };
-  if (typeof assignedTo !== "string") {
-    res.status(400).json({ error: "assignedTo 필드가 필요합니다." });
+  const { staffId } = req.body as { staffId?: number };
+  const member = staff.find((s) => s.id === staffId);
+  if (!member) {
+    res.status(400).json({ error: "유효하지 않은 직원 ID입니다." });
     return;
   }
-  const [updated] = await db
+  await db
     .update(reservationsTable)
-    .set({ assignedTo: assignedTo || null })
-    .where(eq(reservationsTable.id, id))
-    .returning();
-  if (!updated) { res.status(404).json({ error: "접수 정보를 찾을 수 없습니다." }); return; }
-  res.json(updated);
+    .set({ assignedTo: member.name, status: "assigned" })
+    .where(eq(reservationsTable.id, id));
+  res.json({ success: true, assignedTo: member.name });
 });
 
 export default router;
