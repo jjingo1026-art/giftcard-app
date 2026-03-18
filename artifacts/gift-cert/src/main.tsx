@@ -28,6 +28,8 @@ createRoot(document.getElementById("root")!).render(
       <Route path="/staff/dashboard.html" component={StaffDashboard} />
       <Route path="/staff/detail" component={StaffDetail} />
       <Route path="/staff/detail.html" component={StaffDetail} />
+      <Route path="/staff/chat" component={StaffDetail} />
+      <Route path="/staff/chat.html" component={StaffDetail} />
       <Route path="/staff/login" component={StaffLogin} />
       <Route path="/staff/login.html" component={StaffLogin} />
       <Route path="/staff/register" component={StaffRegister} />

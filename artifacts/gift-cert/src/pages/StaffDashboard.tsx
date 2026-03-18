@@ -85,12 +85,21 @@ export default function StaffDashboard() {
               {grouped[date].map((r) => (
                 <div
                   key={r.id}
-                  onClick={() => { location.href = `/staff/detail.html?id=${r.id}`; }}
+                  onClick={() => { location.href = `/staff/chat.html?id=${r.id}`; }}
                   className="bg-white rounded-2xl border border-slate-100 shadow-sm px-4 py-3.5 cursor-pointer hover:border-indigo-200 hover:bg-indigo-50/30 transition-colors active:scale-[0.99]"
                 >
                   <p className="text-[14px] font-semibold text-slate-800">📅 {r.date} {r.time}</p>
                   <p className="text-[14px] text-slate-700 mt-0.5">👤 {r.name ?? r.phone}</p>
                   <p className="text-[14px] text-slate-700">💰 {formatKRW(r.totalPayment)}</p>
+                  <div className="mt-2 flex justify-end">
+                    <a
+                      href={`/staff/chat.html?id=${r.id}`}
+                      onClick={(e) => e.stopPropagation()}
+                      className="text-[13px] font-semibold text-indigo-500 hover:text-indigo-700"
+                    >
+                      💬 채팅하기
+                    </a>
+                  </div>
                 </div>
               ))}
             </div>
