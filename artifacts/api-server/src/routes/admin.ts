@@ -202,6 +202,11 @@ function resolveAuth(req: any): { ok: boolean; senderType: "admin" | "staff"; se
   return { ok: false, senderType: "staff", senderName: "" };
 }
 
+router.get("/chat/:reservationId", (req, res) => {
+  const reservationId = Number(req.params.reservationId);
+  res.json(messages.get(reservationId) ?? []);
+});
+
 router.post("/chat/send", (req, res) => {
   const { reservationId, sender, message } = req.body as { reservationId?: number; sender?: string; message?: string };
   if (!reservationId || !sender || !message?.trim()) {
