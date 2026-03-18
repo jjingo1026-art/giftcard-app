@@ -6,7 +6,8 @@ import crypto from "crypto";
 
 const router: IRouter = Router();
 
-const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD ?? "admin1234";
+const ADMIN_ID = process.env.ADMIN_ID ?? "admin";
+const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD ?? "1234";
 const tokens = new Map<string, number>();
 
 function requireAuth(req: any, res: any, next: any) {
@@ -21,9 +22,9 @@ function requireAuth(req: any, res: any, next: any) {
 }
 
 router.post("/login", async (req, res) => {
-  const { password } = req.body as { password?: string };
-  if (!password || password !== ADMIN_PASSWORD) {
-    res.status(401).json({ error: "비밀번호가 올바르지 않습니다." });
+  const { id, password } = req.body as { id?: string; password?: string };
+  if (id !== ADMIN_ID || password !== ADMIN_PASSWORD) {
+    res.status(401).json({ success: false, error: "아이디 또는 비밀번호가 올바르지 않습니다." });
     return;
   }
   const token = crypto.randomUUID();
