@@ -42,6 +42,17 @@ router.get("/staff", requireAuth, (_req, res) => {
   res.json(staff.map(({ password: _pw, ...s }) => s));
 });
 
+router.post("/staff/register", (req, res) => {
+  const { name, phone, password } = req.body as { name?: string; phone?: string; password?: string };
+  if (!name || !phone || !password) {
+    res.status(400).json({ success: false, error: "name, phone, password는 필수입니다." });
+    return;
+  }
+  const newStaff = { id: Date.now(), name, phone, password, status: "pending" };
+  staff.push(newStaff);
+  res.json({ success: true, message: "신청 완료 (승인 대기)" });
+});
+
 router.get("/reservations", requireAuth, async (req, res) => {
   const { date } = req.query as { date?: string };
   let rows = await db
