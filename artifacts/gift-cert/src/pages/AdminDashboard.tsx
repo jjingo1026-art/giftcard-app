@@ -17,11 +17,10 @@ interface Reservation {
 }
 
 const STATUS_LABELS: Record<string, { label: string; color: string }> = {
-  pending:     { label: "대기중",  color: "bg-amber-100 text-amber-700" },
-  confirmed:   { label: "확정",    color: "bg-blue-100 text-blue-700" },
-  in_progress: { label: "진행중",  color: "bg-violet-100 text-violet-700" },
-  completed:   { label: "완료",    color: "bg-emerald-100 text-emerald-700" },
-  cancelled:   { label: "취소",    color: "bg-slate-100 text-slate-500" },
+  pending:   { label: "예약완료", color: "bg-amber-100 text-amber-700" },
+  assigned:  { label: "직원배정", color: "bg-blue-100 text-blue-700" },
+  completed: { label: "매입완료", color: "bg-emerald-100 text-emerald-700" },
+  cancelled: { label: "취소",     color: "bg-slate-100 text-slate-500" },
 };
 
 function formatKRW(n: number) { return n.toLocaleString("ko-KR") + "원"; }
