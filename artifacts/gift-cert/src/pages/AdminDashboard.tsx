@@ -1,5 +1,8 @@
 import { useState, useEffect } from "react";
 import { useLocation } from "wouter";
+import FullCalendar from "@fullcalendar/react";
+import dayGridPlugin from "@fullcalendar/daygrid";
+import interactionPlugin from "@fullcalendar/interaction";
 import { getAdminToken, clearAdminToken } from "./AdminLogin";
 
 interface Reservation {
@@ -36,7 +39,6 @@ export default function AdminDashboard() {
   const token = getAdminToken();
   if (!token) { navigate("/admin/login"); return null; }
 
-  // 전체 자동 로드 (통계 + 리스트)
   useEffect(() => {
     setLoading(true);
     fetch("/api/admin/reservations", { headers: { Authorization: `Bearer ${token}` } })
@@ -54,11 +56,24 @@ export default function AdminDashboard() {
     completed: allEntries.filter((r) => r.status === "completed").length,
   };
 
-  async function filter() {
+  // 날짜별 예약 건수를 FullCalendar 이벤트로 변환
+  const calendarEvents = Object.entries(
+    allEntries.reduce<Record<string, number>>((acc, r) => {
+      if (r.date) acc[r.date] = (acc[r.date] ?? 0) + 1;
+      return acc;
+    }, {})
+  ).map(([date, count]) => ({
+    title: `${count}건`,
+    date,
+    backgroundColor: "#6366f1",
+    borderColor: "#6366f1",
+  }));
+
+  async function filter(date = dateFilter) {
     setLoading(true);
     setError("");
     try {
-      const res = await fetch(`/api/admin/reservations?date=${dateFilter}`, {
+      const res = await fetch(`/api/admin/reservations?date=${date}`, {
         headers: { Authorization: `Bearer ${token}` },
       });
       if (res.status === 401) { clearAdminToken(); navigate("/admin/login"); return; }
@@ -68,6 +83,11 @@ export default function AdminDashboard() {
     } finally {
       setLoading(false);
     }
+  }
+
+  function handleDateClick(info: { dateStr: string }) {
+    setDateFilter(info.dateStr);
+    filter(info.dateStr);
   }
 
   return (
@@ -88,7 +108,7 @@ export default function AdminDashboard() {
       </header>
 
       <div className="max-w-2xl mx-auto px-4 py-4 space-y-3">
-        {/* 통계 요약 */}
+        {/* 통계 */}
         <div className="grid grid-cols-2 gap-2">
           {[
             { label: "전체 예약",  id: "total",     value: stats.total,     color: "text-slate-700" },
@@ -103,29 +123,42 @@ export default function AdminDashboard() {
           ))}
         </div>
 
-        <hr className="border-slate-100" />
-
-        {/* 예약 리스트 */}
-        <p className="text-[13px] font-bold text-slate-500">예약 리스트</p>
-
-        {/* Date filter + 조회 button */}
-        <div className="flex gap-2">
-          <input
-            type="date"
-            id="calendar"
-            value={dateFilter}
-            onChange={(e) => setDateFilter(e.target.value)}
-            className="flex-1 px-3 py-2.5 rounded-xl border border-slate-200 text-[14px] text-slate-700 outline-none focus:border-indigo-400 bg-white"
+        {/* FullCalendar */}
+        <div className="bg-white rounded-2xl border border-slate-100 shadow-sm p-3 overflow-hidden">
+          <style>{`
+            .fc { font-size: 13px; }
+            .fc-toolbar-title { font-size: 15px !important; font-weight: 700; }
+            .fc-button { font-size: 12px !important; padding: 4px 10px !important; }
+            .fc-daygrid-day:hover { background: #f0f0ff; cursor: pointer; }
+            .fc-day-today { background: #eef2ff !important; }
+            .fc-event { font-size: 11px !important; border-radius: 6px !important; }
+          `}</style>
+          <FullCalendar
+            plugins={[dayGridPlugin, interactionPlugin]}
+            initialView="dayGridMonth"
+            locale="ko"
+            headerToolbar={{ left: "prev", center: "title", right: "next" }}
+            events={calendarEvents}
+            dateClick={handleDateClick}
+            height="auto"
           />
-          <button
-            onClick={filter}
-            disabled={loading}
-            className="px-5 py-2.5 rounded-xl text-white text-[14px] font-bold transition-all active:scale-95 disabled:opacity-60 whitespace-nowrap"
-            style={{ background: "linear-gradient(135deg,#6366f1,#8b5cf6)" }}
-          >
-            {loading ? "조회 중..." : "조회"}
-          </button>
+          {dateFilter && (
+            <div className="mt-2 flex items-center justify-between px-1">
+              <span className="text-[12px] text-indigo-600 font-semibold">📅 {dateFilter} 필터 중</span>
+              <button
+                onClick={() => { setDateFilter(""); setEntries(allEntries); }}
+                className="text-[11px] text-slate-400 hover:text-rose-500 font-medium"
+              >
+                전체 보기
+              </button>
+            </div>
+          )}
         </div>
+
+        <hr className="border-slate-100" />
+        <p className="text-[13px] font-bold text-slate-500">
+          예약 리스트 {dateFilter && <span className="text-indigo-500">— {dateFilter}</span>}
+        </p>
 
         {error && <div className="py-8 text-center text-rose-500 text-[13px]">{error}</div>}
         {loading && <div className="py-10 text-center text-slate-300 text-[13px]">불러오는 중...</div>}
@@ -133,7 +166,7 @@ export default function AdminDashboard() {
           <div className="py-10 text-center text-slate-400 text-[13px]">접수 내역이 없습니다</div>
         )}
 
-        <div id="list" className="space-y-2">
+        <div id="list" className="space-y-2 pb-6">
           {entries.map((r) => {
             const st = STATUS_LABELS[r.status] ?? { label: r.status, color: "bg-slate-100 text-slate-500" };
             return (
