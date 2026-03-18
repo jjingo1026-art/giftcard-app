@@ -63,8 +63,8 @@ export default function AdminDashboard() {
       id: String(r.id),
       title: `${r.name ?? r.phone} (${formatKRW(r.totalPayment)})`,
       start: r.date,
-      backgroundColor: r.kind === "urgent" ? "#f43f5e" : "#6366f1",
-      borderColor:     r.kind === "urgent" ? "#e11d48" : "#4f46e5",
+      backgroundColor: r.status === "completed" ? "green" : r.status === "assigned" ? "orange" : "blue",
+      borderColor:     r.status === "completed" ? "green" : r.status === "assigned" ? "orange" : "blue",
     }));
 
   async function filter(date = dateFilter) {
