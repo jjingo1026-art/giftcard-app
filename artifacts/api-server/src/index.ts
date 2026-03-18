@@ -18,5 +18,5 @@ const httpServer = createServer(app);
 initSocket(httpServer);
 
 httpServer.listen(port, () => {
-  console.log(`Server listening on port ${port}`);
+  console.log("서버 실행됨");
 });
