@@ -22,7 +22,7 @@ function formatKRW(n: number) { return n.toLocaleString("ko-KR") + "원"; }
 
 export default function StaffDashboard() {
   const token = sessionStorage.getItem("gc_staff_token");
-  const staffName = sessionStorage.getItem("gc_staff_name") ?? "직원";
+  const staffName = sessionStorage.getItem("gc_staff_name") ?? "매입담당자";
 
   const [entries, setEntries] = useState<Reservation[]>([]);
   const [loading, setLoading] = useState(true);

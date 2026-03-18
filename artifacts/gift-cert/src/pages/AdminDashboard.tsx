@@ -21,7 +21,7 @@ interface Reservation {
 
 const STATUS_LABELS: Record<string, { label: string; color: string }> = {
   pending:   { label: "예약완료", color: "bg-amber-100 text-amber-700" },
-  assigned:  { label: "직원배정", color: "bg-blue-100 text-blue-700" },
+  assigned:  { label: "매입담당자 배정", color: "bg-blue-100 text-blue-700" },
   completed: { label: "매입 완료", color: "bg-emerald-100 text-emerald-700" },
   cancelled: { label: "취소",     color: "bg-slate-100 text-slate-500" },
 };
@@ -118,7 +118,7 @@ export default function AdminDashboard() {
           {[
             { label: "전체 예약",  id: "total",     value: stats.total,     color: "text-slate-700" },
             { label: "오늘 예약",  id: "today",     value: stats.today,     color: "text-indigo-600" },
-            { label: "직원 배정",  id: "assigned",  value: stats.assigned,  color: "text-blue-600" },
+            { label: "매입담당자 배정",  id: "assigned",  value: stats.assigned,  color: "text-blue-600" },
             { label: "매입 완료",  id: "completed", value: stats.completed, color: "text-emerald-600" },
           ].map(({ label, id, value, color }) => (
             <div key={id} className="bg-white rounded-2xl border border-slate-100 shadow-sm px-4 py-3">

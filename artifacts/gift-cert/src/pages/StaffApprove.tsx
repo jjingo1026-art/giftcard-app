@@ -51,7 +51,7 @@ export default function StaffApprove() {
       <header className="bg-white border-b border-slate-100 sticky top-0 z-40 shadow-sm">
         <div className="max-w-2xl mx-auto px-4 py-3.5 flex items-center justify-between">
           <div>
-            <h1 className="text-[16px] font-bold text-slate-800">직원 승인</h1>
+            <h1 className="text-[16px] font-bold text-slate-800">매입담당자 승인</h1>
             {!loading && <p className="text-[11px] text-slate-400 mt-0.5">대기 중 {list.length}명</p>}
           </div>
           <button
@@ -64,12 +64,12 @@ export default function StaffApprove() {
       </header>
 
       <div className="max-w-2xl mx-auto px-4 py-4 space-y-3">
-        <h2 className="text-[15px] font-bold text-slate-700">직원 승인</h2>
+        <h2 className="text-[15px] font-bold text-slate-700">매입담당자 승인</h2>
 
         {loading && <div className="py-10 text-center text-slate-300 text-[13px]">불러오는 중...</div>}
 
         {!loading && list.length === 0 && (
-          <div className="py-10 text-center text-slate-400 text-[13px]">승인 대기 중인 직원이 없습니다</div>
+          <div className="py-10 text-center text-slate-400 text-[13px]">승인 대기 중인 매입담당자가 없습니다</div>
         )}
 
         <div id="staffList" className="space-y-2">

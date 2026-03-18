@@ -14,7 +14,7 @@ function getReservationId() {
 
 export default function StaffDetail() {
   const token = sessionStorage.getItem("gc_staff_token");
-  const staffName = sessionStorage.getItem("gc_staff_name") ?? "직원";
+  const staffName = sessionStorage.getItem("gc_staff_name") ?? "매입담당자";
   const reservationId = getReservationId();
 
   const [chatMessages, setChatMessages] = useState<Message[]>([]);

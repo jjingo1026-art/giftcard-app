@@ -42,7 +42,7 @@ export default function StaffRegister() {
       <div className="w-full max-w-sm">
         <div className="text-center mb-8">
           <div className="w-14 h-14 bg-indigo-100 rounded-2xl flex items-center justify-center text-2xl mx-auto mb-3">👤</div>
-          <h1 className="text-[20px] font-bold text-slate-800">직원 등록 신청</h1>
+          <h1 className="text-[20px] font-bold text-slate-800">매입담당자 등록 신청</h1>
           <p className="text-[13px] text-slate-400 mt-1">관리자 승인 후 사용 가능합니다</p>
         </div>
 

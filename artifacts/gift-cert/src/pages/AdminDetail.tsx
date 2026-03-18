@@ -14,7 +14,7 @@ interface StaffMember { id: number; name: string; phone: string; }
 
 const STATUS_LABELS: Record<string, { label: string; color: string }> = {
   pending:   { label: "예약완료", color: "bg-amber-100 text-amber-700" },
-  assigned:  { label: "직원배정", color: "bg-blue-100 text-blue-700" },
+  assigned:  { label: "매입담당자 배정", color: "bg-blue-100 text-blue-700" },
   completed: { label: "매입 완료", color: "bg-emerald-100 text-emerald-700" },
   cancelled: { label: "취소",     color: "bg-slate-100 text-slate-500" },
 };
@@ -164,7 +164,7 @@ export default function AdminDetail() {
             <Row label="전화번호" value={entry.phone} />
             {entry.date && <Row label="날짜" value={`${entry.date} ${entry.time ?? ""}`} />}
             <Row label="거래 장소" value={entry.location} />
-            {entry.assignedTo && <Row label="담당 직원" value={entry.assignedTo} />}
+            {entry.assignedTo && <Row label="매입담당자" value={entry.assignedTo} />}
           </div>
         </div>
 
@@ -203,7 +203,7 @@ export default function AdminDetail() {
 
         {/* Staff select + assign */}
         <div className="bg-white rounded-2xl border border-slate-100 shadow-sm px-5 py-4 space-y-3">
-          <h2 className="text-[12px] font-bold text-slate-400 uppercase tracking-wide">직원 배정</h2>
+          <h2 className="text-[12px] font-bold text-slate-400 uppercase tracking-wide">매입담당자 배정</h2>
           <div className="flex gap-2">
             <select
               id="staffSelect"
@@ -211,7 +211,7 @@ export default function AdminDetail() {
               onChange={(e) => setSelectedStaffId(e.target.value)}
               className="flex-1 px-3 py-2.5 rounded-xl border border-slate-200 text-[14px] text-slate-700 outline-none focus:border-indigo-400 bg-white"
             >
-              <option value="">직원 선택</option>
+              <option value="">매입담당자 선택</option>
               {staffList.map((s) => (
                 <option key={s.id} value={String(s.id)}>{s.name}</option>
               ))}
@@ -222,7 +222,7 @@ export default function AdminDetail() {
               className="px-5 py-2.5 rounded-xl text-white text-[14px] font-bold transition-all active:scale-95 disabled:opacity-40 whitespace-nowrap"
               style={{ background: "linear-gradient(135deg,#3b82f6,#6366f1)" }}
             >
-              직원 배정
+              매입담당자 배정
             </button>
           </div>
         </div>

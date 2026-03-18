@@ -39,8 +39,8 @@ export default function StaffLogin() {
       <div className="w-full max-w-sm">
         <div className="text-center mb-8">
           <div className="w-14 h-14 bg-indigo-100 rounded-2xl flex items-center justify-center text-2xl mx-auto mb-3">🔐</div>
-          <h1 className="text-[20px] font-bold text-slate-800">직원 로그인</h1>
-          <p className="text-[13px] text-slate-400 mt-1">승인된 직원만 접근 가능합니다</p>
+          <h1 className="text-[20px] font-bold text-slate-800">매입담당자 로그인</h1>
+          <p className="text-[13px] text-slate-400 mt-1">승인된 매입담당자만 접근 가능합니다</p>
         </div>
 
         <form onSubmit={login} className="bg-white rounded-3xl border border-slate-100 shadow-sm px-6 py-6 space-y-4">
