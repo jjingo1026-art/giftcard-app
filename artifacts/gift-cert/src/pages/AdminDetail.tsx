@@ -1,6 +1,14 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useLocation, useParams } from "wouter";
 import { getAdminToken, clearAdminToken } from "./AdminLogin";
+
+interface ChatMessage {
+  id: number;
+  sender: string;
+  senderName: string;
+  message: string;
+  time: string;
+}
 
 interface SavedItem { type: string; amount: number; rate: number; payment: number; isGift: boolean; }
 interface Reservation {
@@ -46,9 +54,35 @@ export default function AdminDetail() {
   const [toast, setToast] = useState<string | null>(null);
   const [staffList, setStaffList] = useState<StaffMember[]>([]);
   const [selectedStaffId, setSelectedStaffId] = useState("");
+  const [chatMessages, setChatMessages] = useState<ChatMessage[]>([]);
+  const [chatMsg, setChatMsg] = useState("");
+  const chatBoxRef = useRef<HTMLDivElement>(null);
 
   const token = getAdminToken();
   if (!token) { navigate("/admin/login"); return null; }
+
+  function loadChat() {
+    fetch(`/api/admin/chat/${resolvedId}`)
+      .then((r) => r.json())
+      .then((msgs) => {
+        setChatMessages(msgs);
+        setTimeout(() => {
+          if (chatBoxRef.current) chatBoxRef.current.scrollTop = chatBoxRef.current.scrollHeight;
+        }, 50);
+      })
+      .catch(() => {});
+  }
+
+  async function sendChat() {
+    if (!chatMsg.trim()) return;
+    await fetch("/api/admin/chat/send", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ reservationId: Number(resolvedId), sender: "admin", senderName: "관리자", message: chatMsg }),
+    });
+    setChatMsg("");
+    loadChat();
+  }
 
   async function load() {
     setLoading(true);
@@ -66,7 +100,12 @@ export default function AdminDetail() {
     }
   }
 
-  useEffect(() => { load(); }, []);
+  useEffect(() => {
+    load();
+    loadChat();
+    const interval = setInterval(loadChat, 3000);
+    return () => clearInterval(interval);
+  }, []);
 
   async function setStatus(status: string) {
     if (!entry || saving) return;
@@ -223,6 +262,55 @@ export default function AdminDetail() {
               style={{ background: "linear-gradient(135deg,#3b82f6,#6366f1)" }}
             >
               매입담당자 배정
+            </button>
+          </div>
+        </div>
+
+        {/* 채팅 */}
+        <div className="bg-white rounded-2xl border border-slate-100 shadow-sm px-5 py-4 space-y-3">
+          <h2 className="text-[12px] font-bold text-slate-400 uppercase tracking-wide">💬 고객 채팅</h2>
+          <div
+            ref={chatBoxRef}
+            className="bg-slate-50 rounded-xl p-3 space-y-2 overflow-auto"
+            style={{ height: 280 }}
+          >
+            {chatMessages.length === 0 && (
+              <p className="text-center text-slate-300 text-[13px] mt-10">메시지가 없습니다</p>
+            )}
+            {chatMessages.map((m) => {
+              const isMine = m.sender === "admin";
+              return (
+                <div key={m.id} className={`flex ${isMine ? "justify-end" : "justify-start"}`}>
+                  <div className={`max-w-[75%] px-3 py-2 rounded-2xl text-[13px] shadow-sm ${
+                    isMine
+                      ? "bg-indigo-500 text-white rounded-br-sm"
+                      : m.sender === "staff"
+                        ? "bg-violet-100 text-violet-800 rounded-bl-sm"
+                        : "bg-white border border-slate-100 text-slate-800 rounded-bl-sm"
+                  }`}>
+                    {!isMine && <p className="text-[10px] font-bold mb-0.5 opacity-60">{m.senderName}</p>}
+                    <p>{m.message}</p>
+                    <p className={`text-[10px] mt-0.5 ${isMine ? "text-indigo-200" : "text-slate-400"}`}>
+                      {new Date(m.time).toLocaleTimeString("ko-KR", { hour: "2-digit", minute: "2-digit" })}
+                    </p>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+          <div className="flex gap-2">
+            <input
+              value={chatMsg}
+              onChange={(e) => setChatMsg(e.target.value)}
+              onKeyDown={(e) => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); sendChat(); } }}
+              placeholder="메시지 입력"
+              className="flex-1 px-4 py-2.5 rounded-xl border border-slate-200 bg-white text-[13px] outline-none focus:border-indigo-400 focus:ring-2 focus:ring-indigo-50"
+            />
+            <button
+              onClick={sendChat}
+              className="px-4 py-2.5 rounded-xl bg-indigo-500 text-white text-[13px] font-bold hover:bg-indigo-600 transition-colors active:scale-95"
+            >
+              전송
             </button>
           </div>
         </div>

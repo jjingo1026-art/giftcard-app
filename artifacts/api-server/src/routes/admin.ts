@@ -323,15 +323,16 @@ router.get("/chat/:reservationId", (req, res) => {
 });
 
 router.post("/chat/send", (req, res) => {
-  const { reservationId, sender, message } = req.body as { reservationId?: number; sender?: string; message?: string };
+  const { reservationId, sender, senderName, message } = req.body as { reservationId?: number; sender?: string; senderName?: string; message?: string };
   if (!reservationId || !sender || !message?.trim()) {
     res.status(400).json({ error: "reservationId, sender, message는 필수입니다." }); return;
   }
+  const nameMap: Record<string, string> = { customer: "고객", admin: "관리자", staff: "담당자", system: "시스템" };
   const msg: Message = {
     id: msgSeq++,
     reservationId,
     sender: sender as Message["sender"],
-    senderName: sender,
+    senderName: senderName ?? nameMap[sender] ?? sender,
     message: message.trim(),
     time: new Date().toISOString(),
   };
