@@ -40,7 +40,7 @@ router.get("/reservations", requireAuth, async (req, res) => {
     .from(reservationsTable)
     .orderBy(desc(reservationsTable.createdAt));
   if (date) {
-    rows = rows.filter((r) => r.date === date || r.createdAt.toISOString().startsWith(date));
+    rows = rows.filter((r) => r.date === date);
   }
   res.json(rows);
 });
