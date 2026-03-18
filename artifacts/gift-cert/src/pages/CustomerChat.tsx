@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from "react";
+import { io, Socket } from "socket.io-client";
 
 interface Message {
   id: number;
@@ -14,49 +15,54 @@ function getReservationId() {
 
 export default function CustomerChat() {
   const reservationId = getReservationId();
-
   const [chatMessages, setChatMessages] = useState<Message[]>([]);
   const [msg, setMsg] = useState("");
   const chatBoxRef = useRef<HTMLDivElement>(null);
+  const socketRef = useRef<Socket | null>(null);
+
+  function scrollToBottom() {
+    setTimeout(() => {
+      if (chatBoxRef.current) chatBoxRef.current.scrollTop = chatBoxRef.current.scrollHeight;
+    }, 50);
+  }
 
   useEffect(() => {
     if (!reservationId) return;
-    loadChat();
-    const es = new EventSource(`/api/admin/chat/stream/${reservationId}`);
-    es.onmessage = (e) => {
-      const msg = JSON.parse(e.data);
-      setChatMessages((prev) => {
-        if (prev.some((m) => m.id === msg.id)) return prev;
-        const next = [...prev, msg];
-        setTimeout(() => { if (chatBoxRef.current) chatBoxRef.current.scrollTop = chatBoxRef.current.scrollHeight; }, 50);
-        return next;
-      });
-    };
-    return () => es.close();
-  }, []);
 
-  useEffect(() => {
-    if (chatBoxRef.current) {
-      chatBoxRef.current.scrollTop = chatBoxRef.current.scrollHeight;
-    }
-  }, [chatMessages]);
-
-  function loadChat() {
     fetch(`/api/admin/chat/${reservationId}`)
       .then((r) => r.json())
-      .then(setChatMessages)
+      .then((data) => { setChatMessages(data); scrollToBottom(); })
       .catch(() => {});
-  }
 
-  async function send() {
-    if (!msg.trim()) return;
-    await fetch("/api/admin/chat/send", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ reservationId: Number(reservationId), sender: "customer", message: msg }),
+    const socket = io({ path: "/api/socket.io", transports: ["websocket", "polling"] });
+    socketRef.current = socket;
+
+    socket.on("connect", () => {
+      socket.emit("joinRoom", Number(reservationId));
+    });
+
+    socket.on("newMessage", (newMsg: Message) => {
+      setChatMessages((prev) => {
+        if (prev.some((m) => m.id === newMsg.id)) return prev;
+        const next = [...prev, newMsg];
+        scrollToBottom();
+        return next;
+      });
+    });
+
+    return () => { socket.disconnect(); };
+  }, []);
+
+  useEffect(() => { scrollToBottom(); }, [chatMessages]);
+
+  function send() {
+    if (!msg.trim() || !socketRef.current) return;
+    socketRef.current.emit("sendMessage", {
+      reservationId: Number(reservationId),
+      sender: "customer",
+      message: msg,
     });
     setMsg("");
-    loadChat();
   }
 
   function handleKey(e: React.KeyboardEvent) {
@@ -73,15 +79,13 @@ export default function CustomerChat() {
       </header>
 
       <div className="max-w-2xl mx-auto px-4 py-4 space-y-3">
-        <h3 className="text-[15px] font-bold text-slate-700">채팅</h3>
-
         <div
           ref={chatBoxRef}
           className="bg-white rounded-2xl border border-slate-100 shadow-sm p-3 space-y-2 overflow-auto"
-          style={{ height: 300 }}
+          style={{ height: 400 }}
         >
           {chatMessages.length === 0 && (
-            <p className="text-center text-slate-300 text-[13px] mt-10">메시지가 없습니다</p>
+            <p className="text-center text-slate-300 text-[13px] mt-16">메시지가 없습니다</p>
           )}
           {chatMessages.map((m) => {
             const isMine = m.sender === "customer";

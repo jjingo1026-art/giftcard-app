@@ -3,6 +3,7 @@ import { db } from "@workspace/db";
 import { reservationsTable, chatsTable } from "@workspace/db/schema";
 import { eq, desc, asc } from "drizzle-orm";
 import crypto from "crypto";
+import { emitToRoom } from "../socket";
 
 const router: IRouter = Router();
 
@@ -16,15 +17,6 @@ const staff = [
   { id: 2, name: "김철수", phone: "010-2222-3333", password: "1234", status: "approved" },
 ];
 
-// SSE: reservationId → 연결된 응답 객체 집합
-const sseClients = new Map<number, Set<any>>();
-
-function broadcastChat(reservationId: number, msg: object) {
-  const clients = sseClients.get(reservationId);
-  if (!clients) return;
-  const payload = `data: ${JSON.stringify(msg)}\n\n`;
-  clients.forEach((res) => { try { res.write(payload); } catch {} });
-}
 
 function requireStaffAuth(req: any, res: any, next: any) {
   const auth = req.headers.authorization ?? "";
@@ -195,12 +187,13 @@ router.post("/reservations/:id/complete", requireStaffAuth, async (req, res) => 
 
   // 채팅방에 자동 완료 메시지
   const member = staff.find((s) => s.id === staffId);
-  await db.insert(chatsTable).values({
+  const [autoComplete] = await db.insert(chatsTable).values({
     reservationId: id,
     sender: "staff",
     senderName: member?.name ?? "매입담당자",
     message: "매입이 완료되었습니다. 감사합니다!",
-  });
+  }).returning();
+  emitToRoom(id, "newMessage", { ...autoComplete, time: autoComplete.time.toISOString() });
 
   res.json({ success: true });
 });
@@ -275,12 +268,13 @@ router.post("/reservations/:id/assign", requireAuth, async (req, res) => {
     .where(eq(reservationsTable.id, id));
 
   // 채팅방에 자동 안내 메시지 전송
-  await db.insert(chatsTable).values({
+  const [autoAssign] = await db.insert(chatsTable).values({
     reservationId: id,
     sender: "admin",
     senderName: "관리자",
     message: "담당자가 배정되었습니다. 앱에서 확인하세요.",
-  });
+  }).returning();
+  emitToRoom(id, "newMessage", { ...autoAssign, time: autoAssign.time.toISOString() });
 
   res.json({ success: true });
 });
@@ -309,22 +303,6 @@ function resolveAuth(req: any): { ok: boolean; senderType: "admin" | "staff"; se
 
 const NAME_MAP: Record<string, string> = { customer: "고객", admin: "관리자", staff: "담당자", system: "시스템" };
 
-// SSE 스트림 (인증 불필요 — reservationId로 격리)
-router.get("/chat/stream/:reservationId", (req, res) => {
-  const reservationId = Number(req.params.reservationId);
-  res.setHeader("Content-Type", "text/event-stream");
-  res.setHeader("Cache-Control", "no-cache");
-  res.setHeader("Connection", "keep-alive");
-  res.flushHeaders();
-
-  if (!sseClients.has(reservationId)) sseClients.set(reservationId, new Set());
-  sseClients.get(reservationId)!.add(res);
-
-  req.on("close", () => {
-    sseClients.get(reservationId)?.delete(res);
-  });
-});
-
 router.get("/chat/:reservationId", async (req, res) => {
   const reservationId = Number(req.params.reservationId);
   const rows = await db
@@ -347,7 +325,7 @@ router.post("/chat/send", async (req, res) => {
     message: message.trim(),
   }).returning();
   const msgOut = { ...inserted, time: inserted.time.toISOString() };
-  broadcastChat(reservationId, msgOut);
+  emitToRoom(reservationId, "newMessage", msgOut);
   res.json({ success: true, id: inserted.id });
 });
 

@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from "react";
 import { useLocation } from "wouter";
-import { getAdminToken, clearAdminToken } from "./AdminLogin";
+import { io, Socket } from "socket.io-client";
+import { getAdminToken } from "./AdminLogin";
 
 interface Message {
   id: number;
@@ -20,52 +21,57 @@ export default function AdminChat() {
   const [messages, setMessages] = useState<Message[]>([]);
   const [msg, setMsg] = useState("");
   const chatBoxRef = useRef<HTMLDivElement>(null);
+  const socketRef = useRef<Socket | null>(null);
 
   const token = getAdminToken();
   if (!token) { navigate("/admin/login"); return null; }
 
-  function loadChat() {
-    if (!reservationId) return;
-    fetch(`/api/admin/chat/${reservationId}`)
-      .then((r) => r.json())
-      .then((data) => {
-        setMessages(data);
-        setTimeout(() => {
-          if (chatBoxRef.current) chatBoxRef.current.scrollTop = chatBoxRef.current.scrollHeight;
-        }, 50);
-      })
-      .catch(() => {});
+  function scrollToBottom() {
+    setTimeout(() => {
+      if (chatBoxRef.current) chatBoxRef.current.scrollTop = chatBoxRef.current.scrollHeight;
+    }, 50);
   }
 
-  async function send() {
-    if (!msg.trim() || !reservationId) return;
-    await fetch("/api/admin/chat/send", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ reservationId: Number(reservationId), sender: "admin", message: msg }),
+  useEffect(() => {
+    if (!reservationId) return;
+
+    fetch(`/api/admin/chat/${reservationId}`)
+      .then((r) => r.json())
+      .then((data) => { setMessages(data); scrollToBottom(); })
+      .catch(() => {});
+
+    const socket = io({ path: "/api/socket.io", transports: ["websocket", "polling"] });
+    socketRef.current = socket;
+
+    socket.on("connect", () => {
+      socket.emit("joinRoom", Number(reservationId));
+    });
+
+    socket.on("newMessage", (newMsg: Message) => {
+      setMessages((prev) => {
+        if (prev.some((m) => m.id === newMsg.id)) return prev;
+        const next = [...prev, newMsg];
+        scrollToBottom();
+        return next;
+      });
+    });
+
+    return () => { socket.disconnect(); };
+  }, []);
+
+  function send() {
+    if (!msg.trim() || !socketRef.current) return;
+    socketRef.current.emit("sendMessage", {
+      reservationId: Number(reservationId),
+      sender: "admin",
+      message: msg,
     });
     setMsg("");
-    loadChat();
   }
 
   function handleKey(e: React.KeyboardEvent) {
     if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); send(); }
   }
-
-  useEffect(() => {
-    loadChat();
-    const es = new EventSource(`/api/admin/chat/stream/${reservationId}`);
-    es.onmessage = (e) => {
-      const msg = JSON.parse(e.data);
-      setMessages((prev) => {
-        if (prev.some((m) => m.id === msg.id)) return prev;
-        const next = [...prev, msg];
-        setTimeout(() => { if (chatBoxRef.current) chatBoxRef.current.scrollTop = chatBoxRef.current.scrollHeight; }, 50);
-        return next;
-      });
-    };
-    return () => es.close();
-  }, []);
 
   if (!reservationId) return (
     <div className="min-h-screen bg-slate-50 flex items-center justify-center text-slate-400 text-[14px]">
