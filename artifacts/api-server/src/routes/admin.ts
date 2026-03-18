@@ -9,11 +9,24 @@ const router: IRouter = Router();
 const ADMIN_ID = process.env.ADMIN_ID ?? "admin";
 const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD ?? "1234";
 const tokens = new Map<string, number>();
+const staffTokens = new Map<string, { staffId: number; exp: number }>();
 
 const staff = [
   { id: 1, name: "홍길동", phone: "010-1111-2222", password: "1234", status: "approved" },
   { id: 2, name: "김철수", phone: "010-3333-4444", password: "1234", status: "pending"  },
 ];
+
+function requireStaffAuth(req: any, res: any, next: any) {
+  const auth = req.headers.authorization ?? "";
+  const token = auth.startsWith("Bearer ") ? auth.slice(7) : "";
+  const entry = staffTokens.get(token);
+  if (!entry || Date.now() > entry.exp) {
+    res.status(401).json({ error: "인증이 필요합니다." });
+    return;
+  }
+  req.staffId = entry.staffId;
+  next();
+}
 
 function requireAuth(req: any, res: any, next: any) {
   const auth = req.headers.authorization ?? "";
@@ -76,7 +89,7 @@ router.post("/staff/login", (req, res) => {
   }
   const token = crypto.randomUUID();
   const expiresAt = Date.now() + 1000 * 60 * 60 * 8;
-  tokens.set(token, expiresAt);
+  staffTokens.set(token, { staffId: user.id, exp: expiresAt });
   res.json({ success: true, token, expiresAt, staffId: user.id, name: user.name });
 });
 
@@ -93,6 +106,15 @@ router.post("/staff/register", (req, res) => {
   const newStaff = { id: Date.now(), name, phone, password, status: "pending" };
   staff.push(newStaff);
   res.json({ success: true, message: "신청 완료 (승인 대기)" });
+});
+
+router.get("/staff/my-reservations", requireStaffAuth, async (req, res) => {
+  const staffId = (req as any).staffId as number;
+  const rows = await db
+    .select()
+    .from(reservationsTable)
+    .orderBy(desc(reservationsTable.createdAt));
+  res.json(rows.filter((r) => r.assignedStaffId === staffId));
 });
 
 router.get("/reservations", requireAuth, async (req, res) => {
