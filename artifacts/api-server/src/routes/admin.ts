@@ -23,8 +23,7 @@ const messages = new Map<number, Message[]>(); // reservationId → messages
 let msgSeq = 1;
 
 const staff = [
-  { id: 1, name: "홍길동", phone: "010-1111-2222", password: "1234", status: "approved" },
-  { id: 2, name: "김철수", phone: "010-3333-4444", password: "1234", status: "pending"  },
+  { id: 2, name: "김철수", phone: "010-2222-3333", password: "1234", status: "approved" },
 ];
 
 function requireStaffAuth(req: any, res: any, next: any) {
