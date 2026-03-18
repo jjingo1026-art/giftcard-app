@@ -202,6 +202,25 @@ function resolveAuth(req: any): { ok: boolean; senderType: "admin" | "staff"; se
   return { ok: false, senderType: "staff", senderName: "" };
 }
 
+router.post("/chat/send", (req, res) => {
+  const { reservationId, sender, message } = req.body as { reservationId?: number; sender?: string; message?: string };
+  if (!reservationId || !sender || !message?.trim()) {
+    res.status(400).json({ error: "reservationId, sender, message는 필수입니다." }); return;
+  }
+  const msg: Message = {
+    id: msgSeq++,
+    reservationId,
+    sender: sender as Message["sender"],
+    senderName: sender,
+    message: message.trim(),
+    time: new Date().toISOString(),
+  };
+  const room = messages.get(reservationId) ?? [];
+  room.push(msg);
+  messages.set(reservationId, room);
+  res.json({ success: true });
+});
+
 router.get("/messages/:reservationId", (req, res) => {
   const auth = resolveAuth(req);
   if (!auth.ok) { res.status(401).json({ error: "인증이 필요합니다." }); return; }
