@@ -27,7 +27,7 @@ interface ReservationEntry {
   location: string; items: SavedItem[]; totalPayment: number;
 }
 interface UrgentEntry {
-  id: number; phone: string; date: string; time: string;
+  id: number; phone: string;
   location: string; items: SavedItem[]; totalPayment: number;
 }
 
@@ -323,13 +323,13 @@ function HomePage({ onGoUrgent }: { onGoUrgent: () => void }) {
         {/* Urgent Banner */}
         <div className="bg-white rounded-3xl shadow-sm border border-rose-100 overflow-hidden">
           <div className="px-5 pt-5 pb-3 flex items-center justify-between">
-            <div><h2 className="text-[15px] font-bold text-slate-800">긴급 판매 요청</h2><p className="text-[12px] text-slate-400 mt-0.5">Urgent Sale Request</p></div>
+            <div><h2 className="text-[15px] font-bold text-slate-800">긴급 판매 신청</h2><p className="text-[12px] text-slate-400 mt-0.5">Urgent Sale Request</p></div>
             <div className="w-8 h-8 bg-rose-50 rounded-xl flex items-center justify-center">🚨</div>
           </div>
           <div className="px-5 pb-5">
             <p className="text-[13px] text-slate-500 mb-3">지금 바로 판매가 필요하신가요? 긴급 판매 신청 페이지로 이동합니다.</p>
             <button type="button" onClick={onGoUrgent} className="w-full py-4 rounded-2xl text-white text-[15px] font-bold transition-all duration-150 active:scale-95 flex items-center justify-center gap-2" style={{ background: "linear-gradient(135deg, #f43f5e 0%, #e11d48 100%)" }}>
-              <span>🚨</span> 긴급 판매 요청
+              <span>🚨</span> 긴급 판매 신청
             </button>
           </div>
         </div>
@@ -363,11 +363,13 @@ function SubmissionCard({ entry, accent }: { entry: ReservationEntry | UrgentEnt
       </div>
 
       <div className="grid grid-cols-2 gap-2 mb-3">
-        <div className="bg-slate-50 rounded-xl px-3 py-2">
-          <p className="text-[10px] text-slate-400 font-semibold uppercase tracking-wide">날짜 · 시간</p>
-          <p className="text-[12px] text-slate-700 font-semibold mt-0.5">{entry.date} {entry.time}</p>
-        </div>
-        <div className="bg-slate-50 rounded-xl px-3 py-2 col-span-1">
+        {isRes && (
+          <div className="bg-slate-50 rounded-xl px-3 py-2">
+            <p className="text-[10px] text-slate-400 font-semibold uppercase tracking-wide">날짜 · 시간</p>
+            <p className="text-[12px] text-slate-700 font-semibold mt-0.5">{(entry as ReservationEntry).date} {(entry as ReservationEntry).time}</p>
+          </div>
+        )}
+        <div className={`bg-slate-50 rounded-xl px-3 py-2 ${isRes ? "col-span-1" : "col-span-2"}`}>
           <p className="text-[10px] text-slate-400 font-semibold uppercase tracking-wide">거래 장소</p>
           <p className="text-[12px] text-slate-700 font-semibold mt-0.5 truncate">{entry.location}</p>
         </div>
@@ -409,11 +411,9 @@ function SubmissionCard({ entry, accent }: { entry: ReservationEntry | UrgentEnt
 // ─── URGENT SALE PAGE ─────────────────────────────────────────────────────────
 function UrgentPage({ onBack }: { onBack: () => void }) {
   const [phone, setPhone] = useState("");
-  const [date, setDate] = useState("");
-  const [time, setTime] = useState("");
   const [location, setLocation] = useState("");
   const [items, setItems] = useState<VoucherItem[]>([{ type: DEFAULT_TYPE, amount: "", isGift: false }]);
-  const [fieldErrors, setFieldErrors] = useState<{ phone?: string; date?: string; time?: string; location?: string }>({});
+  const [fieldErrors, setFieldErrors] = useState<{ phone?: string; location?: string }>({});
   const [itemErrors, setItemErrors] = useState<string[]>([""]);
   const [submissions, setSubmissions] = useState<UrgentEntry[]>([]);
   const [toast, setToast] = useState(false);
@@ -430,8 +430,6 @@ function UrgentPage({ onBack }: { onBack: () => void }) {
   function validate() {
     const fe: typeof fieldErrors = {};
     if (!phone.trim()) fe.phone = "판매자 전화번호를 입력해주세요";
-    if (!date) fe.date = "날짜 선택";
-    if (!time) fe.time = "시간 선택";
     if (!location.trim()) fe.location = "거래 장소를 입력해주세요";
     setFieldErrors(fe);
     const ie = items.map((item) => (parseFloat(item.amount) || 0) <= 0 ? "금액을 입력해주세요" : "");
@@ -445,12 +443,12 @@ function UrgentPage({ onBack }: { onBack: () => void }) {
     const id = counter + 1;
     setCounter(id);
     const savedItems: SavedItem[] = items.map((item) => {
-      const { amountNum, rate, payment } = computeItem(item, 0.01); // urgent baseDeduct = 0.01
+      const { amountNum, rate, payment } = computeItem(item, 0.01);
       return { type: item.type, amount: amountNum, rate, payment, isGift: item.isGift };
     });
     const totalPayment = savedItems.reduce((s, it) => s + it.payment, 0);
-    setSubmissions((p) => [{ id, phone, date, time, location, items: savedItems, totalPayment }, ...p]);
-    setPhone(""); setDate(""); setTime(""); setLocation("");
+    setSubmissions((p) => [{ id, phone, location, items: savedItems, totalPayment }, ...p]);
+    setPhone(""); setLocation("");
     setItems([{ type: DEFAULT_TYPE, amount: "", isGift: false }]); setItemErrors([""]);
     setToast(true); setTimeout(() => setToast(false), 3000);
   }
@@ -458,7 +456,7 @@ function UrgentPage({ onBack }: { onBack: () => void }) {
   return (
     <div className="min-h-screen bg-gradient-to-b from-rose-50/60 to-slate-100/60">
       <div className={`fixed top-4 left-1/2 -translate-x-1/2 z-50 transition-all duration-300 ${toast ? "opacity-100 translate-y-0" : "opacity-0 -translate-y-2 pointer-events-none"}`}>
-        <div className="bg-rose-500 text-white text-sm font-semibold px-5 py-3 rounded-2xl shadow-lg flex items-center gap-2"><span>✓</span> 긴급 판매 요청이 접수되었습니다!</div>
+        <div className="bg-rose-500 text-white text-sm font-semibold px-5 py-3 rounded-2xl shadow-lg flex items-center gap-2"><span>✓</span> 긴급 판매 신청이 접수되었습니다!</div>
       </div>
       <header className="bg-white/80 backdrop-blur-md border-b border-slate-100 sticky top-0 z-40">
         <div className="max-w-md mx-auto px-5 py-4 flex items-center gap-3">
@@ -466,7 +464,7 @@ function UrgentPage({ onBack }: { onBack: () => void }) {
             <svg width="18" height="18" viewBox="0 0 18 18" fill="none"><path d="M11 4l-5 5 5 5" stroke="#475569" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" /></svg>
           </button>
           <div>
-            <h1 className="text-[17px] font-bold text-slate-800">긴급 판매 요청</h1>
+            <h1 className="text-[17px] font-bold text-slate-800">긴급 판매 신청</h1>
             <p className="text-[11px] text-rose-400 mt-0.5 font-semibold tracking-wide">URGENT SALE REQUEST · 적용 요율 -1%</p>
           </div>
           {submissions.length > 0 && <span className="ml-auto bg-rose-100 text-rose-500 text-[12px] font-bold px-3 py-1.5 rounded-full">{submissions.length}건</span>}
@@ -476,33 +474,25 @@ function UrgentPage({ onBack }: { onBack: () => void }) {
       <div className="max-w-md mx-auto px-4 pt-5 pb-16 space-y-4">
         <div className="flex items-start gap-3 px-4 py-3.5 bg-rose-50 border border-rose-100 rounded-2xl">
           <span className="text-xl flex-shrink-0">⚡</span>
-          <p className="text-[13px] text-rose-600 font-medium leading-relaxed">긴급 판매 요청은 기본 적용 요율에서 <strong>1%가 차감</strong>됩니다.</p>
+          <p className="text-[13px] text-rose-600 font-medium leading-relaxed">긴급 판매 신청은 기본 적용 요율에서 <strong>1%가 차감</strong>됩니다.</p>
         </div>
 
         <div className="bg-white rounded-3xl shadow-sm border border-rose-100 overflow-hidden">
           <div className="px-5 pt-5 pb-3 flex items-center justify-between">
-            <div><h2 className="text-[15px] font-bold text-slate-800">판매 요청</h2><p className="text-[12px] text-slate-400 mt-0.5">Sale Request Form</p></div>
+            <div><h2 className="text-[15px] font-bold text-slate-800">판매 신청</h2><p className="text-[12px] text-slate-400 mt-0.5">Sale Request Form</p></div>
             <div className="w-8 h-8 bg-rose-50 rounded-xl flex items-center justify-center">📋</div>
           </div>
           <form onSubmit={handleSubmit} className="px-5 pb-5 space-y-4">
             <Field label="판매자 전화번호" required error={fieldErrors.phone}>
               <input type="tel" value={phone} onChange={(e) => { setPhone(e.target.value); setFieldErrors((p) => ({ ...p, phone: "" })); }} placeholder="010-0000-0000" className={inputCls(!!fieldErrors.phone, "rose")} />
             </Field>
-            <div className="grid grid-cols-2 gap-3">
-              <Field label="날짜" required error={fieldErrors.date}>
-                <input type="date" value={date} onChange={(e) => { setDate(e.target.value); setFieldErrors((p) => ({ ...p, date: "" })); }} className={inputCls(!!fieldErrors.date, "rose")} />
-              </Field>
-              <Field label="시간" required error={fieldErrors.time}>
-                <input type="time" value={time} onChange={(e) => { setTime(e.target.value); setFieldErrors((p) => ({ ...p, time: "" })); }} className={inputCls(!!fieldErrors.time, "rose")} />
-              </Field>
-            </div>
             <Field label="거래 장소" required error={fieldErrors.location}>
               <input type="text" value={location} onChange={(e) => { setLocation(e.target.value); setFieldErrors((p) => ({ ...p, location: "" })); }} placeholder="예: 강남구 역삼동" className={inputCls(!!fieldErrors.location, "rose")} />
               <p className="text-[12px] text-slate-400 mt-1.5 flex items-start gap-1"><span className="mt-0.5 flex-shrink-0">ℹ️</span>주정차 가능한 곳으로 입력 바랍니다</p>
             </Field>
             <VoucherItems items={items} errors={itemErrors} onChange={updateItem} onToggleGift={toggleGift} onAdd={addItem} onRemove={removeItem} baseDeduct={0.01} accent="rose" />
             <button type="submit" className="w-full py-4 rounded-2xl text-white text-[15px] font-bold transition-all duration-150 active:scale-95 flex items-center justify-center gap-2" style={{ background: "linear-gradient(135deg, #f43f5e 0%, #e11d48 100%)" }}>
-              <span>🚨</span> 긴급 판매 요청하기
+              <span>🚨</span> 긴급 판매 신청하기
             </button>
           </form>
         </div>
