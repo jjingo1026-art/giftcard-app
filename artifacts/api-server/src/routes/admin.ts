@@ -47,6 +47,14 @@ router.get("/staff/pending", requireAuth, (_req, res) => {
   res.json(pending);
 });
 
+router.post("/staff/:id/approve", requireAuth, (req, res) => {
+  const id = Number(req.params.id);
+  const user = staff.find((s) => s.id === id);
+  if (!user) { res.status(404).json({ success: false, error: "직원을 찾을 수 없습니다." }); return; }
+  user.status = "approved";
+  res.json({ success: true });
+});
+
 router.post("/staff/login", (req, res) => {
   const { phone, password } = req.body as { phone?: string; password?: string };
   const user = staff.find((s) => s.phone === phone && s.password === password);
