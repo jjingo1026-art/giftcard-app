@@ -157,6 +157,40 @@ router.get("/staff/reservations", requireAuth, async (req, res) => {
   res.json(grouped);
 });
 
+// 매입담당자용: 담당 예약 완료 처리
+router.post("/reservations/:id/complete", requireStaffAuth, async (req, res) => {
+  const id = parseInt(req.params.id);
+  const staffId = (req as any).staffId as number;
+  if (isNaN(id)) { res.status(400).json({ error: "잘못된 ID" }); return; }
+
+  const [row] = await db.select().from(reservationsTable).where(eq(reservationsTable.id, id));
+  if (!row) { res.status(404).json({ error: "예약을 찾을 수 없습니다." }); return; }
+  if (row.assignedStaffId !== staffId) {
+    res.status(403).json({ error: "담당 예약이 아닙니다." }); return;
+  }
+
+  await db
+    .update(reservationsTable)
+    .set({ status: "completed", completedAt: new Date() })
+    .where(eq(reservationsTable.id, id));
+
+  // 채팅방에 자동 완료 메시지
+  const member = staff.find((s) => s.id === staffId);
+  const autoMsg: Message = {
+    id: msgSeq++,
+    reservationId: id,
+    sender: "staff",
+    senderName: member?.name ?? "매입담당자",
+    message: "매입이 완료되었습니다. 감사합니다!",
+    time: new Date().toISOString(),
+  };
+  const room = messages.get(id) ?? [];
+  room.push(autoMsg);
+  messages.set(id, room);
+
+  res.json({ success: true });
+});
+
 router.get("/staff/my-reservations", requireStaffAuth, async (req, res) => {
   const staffId = (req as any).staffId as number;
   const rows = await db
