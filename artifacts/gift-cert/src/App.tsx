@@ -19,18 +19,26 @@ const RATE_GROUPS = [
 
 const DEFAULT_TYPE = Object.keys(RATES)[0];
 
+const KOREAN_BANKS = [
+  "KB국민은행", "신한은행", "우리은행", "하나은행", "IBK기업은행",
+  "NH농협은행", "SC제일은행", "씨티은행", "카카오뱅크", "케이뱅크",
+  "토스뱅크", "수협은행", "전북은행", "광주은행", "경남은행",
+  "부산은행", "대구은행", "제주은행", "새마을금고", "신협",
+  "우체국", "산업은행", "수출입은행",
+];
+
 interface VoucherItem { type: string; amount: string; isGift: boolean; }
 interface SavedItem { type: string; amount: number; rate: number; payment: number; isGift: boolean; }
 
 interface ReservationEntry {
   id: number; name: string; phone: string; date: string; time: string;
   location: string; items: SavedItem[]; totalPayment: number;
-  bankAccount: string; accountHolder: string;
+  bankName: string; accountNumber: string; accountHolder: string;
 }
 interface UrgentEntry {
   id: number; phone: string;
   location: string; items: SavedItem[]; totalPayment: number;
-  bankAccount: string; accountHolder: string;
+  bankName: string; accountNumber: string; accountHolder: string;
 }
 
 function formatKRW(n: number) { return n.toLocaleString("ko-KR") + "원"; }
@@ -201,10 +209,11 @@ function HomePage({ onGoUrgent }: { onGoUrgent: () => void }) {
   const [date, setDate] = useState("");
   const [time, setTime] = useState("");
   const [location, setLocation] = useState("");
-  const [bankAccount, setBankAccount] = useState("");
+  const [bankName, setBankName] = useState(KOREAN_BANKS[0]);
+  const [accountNumber, setAccountNumber] = useState("");
   const [accountHolder, setAccountHolder] = useState("");
   const [items, setItems] = useState<VoucherItem[]>([{ type: DEFAULT_TYPE, amount: "", isGift: false }]);
-  const [fieldErrors, setFieldErrors] = useState<{ name?: string; phone?: string; date?: string; time?: string; location?: string; bankAccount?: string; accountHolder?: string }>({});
+  const [fieldErrors, setFieldErrors] = useState<{ name?: string; phone?: string; date?: string; time?: string; location?: string; accountNumber?: string; accountHolder?: string }>({});
   const [itemErrors, setItemErrors] = useState<string[]>([""]);
   const [submissions, setSubmissions] = useState<ReservationEntry[]>([]);
   const [toast, setToast] = useState(false);
@@ -225,7 +234,7 @@ function HomePage({ onGoUrgent }: { onGoUrgent: () => void }) {
     if (!date) fe.date = "날짜 선택";
     if (!time) fe.time = "시간 선택";
     if (!location.trim()) fe.location = "거래 장소를 입력해주세요";
-    if (!bankAccount.trim()) fe.bankAccount = "계좌번호를 입력해주세요";
+    if (!accountNumber.trim()) fe.accountNumber = "계좌번호를 입력해주세요";
     if (!accountHolder.trim()) fe.accountHolder = "예금주를 입력해주세요";
     setFieldErrors(fe);
     const ie = items.map((item) => (parseFloat(item.amount) || 0) <= 0 ? "금액을 입력해주세요" : "");
@@ -243,8 +252,8 @@ function HomePage({ onGoUrgent }: { onGoUrgent: () => void }) {
       return { type: item.type, amount: amountNum, rate, payment, isGift: item.isGift };
     });
     const totalPayment = savedItems.reduce((s, it) => s + it.payment, 0);
-    setSubmissions((p) => [{ id, name, phone, date, time, location, items: savedItems, totalPayment, bankAccount, accountHolder }, ...p]);
-    setName(""); setPhone(""); setDate(""); setTime(""); setLocation(""); setBankAccount(""); setAccountHolder("");
+    setSubmissions((p) => [{ id, name, phone, date, time, location, items: savedItems, totalPayment, bankName, accountNumber, accountHolder }, ...p]);
+    setName(""); setPhone(""); setDate(""); setTime(""); setLocation(""); setAccountNumber(""); setAccountHolder("");
     setItems([{ type: DEFAULT_TYPE, amount: "", isGift: false }]); setItemErrors([""]);
     setToast(true); setTimeout(() => setToast(false), 3000);
   }
@@ -314,15 +323,25 @@ function HomePage({ onGoUrgent }: { onGoUrgent: () => void }) {
               </div>
               <div className="px-4 pb-4 space-y-2.5 mt-2">
                 <div>
+                  <select
+                    value={bankName}
+                    onChange={(e) => setBankName(e.target.value)}
+                    className="w-full px-3 py-2.5 rounded-xl border border-slate-200 text-[14px] text-slate-800 outline-none transition-all bg-white focus:border-indigo-400 focus:ring-2 focus:ring-indigo-50 appearance-none"
+                    style={{ backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 20 20'%3E%3Cpath fill='%236366f1' d='M5 8l5 5 5-5z'/%3E%3C/svg%3E")`, backgroundRepeat: "no-repeat", backgroundPosition: "right 12px center" }}
+                  >
+                    {KOREAN_BANKS.map((b) => <option key={b} value={b}>{b}</option>)}
+                  </select>
+                </div>
+                <div>
                   <input
                     type="text"
-                    value={bankAccount}
-                    onChange={(e) => { setBankAccount(e.target.value); setFieldErrors((p) => ({ ...p, bankAccount: "" })); }}
-                    placeholder="은행명 + 계좌번호 (예: 국민 123-456-789012)"
+                    value={accountNumber}
+                    onChange={(e) => { setAccountNumber(e.target.value); setFieldErrors((p) => ({ ...p, accountNumber: "" })); }}
+                    placeholder="계좌번호 (예: 123-456-789012)"
                     className={`w-full px-3 py-2.5 rounded-xl border text-[14px] text-slate-800 outline-none transition-all bg-white placeholder:text-slate-300
-                      ${fieldErrors.bankAccount ? "border-rose-300 focus:border-rose-400 focus:ring-2 focus:ring-rose-100" : "border-slate-200 focus:border-indigo-400 focus:ring-2 focus:ring-indigo-50"}`}
+                      ${fieldErrors.accountNumber ? "border-rose-300 focus:border-rose-400 focus:ring-2 focus:ring-rose-100" : "border-slate-200 focus:border-indigo-400 focus:ring-2 focus:ring-indigo-50"}`}
                   />
-                  {fieldErrors.bankAccount && <p className="text-[11px] text-rose-500 mt-1">⚠ {fieldErrors.bankAccount}</p>}
+                  {fieldErrors.accountNumber && <p className="text-[11px] text-rose-500 mt-1">⚠ {fieldErrors.accountNumber}</p>}
                 </div>
                 <div>
                   <input
@@ -447,8 +466,12 @@ function SubmissionCard({ entry, accent }: { entry: ReservationEntry | UrgentEnt
           <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wide">입금 계좌 정보</span>
         </div>
         <div className="flex items-center justify-between">
+          <span className="text-[11px] text-slate-400">은행</span>
+          <span className="text-[13px] font-semibold text-slate-700">{entry.bankName}</span>
+        </div>
+        <div className="flex items-center justify-between">
           <span className="text-[11px] text-slate-400">계좌번호</span>
-          <span className="text-[13px] font-semibold text-slate-700">{entry.bankAccount}</span>
+          <span className="text-[13px] font-semibold text-slate-700">{entry.accountNumber}</span>
         </div>
         <div className="flex items-center justify-between">
           <span className="text-[11px] text-slate-400">예금주</span>
@@ -463,10 +486,11 @@ function SubmissionCard({ entry, accent }: { entry: ReservationEntry | UrgentEnt
 function UrgentPage({ onBack }: { onBack: () => void }) {
   const [phone, setPhone] = useState("");
   const [location, setLocation] = useState("");
-  const [bankAccount, setBankAccount] = useState("");
+  const [bankName, setBankName] = useState(KOREAN_BANKS[0]);
+  const [accountNumber, setAccountNumber] = useState("");
   const [accountHolder, setAccountHolder] = useState("");
   const [items, setItems] = useState<VoucherItem[]>([{ type: DEFAULT_TYPE, amount: "", isGift: false }]);
-  const [fieldErrors, setFieldErrors] = useState<{ phone?: string; location?: string; bankAccount?: string; accountHolder?: string }>({});
+  const [fieldErrors, setFieldErrors] = useState<{ phone?: string; location?: string; accountNumber?: string; accountHolder?: string }>({});
   const [itemErrors, setItemErrors] = useState<string[]>([""]);
   const [submissions, setSubmissions] = useState<UrgentEntry[]>([]);
   const [toast, setToast] = useState(false);
@@ -484,7 +508,7 @@ function UrgentPage({ onBack }: { onBack: () => void }) {
     const fe: typeof fieldErrors = {};
     if (!phone.trim()) fe.phone = "판매자 전화번호를 입력해주세요";
     if (!location.trim()) fe.location = "거래 장소를 입력해주세요";
-    if (!bankAccount.trim()) fe.bankAccount = "계좌번호를 입력해주세요";
+    if (!accountNumber.trim()) fe.accountNumber = "계좌번호를 입력해주세요";
     if (!accountHolder.trim()) fe.accountHolder = "예금주를 입력해주세요";
     setFieldErrors(fe);
     const ie = items.map((item) => (parseFloat(item.amount) || 0) <= 0 ? "금액을 입력해주세요" : "");
@@ -502,8 +526,8 @@ function UrgentPage({ onBack }: { onBack: () => void }) {
       return { type: item.type, amount: amountNum, rate, payment, isGift: item.isGift };
     });
     const totalPayment = savedItems.reduce((s, it) => s + it.payment, 0);
-    setSubmissions((p) => [{ id, phone, location, items: savedItems, totalPayment, bankAccount, accountHolder }, ...p]);
-    setPhone(""); setLocation(""); setBankAccount(""); setAccountHolder("");
+    setSubmissions((p) => [{ id, phone, location, items: savedItems, totalPayment, bankName, accountNumber, accountHolder }, ...p]);
+    setPhone(""); setLocation(""); setAccountNumber(""); setAccountHolder("");
     setItems([{ type: DEFAULT_TYPE, amount: "", isGift: false }]); setItemErrors([""]);
     setToast(true); setTimeout(() => setToast(false), 3000);
   }
@@ -553,15 +577,25 @@ function UrgentPage({ onBack }: { onBack: () => void }) {
               </div>
               <div className="px-4 pb-4 space-y-2.5 mt-2">
                 <div>
+                  <select
+                    value={bankName}
+                    onChange={(e) => setBankName(e.target.value)}
+                    className="w-full px-3 py-2.5 rounded-xl border border-slate-200 text-[14px] text-slate-800 outline-none transition-all bg-white focus:border-rose-400 focus:ring-2 focus:ring-rose-50 appearance-none"
+                    style={{ backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 20 20'%3E%3Cpath fill='%23f43f5e' d='M5 8l5 5 5-5z'/%3E%3C/svg%3E")`, backgroundRepeat: "no-repeat", backgroundPosition: "right 12px center" }}
+                  >
+                    {KOREAN_BANKS.map((b) => <option key={b} value={b}>{b}</option>)}
+                  </select>
+                </div>
+                <div>
                   <input
                     type="text"
-                    value={bankAccount}
-                    onChange={(e) => { setBankAccount(e.target.value); setFieldErrors((p) => ({ ...p, bankAccount: "" })); }}
-                    placeholder="은행명 + 계좌번호 (예: 국민 123-456-789012)"
+                    value={accountNumber}
+                    onChange={(e) => { setAccountNumber(e.target.value); setFieldErrors((p) => ({ ...p, accountNumber: "" })); }}
+                    placeholder="계좌번호 (예: 123-456-789012)"
                     className={`w-full px-3 py-2.5 rounded-xl border text-[14px] text-slate-800 outline-none transition-all bg-white placeholder:text-slate-300
-                      ${fieldErrors.bankAccount ? "border-rose-300 focus:border-rose-400 focus:ring-2 focus:ring-rose-100" : "border-slate-200 focus:border-rose-400 focus:ring-2 focus:ring-rose-50"}`}
+                      ${fieldErrors.accountNumber ? "border-rose-300 focus:border-rose-400 focus:ring-2 focus:ring-rose-100" : "border-slate-200 focus:border-rose-400 focus:ring-2 focus:ring-rose-50"}`}
                   />
-                  {fieldErrors.bankAccount && <p className="text-[11px] text-rose-500 mt-1">⚠ {fieldErrors.bankAccount}</p>}
+                  {fieldErrors.accountNumber && <p className="text-[11px] text-rose-500 mt-1">⚠ {fieldErrors.accountNumber}</p>}
                 </div>
                 <div>
                   <input
