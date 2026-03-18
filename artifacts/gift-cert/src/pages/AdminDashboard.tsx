@@ -185,7 +185,7 @@ export default function AdminDashboard() {
                 className="bg-white rounded-2xl border border-slate-100 shadow-sm px-4 py-3.5 cursor-pointer hover:border-indigo-200 hover:bg-indigo-50/30 transition-colors active:scale-[0.99]"
               >
                 <p className="text-[14px] font-semibold text-slate-800">
-                  🕒 {r.time ?? "—"} | 👤 {r.name ?? r.phone} | 💰 {formatKRW(r.totalPayment)} | {statusText[r.status] ?? r.status}
+                  🕒 {r.time ?? "—"} | 👤 {r.name ?? r.phone} | 💰 {formatKRW(r.totalPayment)} | {statusText[r.status]}
                 </p>
               </div>
             ))}
