@@ -42,6 +42,23 @@ router.get("/staff", requireAuth, (_req, res) => {
   res.json(staff.map(({ password: _pw, ...s }) => s));
 });
 
+router.post("/staff/login", (req, res) => {
+  const { phone, password } = req.body as { phone?: string; password?: string };
+  const user = staff.find((s) => s.phone === phone && s.password === password);
+  if (!user) {
+    res.json({ success: false, message: "정보 틀림" });
+    return;
+  }
+  if (user.status !== "approved") {
+    res.json({ success: false, message: "승인 대기중" });
+    return;
+  }
+  const token = crypto.randomUUID();
+  const expiresAt = Date.now() + 1000 * 60 * 60 * 8;
+  tokens.set(token, expiresAt);
+  res.json({ success: true, token, expiresAt, staffId: user.id, name: user.name });
+});
+
 router.post("/staff/register", (req, res) => {
   const { name, phone, password } = req.body as { name?: string; phone?: string; password?: string };
   if (!name || !phone || !password) {
