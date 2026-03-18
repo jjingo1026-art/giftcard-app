@@ -56,15 +56,16 @@ export default function AdminDashboard() {
     completed: allEntries.filter((r) => r.status === "completed").length,
   };
 
-  // 예약 1건 = 캘린더 이벤트 1개 (이름 + 금액)
-  const calendarEvents = allEntries
-    .filter((r) => r.date)
-    .map((r) => ({
-      id: String(r.id),
-      title: r.name ?? r.phone,
-      start: r.date,
-      color: r.status === "completed" ? "green" : r.status === "assigned" ? "orange" : "blue",
-    }));
+  // 날짜별 건수 집계
+  const countByDate = allEntries.reduce<Record<string, number>>((acc, r) => {
+    if (r.date) acc[r.date] = (acc[r.date] ?? 0) + 1;
+    return acc;
+  }, {});
+
+  const calendarEvents = Object.keys(countByDate).map((date) => ({
+    title: countByDate[date] + "건",
+    start: date,
+  }));
 
   async function filter(date = dateFilter) {
     setLoading(true);
@@ -85,10 +86,6 @@ export default function AdminDashboard() {
   function handleDateClick(info: { dateStr: string }) {
     setDateFilter(info.dateStr);
     filter(info.dateStr);
-  }
-
-  function handleEventClick(info: { event: { id: string } }) {
-    navigate(`/admin/detail/${info.event.id}`);
   }
 
   return (
@@ -142,7 +139,6 @@ export default function AdminDashboard() {
             headerToolbar={{ left: "prev", center: "title", right: "next" }}
             events={calendarEvents}
             dateClick={handleDateClick}
-            eventClick={handleEventClick}
             height="auto"
           />
           {dateFilter && (
