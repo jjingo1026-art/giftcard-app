@@ -252,4 +252,36 @@ router.post("/messages/:reservationId", (req, res) => {
   res.json(msg);
 });
 
+// ── 고객용: 전화번호로 예약 조회 ─────────────────────────────────────────────
+router.get("/customer/reservation", async (req, res) => {
+  const { phone } = req.query as { phone?: string };
+  if (!phone) {
+    res.status(400).json({ success: false, error: "phone 파라미터가 필요합니다." });
+    return;
+  }
+
+  const rows = await db
+    .select()
+    .from(reservationsTable)
+    .orderBy(desc(reservationsTable.createdAt));
+
+  const result = rows.find((r) => r.phone === phone);
+  if (!result) {
+    res.json({ success: false });
+    return;
+  }
+
+  const assignedStaff = result.assignedStaffId
+    ? staff.find((s) => s.id === result.assignedStaffId) ?? null
+    : null;
+
+  res.json({
+    success: true,
+    reservation: result,
+    staff: assignedStaff
+      ? { id: assignedStaff.id, name: assignedStaff.name, phone: assignedStaff.phone }
+      : null,
+  });
+});
+
 export default router;
