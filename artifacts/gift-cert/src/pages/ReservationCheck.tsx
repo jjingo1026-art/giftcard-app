@@ -16,26 +16,9 @@ interface ReservationInfo {
   createdAt: string;
 }
 
-const STATUS_MAP: Record<string, { label: string; color: string }> = {
-  pending:   { label: "예약완료",        color: "bg-amber-100 text-amber-700" },
-  assigned:  { label: "매입담당자 배정", color: "bg-blue-100 text-blue-700" },
-  completed: { label: "매입 완료",       color: "bg-emerald-100 text-emerald-700" },
-  cancelled: { label: "취소",            color: "bg-slate-100 text-slate-500" },
-};
-
 function fmt(n?: number | null) {
   if (!n) return "-";
   return n.toLocaleString("ko-KR") + "원";
-}
-
-function Row({ label, value }: { label: string; value?: string | null }) {
-  if (!value) return null;
-  return (
-    <div className="flex justify-between items-center py-2.5 border-b border-slate-50 last:border-0">
-      <span className="text-[12px] text-slate-400 font-medium">{label}</span>
-      <span className="text-[13px] text-slate-700 font-semibold text-right max-w-[60%] break-words">{value}</span>
-    </div>
-  );
 }
 
 export default function ReservationCheck() {
@@ -67,8 +50,6 @@ export default function ReservationCheck() {
       setSearched(true);
     }
   }
-
-  const status = reservation ? (STATUS_MAP[reservation.status] ?? { label: reservation.status, color: "bg-slate-100 text-slate-500" }) : null;
 
   return (
     <div className="min-h-screen bg-slate-50">
@@ -112,7 +93,7 @@ export default function ReservationCheck() {
           {error && <p className="text-[12px] text-rose-500">{error}</p>}
         </div>
 
-        {/* 결과 없음 */}
+        {/* 예약 없음 */}
         {searched && !reservation && (
           <div className="bg-white rounded-2xl border border-slate-100 shadow-sm px-5 py-10 text-center">
             <div className="text-3xl mb-3">🔍</div>
@@ -121,51 +102,89 @@ export default function ReservationCheck() {
           </div>
         )}
 
-        {/* 예약 정보 */}
-        {reservation && (
+        {/* 예약 접수 완료 (배정 전) */}
+        {reservation && reservation.status !== "assigned" && (
+          <div className="bg-white rounded-2xl border border-slate-100 shadow-sm px-5 py-8 text-center space-y-3">
+            <div className="w-14 h-14 rounded-full bg-amber-50 flex items-center justify-center text-[28px] mx-auto">📋</div>
+            <div>
+              <p className="text-[16px] font-bold text-slate-800">예약 접수 완료</p>
+              <p className="text-[13px] text-slate-500 mt-1.5">현재 담당자 배정 중입니다.</p>
+              <p className="text-[12px] text-slate-400 mt-1">곧 매입담당자가 배정될 예정입니다.</p>
+            </div>
+            <div className="pt-2 border-t border-slate-50 space-y-1.5">
+              {reservation.giftcardType && (
+                <p className="text-[13px] text-slate-600">
+                  <span className="text-slate-400">상품권</span> {reservation.giftcardType}
+                </p>
+              )}
+              {reservation.amount && (
+                <p className="text-[13px] text-slate-600">
+                  <span className="text-slate-400">금액</span> {fmt(reservation.amount)}
+                </p>
+              )}
+            </div>
+          </div>
+        )}
+
+        {/* 예약 확정 (매입담당자 배정 완료) */}
+        {reservation && reservation.status === "assigned" && (
           <>
-            {/* 상태 카드 */}
-            <div className="bg-white rounded-2xl border border-slate-100 shadow-sm px-5 py-4">
-              <div className="flex items-center justify-between mb-3">
-                <p className="text-[11px] font-bold text-slate-400 uppercase tracking-wide">예약 #{reservation.id}</p>
-                {status && (
-                  <span className={`text-[11px] font-bold px-3 py-1 rounded-full ${status.color}`}>{status.label}</span>
-                )}
-              </div>
+            {/* 확정 헤더 */}
+            <div className="bg-emerald-50 border border-emerald-100 rounded-2xl px-5 py-4 flex items-center gap-3">
+              <div className="w-10 h-10 rounded-full bg-emerald-100 flex items-center justify-center text-[20px] flex-shrink-0">✅</div>
               <div>
-                <Row label="이름" value={reservation.name} />
-                <Row label="전화번호" value={reservation.phone} />
-                <Row label="상품권 종류" value={reservation.giftcardType} />
-                <Row label="금액" value={fmt(reservation.amount)} />
-                <Row label="입금 금액" value={fmt(reservation.totalPayment)} />
-                {reservation.date && <Row label="날짜 / 시간" value={`${reservation.date} ${reservation.time ?? ""}`} />}
-                <Row label="거래 장소" value={reservation.location} />
+                <p className="text-[15px] font-bold text-emerald-800">예약 확정</p>
+                <p className="text-[12px] text-emerald-600 mt-0.5">매입담당자가 배정되었습니다.</p>
               </div>
             </div>
 
-            {/* 매입담당자 정보 */}
-            {staffInfo ? (
+            {/* 예약 상세 */}
+            <div className="bg-white rounded-2xl border border-slate-100 shadow-sm px-5 py-4 space-y-0">
+              <p className="text-[11px] font-bold text-slate-400 uppercase tracking-wide mb-3">예약 정보</p>
+              {reservation.date && (
+                <div className="flex justify-between items-center py-2.5 border-b border-slate-50">
+                  <span className="text-[12px] text-slate-400 font-medium flex items-center gap-1.5">📅 날짜 / 시간</span>
+                  <span className="text-[13px] text-slate-700 font-semibold">{reservation.date} {reservation.time ?? ""}</span>
+                </div>
+              )}
+              {reservation.name && (
+                <div className="flex justify-between items-center py-2.5 border-b border-slate-50">
+                  <span className="text-[12px] text-slate-400 font-medium flex items-center gap-1.5">👤 이름</span>
+                  <span className="text-[13px] text-slate-700 font-semibold">{reservation.name}</span>
+                </div>
+              )}
+              {reservation.giftcardType && (
+                <div className="flex justify-between items-center py-2.5 border-b border-slate-50">
+                  <span className="text-[12px] text-slate-400 font-medium">상품권</span>
+                  <span className="text-[13px] text-slate-700 font-semibold">{reservation.giftcardType}</span>
+                </div>
+              )}
+              <div className="flex justify-between items-center py-2.5">
+                <span className="text-[12px] text-slate-400 font-medium flex items-center gap-1.5">💰 금액</span>
+                <span className="text-[15px] text-indigo-600 font-black">{fmt(reservation.amount)}</span>
+              </div>
+            </div>
+
+            {/* 담당자 정보 */}
+            {staffInfo && (
               <div className="bg-white rounded-2xl border border-slate-100 shadow-sm px-5 py-4">
-                <p className="text-[11px] font-bold text-slate-400 uppercase tracking-wide mb-3">매입담당자</p>
-                <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-full bg-indigo-100 flex items-center justify-center text-[18px]">👤</div>
+                <p className="text-[11px] font-bold text-slate-400 uppercase tracking-wide mb-3">담당자 정보</p>
+                <div className="flex items-center gap-3 mb-4">
+                  <div className="w-11 h-11 rounded-full bg-indigo-100 flex items-center justify-center text-[20px]">👨‍🔧</div>
                   <div>
                     <p className="text-[15px] font-bold text-slate-800">{staffInfo.name}</p>
-                    <a href={`tel:${staffInfo.phone}`} className="text-[12px] text-indigo-500 font-medium">{staffInfo.phone}</a>
+                    <a href={`tel:${staffInfo.phone}`} className="text-[13px] text-indigo-500 font-semibold flex items-center gap-1 mt-0.5">
+                      📞 {staffInfo.phone}
+                    </a>
                   </div>
                 </div>
                 <a
                   href={`/chat.html?id=${reservation.id}`}
-                  className="mt-4 flex items-center justify-center gap-2 w-full py-3 rounded-xl text-white text-[13px] font-bold transition-all active:scale-95"
+                  className="flex items-center justify-center gap-2 w-full py-3.5 rounded-xl text-white text-[14px] font-bold transition-all active:scale-95"
                   style={{ background: "linear-gradient(135deg,#6366f1,#8b5cf6)" }}
                 >
                   💬 채팅하기
                 </a>
-              </div>
-            ) : (
-              <div className="bg-indigo-50 rounded-2xl border border-indigo-100 px-5 py-4 text-center">
-                <p className="text-[13px] text-indigo-600 font-semibold">매입담당자 배정 대기 중</p>
-                <p className="text-[11px] text-indigo-400 mt-1">곧 담당자가 배정될 예정입니다.</p>
               </div>
             )}
           </>
