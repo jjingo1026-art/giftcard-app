@@ -175,20 +175,35 @@ export default function AdminDashboard() {
           <div className="py-10 text-center text-slate-400 text-[13px]">접수 내역이 없습니다</div>
         )}
 
-        <div id="list" className="space-y-2 pb-6">
-          {[...entries]
-            .sort((a, b) => (a.time ?? "").localeCompare(b.time ?? ""))
-            .map((r) => (
-              <div
-                key={r.id}
-                onClick={() => { location.href = `/admin/detail.html?id=${r.id}`; }}
-                className="bg-white rounded-2xl border border-slate-100 shadow-sm px-4 py-3.5 cursor-pointer hover:border-indigo-200 hover:bg-indigo-50/30 transition-colors active:scale-[0.99]"
-              >
-                <p className="text-[14px] font-semibold text-slate-800">
-                  🕒 {r.time ?? "—"} | 👤 {r.name ?? r.phone} | 💰 {formatKRW(r.totalPayment)} | {statusText[r.status]}
-                </p>
+        <div id="list" className="space-y-4 pb-6">
+          {(() => {
+            const grouped: Record<string, Reservation[]> = {};
+            [...entries]
+              .sort((a, b) => (a.time ?? "").localeCompare(b.time ?? ""))
+              .forEach((r) => {
+                const key = r.time ?? "—";
+                if (!grouped[key]) grouped[key] = [];
+                grouped[key].push(r);
+              });
+            return Object.keys(grouped).map((time) => (
+              <div key={time}>
+                <p className="text-[12px] font-bold text-slate-400 px-1 mb-1">🕒 {time}</p>
+                <div className="space-y-2">
+                  {grouped[time].map((r) => (
+                    <div
+                      key={r.id}
+                      onClick={() => { location.href = `/admin/detail.html?id=${r.id}`; }}
+                      className="bg-white rounded-2xl border border-slate-100 shadow-sm px-4 py-3.5 cursor-pointer hover:border-indigo-200 hover:bg-indigo-50/30 transition-colors active:scale-[0.99]"
+                    >
+                      <p className="text-[14px] font-semibold text-slate-800">
+                        👤 {r.name ?? r.phone} | 💰 {formatKRW(r.totalPayment)} | {statusText[r.status]}
+                      </p>
+                    </div>
+                  ))}
+                </div>
               </div>
-            ))}
+            ));
+          })()}
         </div>
       </div>
     </div>
