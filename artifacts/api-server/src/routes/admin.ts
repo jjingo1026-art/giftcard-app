@@ -220,7 +220,17 @@ router.get("/reservations/:id", requireAuth, async (req, res) => {
   res.json(row);
 });
 
-router.post("/reservations/:id/status", requireAuth, async (req, res) => {
+router.post("/reservations/:id/status", async (req, res) => {
+  // 관리자 또는 매입담당자 토큰 허용
+  const auth = req.headers.authorization ?? "";
+  const token = auth.startsWith("Bearer ") ? auth.slice(7) : "";
+  const isAdmin = tokens.has(token) && Date.now() <= (tokens.get(token) ?? 0);
+  const staffEntry = staffTokens.get(token);
+  const isStaff = !!staffEntry && Date.now() <= staffEntry.exp;
+  if (!isAdmin && !isStaff) {
+    res.status(401).json({ error: "인증이 필요합니다." }); return;
+  }
+
   const id = parseInt(req.params.id);
   if (isNaN(id)) { res.status(400).json({ error: "잘못된 ID" }); return; }
   const { status } = req.body as { status?: string };

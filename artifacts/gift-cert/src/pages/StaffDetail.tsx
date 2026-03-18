@@ -64,9 +64,10 @@ export default function StaffDetail() {
     if (!confirm("매입 완료 처리하시겠습니까?")) return;
     setCompleting(true);
     try {
-      const res = await fetch(`/api/admin/reservations/${reservationId}/complete`, {
+      const res = await fetch(`/api/admin/reservations/${reservationId}/status`, {
         method: "POST",
-        headers: { Authorization: `Bearer ${token}` },
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+        body: JSON.stringify({ status: "completed" }),
       });
       const data = await res.json();
       if (data.success) {
