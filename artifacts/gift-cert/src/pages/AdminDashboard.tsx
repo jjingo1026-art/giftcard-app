@@ -58,10 +58,9 @@ export default function AdminDashboard() {
     setLoading(true);
     setError("");
     try {
-      const url = dateFilter
-        ? `/api/admin/reservations?date=${dateFilter}`
-        : `/api/admin/reservations`;
-      const res = await fetch(url, { headers: { Authorization: `Bearer ${token}` } });
+      const res = await fetch(`/api/admin/reservations?date=${dateFilter}`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
       if (res.status === 401) { clearAdminToken(); navigate("/admin/login"); return; }
       setEntries(await res.json());
     } catch {
@@ -151,14 +150,13 @@ export default function AdminDashboard() {
                   </div>
                   <div className="min-w-0">
                     <p className="text-[14px] font-semibold text-slate-800 truncate flex items-center gap-1.5">
-                      {r.date ?? "—"} {r.time ?? ""} / {r.name ?? r.phone}
+                      {r.time ?? "—"} / {r.name ?? r.phone} / {formatKRW(r.totalPayment)}
                       {r.kind === "urgent" && (
                         <span className="text-[10px] bg-rose-100 text-rose-500 font-bold px-1.5 py-0.5 rounded-full flex-shrink-0">긴급</span>
                       )}
                     </p>
                     <div className="flex items-center gap-2 mt-0.5">
                       <span className={`text-[11px] font-bold px-2 py-0.5 rounded-full ${st.color}`}>{st.label}</span>
-                      <span className="text-[11px] text-slate-400">{formatKRW(r.totalPayment)}</span>
                       {r.assignedTo && <span className="text-[11px] text-indigo-500">👤 {r.assignedTo}</span>}
                     </div>
                   </div>
