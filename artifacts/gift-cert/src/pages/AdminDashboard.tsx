@@ -157,7 +157,10 @@ export default function AdminDashboard() {
         <hr className="border-slate-100" />
         <h2 className="text-[15px] font-bold text-slate-700">
           📋 선택 날짜 예약 리스트
-          {dateFilter && <span className="text-[13px] text-indigo-500 font-normal ml-2">— {dateFilter}</span>}
+          {dateFilter
+            ? <span className="text-[13px] text-indigo-500 font-normal ml-2">{dateFilter} 예약 ({entries.length}건)</span>
+            : <span className="text-[13px] text-slate-400 font-normal ml-2">({entries.length}건)</span>
+          }
         </h2>
 
         {error && <div className="py-8 text-center text-rose-500 text-[13px]">{error}</div>}
@@ -167,42 +170,19 @@ export default function AdminDashboard() {
         )}
 
         <div id="list" className="space-y-2 pb-6">
-          {entries.map((r) => {
-            const st = STATUS_LABELS[r.status] ?? { label: r.status, color: "bg-slate-100 text-slate-500" };
-            return (
+          {[...entries]
+            .sort((a, b) => (a.time ?? "").localeCompare(b.time ?? ""))
+            .map((r) => (
               <div
                 key={r.id}
-                className="bg-white rounded-2xl border border-slate-100 shadow-sm px-4 py-3.5 flex items-center justify-between gap-3"
+                onClick={() => navigate(`/admin/detail/${r.id}`)}
+                className="bg-white rounded-2xl border border-slate-100 shadow-sm px-4 py-3.5 cursor-pointer hover:border-indigo-200 hover:bg-indigo-50/30 transition-colors active:scale-[0.99]"
               >
-                <div className="flex items-center gap-3 min-w-0">
-                  <div
-                    className="w-8 h-8 rounded-xl text-[12px] font-black flex items-center justify-center text-white flex-shrink-0"
-                    style={{ background: r.kind === "urgent" ? "linear-gradient(135deg,#f43f5e,#e11d48)" : "linear-gradient(135deg,#6366f1,#8b5cf6)" }}
-                  >
-                    {r.id}
-                  </div>
-                  <div className="min-w-0">
-                    <p className="text-[14px] font-semibold text-slate-800 truncate flex items-center gap-1.5">
-                      {r.time ?? "—"} / {r.name ?? r.phone} / {formatKRW(r.totalPayment)}
-                      {r.kind === "urgent" && (
-                        <span className="text-[10px] bg-rose-100 text-rose-500 font-bold px-1.5 py-0.5 rounded-full flex-shrink-0">긴급</span>
-                      )}
-                    </p>
-                    <div className="flex items-center gap-2 mt-0.5">
-                      <span className={`text-[11px] font-bold px-2 py-0.5 rounded-full ${st.color}`}>{st.label}</span>
-                      {r.assignedTo && <span className="text-[11px] text-indigo-500">👤 {r.assignedTo}</span>}
-                    </div>
-                  </div>
-                </div>
-                <button
-                  onClick={() => navigate(`/admin/detail/${r.id}`)}
-                  className="flex-shrink-0 px-3 py-1.5 rounded-xl border border-indigo-200 text-indigo-600 text-[12px] font-semibold hover:bg-indigo-50 transition-colors active:scale-95"
-                >
-                  상세
-                </button>
+                <p className="text-[14px] font-semibold text-slate-800">
+                  🕒 {r.time ?? "—"} | 👤 {r.name ?? r.phone} | 💰 {formatKRW(r.totalPayment)}
+                </p>
               </div>
-            );
-          })}
+            ))}
         </div>
       </div>
     </div>
