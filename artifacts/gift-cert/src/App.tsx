@@ -16,6 +16,7 @@ const RATE_GROUPS = [
   { label: "신세계백화점상품권", sub: "", rate: 95, color: "#6366f1" },
   { label: "롯데백화점상품권",   sub: "", rate: 95, color: "#8b5cf6" },
   { label: "현대백화점상품권",   sub: "", rate: 95, color: "#a78bfa" },
+  { label: "국민관광상품권",     sub: "", rate: 95, color: "#818cf8" },
   { label: "갤러리아백화점상품권", sub: "", rate: 94, color: "#7c3aed" },
   { label: "지류문화상품권", sub: "컬쳐랜드 · 북앤라이프 · 문화상품권", rate: 90, color: "#c084fc" },
   { label: "주유권", sub: "SK · GS · 현대 · S-OIL", rate: 95, color: "#6366f1" },

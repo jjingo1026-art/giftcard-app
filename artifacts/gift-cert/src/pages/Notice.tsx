@@ -26,6 +26,15 @@ const NOTICE_DATA: Record<string, { title: string; sub?: string; rate: number; d
       "액면가의 95%로 매입합니다.",
     ],
   },
+  "국민관광상품권": {
+    title: "국민관광상품권",
+    rate: 95,
+    desc: [
+      "전국 관광지, 호텔, 여행사 등에서 사용 가능한 상품권입니다.",
+      "유효기간 확인 후 매입합니다.",
+      "액면가의 95%로 매입합니다.",
+    ],
+  },
   "갤러리아백화점상품권": {
     title: "갤러리아백화점상품권",
     rate: 94,
