@@ -71,6 +71,7 @@ export default function AdminDashboard() {
   const calendarEvents = Object.keys(countByDate).map((date) => ({
     title: countByDate[date] + "건",
     start: date,
+    color: countByDate[date] > 5 ? "red" : "blue",
   }));
 
   async function filter(date = dateFilter) {
