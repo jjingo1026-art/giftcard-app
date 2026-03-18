@@ -1,7 +1,7 @@
 import { Router, type IRouter } from "express";
 import { db } from "@workspace/db";
-import { reservationsTable } from "@workspace/db/schema";
-import { eq, desc } from "drizzle-orm";
+import { reservationsTable, chatsTable } from "@workspace/db/schema";
+import { eq, desc, asc } from "drizzle-orm";
 import crypto from "crypto";
 
 const router: IRouter = Router();
@@ -11,16 +11,6 @@ const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD ?? "1234";
 const tokens = new Map<string, number>();
 const staffTokens = new Map<string, { staffId: number; exp: number }>();
 
-interface Message {
-  id: number;
-  reservationId: number;
-  sender: "admin" | "staff" | "customer";
-  senderName: string;
-  message: string;
-  time: string;
-}
-const messages = new Map<number, Message[]>(); // reservationId → messages
-let msgSeq = 1;
 
 const staff = [
   { id: 2, name: "김철수", phone: "010-2222-3333", password: "1234", status: "approved" },
@@ -195,17 +185,12 @@ router.post("/reservations/:id/complete", requireStaffAuth, async (req, res) => 
 
   // 채팅방에 자동 완료 메시지
   const member = staff.find((s) => s.id === staffId);
-  const autoMsg: Message = {
-    id: msgSeq++,
+  await db.insert(chatsTable).values({
     reservationId: id,
     sender: "staff",
     senderName: member?.name ?? "매입담당자",
     message: "매입이 완료되었습니다. 감사합니다!",
-    time: new Date().toISOString(),
-  };
-  const room = messages.get(id) ?? [];
-  room.push(autoMsg);
-  messages.set(id, room);
+  });
 
   res.json({ success: true });
 });
@@ -280,17 +265,12 @@ router.post("/reservations/:id/assign", requireAuth, async (req, res) => {
     .where(eq(reservationsTable.id, id));
 
   // 채팅방에 자동 안내 메시지 전송
-  const autoMsg: Message = {
-    id: msgSeq++,
+  await db.insert(chatsTable).values({
     reservationId: id,
     sender: "admin",
     senderName: "관리자",
     message: "담당자가 배정되었습니다. 앱에서 확인하세요.",
-    time: new Date().toISOString(),
-  };
-  const room = messages.get(id) ?? [];
-  room.push(autoMsg);
-  messages.set(id, room);
+  });
 
   res.json({ success: true });
 });
@@ -317,56 +297,57 @@ function resolveAuth(req: any): { ok: boolean; senderType: "admin" | "staff"; se
   return { ok: false, senderType: "staff", senderName: "" };
 }
 
-router.get("/chat/:reservationId", (req, res) => {
+const NAME_MAP: Record<string, string> = { customer: "고객", admin: "관리자", staff: "담당자", system: "시스템" };
+
+router.get("/chat/:reservationId", async (req, res) => {
   const reservationId = Number(req.params.reservationId);
-  res.json(messages.get(reservationId) ?? []);
+  const rows = await db
+    .select()
+    .from(chatsTable)
+    .where(eq(chatsTable.reservationId, reservationId))
+    .orderBy(asc(chatsTable.time));
+  res.json(rows.map((r) => ({ ...r, time: r.time.toISOString() })));
 });
 
-router.post("/chat/send", (req, res) => {
+router.post("/chat/send", async (req, res) => {
   const { reservationId, sender, senderName, message } = req.body as { reservationId?: number; sender?: string; senderName?: string; message?: string };
   if (!reservationId || !sender || !message?.trim()) {
     res.status(400).json({ error: "reservationId, sender, message는 필수입니다." }); return;
   }
-  const nameMap: Record<string, string> = { customer: "고객", admin: "관리자", staff: "담당자", system: "시스템" };
-  const msg: Message = {
-    id: msgSeq++,
+  const [inserted] = await db.insert(chatsTable).values({
     reservationId,
-    sender: sender as Message["sender"],
-    senderName: senderName ?? nameMap[sender] ?? sender,
+    sender,
+    senderName: senderName ?? NAME_MAP[sender] ?? sender,
     message: message.trim(),
-    time: new Date().toISOString(),
-  };
-  const room = messages.get(reservationId) ?? [];
-  room.push(msg);
-  messages.set(reservationId, room);
-  res.json({ success: true });
+  }).returning();
+  res.json({ success: true, id: inserted.id });
 });
 
-router.get("/messages/:reservationId", (req, res) => {
+router.get("/messages/:reservationId", async (req, res) => {
   const auth = resolveAuth(req);
   if (!auth.ok) { res.status(401).json({ error: "인증이 필요합니다." }); return; }
   const reservationId = parseInt(req.params.reservationId);
-  res.json(messages.get(reservationId) ?? []);
+  const rows = await db
+    .select()
+    .from(chatsTable)
+    .where(eq(chatsTable.reservationId, reservationId))
+    .orderBy(asc(chatsTable.time));
+  res.json(rows.map((r) => ({ ...r, time: r.time.toISOString() })));
 });
 
-router.post("/messages/:reservationId", (req, res) => {
+router.post("/messages/:reservationId", async (req, res) => {
   const auth = resolveAuth(req);
   if (!auth.ok) { res.status(401).json({ error: "인증이 필요합니다." }); return; }
   const reservationId = parseInt(req.params.reservationId);
   const { message } = req.body as { message?: string };
   if (!message?.trim()) { res.status(400).json({ error: "메시지를 입력해주세요." }); return; }
-  const msg: Message = {
-    id: msgSeq++,
+  const [inserted] = await db.insert(chatsTable).values({
     reservationId,
     sender: auth.senderType,
     senderName: auth.senderName,
     message: message.trim(),
-    time: new Date().toISOString(),
-  };
-  const room = messages.get(reservationId) ?? [];
-  room.push(msg);
-  messages.set(reservationId, room);
-  res.json(msg);
+  }).returning();
+  res.json({ ...inserted, time: inserted.time.toISOString() });
 });
 
 // ── 고객용: 전화번호로 예약 조회 ─────────────────────────────────────────────
