@@ -57,7 +57,7 @@ router.post("/reservations/:id/status", requireAuth, async (req, res) => {
   const id = parseInt(req.params.id);
   if (isNaN(id)) { res.status(400).json({ error: "잘못된 ID" }); return; }
   const { status } = req.body as { status?: string };
-  const allowed = ["pending", "confirmed", "in_progress", "completed", "cancelled"];
+  const allowed = ["pending", "assigned", "completed", "cancelled"];
   if (!status || !allowed.includes(status)) {
     res.status(400).json({ error: "유효하지 않은 상태값입니다.", allowed });
     return;
