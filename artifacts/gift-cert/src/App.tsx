@@ -21,8 +21,8 @@ const RATE_GROUPS = [
   { label: "주유권", sub: "SK · GS · 현대 · OIL뱅크", rate: 95, color: "#6366f1" },
 ];
 
-function goNotice(brand: string) {
-  alert(`${brand} 상품권 매입율 안내 페이지 준비 중입니다.`);
+function goNotice(type: string) {
+  location.href = `/notice.html?type=${encodeURIComponent(type)}`;
 }
 
 const DEFAULT_TYPE = Object.keys(RATES)[0];
