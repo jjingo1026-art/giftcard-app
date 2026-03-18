@@ -56,18 +56,16 @@ export default function AdminDashboard() {
     completed: allEntries.filter((r) => r.status === "completed").length,
   };
 
-  // 날짜별 예약 건수를 FullCalendar 이벤트로 변환
-  const calendarEvents = Object.entries(
-    allEntries.reduce<Record<string, number>>((acc, r) => {
-      if (r.date) acc[r.date] = (acc[r.date] ?? 0) + 1;
-      return acc;
-    }, {})
-  ).map(([date, count]) => ({
-    title: `${count}건`,
-    date,
-    backgroundColor: "#6366f1",
-    borderColor: "#6366f1",
-  }));
+  // 예약 1건 = 캘린더 이벤트 1개 (이름 + 금액)
+  const calendarEvents = allEntries
+    .filter((r) => r.date)
+    .map((r) => ({
+      id: String(r.id),
+      title: `${r.name ?? r.phone} (${formatKRW(r.totalPayment)})`,
+      start: r.date,
+      backgroundColor: r.kind === "urgent" ? "#f43f5e" : "#6366f1",
+      borderColor:     r.kind === "urgent" ? "#e11d48" : "#4f46e5",
+    }));
 
   async function filter(date = dateFilter) {
     setLoading(true);
@@ -88,6 +86,10 @@ export default function AdminDashboard() {
   function handleDateClick(info: { dateStr: string }) {
     setDateFilter(info.dateStr);
     filter(info.dateStr);
+  }
+
+  function handleEventClick(info: { event: { id: string } }) {
+    navigate(`/admin/detail/${info.event.id}`);
   }
 
   return (
@@ -141,6 +143,7 @@ export default function AdminDashboard() {
             headerToolbar={{ left: "prev", center: "title", right: "next" }}
             events={calendarEvents}
             dateClick={handleDateClick}
+            eventClick={handleEventClick}
             height="auto"
           />
           {dateFilter && (
