@@ -176,6 +176,20 @@ router.post("/reservations/:id/assign", requireAuth, async (req, res) => {
     .update(reservationsTable)
     .set({ assignedStaffId: member.id, assignedTo: member.name, status: "assigned" })
     .where(eq(reservationsTable.id, id));
+
+  // 채팅방에 자동 안내 메시지 전송
+  const autoMsg: Message = {
+    id: msgSeq++,
+    reservationId: id,
+    sender: "admin",
+    senderName: "관리자",
+    message: "담당자가 배정되었습니다. 앱에서 확인하세요.",
+    time: new Date().toISOString(),
+  };
+  const room = messages.get(id) ?? [];
+  room.push(autoMsg);
+  messages.set(id, room);
+
   res.json({ success: true });
 });
 
