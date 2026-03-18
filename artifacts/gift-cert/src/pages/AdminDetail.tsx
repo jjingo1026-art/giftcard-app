@@ -78,7 +78,7 @@ export default function AdminDetail() {
     await fetch("/api/admin/chat/send", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ reservationId: Number(resolvedId), sender: "admin", senderName: "관리자", message: chatMsg }),
+      body: JSON.stringify({ reservationId: Number(resolvedId), sender: "admin", message: chatMsg }),
     });
     setChatMsg("");
     loadChat();
