@@ -11,6 +11,7 @@ import StaffDashboard from "./pages/StaffDashboard";
 import StaffDetail from "./pages/StaffDetail";
 import CustomerChat from "./pages/CustomerChat";
 import Notice from "./pages/Notice";
+import Terms from "./pages/Terms";
 import "./index.css";
 
 const base = import.meta.env.BASE_URL.replace(/\/$/, "");
@@ -34,6 +35,8 @@ createRoot(document.getElementById("root")!).render(
       <Route path="/staff/chat.html" component={StaffDetail} />
       <Route path="/notice" component={Notice} />
       <Route path="/notice.html" component={Notice} />
+      <Route path="/terms" component={Terms} />
+      <Route path="/terms.html" component={Terms} />
       <Route path="/chat" component={CustomerChat} />
       <Route path="/chat.html" component={CustomerChat} />
       <Route path="/staff/login" component={StaffLogin} />
