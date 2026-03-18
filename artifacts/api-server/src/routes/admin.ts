@@ -42,6 +42,11 @@ router.get("/staff", requireAuth, (_req, res) => {
   res.json(staff.map(({ password: _pw, ...s }) => s));
 });
 
+router.get("/staff/pending", requireAuth, (_req, res) => {
+  const pending = staff.filter((s) => s.status === "pending").map(({ password: _pw, ...s }) => s);
+  res.json(pending);
+});
+
 router.post("/staff/login", (req, res) => {
   const { phone, password } = req.body as { phone?: string; password?: string };
   const user = staff.find((s) => s.phone === phone && s.password === password);
