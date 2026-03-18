@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { getNextId, saveEntry } from "@/lib/store";
 
 const RATES: Record<string, number> = {
   "신세계 (Shinsegae)": 0.95,
@@ -245,14 +246,16 @@ function HomePage({ onGoUrgent }: { onGoUrgent: () => void }) {
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     if (!validate()) return;
-    const id = counter + 1;
+    const id = getNextId();
     setCounter(id);
     const savedItems: SavedItem[] = items.map((item) => {
       const { amountNum, rate, payment } = computeItem(item, 0);
       return { type: item.type, amount: amountNum, rate, payment, isGift: item.isGift };
     });
     const totalPayment = savedItems.reduce((s, it) => s + it.payment, 0);
-    setSubmissions((p) => [{ id, name, phone, date, time, location, items: savedItems, totalPayment, bankName, accountNumber, accountHolder }, ...p]);
+    const entry = { id, name, phone, date, time, location, items: savedItems, totalPayment, bankName, accountNumber, accountHolder };
+    setSubmissions((p) => [entry, ...p]);
+    saveEntry({ kind: "reservation", id, createdAt: new Date().toISOString(), name, phone, date, time, location, items: savedItems, totalPayment, bankName, accountNumber, accountHolder });
     setName(""); setPhone(""); setDate(""); setTime(""); setLocation(""); setAccountNumber(""); setAccountHolder("");
     setItems([{ type: DEFAULT_TYPE, amount: "", isGift: false }]); setItemErrors([""]);
     setToast(true); setTimeout(() => setToast(false), 3000);
@@ -519,7 +522,7 @@ function UrgentPage({ onBack }: { onBack: () => void }) {
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     if (!validate()) return;
-    const id = counter + 1;
+    const id = getNextId();
     setCounter(id);
     const savedItems: SavedItem[] = items.map((item) => {
       const { amountNum, rate, payment } = computeItem(item, 0.01);
@@ -527,6 +530,7 @@ function UrgentPage({ onBack }: { onBack: () => void }) {
     });
     const totalPayment = savedItems.reduce((s, it) => s + it.payment, 0);
     setSubmissions((p) => [{ id, phone, location, items: savedItems, totalPayment, bankName, accountNumber, accountHolder }, ...p]);
+    saveEntry({ kind: "urgent", id, createdAt: new Date().toISOString(), phone, location, items: savedItems, totalPayment, bankName, accountNumber, accountHolder });
     setPhone(""); setLocation(""); setAccountNumber(""); setAccountHolder("");
     setItems([{ type: DEFAULT_TYPE, amount: "", isGift: false }]); setItemErrors([""]);
     setToast(true); setTimeout(() => setToast(false), 3000);
