@@ -19,6 +19,7 @@ export const reservationsTable = pgTable("reservations", {
   status: text("status").notNull().default("pending"),
   assignedTo: text("assigned_to"),
   assignedStaffId: integer("assigned_staff_id"),
+  completedAt: timestamp("completed_at"),
 });
 
 interface SavedItem {

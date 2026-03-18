@@ -73,7 +73,7 @@ router.post("/reservations/:id/status", requireAuth, async (req, res) => {
   }
   await db
     .update(reservationsTable)
-    .set({ status })
+    .set({ status, completedAt: status === "completed" ? new Date() : null })
     .where(eq(reservationsTable.id, id));
   res.json({ success: true });
 });
