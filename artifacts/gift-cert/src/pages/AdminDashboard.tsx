@@ -24,32 +24,29 @@ const STATUS_LABELS: Record<string, { label: string; color: string }> = {
 };
 
 function formatKRW(n: number) { return n.toLocaleString("ko-KR") + "원"; }
-function todayStr() {
-  const d = new Date();
-  return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}-${String(d.getDate()).padStart(2,"0")}`;
-}
 
 export default function AdminDashboard() {
   const [, navigate] = useLocation();
   const [dateFilter, setDateFilter] = useState("");
-  const [entries, setEntries] = useState<Reservation[]>([]);
   const [allEntries, setAllEntries] = useState<Reservation[]>([]);
-  const [loaded, setLoaded] = useState(false);
+  const [entries, setEntries] = useState<Reservation[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
   const token = getAdminToken();
   if (!token) { navigate("/admin/login"); return null; }
 
-  // 통계용: 전체 예약 자동 로드
+  // 전체 자동 로드 (통계 + 리스트)
   useEffect(() => {
+    setLoading(true);
     fetch("/api/admin/reservations", { headers: { Authorization: `Bearer ${token}` } })
       .then((r) => { if (r.status === 401) { clearAdminToken(); navigate("/admin/login"); } return r.json(); })
-      .then(setAllEntries)
-      .catch(() => {});
+      .then((data) => { setAllEntries(data); setEntries(data); })
+      .catch(() => setError("데이터를 불러올 수 없습니다."))
+      .finally(() => setLoading(false));
   }, []);
 
-  const today = todayStr();
+  const today = new Date().toISOString().split("T")[0];
   const stats = {
     total:     allEntries.length,
     today:     allEntries.filter((r) => r.date === today).length,
@@ -66,10 +63,7 @@ export default function AdminDashboard() {
         : `/api/admin/reservations`;
       const res = await fetch(url, { headers: { Authorization: `Bearer ${token}` } });
       if (res.status === 401) { clearAdminToken(); navigate("/admin/login"); return; }
-      const data = await res.json();
-      setEntries(data);
-      setAllEntries(data.length && !dateFilter ? data : allEntries);
-      setLoaded(true);
+      setEntries(await res.json());
     } catch {
       setError("데이터를 불러올 수 없습니다.");
     } finally {
@@ -81,7 +75,10 @@ export default function AdminDashboard() {
     <div className="min-h-screen bg-slate-50">
       <header className="bg-white border-b border-slate-100 sticky top-0 z-40 shadow-sm">
         <div className="max-w-2xl mx-auto px-4 py-3.5 flex items-center justify-between">
-          <h1 className="text-[16px] font-bold text-slate-800">관리자 대시보드</h1>
+          <div>
+            <h1 className="text-[16px] font-bold text-slate-800">관리자 대시보드</h1>
+            {allEntries.length > 0 && <p className="text-[11px] text-slate-400 mt-0.5">총 {allEntries.length}건</p>}
+          </div>
           <button
             onClick={() => { clearAdminToken(); navigate("/admin/login"); }}
             className="text-[12px] text-slate-400 hover:text-rose-500 font-semibold transition-colors px-3 py-1.5 rounded-xl hover:bg-rose-50"
@@ -132,10 +129,8 @@ export default function AdminDashboard() {
         </div>
 
         {error && <div className="py-8 text-center text-rose-500 text-[13px]">{error}</div>}
-        {!loaded && !loading && !error && (
-          <div className="py-10 text-center text-slate-300 text-[13px]">날짜를 선택하거나 그냥 조회하세요</div>
-        )}
-        {loaded && !loading && entries.length === 0 && (
+        {loading && <div className="py-10 text-center text-slate-300 text-[13px]">불러오는 중...</div>}
+        {!loading && !error && entries.length === 0 && (
           <div className="py-10 text-center text-slate-400 text-[13px]">접수 내역이 없습니다</div>
         )}
 
