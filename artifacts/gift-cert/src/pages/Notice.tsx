@@ -98,7 +98,7 @@ export default function Notice() {
             </div>
 
             <button
-              onClick={() => { location.href = "/"; }}
+              onClick={() => { location.href = `/terms.html?type=${encodeURIComponent(type)}`; }}
               className="w-full py-4 rounded-2xl bg-indigo-500 text-white font-bold text-[15px] hover:bg-indigo-600 transition-colors active:scale-[0.98]"
             >
               예약 신청하기

@@ -15,10 +15,11 @@ export default function Terms() {
 
   function goNext() {
     if (!agree) {
-      alert("개인정보 수집 및 이용에 동의해주세요.");
+      alert("개인정보 동의가 필요합니다.");
       return;
     }
-    location.href = "/";
+    const type = new URLSearchParams(location.search).get("type");
+    location.href = `/reservation.html?type=${type}`;
   }
 
   return (
