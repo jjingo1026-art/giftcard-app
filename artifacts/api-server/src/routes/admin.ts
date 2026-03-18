@@ -11,8 +11,8 @@ const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD ?? "1234";
 const tokens = new Map<string, number>();
 
 const staff = [
-  { id: 1, name: "홍길동", phone: "010-1111-2222" },
-  { id: 2, name: "김철수", phone: "010-3333-4444" },
+  { id: 1, name: "홍길동", phone: "010-1111-2222", password: "1234", status: "approved" },
+  { id: 2, name: "김철수", phone: "010-3333-4444", password: "1234", status: "pending"  },
 ];
 
 function requireAuth(req: any, res: any, next: any) {
@@ -39,7 +39,7 @@ router.post("/login", async (req, res) => {
 });
 
 router.get("/staff", requireAuth, (_req, res) => {
-  res.json(staff);
+  res.json(staff.map(({ password: _pw, ...s }) => s));
 });
 
 router.get("/reservations", requireAuth, async (req, res) => {
