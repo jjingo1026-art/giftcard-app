@@ -25,10 +25,12 @@ interface SavedItem { type: string; amount: number; rate: number; payment: numbe
 interface ReservationEntry {
   id: number; name: string; phone: string; date: string; time: string;
   location: string; items: SavedItem[]; totalPayment: number;
+  bankAccount: string; accountHolder: string;
 }
 interface UrgentEntry {
   id: number; phone: string;
   location: string; items: SavedItem[]; totalPayment: number;
+  bankAccount: string; accountHolder: string;
 }
 
 function formatKRW(n: number) { return n.toLocaleString("ko-KR") + "원"; }
@@ -199,8 +201,10 @@ function HomePage({ onGoUrgent }: { onGoUrgent: () => void }) {
   const [date, setDate] = useState("");
   const [time, setTime] = useState("");
   const [location, setLocation] = useState("");
+  const [bankAccount, setBankAccount] = useState("");
+  const [accountHolder, setAccountHolder] = useState("");
   const [items, setItems] = useState<VoucherItem[]>([{ type: DEFAULT_TYPE, amount: "", isGift: false }]);
-  const [fieldErrors, setFieldErrors] = useState<{ name?: string; phone?: string; date?: string; time?: string; location?: string }>({});
+  const [fieldErrors, setFieldErrors] = useState<{ name?: string; phone?: string; date?: string; time?: string; location?: string; bankAccount?: string; accountHolder?: string }>({});
   const [itemErrors, setItemErrors] = useState<string[]>([""]);
   const [submissions, setSubmissions] = useState<ReservationEntry[]>([]);
   const [toast, setToast] = useState(false);
@@ -221,6 +225,8 @@ function HomePage({ onGoUrgent }: { onGoUrgent: () => void }) {
     if (!date) fe.date = "날짜 선택";
     if (!time) fe.time = "시간 선택";
     if (!location.trim()) fe.location = "거래 장소를 입력해주세요";
+    if (!bankAccount.trim()) fe.bankAccount = "계좌번호를 입력해주세요";
+    if (!accountHolder.trim()) fe.accountHolder = "예금주를 입력해주세요";
     setFieldErrors(fe);
     const ie = items.map((item) => (parseFloat(item.amount) || 0) <= 0 ? "금액을 입력해주세요" : "");
     setItemErrors(ie);
@@ -237,8 +243,8 @@ function HomePage({ onGoUrgent }: { onGoUrgent: () => void }) {
       return { type: item.type, amount: amountNum, rate, payment, isGift: item.isGift };
     });
     const totalPayment = savedItems.reduce((s, it) => s + it.payment, 0);
-    setSubmissions((p) => [{ id, name, phone, date, time, location, items: savedItems, totalPayment }, ...p]);
-    setName(""); setPhone(""); setDate(""); setTime(""); setLocation("");
+    setSubmissions((p) => [{ id, name, phone, date, time, location, items: savedItems, totalPayment, bankAccount, accountHolder }, ...p]);
+    setName(""); setPhone(""); setDate(""); setTime(""); setLocation(""); setBankAccount(""); setAccountHolder("");
     setItems([{ type: DEFAULT_TYPE, amount: "", isGift: false }]); setItemErrors([""]);
     setToast(true); setTimeout(() => setToast(false), 3000);
   }
@@ -301,6 +307,36 @@ function HomePage({ onGoUrgent }: { onGoUrgent: () => void }) {
               <p className="text-[12px] text-slate-400 mt-1.5 flex items-start gap-1"><span className="mt-0.5 flex-shrink-0">ℹ️</span>주정차가 가능한 장소로 입력해 주세요</p>
             </Field>
             <VoucherItems items={items} errors={itemErrors} onChange={updateItem} onToggleGift={toggleGift} onAdd={addItem} onRemove={removeItem} baseDeduct={0} />
+            <div className="rounded-2xl border border-indigo-100 bg-indigo-50/60 overflow-hidden">
+              <div className="px-4 pt-3.5 pb-1 flex items-center gap-2">
+                <svg width="14" height="14" viewBox="0 0 20 20" fill="none" className="text-indigo-400 flex-shrink-0"><rect x="1" y="5" width="18" height="12" rx="2" stroke="currentColor" strokeWidth="1.6"/><path d="M1 9h18" stroke="currentColor" strokeWidth="1.6"/></svg>
+                <span className="text-[12px] font-bold text-indigo-500 uppercase tracking-wide">입금 계좌 정보</span>
+              </div>
+              <div className="px-4 pb-4 space-y-2.5 mt-2">
+                <div>
+                  <input
+                    type="text"
+                    value={bankAccount}
+                    onChange={(e) => { setBankAccount(e.target.value); setFieldErrors((p) => ({ ...p, bankAccount: "" })); }}
+                    placeholder="은행명 + 계좌번호 (예: 국민 123-456-789012)"
+                    className={`w-full px-3 py-2.5 rounded-xl border text-[14px] text-slate-800 outline-none transition-all bg-white placeholder:text-slate-300
+                      ${fieldErrors.bankAccount ? "border-rose-300 focus:border-rose-400 focus:ring-2 focus:ring-rose-100" : "border-slate-200 focus:border-indigo-400 focus:ring-2 focus:ring-indigo-50"}`}
+                  />
+                  {fieldErrors.bankAccount && <p className="text-[11px] text-rose-500 mt-1">⚠ {fieldErrors.bankAccount}</p>}
+                </div>
+                <div>
+                  <input
+                    type="text"
+                    value={accountHolder}
+                    onChange={(e) => { setAccountHolder(e.target.value); setFieldErrors((p) => ({ ...p, accountHolder: "" })); }}
+                    placeholder="예금주"
+                    className={`w-full px-3 py-2.5 rounded-xl border text-[14px] text-slate-800 outline-none transition-all bg-white placeholder:text-slate-300
+                      ${fieldErrors.accountHolder ? "border-rose-300 focus:border-rose-400 focus:ring-2 focus:ring-rose-100" : "border-slate-200 focus:border-indigo-400 focus:ring-2 focus:ring-indigo-50"}`}
+                  />
+                  {fieldErrors.accountHolder && <p className="text-[11px] text-rose-500 mt-1">⚠ {fieldErrors.accountHolder}</p>}
+                </div>
+              </div>
+            </div>
             <button type="submit" className="w-full py-4 rounded-2xl text-white text-[15px] font-bold transition-all duration-150 active:scale-95" style={{ background: "linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%)" }}>
               예약 신청하기
             </button>
@@ -404,6 +440,21 @@ function SubmissionCard({ entry, accent }: { entry: ReservationEntry | UrgentEnt
           <p className={`text-[18px] font-black ${ac.text}`}>{formatKRW(entry.totalPayment)}</p>
         </div>
       </div>
+
+      <div className="mt-2.5 px-4 py-3 rounded-2xl bg-slate-50 border border-slate-100 space-y-1.5">
+        <div className="flex items-center gap-1.5 mb-1">
+          <svg width="12" height="12" viewBox="0 0 20 20" fill="none" className="text-slate-400"><rect x="1" y="5" width="18" height="12" rx="2" stroke="currentColor" strokeWidth="1.6"/><path d="M1 9h18" stroke="currentColor" strokeWidth="1.6"/></svg>
+          <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wide">입금 계좌 정보</span>
+        </div>
+        <div className="flex items-center justify-between">
+          <span className="text-[11px] text-slate-400">계좌번호</span>
+          <span className="text-[13px] font-semibold text-slate-700">{entry.bankAccount}</span>
+        </div>
+        <div className="flex items-center justify-between">
+          <span className="text-[11px] text-slate-400">예금주</span>
+          <span className="text-[13px] font-semibold text-slate-700">{entry.accountHolder}</span>
+        </div>
+      </div>
     </div>
   );
 }
@@ -412,8 +463,10 @@ function SubmissionCard({ entry, accent }: { entry: ReservationEntry | UrgentEnt
 function UrgentPage({ onBack }: { onBack: () => void }) {
   const [phone, setPhone] = useState("");
   const [location, setLocation] = useState("");
+  const [bankAccount, setBankAccount] = useState("");
+  const [accountHolder, setAccountHolder] = useState("");
   const [items, setItems] = useState<VoucherItem[]>([{ type: DEFAULT_TYPE, amount: "", isGift: false }]);
-  const [fieldErrors, setFieldErrors] = useState<{ phone?: string; location?: string }>({});
+  const [fieldErrors, setFieldErrors] = useState<{ phone?: string; location?: string; bankAccount?: string; accountHolder?: string }>({});
   const [itemErrors, setItemErrors] = useState<string[]>([""]);
   const [submissions, setSubmissions] = useState<UrgentEntry[]>([]);
   const [toast, setToast] = useState(false);
@@ -431,6 +484,8 @@ function UrgentPage({ onBack }: { onBack: () => void }) {
     const fe: typeof fieldErrors = {};
     if (!phone.trim()) fe.phone = "판매자 전화번호를 입력해주세요";
     if (!location.trim()) fe.location = "거래 장소를 입력해주세요";
+    if (!bankAccount.trim()) fe.bankAccount = "계좌번호를 입력해주세요";
+    if (!accountHolder.trim()) fe.accountHolder = "예금주를 입력해주세요";
     setFieldErrors(fe);
     const ie = items.map((item) => (parseFloat(item.amount) || 0) <= 0 ? "금액을 입력해주세요" : "");
     setItemErrors(ie);
@@ -447,8 +502,8 @@ function UrgentPage({ onBack }: { onBack: () => void }) {
       return { type: item.type, amount: amountNum, rate, payment, isGift: item.isGift };
     });
     const totalPayment = savedItems.reduce((s, it) => s + it.payment, 0);
-    setSubmissions((p) => [{ id, phone, location, items: savedItems, totalPayment }, ...p]);
-    setPhone(""); setLocation("");
+    setSubmissions((p) => [{ id, phone, location, items: savedItems, totalPayment, bankAccount, accountHolder }, ...p]);
+    setPhone(""); setLocation(""); setBankAccount(""); setAccountHolder("");
     setItems([{ type: DEFAULT_TYPE, amount: "", isGift: false }]); setItemErrors([""]);
     setToast(true); setTimeout(() => setToast(false), 3000);
   }
@@ -491,6 +546,36 @@ function UrgentPage({ onBack }: { onBack: () => void }) {
               <p className="text-[12px] text-slate-400 mt-1.5 flex items-start gap-1"><span className="mt-0.5 flex-shrink-0">ℹ️</span>주정차 가능한 곳으로 입력 바랍니다</p>
             </Field>
             <VoucherItems items={items} errors={itemErrors} onChange={updateItem} onToggleGift={toggleGift} onAdd={addItem} onRemove={removeItem} baseDeduct={0.01} accent="rose" />
+            <div className="rounded-2xl border border-rose-100 bg-rose-50/60 overflow-hidden">
+              <div className="px-4 pt-3.5 pb-1 flex items-center gap-2">
+                <svg width="14" height="14" viewBox="0 0 20 20" fill="none" className="text-rose-400 flex-shrink-0"><rect x="1" y="5" width="18" height="12" rx="2" stroke="currentColor" strokeWidth="1.6"/><path d="M1 9h18" stroke="currentColor" strokeWidth="1.6"/></svg>
+                <span className="text-[12px] font-bold text-rose-500 uppercase tracking-wide">입금 계좌 정보</span>
+              </div>
+              <div className="px-4 pb-4 space-y-2.5 mt-2">
+                <div>
+                  <input
+                    type="text"
+                    value={bankAccount}
+                    onChange={(e) => { setBankAccount(e.target.value); setFieldErrors((p) => ({ ...p, bankAccount: "" })); }}
+                    placeholder="은행명 + 계좌번호 (예: 국민 123-456-789012)"
+                    className={`w-full px-3 py-2.5 rounded-xl border text-[14px] text-slate-800 outline-none transition-all bg-white placeholder:text-slate-300
+                      ${fieldErrors.bankAccount ? "border-rose-300 focus:border-rose-400 focus:ring-2 focus:ring-rose-100" : "border-slate-200 focus:border-rose-400 focus:ring-2 focus:ring-rose-50"}`}
+                  />
+                  {fieldErrors.bankAccount && <p className="text-[11px] text-rose-500 mt-1">⚠ {fieldErrors.bankAccount}</p>}
+                </div>
+                <div>
+                  <input
+                    type="text"
+                    value={accountHolder}
+                    onChange={(e) => { setAccountHolder(e.target.value); setFieldErrors((p) => ({ ...p, accountHolder: "" })); }}
+                    placeholder="예금주"
+                    className={`w-full px-3 py-2.5 rounded-xl border text-[14px] text-slate-800 outline-none transition-all bg-white placeholder:text-slate-300
+                      ${fieldErrors.accountHolder ? "border-rose-300 focus:border-rose-400 focus:ring-2 focus:ring-rose-100" : "border-slate-200 focus:border-rose-400 focus:ring-2 focus:ring-rose-50"}`}
+                  />
+                  {fieldErrors.accountHolder && <p className="text-[11px] text-rose-500 mt-1">⚠ {fieldErrors.accountHolder}</p>}
+                </div>
+              </div>
+            </div>
             <button type="submit" className="w-full py-4 rounded-2xl text-white text-[15px] font-bold transition-all duration-150 active:scale-95 flex items-center justify-center gap-2" style={{ background: "linear-gradient(135deg, #f43f5e 0%, #e11d48 100%)" }}>
               <span>🚨</span> 긴급 판매 신청하기
             </button>
