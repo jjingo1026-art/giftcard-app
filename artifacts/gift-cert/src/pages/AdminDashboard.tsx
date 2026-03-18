@@ -123,7 +123,8 @@ export default function AdminDashboard() {
           ))}
         </div>
 
-        {/* FullCalendar */}
+        {/* 예약 캘린더 */}
+        <h2 className="text-[15px] font-bold text-slate-700">📅 예약 캘린더</h2>
         <div className="bg-white rounded-2xl border border-slate-100 shadow-sm p-3 overflow-hidden">
           <style>{`
             .fc { font-size: 13px; }
@@ -156,9 +157,10 @@ export default function AdminDashboard() {
         </div>
 
         <hr className="border-slate-100" />
-        <p className="text-[13px] font-bold text-slate-500">
-          예약 리스트 {dateFilter && <span className="text-indigo-500">— {dateFilter}</span>}
-        </p>
+        <h2 className="text-[15px] font-bold text-slate-700">
+          📋 선택 날짜 예약 리스트
+          {dateFilter && <span className="text-[13px] text-indigo-500 font-normal ml-2">— {dateFilter}</span>}
+        </h2>
 
         {error && <div className="py-8 text-center text-rose-500 text-[13px]">{error}</div>}
         {loading && <div className="py-10 text-center text-slate-300 text-[13px]">불러오는 중...</div>}
