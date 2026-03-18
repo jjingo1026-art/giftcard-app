@@ -61,10 +61,9 @@ export default function AdminDashboard() {
     .filter((r) => r.date)
     .map((r) => ({
       id: String(r.id),
-      title: `${r.name ?? r.phone} (${formatKRW(r.totalPayment)})`,
+      title: r.name ?? r.phone,
       start: r.date,
-      backgroundColor: r.status === "completed" ? "green" : r.status === "assigned" ? "orange" : "blue",
-      borderColor:     r.status === "completed" ? "green" : r.status === "assigned" ? "orange" : "blue",
+      color: r.status === "completed" ? "green" : r.status === "assigned" ? "orange" : "blue",
     }));
 
   async function filter(date = dateFilter) {
