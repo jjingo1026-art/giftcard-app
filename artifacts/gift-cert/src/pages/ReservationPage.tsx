@@ -200,23 +200,32 @@ export default function ReservationPage() {
                         className="w-7 h-7 flex items-center justify-center rounded-xl bg-rose-100 text-rose-400 text-[13px]">✕</button>
                     </div>
                   )}
-                  <div className="flex gap-2 items-center">
-                    <input
-                      type="number" value={it.amount} min="0" step="10000"
-                      onChange={e => {
-                        setItems(p => p.map((x, j) => j === i ? { ...x, amount: e.target.value } : x));
-                        setErrors(p => { const q = { ...p }; delete q[`item${i}`]; return q; });
-                      }}
-                      placeholder="금액 입력 (원)"
-                      className={`flex-1 px-3 py-2.5 rounded-xl border text-[14px] outline-none ${errors[`item${i}`] ? "border-rose-300 bg-rose-50" : "border-slate-200 bg-white"}`}
-                    />
-                    <label className="flex items-center gap-1.5 cursor-pointer px-3 py-2.5 rounded-xl border border-slate-200 bg-white flex-shrink-0"
-                      onClick={() => setItems(p => p.map((x, j) => j === i ? { ...x, isGift: !x.isGift } : x))}>
-                      <div className={`w-4 h-4 rounded border-2 flex items-center justify-center ${it.isGift ? "bg-violet-500 border-violet-500" : "border-slate-300"}`}>
-                        {it.isGift && <svg width="9" height="8" viewBox="0 0 11 9" fill="none"><path d="M1 4l3 3 6-6" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>}
+                  <div className="flex gap-2 items-start">
+                    <div className="flex-1 space-y-2">
+                      <div className="space-y-1">
+                        <label className="block text-[11px] font-semibold text-slate-400">구분</label>
+                        <select
+                          value={it.isGift ? "증정" : "일반"}
+                          onChange={e => setItems(p => p.map((x, j) => j === i ? { ...x, isGift: e.target.value === "증정" } : x))}
+                          className="w-full px-3 py-2.5 rounded-xl border border-slate-200 bg-white text-[14px] text-slate-700 outline-none"
+                        >
+                          <option value="일반">일반</option>
+                          <option value="증정">증정용</option>
+                        </select>
                       </div>
-                      <span className={`text-[12px] font-semibold ${it.isGift ? "text-violet-600" : "text-slate-400"}`}>증정용</span>
-                    </label>
+                      <div className="space-y-1">
+                        <label className="block text-[11px] font-semibold text-slate-400">금액</label>
+                        <input
+                          type="number" value={it.amount} min="0" step="10000"
+                          onChange={e => {
+                            setItems(p => p.map((x, j) => j === i ? { ...x, amount: e.target.value } : x));
+                            setErrors(p => { const q = { ...p }; delete q[`item${i}`]; return q; });
+                          }}
+                          placeholder="금액 입력 (원)"
+                          className={`w-full px-3 py-2.5 rounded-xl border text-[14px] outline-none ${errors[`item${i}`] ? "border-rose-300 bg-rose-50" : "border-slate-200 bg-white"}`}
+                        />
+                      </div>
+                    </div>
                   </div>
                   {errors[`item${i}`] && <p className="text-[11px] text-rose-500">⚠ {errors[`item${i}`]}</p>}
                   {n > 0 && (
