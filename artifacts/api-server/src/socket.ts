@@ -14,7 +14,6 @@ const NAME_MAP: Record<string, string> = {
 
 export function initSocket(httpServer: HttpServer) {
   const io = new Server(httpServer, {
-    path: "/api/socket.io",
     cors: { origin: "*" },
   });
 

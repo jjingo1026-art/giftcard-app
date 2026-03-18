@@ -40,7 +40,7 @@ export default function AdminChat() {
       .then((data) => { setMessages(data); scrollToBottom(); })
       .catch(() => {});
 
-    const socket = io({ path: "/api/socket.io", transports: ["websocket", "polling"] });
+    const socket = io({ transports: ["websocket", "polling"] });
     socketRef.current = socket;
 
     socket.on("connect", () => {
