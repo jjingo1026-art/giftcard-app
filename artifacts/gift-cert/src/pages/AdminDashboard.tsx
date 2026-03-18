@@ -103,12 +103,20 @@ export default function AdminDashboard() {
             <h1 className="text-[16px] font-bold text-slate-800">관리자 대시보드</h1>
             {allEntries.length > 0 && <p className="text-[11px] text-slate-400 mt-0.5">총 {allEntries.length}건</p>}
           </div>
-          <button
-            onClick={() => { clearAdminToken(); navigate("/admin/login"); }}
-            className="text-[12px] text-slate-400 hover:text-rose-500 font-semibold transition-colors px-3 py-1.5 rounded-xl hover:bg-rose-50"
-          >
-            로그아웃
-          </button>
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => { location.href = "/admin/staff/view.html"; }}
+              className="text-[12px] text-indigo-500 hover:text-indigo-700 font-semibold transition-colors px-3 py-1.5 rounded-xl hover:bg-indigo-50"
+            >
+              👨‍🔧 담당자별
+            </button>
+            <button
+              onClick={() => { clearAdminToken(); navigate("/admin/login"); }}
+              className="text-[12px] text-slate-400 hover:text-rose-500 font-semibold transition-colors px-3 py-1.5 rounded-xl hover:bg-rose-50"
+            >
+              로그아웃
+            </button>
+          </div>
         </div>
       </header>
 

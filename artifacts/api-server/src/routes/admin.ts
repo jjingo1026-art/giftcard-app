@@ -118,6 +118,27 @@ router.post("/staff/register", (req, res) => {
   res.json({ success: true, message: "신청 완료 (승인 대기)" });
 });
 
+// 관리자용: 매입담당자별 예약 조회 (assigned / completed)
+router.get("/staff/reservations", requireAuth, async (req, res) => {
+  const rows = await db
+    .select()
+    .from(reservationsTable)
+    .orderBy(desc(reservationsTable.createdAt));
+
+  const grouped = staff
+    .filter((s) => s.status === "approved")
+    .map((s) => {
+      const mine = rows.filter((r) => r.assignedStaffId === s.id);
+      return {
+        staff: { id: s.id, name: s.name, phone: s.phone },
+        assigned:  mine.filter((r) => r.status === "assigned"),
+        completed: mine.filter((r) => r.status === "completed"),
+      };
+    });
+
+  res.json(grouped);
+});
+
 router.get("/staff/my-reservations", requireStaffAuth, async (req, res) => {
   const staffId = (req as any).staffId as number;
   const rows = await db
