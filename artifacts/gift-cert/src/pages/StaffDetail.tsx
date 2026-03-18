@@ -27,8 +27,17 @@ export default function StaffDetail() {
     if (!token) { location.href = "/staff/login.html"; return; }
     if (!reservationId) return;
     loadChat();
-    const interval = setInterval(loadChat, 3000);
-    return () => clearInterval(interval);
+    const es = new EventSource(`/api/admin/chat/stream/${reservationId}`);
+    es.onmessage = (e) => {
+      const msg = JSON.parse(e.data);
+      setChatMessages((prev) => {
+        if (prev.some((m) => m.id === msg.id)) return prev;
+        const next = [...prev, msg];
+        setTimeout(() => { if (chatBoxRef.current) chatBoxRef.current.scrollTop = chatBoxRef.current.scrollHeight; }, 50);
+        return next;
+      });
+    };
+    return () => es.close();
   }, []);
 
   useEffect(() => {

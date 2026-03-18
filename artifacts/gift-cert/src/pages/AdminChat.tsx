@@ -54,8 +54,17 @@ export default function AdminChat() {
 
   useEffect(() => {
     loadChat();
-    const interval = setInterval(loadChat, 2000);
-    return () => clearInterval(interval);
+    const es = new EventSource(`/api/admin/chat/stream/${reservationId}`);
+    es.onmessage = (e) => {
+      const msg = JSON.parse(e.data);
+      setMessages((prev) => {
+        if (prev.some((m) => m.id === msg.id)) return prev;
+        const next = [...prev, msg];
+        setTimeout(() => { if (chatBoxRef.current) chatBoxRef.current.scrollTop = chatBoxRef.current.scrollHeight; }, 50);
+        return next;
+      });
+    };
+    return () => es.close();
   }, []);
 
   if (!reservationId) return (

@@ -16,6 +16,16 @@ const staff = [
   { id: 2, name: "김철수", phone: "010-2222-3333", password: "1234", status: "approved" },
 ];
 
+// SSE: reservationId → 연결된 응답 객체 집합
+const sseClients = new Map<number, Set<any>>();
+
+function broadcastChat(reservationId: number, msg: object) {
+  const clients = sseClients.get(reservationId);
+  if (!clients) return;
+  const payload = `data: ${JSON.stringify(msg)}\n\n`;
+  clients.forEach((res) => { try { res.write(payload); } catch {} });
+}
+
 function requireStaffAuth(req: any, res: any, next: any) {
   const auth = req.headers.authorization ?? "";
   const token = auth.startsWith("Bearer ") ? auth.slice(7) : "";
@@ -299,6 +309,22 @@ function resolveAuth(req: any): { ok: boolean; senderType: "admin" | "staff"; se
 
 const NAME_MAP: Record<string, string> = { customer: "고객", admin: "관리자", staff: "담당자", system: "시스템" };
 
+// SSE 스트림 (인증 불필요 — reservationId로 격리)
+router.get("/chat/stream/:reservationId", (req, res) => {
+  const reservationId = Number(req.params.reservationId);
+  res.setHeader("Content-Type", "text/event-stream");
+  res.setHeader("Cache-Control", "no-cache");
+  res.setHeader("Connection", "keep-alive");
+  res.flushHeaders();
+
+  if (!sseClients.has(reservationId)) sseClients.set(reservationId, new Set());
+  sseClients.get(reservationId)!.add(res);
+
+  req.on("close", () => {
+    sseClients.get(reservationId)?.delete(res);
+  });
+});
+
 router.get("/chat/:reservationId", async (req, res) => {
   const reservationId = Number(req.params.reservationId);
   const rows = await db
@@ -320,6 +346,8 @@ router.post("/chat/send", async (req, res) => {
     senderName: senderName ?? NAME_MAP[sender] ?? sender,
     message: message.trim(),
   }).returning();
+  const msgOut = { ...inserted, time: inserted.time.toISOString() };
+  broadcastChat(reservationId, msgOut);
   res.json({ success: true, id: inserted.id });
 });
 
