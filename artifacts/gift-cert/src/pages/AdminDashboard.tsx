@@ -54,7 +54,7 @@ export default function AdminDashboard() {
     completed: allEntries.filter((r) => r.status === "completed").length,
   };
 
-  async function loadReservations() {
+  async function filter() {
     setLoading(true);
     setError("");
     try {
@@ -113,13 +113,13 @@ export default function AdminDashboard() {
         <div className="flex gap-2">
           <input
             type="date"
-            id="dateFilter"
+            id="calendar"
             value={dateFilter}
             onChange={(e) => setDateFilter(e.target.value)}
             className="flex-1 px-3 py-2.5 rounded-xl border border-slate-200 text-[14px] text-slate-700 outline-none focus:border-indigo-400 bg-white"
           />
           <button
-            onClick={loadReservations}
+            onClick={filter}
             disabled={loading}
             className="px-5 py-2.5 rounded-xl text-white text-[14px] font-bold transition-all active:scale-95 disabled:opacity-60 whitespace-nowrap"
             style={{ background: "linear-gradient(135deg,#6366f1,#8b5cf6)" }}
