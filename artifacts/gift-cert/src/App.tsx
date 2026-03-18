@@ -243,18 +243,25 @@ function HomePage({ onGoUrgent }: { onGoUrgent: () => void }) {
     return Object.keys(fe).length === 0 && ie.every((e) => !e);
   }
 
-  function handleSubmit(e: React.FormEvent) {
+  async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     if (!validate()) return;
-    const id = getNextId();
-    setCounter(id);
     const savedItems: SavedItem[] = items.map((item) => {
       const { amountNum, rate, payment } = computeItem(item, 0);
       return { type: item.type, amount: amountNum, rate, payment, isGift: item.isGift };
     });
     const totalPayment = savedItems.reduce((s, it) => s + it.payment, 0);
-    const entry = { id, name, phone, date, time, location, items: savedItems, totalPayment, bankName, accountNumber, accountHolder };
-    setSubmissions((p) => [entry, ...p]);
+    let id = getNextId();
+    try {
+      const res = await fetch("/api/reservations", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ kind: "reservation", name, phone, date, time, location, items: savedItems, totalPayment, bankName, accountNumber, accountHolder }),
+      });
+      if (res.ok) { const data = await res.json(); id = data.id; }
+    } catch {}
+    setCounter(id);
+    setSubmissions((p) => [{ id, name, phone, date, time, location, items: savedItems, totalPayment, bankName, accountNumber, accountHolder }, ...p]);
     saveEntry({ kind: "reservation", id, createdAt: new Date().toISOString(), name, phone, date, time, location, items: savedItems, totalPayment, bankName, accountNumber, accountHolder });
     setName(""); setPhone(""); setDate(""); setTime(""); setLocation(""); setAccountNumber(""); setAccountHolder("");
     setItems([{ type: DEFAULT_TYPE, amount: "", isGift: false }]); setItemErrors([""]);
@@ -519,16 +526,24 @@ function UrgentPage({ onBack }: { onBack: () => void }) {
     return Object.keys(fe).length === 0 && ie.every((e) => !e);
   }
 
-  function handleSubmit(e: React.FormEvent) {
+  async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     if (!validate()) return;
-    const id = getNextId();
-    setCounter(id);
     const savedItems: SavedItem[] = items.map((item) => {
       const { amountNum, rate, payment } = computeItem(item, 0.01);
       return { type: item.type, amount: amountNum, rate, payment, isGift: item.isGift };
     });
     const totalPayment = savedItems.reduce((s, it) => s + it.payment, 0);
+    let id = getNextId();
+    try {
+      const res = await fetch("/api/reservations", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ kind: "urgent", phone, location, items: savedItems, totalPayment, bankName, accountNumber, accountHolder }),
+      });
+      if (res.ok) { const data = await res.json(); id = data.id; }
+    } catch {}
+    setCounter(id);
     setSubmissions((p) => [{ id, phone, location, items: savedItems, totalPayment, bankName, accountNumber, accountHolder }, ...p]);
     saveEntry({ kind: "urgent", id, createdAt: new Date().toISOString(), phone, location, items: savedItems, totalPayment, bankName, accountNumber, accountHolder });
     setPhone(""); setLocation(""); setAccountNumber(""); setAccountHolder("");
