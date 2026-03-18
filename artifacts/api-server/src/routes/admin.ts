@@ -14,10 +14,10 @@ const staffTokens = new Map<string, { staffId: number; exp: number }>();
 interface Message {
   id: number;
   reservationId: number;
-  senderType: "admin" | "staff";
+  sender: "admin" | "staff" | "customer";
   senderName: string;
-  text: string;
-  createdAt: string;
+  message: string;
+  time: string;
 }
 const messages = new Map<number, Message[]>(); // reservationId → messages
 let msgSeq = 1;
@@ -213,15 +213,15 @@ router.post("/messages/:reservationId", (req, res) => {
   const auth = resolveAuth(req);
   if (!auth.ok) { res.status(401).json({ error: "인증이 필요합니다." }); return; }
   const reservationId = parseInt(req.params.reservationId);
-  const { text } = req.body as { text?: string };
-  if (!text?.trim()) { res.status(400).json({ error: "메시지를 입력해주세요." }); return; }
+  const { message } = req.body as { message?: string };
+  if (!message?.trim()) { res.status(400).json({ error: "메시지를 입력해주세요." }); return; }
   const msg: Message = {
     id: msgSeq++,
     reservationId,
-    senderType: auth.senderType,
+    sender: auth.senderType,
     senderName: auth.senderName,
-    text: text.trim(),
-    createdAt: new Date().toISOString(),
+    message: message.trim(),
+    time: new Date().toISOString(),
   };
   const room = messages.get(reservationId) ?? [];
   room.push(msg);
