@@ -11,6 +11,17 @@ const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD ?? "1234";
 const tokens = new Map<string, number>();
 const staffTokens = new Map<string, { staffId: number; exp: number }>();
 
+interface Message {
+  id: number;
+  reservationId: number;
+  senderType: "admin" | "staff";
+  senderName: string;
+  text: string;
+  createdAt: string;
+}
+const messages = new Map<number, Message[]>(); // reservationId → messages
+let msgSeq = 1;
+
 const staff = [
   { id: 1, name: "홍길동", phone: "010-1111-2222", password: "1234", status: "approved" },
   { id: 2, name: "김철수", phone: "010-3333-4444", password: "1234", status: "pending"  },
@@ -167,6 +178,55 @@ router.post("/reservations/:id/assign", requireAuth, async (req, res) => {
     .set({ assignedStaffId: member.id, assignedTo: member.name, status: "assigned" })
     .where(eq(reservationsTable.id, id));
   res.json({ success: true });
+});
+
+// ── 채팅: 예약 1개 = 채팅방 1개 ──────────────────────────────────────────────
+
+function resolveAuth(req: any): { ok: boolean; senderType: "admin" | "staff"; senderName: string } {
+  const auth = req.headers.authorization ?? "";
+  const token = auth.startsWith("Bearer ") ? auth.slice(7) : "";
+
+  // 관리자 토큰 확인
+  const adminExp = tokens.get(token);
+  if (adminExp && Date.now() <= adminExp) {
+    return { ok: true, senderType: "admin", senderName: "관리자" };
+  }
+
+  // 직원 토큰 확인
+  const staffEntry = staffTokens.get(token);
+  if (staffEntry && Date.now() <= staffEntry.exp) {
+    const member = staff.find((s) => s.id === staffEntry.staffId);
+    return { ok: true, senderType: "staff", senderName: member?.name ?? "직원" };
+  }
+
+  return { ok: false, senderType: "staff", senderName: "" };
+}
+
+router.get("/messages/:reservationId", (req, res) => {
+  const auth = resolveAuth(req);
+  if (!auth.ok) { res.status(401).json({ error: "인증이 필요합니다." }); return; }
+  const reservationId = parseInt(req.params.reservationId);
+  res.json(messages.get(reservationId) ?? []);
+});
+
+router.post("/messages/:reservationId", (req, res) => {
+  const auth = resolveAuth(req);
+  if (!auth.ok) { res.status(401).json({ error: "인증이 필요합니다." }); return; }
+  const reservationId = parseInt(req.params.reservationId);
+  const { text } = req.body as { text?: string };
+  if (!text?.trim()) { res.status(400).json({ error: "메시지를 입력해주세요." }); return; }
+  const msg: Message = {
+    id: msgSeq++,
+    reservationId,
+    senderType: auth.senderType,
+    senderName: auth.senderName,
+    text: text.trim(),
+    createdAt: new Date().toISOString(),
+  };
+  const room = messages.get(reservationId) ?? [];
+  room.push(msg);
+  messages.set(reservationId, room);
+  res.json(msg);
 });
 
 export default router;
