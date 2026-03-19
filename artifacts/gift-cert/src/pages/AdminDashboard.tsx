@@ -347,19 +347,24 @@ export default function AdminDashboard() {
 
             return (
               <div className="mt-3 space-y-2">
-                <div className="flex items-center justify-between px-1">
-                  <p className="text-[14px] font-black text-slate-800">📅 {formatDateKo(dateFilter)}</p>
-                  <button
-                    onClick={() => { setDateFilter(""); setEntries(allEntries); setShowUnassignedSlots(false); setTimeSlots([]); setExpandedSlot(null); setSlotDetail([]); }}
-                    className="text-[11px] text-slate-400 hover:text-rose-500 font-medium"
-                  >전체 보기</button>
-                </div>
-                <div className="grid grid-cols-3 gap-2">
-                  <div className="text-center bg-slate-50 rounded-2xl py-3">
-                    <p className="text-[10px] text-slate-400 font-semibold mb-0.5">총</p>
-                    <p className="text-[20px] font-black text-slate-800">{dateTotal}</p>
+                <div className="bg-white rounded-2xl border border-slate-100 shadow-sm overflow-hidden">
+                  {/* 헤더 */}
+                  <div className="flex items-center justify-between px-4 py-3 border-b border-slate-50">
+                    <p className="text-[15px] font-black text-slate-800">📅 {formatDateKo(dateFilter)}</p>
+                    <button
+                      onClick={() => { setDateFilter(""); setEntries(allEntries); setShowUnassignedSlots(false); setTimeSlots([]); setExpandedSlot(null); setSlotDetail([]); }}
+                      className="text-[11px] text-slate-400 hover:text-rose-500 font-medium transition-colors"
+                    >전체 보기</button>
                   </div>
+                  {/* 총 */}
+                  <div className="flex items-center justify-between px-4 py-2.5 border-b border-slate-50">
+                    <span className="text-[13px] text-slate-500 font-medium">총</span>
+                    <span className="text-[14px] font-black text-slate-800">{dateTotal}건</span>
+                  </div>
+                  {/* 🔴 미배정 — 클릭 */}
                   <button
+                    className="w-full flex items-center justify-between px-4 py-2.5 border-b border-slate-50 transition-colors active:scale-[0.99]"
+                    style={{ background: showUnassignedSlots ? "#fff1f2" : "transparent" }}
                     onClick={async () => {
                       const next = !showUnassignedSlots;
                       setShowUnassignedSlots(next);
@@ -374,15 +379,17 @@ export default function AdminDashboard() {
                         } finally { setSlotsLoading(false); }
                       }
                     }}
-                    className="text-center bg-rose-50 rounded-2xl py-3 transition-all active:scale-95"
-                    style={{ border: showUnassignedSlots ? "2px solid #fca5a5" : "2px solid transparent" }}
                   >
-                    <p className="text-[10px] text-rose-400 font-semibold mb-0.5">미배정</p>
-                    <p className="text-[20px] font-black text-rose-600">{dateUnassignedCount}</p>
+                    <span className="text-[13px] font-bold text-rose-500 flex items-center gap-1.5">🔴 미배정</span>
+                    <div className="flex items-center gap-2">
+                      <span className="text-[14px] font-black text-rose-600">{dateUnassignedCount}건</span>
+                      <span className="text-[11px] text-slate-300">{showUnassignedSlots ? "▲" : "▼"}</span>
+                    </div>
                   </button>
-                  <div className="text-center bg-blue-50 rounded-2xl py-3">
-                    <p className="text-[10px] text-blue-400 font-semibold mb-0.5">배정</p>
-                    <p className="text-[20px] font-black text-blue-600">{dateAssigned}</p>
+                  {/* 배정 */}
+                  <div className="flex items-center justify-between px-4 py-2.5">
+                    <span className="text-[13px] text-slate-500 font-medium">배정</span>
+                    <span className="text-[14px] font-black text-blue-600">{dateAssigned}건</span>
                   </div>
                 </div>
                 {showUnassignedSlots && (
