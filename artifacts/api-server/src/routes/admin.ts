@@ -236,13 +236,30 @@ router.post("/reservations/:id/complete", requireStaffAuth, async (req, res) => 
   res.json({ success: true });
 });
 
+// 담당자용: 본인 예약 조회
+// GET /staff/my-reservations?status=pending|completed|cancelled
 router.get("/staff/my-reservations", requireStaffAuth, async (req, res) => {
   const staffId = (req as any).staffId as number;
-  const rows = await db
-    .select()
-    .from(reservationsTable)
-    .orderBy(desc(reservationsTable.createdAt));
-  res.json(rows.filter((r) => r.assignedStaffId === staffId));
+  const { status } = req.query as { status?: "pending" | "assigned" | "completed" | "cancelled" };
+
+  const validStatuses = ["pending", "assigned", "completed", "cancelled"];
+  const conditions: any[] = [eq(reservationsTable.assignedStaffId, staffId)];
+  if (status && validStatuses.includes(status)) {
+    conditions.push(eq(reservationsTable.status, status));
+  }
+
+  try {
+    const rows = await db
+      .select()
+      .from(reservationsTable)
+      .where(and(...conditions))
+      .orderBy(desc(reservationsTable.createdAt));
+
+    res.json(rows);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Failed to fetch reservations" });
+  }
 });
 
 router.get("/dashboard", requireAuth, requireAdmin, async (req, res) => {
