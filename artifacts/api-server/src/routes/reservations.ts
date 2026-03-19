@@ -1,7 +1,7 @@
 import { Router, type IRouter } from "express";
 import { db } from "@workspace/db";
 import { reservationsTable } from "@workspace/db/schema";
-import { eq } from "drizzle-orm";
+import { eq, and, not } from "drizzle-orm";
 
 const normalizePhone = (phone: string) => phone.replace(/[^0-9]/g, "");
 
@@ -110,7 +110,12 @@ router.post("/", async (req, res) => {
   const exists = await db
     .select()
     .from(reservationsTable)
-    .where(eq(reservationsTable.phone, normalizedPhone));
+    .where(
+      and(
+        eq(reservationsTable.phone, normalizedPhone),
+        not(eq(reservationsTable.status, "cancelled"))
+      )
+    );
 
   if (exists.length > 0) {
     res.status(400).json({ error: "이미 예약된 번호입니다" });
