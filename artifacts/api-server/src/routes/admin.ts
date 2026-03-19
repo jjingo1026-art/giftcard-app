@@ -223,9 +223,10 @@ router.get("/staff/my-reservations", requireStaffAuth, async (req, res) => {
 const isValidDate = (d: string) => /^\d{4}-\d{2}-\d{2}$/.test(d);
 
 router.get("/reservations", requireAuth, requireAdmin, async (req, res) => {
-  const { date, status, page = "1", limit = "20" } = req.query as {
+  const { date, status, staffId, page = "1", limit = "20" } = req.query as {
     date?: string;
     status?: string;
+    staffId?: string;
     page?: string;
     limit?: string;
   };
@@ -250,6 +251,10 @@ router.get("/reservations", requireAuth, requireAdmin, async (req, res) => {
 
   if (status) {
     query = query.where(eq(reservationsTable.status, status));
+  }
+
+  if (staffId) {
+    query = query.where(eq(reservationsTable.assignedStaffId, parseInt(staffId)));
   }
 
   const rows = await query;
