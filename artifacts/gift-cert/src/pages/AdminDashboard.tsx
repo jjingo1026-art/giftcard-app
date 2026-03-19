@@ -59,7 +59,7 @@ export default function AdminDashboard() {
   const [selectedStaff, setSelectedStaff] = useState<Record<number, number>>({});
   const [assigning, setAssigning] = useState<number | null>(null);
   const [showUnassignedSlots, setShowUnassignedSlots] = useState(false);
-  const [calendarData, setCalendarData] = useState<{ date: string; total: number; unassigned: number; assigned: number }[]>([]);
+  const [calendarData, setCalendarData] = useState<{ date: string; total: number; unassigned: number; assigned: number; urgent: number }[]>([]);
   const [timeSlots, setTimeSlots] = useState<{ time: string | null; count: number }[]>([]);
   const [slotsLoading, setSlotsLoading] = useState(false);
   const [expandedSlot, setExpandedSlot] = useState<string | null>(null);
@@ -138,9 +138,13 @@ export default function AdminDashboard() {
   // 캘린더 이벤트 — 서버 집계 우선, 없으면 allEntries로 fallback
   const calendarEvents = calendarData.length > 0
     ? calendarData.map((d) => ({
-        title: d.unassigned > 0 ? `총 ${d.total}건 / 미배정 ${d.unassigned}` : `${d.total}건`,
+        title: d.urgent > 0
+          ? `🚨${d.urgent} / 미배정 ${d.unassigned}`
+          : d.unassigned > 0
+            ? `총 ${d.total}건 / 미배정 ${d.unassigned}`
+            : `${d.total}건`,
         start: d.date!,
-        color: d.unassigned > 0 ? "#ef4444" : "#6366f1",
+        color: d.urgent > 0 ? "#dc2626" : d.unassigned > 0 ? "#ef4444" : "#6366f1",
       }))
     : (() => {
         const countByDate = allEntries.reduce<Record<string, number>>((acc, r) => {
@@ -338,6 +342,8 @@ export default function AdminDashboard() {
             const dateTotal    = dayEntries.length;
             const dateUnassignedCount = dayUnassigned.length;
             const dateAssigned = dayEntries.filter((r) => r.status === "assigned").length;
+            const calDay = calendarData.find((d) => d.date === dateFilter);
+            const dateUrgent = calDay?.urgent ?? dayUnassigned.filter((r) => r.isUrgent).length;
             const slotMap: Record<string, number> = {};
             dayUnassigned.forEach((r) => {
               const t = r.time ?? "시간 미정";
@@ -361,6 +367,13 @@ export default function AdminDashboard() {
                     <span className="text-[13px] text-slate-500 font-medium">총</span>
                     <span className="text-[14px] font-black text-slate-800">{dateTotal}건</span>
                   </div>
+                  {/* 🚨 긴급 미배정 (0건이면 숨김) */}
+                  {dateUrgent > 0 && (
+                    <div className="flex items-center justify-between px-4 py-2.5 border-b border-slate-50" style={{ background: "#fff1f2" }}>
+                      <span className="text-[13px] font-bold text-red-600 flex items-center gap-1.5">🚨 긴급 미배정</span>
+                      <span className="text-[14px] font-black text-red-600">{dateUrgent}건</span>
+                    </div>
+                  )}
                   {/* 🔴 미배정 — 클릭 (0건이면 숨김) */}
                   {dateUnassignedCount > 0 && <button
                     className="w-full flex items-center justify-between px-4 py-2.5 border-b border-slate-50 transition-colors active:scale-[0.99]"

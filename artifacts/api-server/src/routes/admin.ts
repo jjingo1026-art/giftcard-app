@@ -347,6 +347,7 @@ router.get("/reservations/calendar", requireAuth, requireAdmin, async (_req, res
         total:      sql<number>`COUNT(*)`,
         unassigned: sql<number>`COUNT(*) FILTER (WHERE ${reservationsTable.assignedStaffId} IS NULL)`,
         assigned:   sql<number>`COUNT(*) FILTER (WHERE ${reservationsTable.assignedStaffId} IS NOT NULL)`,
+        urgent:     sql<number>`COUNT(*) FILTER (WHERE ${reservationsTable.isUrgent} = true AND ${reservationsTable.assignedStaffId} IS NULL)`,
       })
       .from(reservationsTable)
       .where(sql`${reservationsTable.date} IS NOT NULL`)
