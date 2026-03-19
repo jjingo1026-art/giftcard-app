@@ -61,6 +61,8 @@ export default function AdminDashboard() {
   const [assigning, setAssigning] = useState<number | null>(null);
   const [calendarData, setCalendarData] = useState<{ date: string; total: number; unassigned: number; assigned: number; urgent: number }[]>([]);
   const [showTodayList, setShowTodayList] = useState(false);
+  const [showCompletedSearch, setShowCompletedSearch] = useState(false);
+  const [completedQuery, setCompletedQuery] = useState("");
 
   const token = getAdminToken();
   if (!token) { navigate("/admin/login"); return null; }
@@ -229,23 +231,23 @@ export default function AdminDashboard() {
         {/* 통계 */}
         <div className="grid grid-cols-3 gap-2">
           {[
-            { label: "전체 예약",   id: "total",     value: stats.total,     color: "text-slate-700",   clickable: false },
-            { label: "오늘 예약",   id: "today",     value: stats.today,     color: "text-indigo-600",  clickable: true  },
-            { label: "담당자 배정", id: "assigned",  value: stats.assigned,  color: "text-blue-600",    clickable: false },
-            { label: "처리 완료",   id: "completed", value: stats.completed, color: "text-emerald-600", clickable: false },
-            { label: "취소",        id: "cancelled", value: stats.cancelled, color: "text-slate-400",   clickable: false },
-          ].map(({ label, id, value, color, clickable }) => (
+            { label: "전체 예약",   id: "total",     value: stats.total,     color: "text-slate-700",   onClick: undefined as (() => void) | undefined,         active: false },
+            { label: "오늘 예약",   id: "today",     value: stats.today,     color: "text-indigo-600",  onClick: () => { setShowTodayList((p) => !p); setShowCompletedSearch(false); }, active: showTodayList },
+            { label: "담당자 배정", id: "assigned",  value: stats.assigned,  color: "text-blue-600",    onClick: undefined,                                                             active: false },
+            { label: "처리 완료",   id: "completed", value: stats.completed, color: "text-emerald-600", onClick: () => { setShowCompletedSearch((p) => !p); setShowTodayList(false); setCompletedQuery(""); }, active: showCompletedSearch },
+            { label: "취소",        id: "cancelled", value: stats.cancelled, color: "text-slate-400",   onClick: undefined,                                                             active: false },
+          ].map(({ label, id, value, color, onClick, active }) => (
             <div
               key={id}
-              onClick={clickable ? () => setShowTodayList((p) => !p) : undefined}
+              onClick={onClick}
               className={`bg-white rounded-2xl border shadow-sm px-4 py-3 transition-all
-                ${clickable
-                  ? showTodayList && id === "today"
-                    ? "border-indigo-300 bg-indigo-50 cursor-pointer"
-                    : "border-slate-100 cursor-pointer hover:border-indigo-200 hover:bg-indigo-50/40 active:scale-[0.98]"
+                ${onClick
+                  ? active
+                    ? "border-emerald-300 bg-emerald-50 cursor-pointer"
+                    : "border-slate-100 cursor-pointer hover:border-slate-200 hover:bg-slate-50/60 active:scale-[0.98]"
                   : "border-slate-100"}`}
             >
-              <p className="text-[11px] text-slate-400 font-medium">{label}{clickable && <span className="ml-1 text-indigo-300">{showTodayList ? "▲" : "▼"}</span>}</p>
+              <p className="text-[11px] text-slate-400 font-medium">{label}{onClick && <span className="ml-1 text-slate-300">{active ? "▲" : "▼"}</span>}</p>
               <p id={id} className={`text-[24px] font-black mt-0.5 ${color}`}>{value}</p>
             </div>
           ))}
@@ -275,6 +277,89 @@ export default function AdminDashboard() {
             </div>
           </>
         )}
+
+        {/* 처리완료 고객 검색 (캘린더 위) */}
+        {showCompletedSearch && (() => {
+          const q = completedQuery.trim().toLowerCase();
+          const completedAll = allEntries.filter((r) => r.status === "completed");
+          const results = q
+            ? completedAll.filter((r) =>
+                (r.name ?? "").toLowerCase().includes(q) ||
+                r.phone.replace(/-/g, "").includes(q.replace(/-/g, ""))
+              )
+            : [];
+          const totalAmount = results.reduce((s, r) => s + r.totalPayment, 0);
+
+          return (
+            <div className="space-y-2">
+              {/* 검색 헤더 */}
+              <div className="flex items-center justify-between px-1">
+                <p className="text-[14px] font-bold text-emerald-700 flex items-center gap-1.5">
+                  ✅ 처리완료 고객 검색
+                </p>
+                <button
+                  onClick={() => { setShowCompletedSearch(false); setCompletedQuery(""); }}
+                  className="text-[11px] text-slate-400 hover:text-rose-500 font-medium transition-colors"
+                >닫기 ✕</button>
+              </div>
+
+              {/* 검색 입력 */}
+              <div className="relative">
+                <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-300 text-[15px]">🔍</span>
+                <input
+                  type="text"
+                  value={completedQuery}
+                  onChange={(e) => setCompletedQuery(e.target.value)}
+                  placeholder="고객 이름 또는 전화번호 검색"
+                  className="w-full pl-9 pr-4 py-3 rounded-2xl border border-emerald-200 text-[14px] text-slate-800 outline-none focus:border-emerald-400 focus:ring-2 focus:ring-emerald-50 bg-white placeholder:text-slate-300 transition-all"
+                />
+              </div>
+
+              {/* 결과 */}
+              {q.length > 0 && (
+                results.length === 0 ? (
+                  <div className="bg-white rounded-2xl border border-slate-100 shadow-sm px-4 py-6 text-center text-[13px] text-slate-400">
+                    "{completedQuery}" 검색 결과 없음
+                  </div>
+                ) : (
+                  <div className="space-y-2">
+                    <div className="flex items-center justify-between px-1">
+                      <p className="text-[12px] font-bold text-emerald-600">
+                        {results[0].name ?? results[0].phone} 거래 완료 {results.length}건
+                      </p>
+                      <p className="text-[12px] font-black text-emerald-700">
+                        합계 {formatKRW(totalAmount)}
+                      </p>
+                    </div>
+                    {[...results]
+                      .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
+                      .map((r) => (
+                        <div
+                          key={r.id}
+                          onClick={() => { window.location.href = `/admin/detail.html?id=${r.id}`; }}
+                          className="bg-white rounded-2xl border border-emerald-100 shadow-sm px-4 py-3.5 flex items-center justify-between gap-2 cursor-pointer hover:border-emerald-300 hover:bg-emerald-50/30 transition-colors active:scale-[0.99]"
+                        >
+                          <div className="flex-1 min-w-0">
+                            <p className="text-[14px] font-bold text-slate-800 flex items-center gap-1.5">
+                              {r.isUrgent && <span className="text-red-500">🚨</span>}
+                              👤 {r.name ?? r.phone}
+                            </p>
+                            <p className="text-[12px] text-slate-400 mt-0.5">
+                              📅 {formatDateKo(r.date)} {r.time && `· 🕐 ${r.time}`} · 📍 {r.location}
+                            </p>
+                            {r.assignedTo && (
+                              <p className="text-[11px] text-blue-500 mt-0.5 font-medium">👨‍🔧 {r.assignedTo}</p>
+                            )}
+                          </div>
+                          <p className="text-[15px] font-black text-emerald-600 flex-shrink-0">{formatKRW(r.totalPayment)}</p>
+                        </div>
+                      ))}
+                  </div>
+                )
+              )}
+            </div>
+          );
+        })()}
 
         {/* 오늘 예약 — 시간대순 목록 (캘린더 위) */}
         {showTodayList && (() => {
