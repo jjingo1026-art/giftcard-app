@@ -696,8 +696,9 @@ function UrgentPage({ onBack }: { onBack: () => void }) {
 
 // ─── ROOT ─────────────────────────────────────────────────────────────────────
 export default function App() {
-  const [page, setPage] = useState<"home" | "urgent">("home");
+  const isUrgent = new URLSearchParams(window.location.search).get("urgent") === "1";
+  const [page, setPage] = useState<"home" | "urgent">(isUrgent ? "urgent" : "home");
   return page === "home"
-    ? <HomePage onGoUrgent={() => setPage("urgent")} />
+    ? <HomePage onGoUrgent={() => { location.href = "/terms.html?urgent=1"; }} />
     : <UrgentPage onBack={() => setPage("home")} />;
 }

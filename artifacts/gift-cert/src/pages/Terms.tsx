@@ -11,9 +11,16 @@ const NOTICES = [
 ];
 
 export default function Terms() {
+  const params = new URLSearchParams(location.search);
+  const isUrgent = params.get("urgent") === "1";
+
   function handleAgree() {
-    const type = new URLSearchParams(location.search).get("type");
-    location.href = `/reservation.html?type=${type}`;
+    if (isUrgent) {
+      location.href = "/?urgent=1";
+    } else {
+      const type = params.get("type");
+      location.href = `/reservation.html?type=${type}`;
+    }
   }
 
   return (
@@ -55,7 +62,7 @@ export default function Terms() {
           <div className="w-5 h-5 rounded-md border-2 border-slate-300 bg-white flex items-center justify-center flex-shrink-0">
           </div>
           <span className="text-[14px] font-semibold text-slate-600">
-            개인정보 수집 및 이용에 동의하고 예약 신청하기
+            개인정보 수집 및 이용에 동의하고 {isUrgent ? "긴급 판매 신청하기" : "예약 신청하기"}
           </span>
         </div>
       </div>
