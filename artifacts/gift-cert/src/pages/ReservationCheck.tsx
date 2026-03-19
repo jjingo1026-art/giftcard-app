@@ -111,7 +111,7 @@ export default function ReservationCheck() {
       )}
       <header className="bg-white border-b border-slate-100 shadow-sm sticky top-0 z-40">
         <div className="max-w-lg mx-auto px-4 py-3.5 flex items-center gap-3">
-          <button onClick={() => history.back()} className="w-8 h-8 flex items-center justify-center rounded-xl hover:bg-slate-100 transition-colors">
+          <button onClick={() => { window.location.href = "/"; }} className="w-8 h-8 flex items-center justify-center rounded-xl hover:bg-slate-100 transition-colors">
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
               <path d="M19 12H5M12 19l-7-7 7-7"/>
             </svg>
