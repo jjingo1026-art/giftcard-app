@@ -53,6 +53,10 @@ export default function AdminDashboard() {
   const [error, setError] = useState("");
   const [staffSummary, setStaffSummary] = useState<StaffSummary[]>([]);
   const [dashboardStats, setDashboardStats] = useState<DashboardStats | null>(null);
+  const [unassigned, setUnassigned] = useState<Reservation[]>([]);
+  const [staffList, setStaffList] = useState<{ id: number; name: string }[]>([]);
+  const [selectedStaff, setSelectedStaff] = useState<Record<number, number>>({});
+  const [assigning, setAssigning] = useState<number | null>(null);
 
   const token = getAdminToken();
   if (!token) { navigate("/admin/login"); return null; }
@@ -76,7 +80,38 @@ export default function AdminDashboard() {
       .then((r) => r.json())
       .then((data) => setDashboardStats(data))
       .catch(() => {});
+
+    fetch("/api/admin/reservations/unassigned", { headers })
+      .then((r) => r.json())
+      .then(setUnassigned)
+      .catch(() => {});
+
+    fetch("/api/admin/staff", { headers })
+      .then((r) => r.json())
+      .then((data: any[]) => setStaffList(data.map((s) => ({ id: s.id, name: s.name }))))
+      .catch(() => {});
   }, []);
+
+  async function assignStaff(reservationId: number) {
+    const staffId = selectedStaff[reservationId];
+    if (!staffId) return;
+    setAssigning(reservationId);
+    try {
+      await fetch(`/api/admin/reservations/${reservationId}/assign`, {
+        method: "PATCH",
+        headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
+        body: JSON.stringify({ staffId }),
+      });
+      setUnassigned((prev) => prev.filter((r) => r.id !== reservationId));
+      setAllEntries((prev) => prev.map((r) =>
+        r.id === reservationId
+          ? { ...r, status: "assigned", assignedTo: staffList.find((s) => s.id === staffId)?.name }
+          : r
+      ));
+    } finally {
+      setAssigning(null);
+    }
+  }
 
   const today = new Date().toISOString().split("T")[0];
   const stats = {
@@ -178,6 +213,55 @@ export default function AdminDashboard() {
             </div>
           ))}
         </div>
+
+        {/* 미배정 예약 */}
+        {unassigned.length > 0 && (
+          <>
+            <h2 className="text-[15px] font-bold text-slate-700 flex items-center gap-1.5">
+              🔴 미배정 예약
+              <span className="text-[12px] font-semibold text-rose-500 bg-rose-50 px-2 py-0.5 rounded-full">{unassigned.length}건</span>
+            </h2>
+            <div className="space-y-2">
+              {unassigned.map((r) => (
+                <div key={r.id} className="bg-white rounded-2xl border border-rose-100 shadow-sm px-4 py-3.5 space-y-2.5">
+                  <div className="flex items-center justify-between gap-2">
+                    <div
+                      onClick={() => { location.href = `/admin/detail.html?id=${r.id}`; }}
+                      className="cursor-pointer flex-1 min-w-0"
+                    >
+                      <p className="text-[14px] font-bold text-slate-800 truncate">
+                        👤 {r.name ?? r.phone}
+                      </p>
+                      <p className="text-[12px] text-slate-400 mt-0.5">
+                        {r.date} {r.time && `· ${r.time}`} · {formatKRW(r.totalPayment)}
+                      </p>
+                    </div>
+                    <span className="text-[11px] bg-amber-50 text-amber-600 font-bold px-2.5 py-1 rounded-full whitespace-nowrap">🟡 처리 대기</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <select
+                      value={selectedStaff[r.id] ?? ""}
+                      onChange={(e) => setSelectedStaff((prev) => ({ ...prev, [r.id]: Number(e.target.value) }))}
+                      className="flex-1 text-[13px] border border-slate-200 rounded-xl px-3 py-2 bg-white focus:outline-none focus:ring-2 focus:ring-indigo-300"
+                    >
+                      <option value="">담당자 선택</option>
+                      {staffList.map((s) => (
+                        <option key={s.id} value={s.id}>{s.name}</option>
+                      ))}
+                    </select>
+                    <button
+                      disabled={!selectedStaff[r.id] || assigning === r.id}
+                      onClick={() => assignStaff(r.id)}
+                      className="text-[13px] font-bold px-4 py-2 rounded-xl bg-indigo-500 text-white hover:bg-indigo-600 disabled:opacity-40 disabled:cursor-not-allowed transition-colors whitespace-nowrap active:scale-95"
+                    >
+                      {assigning === r.id ? "배정 중…" : "담당자 지정"}
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </>
+        )}
 
         {/* 매입담당자 현황 */}
         {staffSummary.length > 0 && (
