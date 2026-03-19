@@ -35,6 +35,17 @@ const RATE_GROUPS = [
 
 const DEFAULT_TYPE = Object.keys(RATES)[0];
 
+const TIME_OPTIONS: string[] = (() => {
+  const opts: string[] = [];
+  for (let h = 9; h <= 20; h++) {
+    for (const m of [0, 10, 20, 30, 40, 50]) {
+      if (h === 20 && m > 0) break;
+      opts.push(`${String(h).padStart(2, "0")}:${String(m).padStart(2, "0")}`);
+    }
+  }
+  return opts;
+})();
+
 const KOREAN_BANKS = [
   "KB국민은행", "신한은행", "우리은행", "하나은행", "IBK기업은행",
   "NH농협은행", "SC제일은행", "씨티은행", "카카오뱅크", "케이뱅크",
@@ -267,12 +278,7 @@ function HomePage({ onGoUrgent }: { onGoUrgent: () => void }) {
     if (!name.trim()) fe.name = "이름을 입력해주세요";
     if (!phone.trim()) fe.phone = "연락처를 입력해주세요";
     if (!date) fe.date = "날짜 선택";
-    if (!time) {
-      fe.time = "시간을 선택해주세요";
-    } else {
-      const mins = parseInt(time.split(":")[1] ?? "0", 10);
-      if (mins % 10 !== 0) fe.time = "10분 단위로만 선택 가능합니다 (예: 14:00, 14:10, 14:20)";
-    }
+    if (!time) fe.time = "시간을 선택해주세요";
     if (!location.trim()) fe.location = "거래 장소를 입력해주세요";
     if (!accountNumber.trim()) fe.accountNumber = "계좌번호를 입력해주세요";
     if (!accountHolder.trim()) fe.accountHolder = "예금주를 입력해주세요";
@@ -433,25 +439,19 @@ function HomePage({ onGoUrgent }: { onGoUrgent: () => void }) {
                 <input type="date" value={date} onChange={(e) => { setDate(e.target.value); setFieldErrors((p) => ({ ...p, date: "" })); }} className={inputCls(!!fieldErrors.date)} />
               </Field>
               <Field label="예약 시간" required error={fieldErrors.time}>
-                <input
-                  type="time"
-                  step="600"
+                <select
                   value={time}
-                  onChange={(e) => {
-                    const v = e.target.value;
-                    setTime(v);
-                    if (!v) {
-                      setFieldErrors((p) => ({ ...p, time: "" }));
-                    } else {
-                      const mins = parseInt(v.split(":")[1] ?? "0", 10);
-                      setFieldErrors((p) => ({
-                        ...p,
-                        time: mins % 10 !== 0 ? "10분 단위로만 선택 가능합니다 (예: 14:00, 14:10)" : "",
-                      }));
-                    }
-                  }}
-                  className={inputCls(!!fieldErrors.time)}
-                />
+                  onChange={(e) => { setTime(e.target.value); setFieldErrors((p) => ({ ...p, time: "" })); }}
+                  className={`w-full px-3 py-2.5 rounded-xl border text-[14px] outline-none transition-all bg-white appearance-none
+                    ${fieldErrors.time ? "border-rose-300 focus:border-rose-400 focus:ring-2 focus:ring-rose-100 text-rose-400" : "border-slate-200 focus:border-indigo-400 focus:ring-2 focus:ring-indigo-50 text-slate-800"}
+                    ${!time ? "text-slate-400" : ""}`}
+                  style={{ backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 20 20'%3E%3Cpath fill='%236366f1' d='M5 8l5 5 5-5z'/%3E%3C/svg%3E")`, backgroundRepeat: "no-repeat", backgroundPosition: "right 12px center" }}
+                >
+                  <option value="">시간 선택</option>
+                  {TIME_OPTIONS.map((t) => (
+                    <option key={t} value={t}>{t}</option>
+                  ))}
+                </select>
               </Field>
             </div>
             <Field label="거래 장소" required error={fieldErrors.location}>
