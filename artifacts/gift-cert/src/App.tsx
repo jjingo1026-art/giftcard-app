@@ -22,9 +22,6 @@ const RATE_GROUPS = [
   { label: "주유권", sub: "SK · GS · 현대 · S-OIL", rate: 95, color: "#6366f1" },
 ];
 
-function goNotice(type: string) {
-  location.href = `/terms.html?type=${encodeURIComponent(type)}`;
-}
 
 const DEFAULT_TYPE = Object.keys(RATES)[0];
 
@@ -319,8 +316,7 @@ function HomePage({ onGoUrgent }: { onGoUrgent: () => void }) {
             {RATE_GROUPS.map((g) => (
               <div
                 key={g.label}
-                onClick={() => goNotice(g.label)}
-                className="flex items-center justify-between px-4 py-3.5 rounded-2xl cursor-pointer active:scale-[0.98] transition-all"
+                className="flex items-center justify-between px-4 py-3.5 rounded-2xl transition-all"
                 style={{ backgroundColor: g.color + "12" }}
               >
                 <div>
@@ -780,6 +776,6 @@ export default function App() {
   const isUrgent = new URLSearchParams(window.location.search).get("urgent") === "1";
   const [page, setPage] = useState<"home" | "urgent">(isUrgent ? "urgent" : "home");
   return page === "home"
-    ? <HomePage onGoUrgent={() => { location.href = "/terms.html?urgent=1"; }} />
+    ? <HomePage onGoUrgent={() => setPage("urgent")} />
     : <UrgentPage onBack={() => setPage("home")} />;
 }
