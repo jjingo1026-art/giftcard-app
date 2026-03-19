@@ -1,7 +1,7 @@
 import { Router, type IRouter } from "express";
 import { db } from "@workspace/db";
 import { reservationsTable, chatsTable, staffTable } from "@workspace/db/schema";
-import { eq, desc, asc, and, sql } from "drizzle-orm";
+import { eq, desc, asc, and, sql, gte, lte } from "drizzle-orm";
 import crypto from "crypto";
 import { emitToRoom } from "../socket";
 
@@ -296,6 +296,32 @@ router.get("/reservations/revenue", requireAuth, requireAdmin, async (req, res) 
     );
 
   res.json({ date, revenue: result[0].total });
+});
+
+router.get("/reservations/revenue/range", requireAuth, requireAdmin, async (req, res) => {
+  const { startDate, endDate } = req.query as {
+    startDate?: string;
+    endDate?: string;
+  };
+
+  if (!startDate || !endDate) {
+    res.status(400).json({ error: "startDate, endDate required" }); return;
+  }
+
+  const result = await db
+    .select({
+      total: sql<number>`COALESCE(SUM(${reservationsTable.amount}), 0)`
+    })
+    .from(reservationsTable)
+    .where(
+      and(
+        gte(reservationsTable.date, startDate),
+        lte(reservationsTable.date, endDate),
+        eq(reservationsTable.status, "completed")
+      )
+    );
+
+  res.json({ startDate, endDate, revenue: result[0].total });
 });
 
 router.get("/reservations/:id", requireAuth, async (req, res) => {
