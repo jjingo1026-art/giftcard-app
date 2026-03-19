@@ -122,17 +122,13 @@ router.post("/", async (req, res) => {
     return;
   }
 
-  // 노쇼 패널티 차단 확인 (누적 3회 이상 시 차단)
-  const NO_SHOW_BLOCK_THRESHOLD = 3;
-  const [user] = await db
-    .select()
-    .from(usersTable)
-    .where(eq(usersTable.id, normalizedPhone));
-  if ((user?.noShowCount ?? 0) >= NO_SHOW_BLOCK_THRESHOLD) {
-    res.status(400).json({
-      error: `노쇼 ${user!.noShowCount}회로 예약이 제한되어 있습니다. 관리자에게 문의해주세요.`,
-    });
-    return;
+  // 노쇼 차단 여부 확인
+  const [user] = await db.select().from(usersTable).where(eq(usersTable.id, normalizedPhone));
+  if (user?.isBlocked) {
+    if (user.blockedUntil && new Date() < user.blockedUntil) {
+      res.status(403).json({ error: "현재 예약이 제한된 상태입니다. 관리자에게 문의해주세요." });
+      return;
+    }
   }
 
   const normalize = (str: string) => str.replace(/\s/g, "").toLowerCase();
