@@ -384,6 +384,15 @@ router.post("/customer/cancel", async (req, res) => {
     res.json({ success: false, error: "완료된 예약은 취소할 수 없습니다." }); return;
   }
 
+  // 예약 1시간 전까지만 취소 가능
+  if (row.date && row.time) {
+    const scheduled = new Date(`${row.date}T${row.time}`);
+    const diffMs = scheduled.getTime() - Date.now();
+    if (diffMs < 60 * 60 * 1000) {
+      res.json({ success: false, error: "예약 1시간 전까지만 취소할 수 있습니다." }); return;
+    }
+  }
+
   await db
     .update(reservationsTable)
     .set({ status: "cancelled", cancelledAt: new Date() })
