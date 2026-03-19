@@ -361,8 +361,8 @@ export default function AdminDashboard() {
                     <span className="text-[13px] text-slate-500 font-medium">총</span>
                     <span className="text-[14px] font-black text-slate-800">{dateTotal}건</span>
                   </div>
-                  {/* 🔴 미배정 — 클릭 */}
-                  <button
+                  {/* 🔴 미배정 — 클릭 (0건이면 숨김) */}
+                  {dateUnassignedCount > 0 && <button
                     className="w-full flex items-center justify-between px-4 py-2.5 border-b border-slate-50 transition-colors active:scale-[0.99]"
                     style={{ background: showUnassignedSlots ? "#fff1f2" : "transparent" }}
                     onClick={async () => {
@@ -385,7 +385,7 @@ export default function AdminDashboard() {
                       <span className="text-[14px] font-black text-rose-600">{dateUnassignedCount}건</span>
                       <span className="text-[11px] text-slate-300">{showUnassignedSlots ? "▲" : "▼"}</span>
                     </div>
-                  </button>
+                  </button>}
                   {/* 배정 */}
                   <div className="flex items-center justify-between px-4 py-2.5">
                     <span className="text-[13px] text-slate-500 font-medium">배정</span>
