@@ -32,6 +32,17 @@ router.get("/customer", async (req, res) => {
   res.json(data);
 });
 
+router.post("/:id/status", async (req, res) => {
+  const { status } = req.body;
+
+  await db
+    .update(reservationsTable)
+    .set({ status })
+    .where(eq(reservationsTable.id, Number(req.params.id)));
+
+  res.json({ success: true });
+});
+
 router.post("/", async (req, res) => {
   const body = req.body as {
     kind?: string;
