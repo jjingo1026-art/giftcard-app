@@ -1,11 +1,23 @@
 import { Router, type IRouter } from "express";
 import { db } from "@workspace/db";
 import { reservationsTable } from "@workspace/db/schema";
+import { eq } from "drizzle-orm";
 
 const router: IRouter = Router();
 
 router.get("/", async (_req, res) => {
   const data = await db.select().from(reservationsTable);
+  res.json(data);
+});
+
+router.get("/by-date", async (req, res) => {
+  const { date } = req.query;
+
+  const data = await db
+    .select()
+    .from(reservationsTable)
+    .where(eq(reservationsTable.date, String(date)));
+
   res.json(data);
 });
 
