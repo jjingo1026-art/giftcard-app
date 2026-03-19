@@ -338,6 +338,29 @@ router.get("/dashboard", requireAuth, requireAdmin, async (req, res) => {
   }
 });
 
+// 배정되지 않은 예약 조회 (assignedStaffId IS NULL)
+// GET /api/admin/reservations/unassigned?date=YYYY-MM-DD&status=pending
+router.get("/reservations/unassigned", requireAuth, requireAdmin, async (req, res) => {
+  const { date, status } = req.query as { date?: string; status?: string };
+
+  const conditions: any[] = [sql`${reservationsTable.assignedStaffId} IS NULL`];
+  if (date) conditions.push(eq(reservationsTable.date, date));
+  if (status) conditions.push(eq(reservationsTable.status, status));
+
+  try {
+    const rows = await db
+      .select()
+      .from(reservationsTable)
+      .where(and(...conditions))
+      .orderBy(desc(reservationsTable.createdAt));
+
+    res.json(rows);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Failed to fetch unassigned reservations" });
+  }
+});
+
 const isValidDate = (d: string) => /^\d{4}-\d{2}-\d{2}$/.test(d);
 
 router.get("/reservations", requireAuth, requireAdmin, async (req, res) => {
