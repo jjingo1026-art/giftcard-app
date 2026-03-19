@@ -91,17 +91,21 @@ function GiftCheckbox({ checked, onChange }: { checked: boolean; onChange: (v: b
   );
 }
 
-function TypeSelectInline({ value, onChange, accent = "indigo" }: { value: string; onChange: (v: string) => void; accent?: string }) {
+function TypeScrollPicker({ value, onChange, accent = "indigo" }: { value: string; onChange: (v: string) => void; accent?: string }) {
+  const activeClass = accent === "rose"
+    ? "bg-rose-500 text-white border-rose-500"
+    : "bg-indigo-500 text-white border-indigo-500";
+  const inactiveClass = accent === "rose"
+    ? "bg-white text-slate-500 border-slate-200 hover:border-rose-300 hover:text-rose-400"
+    : "bg-white text-slate-500 border-slate-200 hover:border-indigo-300 hover:text-indigo-400";
   return (
-    <div className="relative flex-1 min-w-0">
-      <select value={value} onChange={(e) => onChange(e.target.value)}
-        className={`w-full px-3 py-3 rounded-xl border border-slate-200 bg-slate-50 text-[14px] text-slate-800 outline-none transition-all duration-150 appearance-none pr-8
-          ${accent === "rose" ? "focus:border-rose-400 focus:bg-white focus:ring-2 focus:ring-rose-50" : "focus:border-indigo-400 focus:bg-white focus:ring-2 focus:ring-indigo-50"}`}>
-        {Object.keys(RATES).map((k) => <option key={k} value={k}>{k}</option>)}
-      </select>
-      <div className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-slate-400">
-        <svg width="12" height="12" viewBox="0 0 14 14" fill="none"><path d="M3 5l4 4 4-4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" /></svg>
-      </div>
+    <div className="overflow-x-auto flex gap-2 pb-1 scrollbar-none -mx-3 px-3">
+      {Object.keys(RATES).map((k) => (
+        <button key={k} type="button" onClick={() => onChange(k)}
+          className={`flex-shrink-0 px-3.5 py-2 rounded-full text-[12px] font-bold border-2 transition-all whitespace-nowrap active:scale-95 ${value === k ? activeClass : inactiveClass}`}>
+          {k}
+        </button>
+      ))}
     </div>
   );
 }
@@ -137,41 +141,47 @@ function VoucherItems({
           const { amountNum, rate, payment } = computeItem(item, baseDeduct);
           return (
             <div key={idx} className="rounded-2xl border border-slate-200 bg-slate-50 overflow-hidden">
-              {/* Row 1: type select + remove */}
-              <div className="flex items-center gap-2 px-3 pt-3 pb-1.5">
-                <TypeSelectInline value={item.type} onChange={(v) => onChange(idx, "type", v)} accent={accent} />
-                {items.length > 1 && (
+              {/* Row 1: 삭제 버튼 */}
+              {items.length > 1 && (
+                <div className="flex justify-end px-3 pt-2">
                   <button type="button" onClick={() => onRemove(idx)}
-                    className="w-7 h-7 flex items-center justify-center rounded-xl bg-rose-100 text-rose-400 hover:bg-rose-200 active:scale-90 transition-all flex-shrink-0">
+                    className="w-7 h-7 flex items-center justify-center rounded-xl bg-rose-100 text-rose-400 hover:bg-rose-200 active:scale-90 transition-all">
                     <svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M2 2l8 8M10 2l-8 8" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" /></svg>
                   </button>
-                )}
-              </div>
-              {/* Row 2: amount input + gift checkbox */}
-              <div className="px-3 pb-1.5 flex items-center gap-2">
-                <div className="flex-1 min-w-0">
-                  <input
-                    type="number"
-                    value={item.amount}
-                    onChange={(e) => onChange(idx, "amount", e.target.value)}
-                    placeholder="금액 입력 (원)"
-                    min="0"
-                    step="10000"
-                    className={`w-full px-3 py-2.5 rounded-xl border text-[14px] text-slate-800 outline-none transition-all duration-150 placeholder:text-slate-300
-                      ${errors[idx] ? "border-rose-300 bg-rose-50" : "border-slate-200 bg-white"}`}
-                  />
                 </div>
-                <label className="flex items-center gap-1.5 cursor-pointer select-none flex-shrink-0 px-2 py-2.5 rounded-xl border border-slate-200 bg-white"
-                  onClick={() => onToggleGift(idx)}>
-                  <div className={`w-4 h-4 rounded flex items-center justify-center border-2 transition-all duration-150 flex-shrink-0
-                    ${item.isGift ? "bg-violet-500 border-violet-500" : "bg-white border-slate-300"}`}>
-                    {item.isGift && <svg width="9" height="8" viewBox="0 0 11 9" fill="none"><path d="M1 4l3 3 6-6" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" /></svg>}
-                  </div>
-                  <span className={`text-[12px] font-semibold whitespace-nowrap transition-colors ${item.isGift ? "text-violet-600" : "text-slate-400"}`}>증정용</span>
-                  {item.isGift && <span className="text-[10px] bg-violet-100 text-violet-500 font-bold px-1 py-0.5 rounded-full">-1%</span>}
-                </label>
+              )}
+              {/* Row 2: 가로 스크롤 타입 선택 */}
+              <div className={`px-3 ${items.length > 1 ? "pt-1" : "pt-3"} pb-2`}>
+                <TypeScrollPicker value={item.type} onChange={(v) => onChange(idx, "type", v)} accent={accent} />
               </div>
-              {/* Row 3: error + payment preview */}
+              {/* Row 3: 금액 입력 */}
+              <div className="px-3 pb-2">
+                <input
+                  type="number"
+                  value={item.amount}
+                  onChange={(e) => onChange(idx, "amount", e.target.value)}
+                  placeholder="금액 입력 (원)"
+                  min="0"
+                  step="10000"
+                  className={`w-full px-3 py-2.5 rounded-xl border text-[14px] text-slate-800 outline-none transition-all duration-150 placeholder:text-slate-300
+                    ${errors[idx] ? "border-rose-300 bg-rose-50" : "border-slate-200 bg-white"}`}
+                />
+              </div>
+              {/* Row 4: 증정용 토글 버튼 */}
+              <div className="px-3 pb-3">
+                <button type="button" onClick={() => onToggleGift(idx)}
+                  className={`w-full py-2.5 rounded-xl font-bold text-[14px] border-2 transition-all duration-150 active:scale-[0.98] flex items-center justify-center gap-2
+                    ${item.isGift
+                      ? "bg-violet-500 border-violet-500 text-white shadow-sm shadow-violet-200"
+                      : "bg-white border-slate-200 text-slate-400 hover:border-violet-300 hover:text-violet-400"}`}>
+                  <span>🎁</span>
+                  <span>증정용</span>
+                  {item.isGift
+                    ? <span className="text-[11px] bg-white/25 text-white font-bold px-2 py-0.5 rounded-full">선택됨 · -1%</span>
+                    : <span className="text-[11px] text-slate-300 font-normal">클릭하여 선택</span>}
+                </button>
+              </div>
+              {/* Row 5: 오류 + 금액 미리보기 */}
               <div className="px-3 pb-3 space-y-1.5">
                 {errors[idx] && <p className="text-[11px] text-rose-500">⚠ {errors[idx]}</p>}
                 {amountNum > 0 && (
