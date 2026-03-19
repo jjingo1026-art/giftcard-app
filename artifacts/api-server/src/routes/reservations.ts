@@ -1,7 +1,7 @@
 import { Router, type IRouter } from "express";
 import { db } from "@workspace/db";
 import { reservationsTable } from "@workspace/db/schema";
-import { eq, and, not } from "drizzle-orm";
+import { eq, and, inArray } from "drizzle-orm";
 
 const normalizePhone = (phone: string) => phone.replace(/[^0-9]/g, "");
 
@@ -113,7 +113,7 @@ router.post("/", async (req, res) => {
     .where(
       and(
         eq(reservationsTable.phone, normalizedPhone),
-        not(eq(reservationsTable.status, "cancelled"))
+        inArray(reservationsTable.status, ["pending", "assigned"])
       )
     );
 
