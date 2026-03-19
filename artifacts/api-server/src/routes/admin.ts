@@ -48,6 +48,17 @@ function requireAuth(req: any, res: any, next: any) {
   next();
 }
 
+function requireAdmin(req: any, res: any, next: any) {
+  const auth = req.headers.authorization ?? "";
+  const token = auth.startsWith("Bearer ") ? auth.slice(7) : "";
+  const exp = tokens.get(token);
+  if (!exp || Date.now() > exp) {
+    res.status(403).json({ error: "관리자 권한이 필요합니다." });
+    return;
+  }
+  next();
+}
+
 router.post("/login", async (req, res) => {
   const { id, password } = req.body as { id?: string; password?: string };
   if (id !== ADMIN_ID || password !== ADMIN_PASSWORD) {
@@ -211,7 +222,7 @@ router.get("/staff/my-reservations", requireStaffAuth, async (req, res) => {
 
 const isValidDate = (d: string) => /^\d{4}-\d{2}-\d{2}$/.test(d);
 
-router.get("/reservations", requireAuth, async (req, res) => {
+router.get("/reservations", requireAuth, requireAdmin, async (req, res) => {
   const { date } = req.query as { date?: string };
 
   if (date && !isValidDate(date)) {
