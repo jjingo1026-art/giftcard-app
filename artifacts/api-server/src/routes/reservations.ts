@@ -1,7 +1,7 @@
 import { Router, type IRouter } from "express";
 import { db } from "@workspace/db";
-import { reservationsTable, penaltiesTable } from "@workspace/db/schema";
-import { eq, and, inArray, or, isNull, gt, count } from "drizzle-orm";
+import { reservationsTable, usersTable } from "@workspace/db/schema";
+import { eq, and, inArray } from "drizzle-orm";
 
 const normalizePhone = (phone: string) => phone.replace(/[^0-9]/g, "");
 
@@ -122,22 +122,15 @@ router.post("/", async (req, res) => {
     return;
   }
 
-  // 노쇼 패널티 차단 확인 (활성 패널티 3회 이상 시 차단)
+  // 노쇼 패널티 차단 확인 (누적 3회 이상 시 차단)
   const NO_SHOW_BLOCK_THRESHOLD = 3;
-  const now = new Date();
-  const [{ value: activePenaltyCount }] = await db
-    .select({ value: count() })
-    .from(penaltiesTable)
-    .where(
-      and(
-        eq(penaltiesTable.userId, normalizedPhone),
-        eq(penaltiesTable.type, "no_show"),
-        or(isNull(penaltiesTable.expiresAt), gt(penaltiesTable.expiresAt, now))
-      )
-    );
-  if (activePenaltyCount >= NO_SHOW_BLOCK_THRESHOLD) {
+  const [user] = await db
+    .select()
+    .from(usersTable)
+    .where(eq(usersTable.id, normalizedPhone));
+  if ((user?.noShowCount ?? 0) >= NO_SHOW_BLOCK_THRESHOLD) {
     res.status(400).json({
-      error: `노쇼 ${activePenaltyCount}회로 예약이 제한되어 있습니다. 관리자에게 문의해주세요.`,
+      error: `노쇼 ${user!.noShowCount}회로 예약이 제한되어 있습니다. 관리자에게 문의해주세요.`,
     });
     return;
   }

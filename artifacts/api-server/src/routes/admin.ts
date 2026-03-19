@@ -1,6 +1,6 @@
 import { Router, type IRouter } from "express";
 import { db } from "@workspace/db";
-import { reservationsTable, chatsTable, staffTable, penaltiesTable } from "@workspace/db/schema";
+import { reservationsTable, chatsTable, staffTable, penaltiesTable, usersTable } from "@workspace/db/schema";
 import { eq, desc, asc, and, sql, gte, lte, inArray } from "drizzle-orm";
 import crypto from "crypto";
 import { emitToRoom } from "../socket";
@@ -579,13 +579,27 @@ router.post("/reservations/:id/status", async (req, res) => {
 
     const [row] = await db.select().from(reservationsTable).where(eq(reservationsTable.id, id));
     if (row?.phone) {
+      const userId = row.phone;
+
+      // 개별 패널티 레코드 삽입 (감사용)
       const expiresAt = new Date(Date.now() + PENALTY_EXPIRE_DAYS * 24 * 60 * 60 * 1000);
       await db.insert(penaltiesTable).values({
-        userId: row.phone,
+        userId,
         reservationId: id,
         type: "no_show",
         expiresAt,
       });
+
+      // 유저 패널티 누적 카운트 증가
+      await db.insert(usersTable)
+        .values({ id: userId, noShowCount: 1 })
+        .onConflictDoUpdate({
+          target: usersTable.id,
+          set: {
+            noShowCount: sql`${usersTable.noShowCount} + 1`,
+            updatedAt: new Date(),
+          },
+        });
     }
 
     const [autoMsg] = await db.insert(chatsTable).values({
