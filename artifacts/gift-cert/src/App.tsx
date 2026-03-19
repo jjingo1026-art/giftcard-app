@@ -911,19 +911,19 @@ function UrgentPage({ onBack }: { onBack: () => void }) {
               <input type="text" value={location} onChange={(e) => { setLocation(e.target.value); setFieldErrors((p) => ({ ...p, location: "" })); }} placeholder="예: 강남구 역삼동" className={inputCls(!!fieldErrors.location, "rose")} />
               <p className="text-[12px] text-slate-400 mt-1.5 flex items-start gap-1"><span className="mt-0.5 flex-shrink-0">ℹ️</span>주정차 가능한 곳으로 입력 바랍니다</p>
             </Field>
-            <VoucherItems items={items} errors={itemErrors} onChange={updateItem} onToggleGift={toggleGift} onAdd={addItem} onRemove={removeItem} baseDeduct={0.01} accent="rose" />
-            <div className="rounded-2xl border border-rose-100 bg-rose-50/60 overflow-hidden">
+            <VoucherItems items={items} errors={itemErrors} onChange={updateItem} onToggleGift={toggleGift} onAdd={addItem} onRemove={removeItem} baseDeduct={0.01} />
+            <div className="rounded-2xl border border-indigo-100 bg-indigo-50/60 overflow-hidden">
               <div className="px-4 pt-3.5 pb-1 flex items-center gap-2">
-                <svg width="14" height="14" viewBox="0 0 20 20" fill="none" className="text-rose-400 flex-shrink-0"><rect x="1" y="5" width="18" height="12" rx="2" stroke="currentColor" strokeWidth="1.6"/><path d="M1 9h18" stroke="currentColor" strokeWidth="1.6"/></svg>
-                <span className="text-[12px] font-bold text-rose-500 uppercase tracking-wide">입금 계좌 정보</span>
+                <svg width="14" height="14" viewBox="0 0 20 20" fill="none" className="text-indigo-400 flex-shrink-0"><rect x="1" y="5" width="18" height="12" rx="2" stroke="currentColor" strokeWidth="1.6"/><path d="M1 9h18" stroke="currentColor" strokeWidth="1.6"/></svg>
+                <span className="text-[12px] font-bold text-indigo-500 uppercase tracking-wide">입금 계좌 정보</span>
               </div>
               <div className="px-4 pb-4 space-y-2.5 mt-2">
                 <div>
                   <select
                     value={bankName}
                     onChange={(e) => setBankName(e.target.value)}
-                    className="w-full px-3 py-2.5 rounded-xl border border-slate-200 text-[14px] text-slate-800 outline-none transition-all bg-white focus:border-rose-400 focus:ring-2 focus:ring-rose-50 appearance-none"
-                    style={{ backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 20 20'%3E%3Cpath fill='%23f43f5e' d='M5 8l5 5 5-5z'/%3E%3C/svg%3E")`, backgroundRepeat: "no-repeat", backgroundPosition: "right 12px center" }}
+                    className="w-full px-3 py-2.5 rounded-xl border border-slate-200 text-[14px] text-slate-800 outline-none transition-all bg-white focus:border-indigo-400 focus:ring-2 focus:ring-indigo-50 appearance-none"
+                    style={{ backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 20 20'%3E%3Cpath fill='%236366f1' d='M5 8l5 5 5-5z'/%3E%3C/svg%3E")`, backgroundRepeat: "no-repeat", backgroundPosition: "right 12px center" }}
                   >
                     {KOREAN_BANKS.map((b) => <option key={b} value={b}>{b}</option>)}
                   </select>
@@ -935,7 +935,7 @@ function UrgentPage({ onBack }: { onBack: () => void }) {
                     onChange={(e) => { setAccountNumber(e.target.value); setFieldErrors((p) => ({ ...p, accountNumber: "" })); }}
                     placeholder="계좌번호 (예: 123-456-789012)"
                     className={`w-full px-3 py-2.5 rounded-xl border text-[14px] text-slate-800 outline-none transition-all bg-white placeholder:text-slate-300
-                      ${fieldErrors.accountNumber ? "border-rose-300 focus:border-rose-400 focus:ring-2 focus:ring-rose-100" : "border-slate-200 focus:border-rose-400 focus:ring-2 focus:ring-rose-50"}`}
+                      ${fieldErrors.accountNumber ? "border-rose-300 focus:border-rose-400 focus:ring-2 focus:ring-rose-100" : "border-slate-200 focus:border-indigo-400 focus:ring-2 focus:ring-indigo-50"}`}
                   />
                   {fieldErrors.accountNumber && <p className="text-[11px] text-rose-500 mt-1">⚠ {fieldErrors.accountNumber}</p>}
                 </div>
@@ -946,7 +946,7 @@ function UrgentPage({ onBack }: { onBack: () => void }) {
                     onChange={(e) => { setAccountHolder(e.target.value); setFieldErrors((p) => ({ ...p, accountHolder: "" })); }}
                     placeholder="예금주"
                     className={`w-full px-3 py-2.5 rounded-xl border text-[14px] text-slate-800 outline-none transition-all bg-white placeholder:text-slate-300
-                      ${fieldErrors.accountHolder ? "border-rose-300 focus:border-rose-400 focus:ring-2 focus:ring-rose-100" : "border-slate-200 focus:border-rose-400 focus:ring-2 focus:ring-rose-50"}`}
+                      ${fieldErrors.accountHolder ? "border-rose-300 focus:border-rose-400 focus:ring-2 focus:ring-rose-100" : "border-slate-200 focus:border-indigo-400 focus:ring-2 focus:ring-indigo-50"}`}
                   />
                   {fieldErrors.accountHolder && <p className="text-[11px] text-rose-500 mt-1">⚠ {fieldErrors.accountHolder}</p>}
                 </div>
