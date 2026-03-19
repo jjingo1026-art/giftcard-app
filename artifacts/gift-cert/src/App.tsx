@@ -241,6 +241,10 @@ function HomePage({ onGoUrgent }: { onGoUrgent: () => void }) {
   const [toast, setToast] = useState(false);
   const [counter, setCounter] = useState(0);
   const [showForm, setShowForm] = useState(false);
+  const [showNoticeModal, setShowNoticeModal] = useState(false);
+  const [noticeTarget, setNoticeTarget] = useState<{ label: string; sub: string; rate: number; color: string } | null>(null);
+  const [privacyChecked, setPrivacyChecked] = useState(false);
+  const [agreedPrivacy, setAgreedPrivacy] = useState(false);
 
   function addItem() { setItems((p) => [...p, { type: DEFAULT_TYPE, amount: "", isGift: false }]); setItemErrors((p) => [...p, ""]); }
   function removeItem(idx: number) { setItems((p) => p.filter((_, i) => i !== idx)); setItemErrors((p) => p.filter((_, i) => i !== idx)); }
@@ -316,14 +320,18 @@ function HomePage({ onGoUrgent }: { onGoUrgent: () => void }) {
             {RATE_GROUPS.map((g) => (
               <div
                 key={g.label}
-                className="flex items-center justify-between px-4 py-3.5 rounded-2xl transition-all"
+                onClick={() => { setNoticeTarget(g); setPrivacyChecked(false); setShowNoticeModal(true); }}
+                className="flex items-center justify-between px-4 py-3.5 rounded-2xl cursor-pointer active:scale-[0.98] transition-all"
                 style={{ backgroundColor: g.color + "12" }}
               >
                 <div>
                   <p className="text-[14px] font-semibold text-slate-700">{g.label}</p>
                   {g.sub && <p className="text-[11px] text-slate-400 mt-0.5">{g.sub}</p>}
                 </div>
-                <span className="text-[20px] font-black tabular-nums flex-shrink-0 ml-3" style={{ color: g.color }}>{g.rate}%</span>
+                <div className="flex items-center gap-2">
+                  <span className="text-[20px] font-black tabular-nums flex-shrink-0" style={{ color: g.color }}>{g.rate}%</span>
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#94a3b8" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M9 18l6-6-6-6"/></svg>
+                </div>
               </div>
             ))}
           </div>
@@ -346,8 +354,19 @@ function HomePage({ onGoUrgent }: { onGoUrgent: () => void }) {
           </svg>
         </a>
 
+        {/* 권종 미선택 시 안내 */}
+        {!agreedPrivacy && (
+          <div className="flex items-center gap-3 px-4 py-3.5 bg-indigo-50 rounded-2xl border border-indigo-100">
+            <span className="text-[22px]">👆</span>
+            <div>
+              <p className="text-[13px] font-semibold text-indigo-700">위 권종을 클릭해주세요</p>
+              <p className="text-[11px] text-indigo-400 mt-0.5">공지사항 확인 및 개인정보 동의 후 예약 가능합니다</p>
+            </div>
+          </div>
+        )}
+
         {/* 예약신청 버튼 or 폼 */}
-        {!showForm ? (
+        {agreedPrivacy && (!showForm ? (
           <button
             type="button"
             onClick={() => setShowForm(true)}
@@ -437,7 +456,7 @@ function HomePage({ onGoUrgent }: { onGoUrgent: () => void }) {
             </button>
           </form>
         </div>
-        )}
+        ))}
 
         {/* Submissions */}
         {submissions.length > 0 && (
@@ -453,19 +472,99 @@ function HomePage({ onGoUrgent }: { onGoUrgent: () => void }) {
         )}
 
         {/* Urgent Banner */}
-        <div className="bg-white rounded-3xl shadow-sm border border-rose-100 overflow-hidden">
-          <div className="px-5 pt-5 pb-3 flex items-center justify-between">
-            <div><h2 className="text-[15px] font-bold text-slate-800">긴급 판매 신청</h2><p className="text-[12px] text-slate-400 mt-0.5">Urgent Sale Request</p></div>
-            <div className="w-8 h-8 bg-rose-50 rounded-xl flex items-center justify-center">🚨</div>
+        {agreedPrivacy && (
+          <div className="bg-white rounded-3xl shadow-sm border border-rose-100 overflow-hidden">
+            <div className="px-5 pt-5 pb-3 flex items-center justify-between">
+              <div><h2 className="text-[15px] font-bold text-slate-800">긴급 판매 신청</h2><p className="text-[12px] text-slate-400 mt-0.5">Urgent Sale Request</p></div>
+              <div className="w-8 h-8 bg-rose-50 rounded-xl flex items-center justify-center">🚨</div>
+            </div>
+            <div className="px-5 pb-5">
+              <p className="text-[13px] text-slate-500 mb-3">지금 바로 판매가 필요하신가요? 긴급 판매 신청 페이지로 이동합니다.</p>
+              <button type="button" onClick={onGoUrgent} className="w-full py-4 rounded-2xl text-white text-[15px] font-bold transition-all duration-150 active:scale-95 flex items-center justify-center gap-2" style={{ background: "linear-gradient(135deg, #f43f5e 0%, #e11d48 100%)" }}>
+                <span>🚨</span> 긴급 판매 신청
+              </button>
+            </div>
           </div>
-          <div className="px-5 pb-5">
-            <p className="text-[13px] text-slate-500 mb-3">지금 바로 판매가 필요하신가요? 긴급 판매 신청 페이지로 이동합니다.</p>
-            <button type="button" onClick={onGoUrgent} className="w-full py-4 rounded-2xl text-white text-[15px] font-bold transition-all duration-150 active:scale-95 flex items-center justify-center gap-2" style={{ background: "linear-gradient(135deg, #f43f5e 0%, #e11d48 100%)" }}>
-              <span>🚨</span> 긴급 판매 신청
-            </button>
+        )}
+      </div>
+
+      {/* 공지사항 + 개인정보동의 모달 */}
+      {showNoticeModal && noticeTarget && (
+        <div className="fixed inset-0 z-50 flex items-end justify-center" style={{ background: "rgba(0,0,0,0.45)" }} onClick={(e) => { if (e.target === e.currentTarget) setShowNoticeModal(false); }}>
+          <div className="w-full max-w-md bg-white rounded-t-3xl shadow-2xl overflow-hidden">
+            {/* 헤더 */}
+            <div className="px-5 pt-5 pb-4 border-b border-slate-100 flex items-center justify-between">
+              <div>
+                <p className="text-[11px] font-bold text-indigo-400 uppercase tracking-widest mb-0.5">공지사항</p>
+                <h2 className="text-[17px] font-black text-slate-800">{noticeTarget.label}</h2>
+                <p className="text-[13px] font-bold mt-0.5" style={{ color: noticeTarget.color }}>매입 요율 {noticeTarget.rate}%</p>
+              </div>
+              <button onClick={() => setShowNoticeModal(false)} className="w-9 h-9 flex items-center justify-center rounded-2xl bg-slate-100 text-slate-400">
+                <svg width="13" height="13" viewBox="0 0 12 12" fill="none"><path d="M2 2l8 8M10 2l-8 8" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round"/></svg>
+              </button>
+            </div>
+
+            <div className="px-5 py-4 space-y-4 overflow-y-auto max-h-[60vh]">
+              {/* 공지 내용 */}
+              <div className="rounded-2xl bg-amber-50 border border-amber-200 px-4 py-4 space-y-2.5">
+                <p className="text-[12px] font-bold text-amber-700 flex items-center gap-1.5">⚠️ 이용 전 반드시 확인해 주세요</p>
+                {[
+                  "상품권 원본을 반드시 지참해 주세요.",
+                  "훼손·스크래치·일부 사용 상품권은 매입이 불가합니다.",
+                  "반드시 직접 대면 거래만 가능합니다 (택배·비대면 불가).",
+                  "주정차가 가능한 장소로 거래 장소를 지정해 주세요.",
+                  "예약 당일 미방문(노쇼) 시 예약 이용에 제한이 생길 수 있습니다.",
+                  "예약 취소 시 사전에 연락 부탁드립니다.",
+                ].map((item, i) => (
+                  <div key={i} className="flex items-start gap-2">
+                    <span className="w-4 h-4 rounded-full bg-amber-200 text-amber-700 text-[10px] font-bold flex items-center justify-center flex-shrink-0 mt-0.5">{i + 1}</span>
+                    <p className="text-[12px] text-amber-800 leading-relaxed">{item}</p>
+                  </div>
+                ))}
+              </div>
+
+              {/* 개인정보 수집 동의 */}
+              <div className="rounded-2xl bg-slate-50 border border-slate-200 px-4 py-4 space-y-3">
+                <p className="text-[12px] font-bold text-slate-700">개인정보 수집 및 이용 안내</p>
+                <div className="space-y-1.5 text-[11px] text-slate-500">
+                  <div className="flex gap-2"><span className="font-semibold text-slate-600 flex-shrink-0">수집 항목</span><span>성명, 전화번호, 거래 장소, 계좌번호</span></div>
+                  <div className="flex gap-2"><span className="font-semibold text-slate-600 flex-shrink-0">수집 목적</span><span>상품권 매입 예약 서비스 제공 및 본인 확인</span></div>
+                  <div className="flex gap-2"><span className="font-semibold text-slate-600 flex-shrink-0">보유 기간</span><span>예약 완료 후 30일 이내 파기</span></div>
+                </div>
+                {/* 동의 체크박스 */}
+                <label className="flex items-center gap-3 cursor-pointer pt-1 border-t border-slate-200">
+                  <div
+                    onClick={() => setPrivacyChecked(v => !v)}
+                    className={`w-5 h-5 rounded-md border-2 flex items-center justify-center flex-shrink-0 transition-all
+                      ${privacyChecked ? "bg-indigo-500 border-indigo-500" : "border-slate-300 bg-white"}`}
+                  >
+                    {privacyChecked && <svg width="11" height="9" viewBox="0 0 11 9" fill="none"><path d="M1 4l3 3.5L10 1" stroke="white" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/></svg>}
+                  </div>
+                  <span onClick={() => setPrivacyChecked(v => !v)} className="text-[12px] font-semibold text-slate-700 select-none">
+                    개인정보 수집 및 이용에 동의합니다 <span className="text-rose-400">(필수)</span>
+                  </span>
+                </label>
+              </div>
+            </div>
+
+            {/* 버튼 */}
+            <div className="px-5 pb-6 pt-3 flex gap-3">
+              <button onClick={() => setShowNoticeModal(false)} className="flex-1 py-3.5 rounded-2xl border border-slate-200 text-slate-500 text-[14px] font-bold">
+                취소
+              </button>
+              <button
+                onClick={() => { if (!privacyChecked) return; setShowNoticeModal(false); setAgreedPrivacy(true); }}
+                disabled={!privacyChecked}
+                className={`flex-[2] py-3.5 rounded-2xl text-white text-[14px] font-bold transition-all
+                  ${privacyChecked ? "opacity-100 active:scale-95" : "opacity-40 cursor-not-allowed"}`}
+                style={{ background: "linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%)" }}
+              >
+                동의하고 예약 신청
+              </button>
+            </div>
           </div>
         </div>
-      </div>
+      )}
     </div>
   );
 }
