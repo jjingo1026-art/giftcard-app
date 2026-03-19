@@ -139,61 +139,67 @@ function VoucherItems({
       <div className="space-y-2">
         {items.map((item, idx) => {
           const { amountNum, rate, payment } = computeItem(item, baseDeduct);
+          const selectFocus = accent === "rose"
+            ? "focus:border-rose-400 focus:ring-2 focus:ring-rose-50"
+            : "focus:border-indigo-400 focus:ring-2 focus:ring-indigo-50";
+          const arrowColor = accent === "rose" ? "%23f43f5e" : "%236366f1";
           return (
-            <div key={idx} className="rounded-2xl border border-slate-200 bg-slate-50 overflow-hidden">
-              {/* Row 1: 삭제 버튼 */}
-              {items.length > 1 && (
-                <div className="flex justify-end px-3 pt-2">
-                  <button type="button" onClick={() => onRemove(idx)}
-                    className="w-7 h-7 flex items-center justify-center rounded-xl bg-rose-100 text-rose-400 hover:bg-rose-200 active:scale-90 transition-all">
-                    <svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M2 2l8 8M10 2l-8 8" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" /></svg>
-                  </button>
+            <div key={idx} className="rounded-2xl border border-slate-200 bg-slate-50 p-3 space-y-2">
+              {/* Row 1: select + 증정용 버튼 + 삭제 */}
+              <div className="flex gap-2 items-stretch">
+                <div className="flex-1 relative">
+                  <select
+                    value={item.type}
+                    onChange={(e) => onChange(idx, "type", e.target.value)}
+                    className={`w-full h-full px-3 py-2.5 rounded-xl border border-slate-200 bg-white text-[14px] text-slate-700 outline-none appearance-none pr-7 transition-all ${selectFocus}`}
+                    style={{ backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 20 20'%3E%3Cpath fill='${arrowColor}' d='M5 8l5 5 5-5z'/%3E%3C/svg%3E")`, backgroundRepeat: "no-repeat", backgroundPosition: "right 10px center" }}
+                  >
+                    {Object.keys(RATES).map((k) => <option key={k} value={k}>{k}</option>)}
+                  </select>
                 </div>
-              )}
-              {/* Row 2: 가로 스크롤 타입 선택 */}
-              <div className={`px-3 ${items.length > 1 ? "pt-1" : "pt-3"} pb-2`}>
-                <TypeScrollPicker value={item.type} onChange={(v) => onChange(idx, "type", v)} accent={accent} />
-              </div>
-              {/* Row 3: 금액 입력 */}
-              <div className="px-3 pb-2">
-                <input
-                  type="number"
-                  value={item.amount}
-                  onChange={(e) => onChange(idx, "amount", e.target.value)}
-                  placeholder="금액 입력 (원)"
-                  min="0"
-                  step="10000"
-                  className={`w-full px-3 py-2.5 rounded-xl border text-[14px] text-slate-800 outline-none transition-all duration-150 placeholder:text-slate-300
-                    ${errors[idx] ? "border-rose-300 bg-rose-50" : "border-slate-200 bg-white"}`}
-                />
-              </div>
-              {/* Row 4: 증정용 토글 버튼 */}
-              <div className="px-3 pb-3">
-                <button type="button" onClick={() => onToggleGift(idx)}
-                  className={`w-full py-2.5 rounded-xl font-bold text-[14px] border-2 transition-all duration-150 active:scale-[0.98] flex items-center justify-center gap-2
+                <button
+                  type="button"
+                  onClick={() => onToggleGift(idx)}
+                  className={`flex-shrink-0 px-3 py-2 rounded-xl font-bold text-[13px] border-2 transition-all duration-150 active:scale-95 flex items-center gap-1.5
                     ${item.isGift
                       ? "bg-violet-500 border-violet-500 text-white shadow-sm shadow-violet-200"
-                      : "bg-white border-slate-200 text-slate-400 hover:border-violet-300 hover:text-violet-400"}`}>
-                  <span>🎁</span>
-                  <span>증정용</span>
-                  {item.isGift
-                    ? <span className="text-[11px] bg-white/25 text-white font-bold px-2 py-0.5 rounded-full">선택됨 · -1%</span>
-                    : <span className="text-[11px] text-slate-300 font-normal">클릭하여 선택</span>}
-                </button>
-              </div>
-              {/* Row 5: 오류 + 금액 미리보기 */}
-              <div className="px-3 pb-3 space-y-1.5">
-                {errors[idx] && <p className="text-[11px] text-rose-500">⚠ {errors[idx]}</p>}
-                {amountNum > 0 && (
-                  <div className={`flex items-center justify-between px-3 py-2 rounded-xl text-[12px] font-semibold ${cl.bg} ${cl.text}`}>
-                    <span className="flex items-center gap-1.5">
-                      요율 {Math.round(rate * 100)}%
-                      {item.isGift && <span className="text-[10px] bg-violet-100 text-violet-500 font-bold px-1.5 py-0.5 rounded-full">증정 -1%</span>}
-                    </span>
-                    <span className={`font-black text-[15px] ${cl.textDark}`}>{formatKRW(payment)}</span>
+                      : "bg-white border-slate-200 text-slate-400 hover:border-violet-400 hover:bg-violet-50 hover:text-violet-500"}`}
+                >
+                  <span className="text-[15px]">🎁</span>
+                  <div className="flex flex-col items-center leading-tight">
+                    <span>증정용</span>
+                    {item.isGift && <span className="text-[9px] font-bold opacity-90">-1%</span>}
                   </div>
+                </button>
+                {items.length > 1 && (
+                  <button type="button" onClick={() => onRemove(idx)}
+                    className="w-8 flex items-center justify-center rounded-xl bg-rose-100 text-rose-400 hover:bg-rose-200 active:scale-90 transition-all flex-shrink-0">
+                    <svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M2 2l8 8M10 2l-8 8" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" /></svg>
+                  </button>
                 )}
               </div>
+              {/* Row 2: 금액 입력 */}
+              <input
+                type="number"
+                value={item.amount}
+                onChange={(e) => onChange(idx, "amount", e.target.value)}
+                placeholder="금액 입력 (원)"
+                min="0"
+                step="10000"
+                className={`w-full px-3 py-2.5 rounded-xl border text-[14px] text-slate-800 outline-none transition-all duration-150 placeholder:text-slate-300
+                  ${errors[idx] ? "border-rose-300 bg-rose-50" : "border-slate-200 bg-white"}`}
+              />
+              {/* Row 3: 오류 + 금액 미리보기 */}
+              {errors[idx] && <p className="text-[11px] text-rose-500">⚠ {errors[idx]}</p>}
+              {amountNum > 0 && (
+                <div className={`flex items-center justify-between px-3 py-2 rounded-xl text-[12px] font-semibold ${cl.bg} ${cl.text}`}>
+                  <span className="flex items-center gap-1.5">
+                    요율 {Math.round(rate * 100)}%
+                    {item.isGift && <span className="text-[10px] bg-violet-100 text-violet-500 font-bold px-1.5 py-0.5 rounded-full">증정 -1%</span>}
+                  </span>
+                  <span className={`font-black text-[15px] ${cl.textDark}`}>{formatKRW(payment)}</span>
+                </div>
+              )}
             </div>
           );
         })}
