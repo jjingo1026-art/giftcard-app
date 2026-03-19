@@ -187,11 +187,17 @@ router.post("/", async (req, res) => {
 
   const totalPayment = body.totalPayment ?? body.items?.reduce((s, it) => s + it.payment, 0) ?? totalAmount;
 
+  const isUrgent = body.kind === "urgent"
+    ? true
+    : body.date && body.time
+      ? new Date(`${body.date} ${body.time}`).getTime() - Date.now() < 60 * 60 * 1000
+      : false;
+
   const [inserted] = await db
     .insert(reservationsTable)
     .values({
       kind: body.kind ?? "reservation",
-      isUrgent: body.isUrgent ?? body.kind === "urgent",
+      isUrgent,
       name: body.name,
       phone: normalizedPhone,
       date: body.date,
