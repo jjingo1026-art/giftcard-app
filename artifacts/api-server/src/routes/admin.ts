@@ -129,17 +129,29 @@ router.post("/staff/register", async (req, res) => {
 
 // 관리자용: 매입담당자별 요약 (진행중/완료 건수)
 router.get("/staff-summary", requireAuth, async (_req, res) => {
-  const [staffList, rows] = await Promise.all([
-    db.select().from(staffTable).where(eq(staffTable.status, "approved")),
-    db.select().from(reservationsTable),
+  const [staffList, grouped] = await Promise.all([
+    db.select({ id: staffTable.id, name: staffTable.name })
+      .from(staffTable)
+      .where(eq(staffTable.status, "approved")),
+    db.select({
+        staffId:   reservationsTable.assignedStaffId,
+        status:    reservationsTable.status,
+        count:     sql<number>`COUNT(*)`,
+      })
+      .from(reservationsTable)
+      .where(sql`${reservationsTable.assignedStaffId} IS NOT NULL`)
+      .groupBy(reservationsTable.assignedStaffId, reservationsTable.status),
   ]);
 
-  const summary = staffList.map((s) => ({
-    id: s.id,
-    name: s.name,
-    assigned:  rows.filter((r) => r.assignedStaffId === s.id && r.status === "assigned").length,
-    completed: rows.filter((r) => r.assignedStaffId === s.id && r.status === "completed").length,
-  }));
+  const summary = staffList.map((s) => {
+    const rows = grouped.filter((g) => g.staffId === s.id);
+    return {
+      id:        s.id,
+      name:      s.name,
+      assigned:  Number(rows.find((g) => g.status === "assigned")?.count  ?? 0),
+      completed: Number(rows.find((g) => g.status === "completed")?.count ?? 0),
+    };
+  });
 
   res.json(summary);
 });
