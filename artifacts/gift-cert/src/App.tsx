@@ -257,6 +257,7 @@ function HomePage({ onGoUrgent }: { onGoUrgent: () => void }) {
   const [phone, setPhone] = useState("");
   const [date, setDate] = useState("");
   const [time, setTime] = useState("14:20");
+  const [takenSlots, setTakenSlots] = useState<string[]>([]);
   const [location, setLocation] = useState("");
   const [bankName, setBankName] = useState(KOREAN_BANKS[0]);
   const [accountNumber, setAccountNumber] = useState("");
@@ -442,7 +443,31 @@ function HomePage({ onGoUrgent }: { onGoUrgent: () => void }) {
             </Field>
             <div className="grid grid-cols-2 gap-3">
               <Field label="예약 날짜" required error={fieldErrors.date}>
-                <input type="date" value={date} onChange={(e) => { setDate(e.target.value); setFieldErrors((p) => ({ ...p, date: "" })); }} className={inputCls(!!fieldErrors.date)} />
+                <input
+                  type="date"
+                  value={date}
+                  onChange={async (e) => {
+                    const d = e.target.value;
+                    setDate(d);
+                    setFieldErrors((p) => ({ ...p, date: "" }));
+                    if (d) {
+                      try {
+                        const res = await fetch(`/api/reservations/by-date?date=${d}`);
+                        const list = await res.json() as { time?: string; status?: string }[];
+                        const taken = list
+                          .filter((r) => r.status === "pending" || r.status === "assigned")
+                          .map((r) => r.time ?? "");
+                        setTakenSlots(taken.filter(Boolean));
+                        if (taken.includes(time)) setTime("14:20");
+                      } catch {
+                        setTakenSlots([]);
+                      }
+                    } else {
+                      setTakenSlots([]);
+                    }
+                  }}
+                  className={inputCls(!!fieldErrors.date)}
+                />
               </Field>
               <Field label="예약 시간" required error={fieldErrors.time}>
                 <select
@@ -454,9 +479,14 @@ function HomePage({ onGoUrgent }: { onGoUrgent: () => void }) {
                   style={{ backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 20 20'%3E%3Cpath fill='%236366f1' d='M5 8l5 5 5-5z'/%3E%3C/svg%3E")`, backgroundRepeat: "no-repeat", backgroundPosition: "right 12px center" }}
                 >
                   <option value="">시간 선택</option>
-                  {TIME_OPTIONS.map((t) => (
-                    <option key={t} value={t}>{t}</option>
-                  ))}
+                  {TIME_OPTIONS.map((t) => {
+                    const taken = takenSlots.includes(t);
+                    return (
+                      <option key={t} value={t} disabled={taken}>
+                        {taken ? `❌ ${t}` : `⭕ ${t}`}
+                      </option>
+                    );
+                  })}
                 </select>
               </Field>
             </div>
