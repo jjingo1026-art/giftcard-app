@@ -65,6 +65,14 @@
   --radius: 0.75rem;
 }
 
+@keyframes fade-in-up {
+  from { opacity: 0; transform: translateX(-50%) translateY(12px); }
+  to   { opacity: 1; transform: translateX(-50%) translateY(0); }
+}
+.animate-fade-in-up {
+  animation: fade-in-up 0.25s ease-out both;
+}
+
 @layer base {
   * {
     @apply border-border box-border;

@@ -31,6 +31,7 @@ export default function ReservationCheck() {
   const [searched, setSearched] = useState(false);
   const [cancelling, setCancelling] = useState(false);
   const [cancelError, setCancelError] = useState("");
+  const [cancelSuccess, setCancelSuccess] = useState(false);
 
   async function check() {
     const p = phone.trim();
@@ -67,7 +68,9 @@ export default function ReservationCheck() {
       });
       const data = await res.json();
       if (data.success) {
-        setReservation({ ...reservation, status: "cancelled" });
+        setReservation({ ...reservation, status: "cancelled", cancelledAt: new Date().toISOString() });
+        setCancelSuccess(true);
+        setTimeout(() => setCancelSuccess(false), 3000);
       } else {
         setCancelError(data.error ?? "취소 중 오류가 발생했습니다.");
       }
@@ -89,6 +92,12 @@ export default function ReservationCheck() {
 
   return (
     <div className="min-h-screen bg-slate-50">
+      {/* 취소 성공 토스트 */}
+      {cancelSuccess && (
+        <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 px-5 py-3 rounded-full bg-slate-800 text-white text-[14px] font-medium shadow-lg animate-fade-in-up">
+          예약이 취소되었습니다.
+        </div>
+      )}
       <header className="bg-white border-b border-slate-100 shadow-sm sticky top-0 z-40">
         <div className="max-w-lg mx-auto px-4 py-3.5 flex items-center gap-3">
           <button onClick={() => history.back()} className="w-8 h-8 flex items-center justify-center rounded-xl hover:bg-slate-100 transition-colors">
