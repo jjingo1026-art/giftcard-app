@@ -211,11 +211,16 @@ router.get("/staff/my-reservations", requireStaffAuth, async (req, res) => {
 
 router.get("/reservations", requireAuth, async (req, res) => {
   const { date } = req.query as { date?: string };
-  const rows = await db
+
+  const query = db
     .select()
     .from(reservationsTable)
-    .where(date ? eq(reservationsTable.date, date) : undefined)
     .orderBy(desc(reservationsTable.createdAt));
+
+  const rows = date
+    ? await query.where(eq(reservationsTable.date, date))
+    : await query;
+
   res.json(rows);
 });
 
