@@ -614,6 +614,39 @@ function SubmissionCard({ entry }: { entry: ReservationEntry | UrgentEntry }) {
     ? { text: "text-rose-500", bg: "bg-rose-50", border: "border-rose-100", pill: "bg-rose-100 text-rose-600" }
     : { text: "text-indigo-500", bg: "bg-indigo-50", border: "border-indigo-100", pill: "bg-indigo-100 text-indigo-600" };
 
+  const [showModal, setShowModal] = useState(false);
+  const [staffList, setStaffList] = useState<{ id: number; name: string }[]>([]);
+  const [assigning, setAssigning] = useState(false);
+  const [assignedTo, setAssignedTo] = useState<string | null>(null);
+
+  async function openAssign() {
+    const token = localStorage.getItem("gc_admin_token");
+    if (!token) { alert("관리자 로그인이 필요합니다."); return; }
+    try {
+      const res = await fetch("/api/admin/staff", { headers: { Authorization: `Bearer ${token}` } });
+      if (!res.ok) { alert("직원 목록을 불러올 수 없습니다."); return; }
+      const data: any[] = await res.json();
+      setStaffList(data.map((s) => ({ id: s.id, name: s.name })));
+    } catch { alert("서버 오류가 발생했습니다."); return; }
+    setShowModal(true);
+  }
+
+  async function doAssign(staffId: number, staffName: string) {
+    const token = localStorage.getItem("gc_admin_token");
+    if (!token || !entry.id) return;
+    setAssigning(true);
+    try {
+      const res = await fetch(`/api/admin/reservations/${entry.id}/assign`, {
+        method: "PATCH",
+        headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
+        body: JSON.stringify({ staffId }),
+      });
+      if (res.ok) { setAssignedTo(staffName); setShowModal(false); }
+      else { alert("배정에 실패했습니다."); }
+    } catch { alert("서버 오류가 발생했습니다."); }
+    finally { setAssigning(false); }
+  }
+
   return (
     <div
       className="rounded-3xl shadow-sm overflow-hidden"
@@ -715,17 +748,62 @@ function SubmissionCard({ entry }: { entry: ReservationEntry | UrgentEntry }) {
 
       {/* ── 담당자 배정 버튼 ── */}
       <div className="px-4 pb-4">
-        <button
-          type="button"
-          className="w-full py-3 rounded-2xl text-[14px] font-bold transition-all active:scale-[0.98]"
-          style={isUrgent
-            ? { background: "#ef4444", color: "#fff" }
-            : { background: "#6366f1", color: "#fff" }
-          }
-        >
-          담당자 배정
-        </button>
+        {assignedTo ? (
+          <div className="w-full py-3 rounded-2xl text-[14px] font-bold text-center"
+            style={{ background: "#f0fdf4", color: "#16a34a", border: "1.5px solid #bbf7d0" }}>
+            ✅ {assignedTo} 배정 완료
+          </div>
+        ) : (
+          <button
+            type="button"
+            onClick={openAssign}
+            className="w-full py-3 rounded-2xl text-[14px] font-bold transition-all active:scale-[0.98]"
+            style={isUrgent
+              ? { background: "#ef4444", color: "#fff" }
+              : { background: "#6366f1", color: "#fff" }
+            }
+          >
+            담당자 배정
+          </button>
+        )}
       </div>
+
+      {/* ── 직원 선택 모달 ── */}
+      {showModal && (
+        <div
+          className="fixed inset-0 z-50 flex items-end justify-center"
+          style={{ background: "rgba(0,0,0,0.45)" }}
+          onClick={() => setShowModal(false)}
+        >
+          <div
+            className="w-full max-w-md rounded-t-3xl bg-white pb-8"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex items-center justify-between px-5 pt-5 pb-3">
+              <p className="text-[16px] font-black text-slate-800">담당자 선택</p>
+              <button onClick={() => setShowModal(false)} className="text-slate-400 text-xl leading-none">✕</button>
+            </div>
+            <div className="h-px bg-slate-100 mx-5 mb-2" />
+            {staffList.length === 0 ? (
+              <p className="text-center text-[13px] text-slate-400 py-8">등록된 직원이 없습니다.</p>
+            ) : (
+              <ul className="px-4 space-y-2 max-h-72 overflow-y-auto">
+                {staffList.map((s) => (
+                  <li key={s.id}>
+                    <button
+                      disabled={assigning}
+                      onClick={() => doAssign(s.id, s.name)}
+                      className="w-full text-left px-4 py-3.5 rounded-2xl border border-slate-100 bg-slate-50 text-[14px] font-semibold text-slate-800 hover:bg-indigo-50 hover:border-indigo-200 transition-colors active:scale-[0.98] disabled:opacity-50"
+                    >
+                      👤 {s.name}
+                    </button>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </div>
+        </div>
+      )}
     </div>
   );
 }
