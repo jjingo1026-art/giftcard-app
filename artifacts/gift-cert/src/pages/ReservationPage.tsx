@@ -49,6 +49,7 @@ export default function ReservationPage() {
   const [holder, setHolder]   = useState("");
   const [items, setItems]     = useState<Item[]>([{ type: getDefaultType(), amount: "", isGift: false }]);
   const [errors, setErrors]   = useState<Record<string, string>>({});
+  const [agreeMatch, setAgreeMatch] = useState(false);
   const [toast, setToast]     = useState(false);
 
   function total() {
@@ -68,6 +69,7 @@ export default function ReservationPage() {
     if (!loc.trim())    e.loc    = "거래 장소를 입력해주세요";
     if (!acct.trim())   e.acct   = "계좌번호를 입력해주세요";
     if (!holder.trim()) e.holder = "예금주를 입력해주세요";
+    if (!agreeMatch)    e.agreeMatch = "신청자와 예금주 동일 여부를 확인해주세요";
     items.forEach((it, i) => {
       if ((parseFloat(it.amount) || 0) <= 0) e[`item${i}`] = "금액을 입력해주세요";
     });
@@ -257,26 +259,51 @@ export default function ReservationPage() {
         </div>
 
         {/* 안내사항 */}
-        <div className="rounded-2xl border border-amber-200 bg-amber-50 px-4 py-4 space-y-2.5">
+        <div className={`rounded-2xl border px-4 py-4 space-y-3 ${errors.agreeMatch ? "border-rose-300 bg-rose-50" : "border-amber-200 bg-amber-50"}`}>
           <p className="text-[13px] font-bold text-amber-700 flex items-center gap-1.5">
             <span>※</span> 안내사항 <span className="text-[11px] font-semibold bg-amber-200 text-amber-800 px-2 py-0.5 rounded-full">필수 확인</span>
           </p>
-          <p className="text-[13px] text-amber-800 leading-relaxed">
-            안전한 거래를 위해 <strong>신청자 성함</strong>과 <strong>입금받을 계좌의 예금주명</strong>이 반드시 동일해야 합니다.
-          </p>
-          <ul className="space-y-1">
-            <li className="text-[12px] text-amber-700 flex items-start gap-1.5">
-              <span className="mt-0.5 flex-shrink-0">•</span>
-              <span>성함과 예금주명이 다를 경우 예약이 거절될 수 있습니다.</span>
-            </li>
-            <li className="text-[12px] text-amber-700 flex items-start gap-1.5">
-              <span className="mt-0.5 flex-shrink-0">•</span>
-              <span>타인 명의 계좌 사용 시 거래가 제한됩니다.</span>
-            </li>
-          </ul>
-          <p className="text-[12px] font-semibold text-amber-600 border-t border-amber-200 pt-2 mt-1">
-            위 내용을 확인하셨습니까?
-          </p>
+          {/* 성함 / 예금주 비교 */}
+          <div className="rounded-xl border border-amber-200 bg-white overflow-hidden">
+            <div className="flex items-center px-4 py-2.5 border-b border-amber-100">
+              <span className="text-[12px] font-semibold text-slate-400 w-16 flex-shrink-0">성함</span>
+              <span className={`text-[14px] font-bold ${name.trim() ? "text-slate-800" : "text-slate-300"}`}>
+                {name.trim() || "홍길동"}
+              </span>
+            </div>
+            <div className="flex items-center px-4 py-2.5">
+              <span className="text-[12px] font-semibold text-slate-400 w-16 flex-shrink-0">예금주</span>
+              <span className={`text-[14px] font-bold ${holder.trim() ? "text-slate-800" : "text-slate-300"}`}>
+                {holder.trim() || "홍길동"}
+              </span>
+            </div>
+          </div>
+          {/* 체크박스 */}
+          <label className="flex items-center gap-3 cursor-pointer group">
+            <div
+              onClick={() => { setAgreeMatch(v => !v); setErrors(p => { const q = { ...p }; delete q.agreeMatch; return q; }); }}
+              className={`w-5 h-5 rounded-md border-2 flex items-center justify-center flex-shrink-0 transition-all duration-150
+                ${agreeMatch
+                  ? "bg-indigo-500 border-indigo-500"
+                  : errors.agreeMatch
+                    ? "border-rose-400 bg-rose-50"
+                    : "border-slate-300 bg-white group-hover:border-indigo-400"}`}
+            >
+              {agreeMatch && (
+                <svg width="11" height="9" viewBox="0 0 11 9" fill="none">
+                  <path d="M1 4l3 3.5L10 1" stroke="white" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
+                </svg>
+              )}
+            </div>
+            <span
+              onClick={() => { setAgreeMatch(v => !v); setErrors(p => { const q = { ...p }; delete q.agreeMatch; return q; }); }}
+              className={`text-[13px] font-semibold select-none ${errors.agreeMatch ? "text-rose-600" : "text-slate-700"}`}
+            >
+              신청자와 예금주가 동일합니다
+              <span className="ml-1.5 text-[11px] font-bold text-rose-400">(필수)</span>
+            </span>
+          </label>
+          {errors.agreeMatch && <p className="text-[11px] text-rose-500">⚠ {errors.agreeMatch}</p>}
         </div>
 
         <button type="submit"
