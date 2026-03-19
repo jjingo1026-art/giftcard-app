@@ -44,7 +44,7 @@ export default function ReservationCheck() {
   const [cancelSuccess, setCancelSuccess] = useState(false);
 
   async function check() {
-    const p = phone.trim();
+    const p = phone.trim().replace(/[^0-9]/g, "");
     if (!p) { setError("전화번호를 입력해주세요."); return; }
     setError(""); setLoading(true); setSearched(false);
     try {
