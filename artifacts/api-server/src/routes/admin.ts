@@ -222,20 +222,27 @@ router.get("/staff/my-reservations", requireStaffAuth, async (req, res) => {
 
 router.get("/dashboard", requireAuth, requireAdmin, async (_req, res) => {
   const today = new Date().toISOString().slice(0, 10);
+  const weekAgo = new Date(Date.now() - 6 * 24 * 60 * 60 * 1000).toISOString().slice(0, 10);
 
-  const [reservations, staffList, revenueResult] = await Promise.all([
+  const [reservations, staffList, todayRevenueResult, weeklyRevenueResult] = await Promise.all([
     db.select().from(reservationsTable),
     db.select({ id: staffTable.id, name: staffTable.name }).from(staffTable).where(eq(staffTable.status, "approved")),
     db.select({ total: sql<number>`COALESCE(SUM(${reservationsTable.amount}), 0)` })
       .from(reservationsTable)
       .where(and(eq(reservationsTable.date, today), eq(reservationsTable.status, "completed"))),
+    db.select({ total: sql<number>`COALESCE(SUM(${reservationsTable.amount}), 0)` })
+      .from(reservationsTable)
+      .where(and(gte(reservationsTable.date, weekAgo), lte(reservationsTable.date, today), eq(reservationsTable.status, "completed"))),
   ]);
 
+  const total     = reservations.length;
+  const completed = reservations.filter(r => r.status === "completed").length;
+
   const stats = {
-    total:     reservations.length,
+    total,
     pending:   reservations.filter(r => r.status === "pending").length,
     assigned:  reservations.filter(r => r.status === "assigned").length,
-    completed: reservations.filter(r => r.status === "completed").length,
+    completed,
     cancelled: reservations.filter(r => r.status === "cancelled").length,
   };
 
@@ -249,7 +256,10 @@ router.get("/dashboard", requireAuth, requireAdmin, async (_req, res) => {
   res.json({
     today,
     stats,
-    todayRevenue: revenueResult[0].total,
+    todayRevenue:       Number(todayRevenueResult[0].total),
+    weeklyRevenue:      Number(weeklyRevenueResult[0].total),
+    totalReservations:  total,
+    completedRate:      total > 0 ? Math.round((completed / total) * 100) : 0,
     staffSummary,
   });
 });
