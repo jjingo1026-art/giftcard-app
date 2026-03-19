@@ -62,6 +62,9 @@ export default function AdminDashboard() {
   const [calendarData, setCalendarData] = useState<{ date: string; total: number; unassigned: number; assigned: number }[]>([]);
   const [timeSlots, setTimeSlots] = useState<{ time: string | null; count: number }[]>([]);
   const [slotsLoading, setSlotsLoading] = useState(false);
+  const [expandedSlot, setExpandedSlot] = useState<string | null>(null);
+  const [slotDetail, setSlotDetail] = useState<Reservation[]>([]);
+  const [slotDetailLoading, setSlotDetailLoading] = useState(false);
 
   const token = getAdminToken();
   if (!token) { navigate("/admin/login"); return null; }
@@ -171,6 +174,8 @@ export default function AdminDashboard() {
     setDateFilter(info.dateStr);
     setShowUnassignedSlots(false);
     setTimeSlots([]);
+    setExpandedSlot(null);
+    setSlotDetail([]);
     filter(info.dateStr);
   }
 
@@ -345,7 +350,7 @@ export default function AdminDashboard() {
                 <div className="flex items-center justify-between px-1">
                   <p className="text-[14px] font-black text-slate-800">📅 {formatDateKo(dateFilter)}</p>
                   <button
-                    onClick={() => { setDateFilter(""); setEntries(allEntries); setShowUnassignedSlots(false); setTimeSlots([]); }}
+                    onClick={() => { setDateFilter(""); setEntries(allEntries); setShowUnassignedSlots(false); setTimeSlots([]); setExpandedSlot(null); setSlotDetail([]); }}
                     className="text-[11px] text-slate-400 hover:text-rose-500 font-medium"
                   >전체 보기</button>
                 </div>
@@ -389,12 +394,52 @@ export default function AdminDashboard() {
                       <p className="px-4 pb-3 text-[13px] text-slate-400">미배정 건 없음</p>
                     ) : (
                       <ul className="divide-y divide-slate-50">
-                        {timeSlots.map((s) => (
-                          <li key={s.time ?? "—"} className="flex items-center justify-between px-4 py-2.5">
-                            <span className="text-[13px] font-semibold text-slate-700">{s.time ?? "시간 미정"}</span>
-                            <span className="text-[13px] font-black text-rose-500">{s.count}건</span>
-                          </li>
-                        ))}
+                        {timeSlots.map((s) => {
+                          const t = s.time ?? "시간 미정";
+                          const isExpanded = expandedSlot === t;
+                          return (
+                            <li key={t}>
+                              <button
+                                className="w-full flex items-center justify-between px-4 py-2.5 hover:bg-rose-50/60 transition-colors"
+                                onClick={async () => {
+                                  if (isExpanded) { setExpandedSlot(null); return; }
+                                  setExpandedSlot(t);
+                                  setSlotDetailLoading(true);
+                                  setSlotDetail([]);
+                                  try {
+                                    const r = await fetch(
+                                      `/api/admin/reservations/unassigned-detail?date=${dateFilter}&time=${encodeURIComponent(s.time ?? "")}`,
+                                      { headers: { Authorization: `Bearer ${token}` } }
+                                    );
+                                    if (r.ok) setSlotDetail(await r.json());
+                                  } finally { setSlotDetailLoading(false); }
+                                }}
+                              >
+                                <span className="text-[13px] font-semibold text-slate-700">🕐 {t}</span>
+                                <div className="flex items-center gap-2">
+                                  <span className="text-[13px] font-black text-rose-500">{s.count}건</span>
+                                  <span className="text-[11px] text-slate-300">{isExpanded ? "▲" : "▼"}</span>
+                                </div>
+                              </button>
+                              {isExpanded && (
+                                <div className="px-4 pb-2.5 space-y-1.5">
+                                  {slotDetailLoading ? (
+                                    <p className="text-[12px] text-slate-400 py-1">불러오는 중...</p>
+                                  ) : slotDetail.map((r) => (
+                                    <button
+                                      key={r.id}
+                                      onClick={() => { location.href = `/admin/detail.html?id=${r.id}`; }}
+                                      className="w-full text-left bg-white border border-rose-100 rounded-xl px-3 py-2 hover:bg-rose-50 transition-colors"
+                                    >
+                                      <p className="text-[13px] font-bold text-slate-800">👤 {r.name ?? r.phone}</p>
+                                      <p className="text-[11px] text-slate-400 mt-0.5">📍 {r.location || "—"}</p>
+                                    </button>
+                                  ))}
+                                </div>
+                              )}
+                            </li>
+                          );
+                        })}
                       </ul>
                     )}
                   </div>
