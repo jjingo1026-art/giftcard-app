@@ -19,6 +19,7 @@ router.post("/", async (req, res) => {
     accountHolder?: string;
     giftcardType?: string;
     amount?: number;
+    category?: string;
   };
 
   if (!body.phone) {
@@ -51,6 +52,7 @@ router.post("/", async (req, res) => {
       accountHolder: body.accountHolder ?? "",
       giftcardType: body.giftcardType,
       amount: totalAmount,
+      category: body.category,
       status: "pending",
     })
     .returning();
