@@ -45,7 +45,7 @@ interface ReservationEntry {
   bankName: string; accountNumber: string; accountHolder: string;
 }
 interface UrgentEntry {
-  id: number; phone: string;
+  id: number; name: string; phone: string;
   location: string; items: SavedItem[]; totalPayment: number;
   bankName: string; accountNumber: string; accountHolder: string;
 }
@@ -469,10 +469,10 @@ function SubmissionCard({ entry, accent }: { entry: ReservationEntry | UrgentEnt
           </div>
           <div>
             <p className={`text-[15px] font-bold text-slate-800 flex items-center gap-1.5`}>
-              {isRes ? (entry as ReservationEntry).name : (entry as UrgentEntry).phone}
+              {isRes ? (entry as ReservationEntry).name : (entry as UrgentEntry).name}
               {accent === "rose" && <span className="text-[10px] bg-rose-100 text-rose-500 font-bold px-1.5 py-0.5 rounded-full">긴급</span>}
             </p>
-            <p className="text-[12px] text-slate-400">{isRes ? (entry as ReservationEntry).phone : "긴급 판매"}</p>
+            <p className="text-[12px] text-slate-400">{isRes ? (entry as ReservationEntry).phone : (entry as UrgentEntry).phone}</p>
           </div>
         </div>
         <span className={`text-[11px] font-bold px-2 py-1 rounded-full ${ac.badge}`}>{entry.items.length}종류</span>
@@ -545,13 +545,14 @@ function SubmissionCard({ entry, accent }: { entry: ReservationEntry | UrgentEnt
 
 // ─── URGENT SALE PAGE ─────────────────────────────────────────────────────────
 function UrgentPage({ onBack }: { onBack: () => void }) {
+  const [name, setName] = useState("");
   const [phone, setPhone] = useState("");
   const [location, setLocation] = useState("");
   const [bankName, setBankName] = useState(KOREAN_BANKS[0]);
   const [accountNumber, setAccountNumber] = useState("");
   const [accountHolder, setAccountHolder] = useState("");
   const [items, setItems] = useState<VoucherItem[]>([{ type: DEFAULT_TYPE, amount: "", isGift: false }]);
-  const [fieldErrors, setFieldErrors] = useState<{ phone?: string; location?: string; accountNumber?: string; accountHolder?: string }>({});
+  const [fieldErrors, setFieldErrors] = useState<{ name?: string; phone?: string; location?: string; accountNumber?: string; accountHolder?: string }>({});
   const [itemErrors, setItemErrors] = useState<string[]>([""]);
   const [submissions, setSubmissions] = useState<UrgentEntry[]>([]);
   const [toast, setToast] = useState(false);
@@ -567,6 +568,7 @@ function UrgentPage({ onBack }: { onBack: () => void }) {
 
   function validate() {
     const fe: typeof fieldErrors = {};
+    if (!name.trim()) fe.name = "성명을 입력해주세요";
     if (!phone.trim()) fe.phone = "판매자 전화번호를 입력해주세요";
     if (!location.trim()) fe.location = "거래 장소를 입력해주세요";
     if (!accountNumber.trim()) fe.accountNumber = "계좌번호를 입력해주세요";
@@ -590,14 +592,14 @@ function UrgentPage({ onBack }: { onBack: () => void }) {
       const res = await fetch("/api/reservations", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ kind: "urgent", phone, location, items: savedItems, totalPayment, bankName, accountNumber, accountHolder }),
+        body: JSON.stringify({ kind: "urgent", name, phone, location, items: savedItems, totalPayment, bankName, accountNumber, accountHolder }),
       });
       if (res.ok) { const data = await res.json(); id = data.id; }
     } catch {}
     setCounter(id);
-    setSubmissions((p) => [{ id, phone, location, items: savedItems, totalPayment, bankName, accountNumber, accountHolder }, ...p]);
-    saveEntry({ kind: "urgent", id, createdAt: new Date().toISOString(), phone, location, items: savedItems, totalPayment, bankName, accountNumber, accountHolder });
-    setPhone(""); setLocation(""); setAccountNumber(""); setAccountHolder("");
+    setSubmissions((p) => [{ id, name, phone, location, items: savedItems, totalPayment, bankName, accountNumber, accountHolder }, ...p]);
+    saveEntry({ kind: "urgent", id, createdAt: new Date().toISOString(), name, phone, location, items: savedItems, totalPayment, bankName, accountNumber, accountHolder });
+    setName(""); setPhone(""); setLocation(""); setAccountNumber(""); setAccountHolder("");
     setItems([{ type: DEFAULT_TYPE, amount: "", isGift: false }]); setItemErrors([""]);
     setToast(true); setTimeout(() => setToast(false), 3000);
   }
@@ -632,6 +634,9 @@ function UrgentPage({ onBack }: { onBack: () => void }) {
             <div className="w-8 h-8 bg-rose-50 rounded-xl flex items-center justify-center">📋</div>
           </div>
           <form onSubmit={handleSubmit} className="px-5 pb-5 space-y-4">
+            <Field label="성명" required error={fieldErrors.name}>
+              <input type="text" value={name} onChange={(e) => { setName(e.target.value); setFieldErrors((p) => ({ ...p, name: "" })); }} placeholder="홍길동" className={inputCls(!!fieldErrors.name, "rose")} />
+            </Field>
             <Field label="판매자 전화번호" required error={fieldErrors.phone}>
               <input type="tel" value={phone} onChange={(e) => { setPhone(e.target.value); setFieldErrors((p) => ({ ...p, phone: "" })); }} placeholder="010-0000-0000" className={inputCls(!!fieldErrors.phone, "rose")} />
             </Field>
