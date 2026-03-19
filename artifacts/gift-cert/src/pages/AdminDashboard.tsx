@@ -439,57 +439,7 @@ export default function AdminDashboard() {
           })()}
         </div>
 
-        <hr className="border-slate-100" />
-        <h2 className="text-[15px] font-bold text-slate-700">
-          📋 {dateFilter ? formatDateKo(dateFilter) : "전체"} 예약 리스트
-          <span className="text-[13px] text-slate-400 font-normal ml-2">({entries.length}건)</span>
-        </h2>
-
-        {error && <div className="py-8 text-center text-rose-500 text-[13px]">{error}</div>}
-        {loading && <div className="py-10 text-center text-slate-300 text-[13px]">불러오는 중...</div>}
-        {!loading && !error && entries.length === 0 && (
-          <div className="py-10 text-center text-slate-400 text-[13px]">접수 내역이 없습니다</div>
-        )}
-
-        <div id="list" className="space-y-4 pb-6">
-          {(() => {
-            const grouped: Record<string, Reservation[]> = {};
-            [...entries]
-              .sort((a, b) => (a.time ?? "").localeCompare(b.time ?? ""))
-              .forEach((r) => {
-                const key = r.time ?? "—";
-                if (!grouped[key]) grouped[key] = [];
-                grouped[key].push(r);
-              });
-            return Object.keys(grouped).map((time) => (
-              <div key={time}>
-                <p className="text-[12px] font-bold text-slate-400 px-1 mb-1">🕒 {time}</p>
-                <div className="space-y-2">
-                  {grouped[time].map((r) => (
-                    <div
-                      key={r.id}
-                      className="bg-white rounded-2xl border border-slate-100 shadow-sm px-4 py-3.5 flex items-center justify-between gap-2 hover:border-indigo-200 hover:bg-indigo-50/30 transition-colors"
-                    >
-                      <p
-                        onClick={() => { location.href = `/admin/detail.html?id=${r.id}`; }}
-                        className="text-[14px] font-semibold text-slate-800 cursor-pointer flex-1 min-w-0 truncate"
-                      >
-                        👤 {r.name ?? r.phone} | 💰 {formatKRW(r.totalPayment)} | {statusText[r.status]}
-                      </p>
-                      <a
-                        href={`/admin/chat.html?id=${r.id}`}
-                        onClick={(e) => e.stopPropagation()}
-                        className="flex-shrink-0 text-[12px] font-bold text-indigo-500 bg-indigo-50 hover:bg-indigo-100 px-3 py-1.5 rounded-xl transition-colors active:scale-95 whitespace-nowrap"
-                      >
-                        💬 채팅
-                      </a>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            ));
-          })()}
-        </div>
+        <div className="pb-6" />
       </div>
     </div>
   );
