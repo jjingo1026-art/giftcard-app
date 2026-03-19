@@ -235,8 +235,9 @@ function HomePage({ onGoUrgent }: { onGoUrgent: () => void }) {
   const [accountNumber, setAccountNumber] = useState("");
   const [accountHolder, setAccountHolder] = useState("");
   const [items, setItems] = useState<VoucherItem[]>([{ type: DEFAULT_TYPE, amount: "", isGift: false }]);
-  const [fieldErrors, setFieldErrors] = useState<{ name?: string; phone?: string; date?: string; time?: string; location?: string; accountNumber?: string; accountHolder?: string }>({});
+  const [fieldErrors, setFieldErrors] = useState<{ name?: string; phone?: string; date?: string; time?: string; location?: string; accountNumber?: string; accountHolder?: string; agreeMatch?: string }>({});
   const [itemErrors, setItemErrors] = useState<string[]>([""]);
+  const [agreeMatch, setAgreeMatch] = useState(false);
   const [submissions, setSubmissions] = useState<ReservationEntry[]>([]);
   const [toast, setToast] = useState(false);
   const [counter, setCounter] = useState(0);
@@ -260,6 +261,7 @@ function HomePage({ onGoUrgent }: { onGoUrgent: () => void }) {
     if (!location.trim()) fe.location = "거래 장소를 입력해주세요";
     if (!accountNumber.trim()) fe.accountNumber = "계좌번호를 입력해주세요";
     if (!accountHolder.trim()) fe.accountHolder = "예금주를 입력해주세요";
+    if (!agreeMatch) fe.agreeMatch = "신청자와 예금주 동일 여부를 확인해주세요";
     setFieldErrors(fe);
     const ie = items.map((item) => (parseFloat(item.amount) || 0) <= 0 ? "금액을 입력해주세요" : "");
     setItemErrors(ie);
@@ -453,6 +455,50 @@ function HomePage({ onGoUrgent }: { onGoUrgent: () => void }) {
                 </div>
               </div>
             </div>
+            {/* 신청자·예금주 동일 확인 */}
+            <div className={`rounded-2xl border px-4 py-4 space-y-3 ${fieldErrors.agreeMatch ? "border-rose-300 bg-rose-50" : "border-amber-200 bg-amber-50"}`}>
+              <p className="text-[12px] font-bold text-amber-700 flex items-center gap-1.5">⚠️ 신청자와 예금주 확인</p>
+              <div className="rounded-xl border border-amber-200 bg-white overflow-hidden">
+                <div className="flex items-center px-4 py-2.5 border-b border-amber-100">
+                  <span className="text-[12px] font-semibold text-slate-400 w-16 flex-shrink-0">성명</span>
+                  <span className={`text-[14px] font-bold ${name.trim() ? "text-slate-800" : "text-slate-300"}`}>
+                    {name.trim() || "홍길동"}
+                  </span>
+                </div>
+                <div className="flex items-center px-4 py-2.5">
+                  <span className="text-[12px] font-semibold text-slate-400 w-16 flex-shrink-0">예금주</span>
+                  <span className={`text-[14px] font-bold ${accountHolder.trim() ? "text-slate-800" : "text-slate-300"}`}>
+                    {accountHolder.trim() || "홍길동"}
+                  </span>
+                </div>
+              </div>
+              <label className="flex items-center gap-3 cursor-pointer group">
+                <div
+                  onClick={() => { setAgreeMatch(v => !v); setFieldErrors(p => { const q = { ...p }; delete q.agreeMatch; return q; }); }}
+                  className={`w-5 h-5 rounded-md border-2 flex items-center justify-center flex-shrink-0 transition-all duration-150
+                    ${agreeMatch
+                      ? "bg-indigo-500 border-indigo-500"
+                      : fieldErrors.agreeMatch
+                        ? "border-rose-400 bg-rose-50"
+                        : "border-slate-300 bg-white group-hover:border-indigo-400"}`}
+                >
+                  {agreeMatch && (
+                    <svg width="11" height="9" viewBox="0 0 11 9" fill="none">
+                      <path d="M1 4l3 3.5L10 1" stroke="white" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
+                    </svg>
+                  )}
+                </div>
+                <span
+                  onClick={() => { setAgreeMatch(v => !v); setFieldErrors(p => { const q = { ...p }; delete q.agreeMatch; return q; }); }}
+                  className={`text-[13px] font-semibold select-none ${fieldErrors.agreeMatch ? "text-rose-600" : "text-slate-700"}`}
+                >
+                  신청자와 예금주가 동일합니다
+                  <span className="ml-1.5 text-[11px] font-bold text-rose-400">(필수)</span>
+                </span>
+              </label>
+              {fieldErrors.agreeMatch && <p className="text-[11px] text-rose-500">⚠ {fieldErrors.agreeMatch}</p>}
+            </div>
+
             <button type="submit" className="w-full py-4 rounded-2xl text-white text-[15px] font-bold transition-all duration-150 active:scale-95" style={{ background: "linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%)" }}>
               예약 신청하기
             </button>
