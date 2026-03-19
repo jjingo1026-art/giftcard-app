@@ -125,10 +125,8 @@ router.post("/", async (req, res) => {
   // 노쇼 차단 여부 확인
   const [user] = await db.select().from(usersTable).where(eq(usersTable.id, normalizedPhone));
   if (user?.isBlocked) {
-    if (user.blockedUntil && new Date() < user.blockedUntil) {
-      res.status(403).json({ error: "현재 예약이 제한된 상태입니다. 관리자에게 문의해주세요." });
-      return;
-    }
+    res.status(403).json({ error: "노쇼 이력으로 인해 예약이 제한됩니다." });
+    return;
   }
 
   const normalize = (str: string) => str.replace(/\s/g, "").toLowerCase();
