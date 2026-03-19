@@ -615,7 +615,13 @@ function SubmissionCard({ entry }: { entry: ReservationEntry | UrgentEntry }) {
     : { text: "text-indigo-500", bg: "bg-indigo-50", border: "border-indigo-100", pill: "bg-indigo-100 text-indigo-600" };
 
   return (
-    <div className={`bg-white rounded-3xl shadow-sm border overflow-hidden ${isUrgent ? "border-rose-100" : "border-slate-100"}`}>
+    <div
+      className="rounded-3xl shadow-sm overflow-hidden"
+      style={isUrgent
+        ? { border: "2px solid #ef4444", background: "#ffe5e5" }
+        : { border: "1px solid #f1f5f9", background: "#ffffff" }
+      }
+    >
 
       {/* ── 카드 헤더 라벨 ── */}
       <div className={`px-5 pt-4 pb-2 flex items-center justify-between`}>
