@@ -33,9 +33,16 @@ const statusText: Record<string, string> = {
   cancelled: "🔴 취소",
 };
 
-function formatKRW(n: number) { return n.toLocaleString("ko-KR") + "원"; }
-
 interface StaffSummary { id: number; name: string; assigned: number; completed: number; }
+
+interface DashboardStats {
+  todayRevenue: number;
+  weeklyRevenue: number;
+  totalReservations: number;
+  completedRate: number;
+}
+
+function formatKRW(n: number) { return n.toLocaleString("ko-KR") + "원"; }
 
 export default function AdminDashboard() {
   const [, navigate] = useLocation();
@@ -45,21 +52,29 @@ export default function AdminDashboard() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [staffSummary, setStaffSummary] = useState<StaffSummary[]>([]);
+  const [dashboardStats, setDashboardStats] = useState<DashboardStats | null>(null);
 
   const token = getAdminToken();
   if (!token) { navigate("/admin/login"); return null; }
 
   useEffect(() => {
+    const headers = { Authorization: `Bearer ${token}` };
+
     setLoading(true);
-    fetch("/api/admin/reservations", { headers: { Authorization: `Bearer ${token}` } })
+    fetch("/api/admin/reservations", { headers })
       .then((r) => { if (r.status === 401) { clearAdminToken(); navigate("/admin/login"); } return r.json(); })
       .then((data) => { setAllEntries(data); setEntries(data); })
       .catch(() => setError("데이터를 불러올 수 없습니다."))
       .finally(() => setLoading(false));
 
-    fetch("/api/admin/staff-summary", { headers: { Authorization: `Bearer ${token}` } })
+    fetch("/api/admin/staff-summary", { headers })
       .then((r) => r.json())
       .then(setStaffSummary)
+      .catch(() => {});
+
+    fetch("/api/admin/dashboard", { headers })
+      .then((r) => r.json())
+      .then((data) => setDashboardStats(data))
       .catch(() => {});
   }, []);
 
@@ -131,6 +146,23 @@ export default function AdminDashboard() {
       </header>
 
       <div className="max-w-2xl mx-auto px-4 py-4 space-y-3">
+        {/* 매출 요약 */}
+        {dashboardStats && (
+          <div className="grid grid-cols-2 gap-2">
+            {[
+              { label: "오늘 매출",  value: formatKRW(Number(dashboardStats.todayRevenue)),   color: "text-emerald-600",  bg: "bg-emerald-50",  icon: "💰" },
+              { label: "이번주 매출", value: formatKRW(Number(dashboardStats.weeklyRevenue)), color: "text-indigo-600",  bg: "bg-indigo-50",   icon: "📈" },
+              { label: "예약 수",    value: `${Number(dashboardStats.totalReservations)}건`,  color: "text-slate-700",   bg: "bg-slate-50",    icon: "📋" },
+              { label: "완료율",     value: `${dashboardStats.completedRate}%`,               color: "text-blue-600",   bg: "bg-blue-50",     icon: "✅" },
+            ].map(({ label, value, color, bg, icon }) => (
+              <div key={label} className={`${bg} rounded-2xl border border-slate-100 shadow-sm px-4 py-3.5`}>
+                <p className="text-[11px] text-slate-500 font-medium">{icon} {label}</p>
+                <p className={`text-[20px] font-black mt-0.5 ${color} tracking-tight`}>{value}</p>
+              </div>
+            ))}
+          </div>
+        )}
+
         {/* 통계 */}
         <div className="grid grid-cols-3 gap-2">
           {[
