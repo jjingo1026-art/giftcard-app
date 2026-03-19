@@ -618,7 +618,7 @@ function SubmissionCard({ entry, accent }: { entry: ReservationEntry | UrgentEnt
       <div className={`px-5 pt-4 pb-2 flex items-center justify-between`}>
         <div className="flex items-center gap-2">
           <span className={`text-[11px] font-bold px-2.5 py-1 rounded-full tracking-wide ${ac.pill}`}>
-            {accent === "rose" ? "🚨 긴급 판매 카드" : "📋 예약 카드"}
+            {accent === "rose" ? "🚨 긴급" : "📋 예약 카드"}
           </span>
           <span className="text-[11px] text-slate-300">#{entry.id}</span>
         </div>
