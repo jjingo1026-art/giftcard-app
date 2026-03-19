@@ -22,6 +22,7 @@ export const reservationsTable = pgTable("reservations", {
   assignedTo: text("assigned_to"),
   assignedStaffId: integer("assigned_staff_id"),
   completedAt: timestamp("completed_at"),
+  cancelledAt: timestamp("cancelled_at"),
 });
 
 interface SavedItem {

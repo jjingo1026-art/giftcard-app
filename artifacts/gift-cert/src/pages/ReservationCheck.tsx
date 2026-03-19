@@ -14,6 +14,7 @@ interface ReservationInfo {
   status: string;
   assignedTo?: string;
   createdAt: string;
+  cancelledAt?: string | null;
 }
 
 function fmt(n?: number | null) {
@@ -137,6 +138,11 @@ export default function ReservationCheck() {
             <p className="text-[13px] text-rose-500">해당 예약은 취소되었습니다.</p>
             {reservation.giftcardType && (
               <p className="text-[13px] text-slate-500 pt-2">{reservation.giftcardType} · {fmt(reservation.amount)}</p>
+            )}
+            {reservation.cancelledAt && (
+              <p className="text-[11px] text-slate-400">
+                취소 시각: {new Date(reservation.cancelledAt).toLocaleString("ko-KR")}
+              </p>
             )}
           </div>
         )}

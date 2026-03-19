@@ -248,7 +248,11 @@ router.post("/reservations/:id/status", async (req, res) => {
   }
   await db
     .update(reservationsTable)
-    .set({ status, completedAt: status === "completed" ? new Date() : null })
+    .set({
+      status,
+      completedAt: status === "completed" ? new Date() : null,
+      cancelledAt: status === "cancelled" ? new Date() : null,
+    })
     .where(eq(reservationsTable.id, id));
   res.json({ success: true });
 });
@@ -382,7 +386,7 @@ router.post("/customer/cancel", async (req, res) => {
 
   await db
     .update(reservationsTable)
-    .set({ status: "cancelled" })
+    .set({ status: "cancelled", cancelledAt: new Date() })
     .where(eq(reservationsTable.id, reservationId));
 
   res.json({ success: true });
