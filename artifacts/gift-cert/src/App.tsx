@@ -77,6 +77,11 @@ interface UrgentEntry {
 }
 
 function formatKRW(n: number) { return n.toLocaleString("ko-KR") + "원"; }
+function formatDateKo(dateStr?: string) {
+  if (!dateStr) return "";
+  const [, m, d] = dateStr.split("-");
+  return `${parseInt(m)}월 ${parseInt(d)}일`;
+}
 
 // baseDeduct: extra deduction applied on top (e.g. 0.01 for urgent)
 function computeItem(item: VoucherItem, baseDeduct: number): { amountNum: number; rate: number; payment: number } {
@@ -644,27 +649,25 @@ function SubmissionCard({ entry }: { entry: ReservationEntry | UrgentEntry }) {
       </div>
 
       {/* ── 날짜·장소·성함·연락처 ── */}
-      <div className="px-5 pb-3 space-y-1.5">
+      <div className="px-5 pb-3 space-y-2">
         {isRes && (
           <p className="text-[14px] font-semibold text-slate-700 flex items-center gap-2">
             <span>📅</span>
-            <span>{(entry as ReservationEntry).date} {(entry as ReservationEntry).time}</span>
+            <span>{formatDateKo((entry as ReservationEntry).date)} {(entry as ReservationEntry).time}</span>
           </p>
         )}
         <p className="text-[14px] font-semibold text-slate-700 flex items-center gap-2">
           <span>📍</span>
           <span className="truncate">{entry.location || "—"}</span>
         </p>
-        <div className="flex items-center gap-4 pt-0.5">
-          <p className="text-[13px] text-slate-500">
-            <span className="font-semibold text-slate-400 mr-1">성함</span>
-            {(entry as ReservationEntry).name || "—"}
-          </p>
-          <p className="text-[13px] text-slate-500">
-            <span className="font-semibold text-slate-400 mr-1">연락처</span>
-            {entry.phone}
-          </p>
-        </div>
+        <p className="text-[14px] font-semibold text-slate-700 flex items-center gap-2">
+          <span>👤</span>
+          <span>{(entry as ReservationEntry).name || "—"}</span>
+        </p>
+        <p className="text-[14px] font-semibold text-slate-700 flex items-center gap-2">
+          <span>📞</span>
+          <span>{entry.phone}</span>
+        </p>
       </div>
 
       <div className="mx-4 h-px bg-slate-100 mb-3" />
@@ -713,6 +716,20 @@ function SubmissionCard({ entry }: { entry: ReservationEntry | UrgentEntry }) {
             <span className="text-[13px] font-semibold text-slate-700">{value}</span>
           </div>
         ))}
+      </div>
+
+      {/* ── 담당자 배정 버튼 ── */}
+      <div className="px-4 pb-4">
+        <button
+          type="button"
+          className="w-full py-3 rounded-2xl text-[14px] font-bold transition-all active:scale-[0.98]"
+          style={isUrgent
+            ? { background: "#ef4444", color: "#fff" }
+            : { background: "#6366f1", color: "#fff" }
+          }
+        >
+          담당자 배정
+        </button>
       </div>
     </div>
   );
