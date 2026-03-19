@@ -37,9 +37,8 @@ const DEFAULT_TYPE = Object.keys(RATES)[0];
 
 const TIME_OPTIONS: string[] = (() => {
   const opts: string[] = [];
-  for (let h = 9; h <= 20; h++) {
-    for (const m of [0, 10, 20, 30, 40, 50]) {
-      if (h === 20 && m > 0) break;
+  for (let h = 9; h <= 18; h++) {
+    for (let m = 0; m < 60; m += 10) {
       opts.push(`${String(h).padStart(2, "0")}:${String(m).padStart(2, "0")}`);
     }
   }
