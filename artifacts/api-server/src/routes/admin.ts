@@ -220,6 +220,40 @@ router.get("/staff/my-reservations", requireStaffAuth, async (req, res) => {
   res.json(rows.filter((r) => r.assignedStaffId === staffId));
 });
 
+router.get("/dashboard", requireAuth, requireAdmin, async (_req, res) => {
+  const today = new Date().toISOString().slice(0, 10);
+
+  const [reservations, staffList, revenueResult] = await Promise.all([
+    db.select().from(reservationsTable),
+    db.select({ id: staffTable.id, name: staffTable.name }).from(staffTable).where(eq(staffTable.status, "approved")),
+    db.select({ total: sql<number>`COALESCE(SUM(${reservationsTable.amount}), 0)` })
+      .from(reservationsTable)
+      .where(and(eq(reservationsTable.date, today), eq(reservationsTable.status, "completed"))),
+  ]);
+
+  const stats = {
+    total:     reservations.length,
+    pending:   reservations.filter(r => r.status === "pending").length,
+    assigned:  reservations.filter(r => r.status === "assigned").length,
+    completed: reservations.filter(r => r.status === "completed").length,
+    cancelled: reservations.filter(r => r.status === "cancelled").length,
+  };
+
+  const staffSummary = staffList.map(s => ({
+    id: s.id,
+    name: s.name,
+    assigned:  reservations.filter(r => r.assignedStaffId === s.id && r.status === "assigned").length,
+    completed: reservations.filter(r => r.assignedStaffId === s.id && r.status === "completed").length,
+  }));
+
+  res.json({
+    today,
+    stats,
+    todayRevenue: revenueResult[0].total,
+    staffSummary,
+  });
+});
+
 const isValidDate = (d: string) => /^\d{4}-\d{2}-\d{2}$/.test(d);
 
 router.get("/reservations", requireAuth, requireAdmin, async (req, res) => {
