@@ -770,7 +770,7 @@ router.get("/customer/reservation", async (req, res) => {
     .where(
       and(
         eq(reservationsTable.phone, normalizedPhone),
-        inArray(reservationsTable.status, ["pending", "assigned"])
+        inArray(reservationsTable.status, ["pending", "assigned", "cancelled"])
       )
     )
     .orderBy(desc(reservationsTable.createdAt));
