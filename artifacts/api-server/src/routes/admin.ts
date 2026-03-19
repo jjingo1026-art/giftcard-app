@@ -592,7 +592,7 @@ router.post("/reservations/:id/status", async (req, res) => {
 
       // 유저 패널티 누적 카운트 증가
       const NO_SHOW_BLOCK_THRESHOLD = 3;
-      const BLOCK_DAYS = 30;
+      const BLOCK_DAYS = 3;
 
       await db.insert(usersTable)
         .values({ id: userId, noShowCount: 1 })
@@ -606,8 +606,9 @@ router.post("/reservations/:id/status", async (req, res) => {
 
       // 임계치 도달 시 isBlocked + blockedUntil 설정
       const [updatedUser] = await db.select().from(usersTable).where(eq(usersTable.id, userId));
-      if ((updatedUser?.noShowCount ?? 0) >= NO_SHOW_BLOCK_THRESHOLD && !updatedUser?.isBlocked) {
-        const blockedUntil = new Date(Date.now() + BLOCK_DAYS * 24 * 60 * 60 * 1000);
+      if ((updatedUser?.noShowCount ?? 0) >= NO_SHOW_BLOCK_THRESHOLD) {
+        const blockedUntil = new Date();
+        blockedUntil.setDate(blockedUntil.getDate() + BLOCK_DAYS);
         await db.update(usersTable)
           .set({ isBlocked: true, blockedUntil, updatedAt: new Date() })
           .where(eq(usersTable.id, userId));
