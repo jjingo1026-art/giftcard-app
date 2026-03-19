@@ -220,48 +220,80 @@ router.get("/staff/my-reservations", requireStaffAuth, async (req, res) => {
   res.json(rows.filter((r) => r.assignedStaffId === staffId));
 });
 
-router.get("/dashboard", requireAuth, requireAdmin, async (_req, res) => {
-  const today = new Date().toISOString().slice(0, 10);
-  const weekAgo = new Date(Date.now() - 6 * 24 * 60 * 60 * 1000).toISOString().slice(0, 10);
+router.get("/dashboard", requireAuth, requireAdmin, async (req, res) => {
+  const today = new Date();
+  const todayStr = today.toISOString().slice(0, 10);
 
-  const [reservations, staffList, todayRevenueResult, weeklyRevenueResult] = await Promise.all([
-    db.select().from(reservationsTable),
-    db.select({ id: staffTable.id, name: staffTable.name }).from(staffTable).where(eq(staffTable.status, "approved")),
-    db.select({ total: sql<number>`COALESCE(SUM(${reservationsTable.amount}), 0)` })
+  // 이번주 시작 (월요일 기준)
+  const day = today.getDay(); // 0 (일) ~ 6 (토)
+  const diff = day === 0 ? -6 : 1 - day;
+
+  const weekStart = new Date(today);
+  weekStart.setDate(today.getDate() + diff);
+  const weekStartStr = weekStart.toISOString().slice(0, 10);
+
+  try {
+    // 🔹 오늘 매출
+    const todayRevenueResult = await db
+      .select({
+        total: sql<number>`COALESCE(SUM(${reservationsTable.amount}), 0)`
+      })
       .from(reservationsTable)
-      .where(and(eq(reservationsTable.date, today), eq(reservationsTable.status, "completed"))),
-    db.select({ total: sql<number>`COALESCE(SUM(${reservationsTable.amount}), 0)` })
+      .where(
+        and(
+          eq(reservationsTable.date, todayStr),
+          eq(reservationsTable.status, "completed")
+        )
+      );
+
+    // 🔹 이번주 매출
+    const weeklyRevenueResult = await db
+      .select({
+        total: sql<number>`COALESCE(SUM(${reservationsTable.amount}), 0)`
+      })
       .from(reservationsTable)
-      .where(and(gte(reservationsTable.date, weekAgo), lte(reservationsTable.date, today), eq(reservationsTable.status, "completed"))),
-  ]);
+      .where(
+        and(
+          gte(reservationsTable.date, weekStartStr),
+          lte(reservationsTable.date, todayStr),
+          eq(reservationsTable.status, "completed")
+        )
+      );
 
-  const total     = reservations.length;
-  const completed = reservations.filter(r => r.status === "completed").length;
+    // 🔹 전체 예약 수
+    const totalReservationsResult = await db
+      .select({
+        count: sql<number>`COUNT(*)`
+      })
+      .from(reservationsTable);
 
-  const stats = {
-    total,
-    pending:   reservations.filter(r => r.status === "pending").length,
-    assigned:  reservations.filter(r => r.status === "assigned").length,
-    completed,
-    cancelled: reservations.filter(r => r.status === "cancelled").length,
-  };
+    // 🔹 완료된 예약 수
+    const completedReservationsResult = await db
+      .select({
+        count: sql<number>`COUNT(*)`
+      })
+      .from(reservationsTable)
+      .where(eq(reservationsTable.status, "completed"));
 
-  const staffSummary = staffList.map(s => ({
-    id: s.id,
-    name: s.name,
-    assigned:  reservations.filter(r => r.assignedStaffId === s.id && r.status === "assigned").length,
-    completed: reservations.filter(r => r.assignedStaffId === s.id && r.status === "completed").length,
-  }));
+    const totalReservations = totalReservationsResult[0].count;
+    const completedReservations = completedReservationsResult[0].count;
 
-  res.json({
-    today,
-    stats,
-    todayRevenue:       Number(todayRevenueResult[0].total),
-    weeklyRevenue:      Number(weeklyRevenueResult[0].total),
-    totalReservations:  total,
-    completedRate:      total > 0 ? Math.round((completed / total) * 100) : 0,
-    staffSummary,
-  });
+    const completedRate =
+      totalReservations === 0
+        ? 0
+        : Math.round((completedReservations / totalReservations) * 100);
+
+    res.json({
+      todayRevenue: todayRevenueResult[0].total,
+      weeklyRevenue: weeklyRevenueResult[0].total,
+      totalReservations,
+      completedRate
+    });
+
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Dashboard error" });
+  }
 });
 
 const isValidDate = (d: string) => /^\d{4}-\d{2}-\d{2}$/.test(d);
