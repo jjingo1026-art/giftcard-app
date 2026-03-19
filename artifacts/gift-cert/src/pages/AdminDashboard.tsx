@@ -450,6 +450,41 @@ export default function AdminDashboard() {
                     ))}
                   </div>
                 )}
+
+                {/* 배정 완료 날짜 — 전체 예약 상세 리스트 (시간대순) */}
+                {dayUnassigned.length === 0 && dayEntries.length > 0 && (
+                  <div className="space-y-2">
+                    <p className="text-[13px] font-bold text-blue-600 flex items-center gap-1.5 px-1">
+                      ✅ 배정 완료 예약 <span className="text-blue-400">{dayEntries.length}건</span>
+                    </p>
+                    {[...dayEntries]
+                      .sort((a, b) => (a.time ?? "").localeCompare(b.time ?? ""))
+                      .map((r) => {
+                        const sl = STATUS_LABELS[r.status] ?? { label: r.status, color: "bg-slate-100 text-slate-500" };
+                        return (
+                          <div
+                            key={r.id}
+                            onClick={() => { window.location.href = `/admin/detail.html?id=${r.id}`; }}
+                            className="bg-white rounded-2xl border border-blue-100 shadow-sm px-4 py-3.5 flex items-center justify-between gap-2 cursor-pointer hover:border-blue-300 hover:bg-blue-50/30 transition-colors active:scale-[0.99]"
+                          >
+                            <div className="flex-1 min-w-0">
+                              <p className="text-[14px] font-bold text-slate-800 flex items-center gap-1.5">
+                                {r.isUrgent && <span className="text-red-500">🚨</span>}
+                                👤 {r.name ?? r.phone}
+                              </p>
+                              <p className="text-[12px] text-slate-400 mt-0.5">
+                                🕐 {r.time ?? "시간 미정"} · 📍 {r.location} · 💰 {formatKRW(r.totalPayment)}
+                              </p>
+                              {r.assignedTo && (
+                                <p className="text-[11px] text-blue-500 mt-0.5 font-medium">👨‍🔧 {r.assignedTo}</p>
+                              )}
+                            </div>
+                            <span className={`text-[11px] font-bold px-2.5 py-1 rounded-full whitespace-nowrap flex-shrink-0 ${sl.color}`}>{sl.label}</span>
+                          </div>
+                        );
+                      })}
+                  </div>
+                )}
               </div>
             );
           })()}
