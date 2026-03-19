@@ -3,6 +3,8 @@ import { db } from "@workspace/db";
 import { reservationsTable } from "@workspace/db/schema";
 import { eq } from "drizzle-orm";
 
+const normalizePhone = (s: string) => s.replace(/[\s\-]/g, "");
+
 const router: IRouter = Router();
 
 router.get("/", async (_req, res) => {
@@ -29,11 +31,10 @@ router.get("/by-date", async (req, res) => {
 
 router.get("/customer", async (req, res) => {
   const { phone } = req.query;
+  const queryPhone = normalizePhone(String(phone ?? ""));
 
-  const data = await db
-    .select()
-    .from(reservationsTable)
-    .where(eq(reservationsTable.phone, String(phone)));
+  const all = await db.select().from(reservationsTable);
+  const data = all.filter(r => normalizePhone(r.phone ?? "") === queryPhone);
 
   res.json(data);
 });
@@ -98,6 +99,8 @@ router.post("/", async (req, res) => {
     res.status(400).json({ error: "필수 항목이 누락되었습니다." });
     return;
   }
+
+  body.phone = normalizePhone(body.phone);
 
   const normalize = (str: string) => str.replace(/\s/g, "").toLowerCase();
 
