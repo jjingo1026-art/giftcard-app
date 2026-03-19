@@ -107,6 +107,16 @@ router.post("/", async (req, res) => {
 
   const normalizedPhone = normalizePhone(body.phone);
 
+  const exists = await db
+    .select()
+    .from(reservationsTable)
+    .where(eq(reservationsTable.phone, normalizedPhone));
+
+  if (exists.length > 0) {
+    res.status(400).json({ error: "이미 예약된 번호입니다" });
+    return;
+  }
+
   const normalize = (str: string) => str.replace(/\s/g, "").toLowerCase();
 
   if (

@@ -97,7 +97,14 @@ export default function ReservationPage() {
         const d = await res.json(); id = d.id;
       } else {
         const d = await res.json().catch(() => ({}));
-        if (d.error) { setErrors(p => ({ ...p, agreeMatch: d.error })); return; }
+        if (d.error) {
+          if (d.error.includes("번호")) {
+            setErrors(p => ({ ...p, phone: d.error }));
+          } else {
+            setErrors(p => ({ ...p, agreeMatch: d.error }));
+          }
+          return;
+        }
       }
     } catch {}
     saveEntry({ kind: "reservation", id, createdAt: new Date().toISOString(), name, phone, date, time, location: loc, items: savedItems, totalPayment, bankName: bank, accountNumber: acct, accountHolder: holder, giftcardType: items[0]?.type ?? "" });
