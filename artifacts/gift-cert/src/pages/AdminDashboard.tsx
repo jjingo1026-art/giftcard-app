@@ -60,6 +60,7 @@ export default function AdminDashboard() {
   const [selectedStaff, setSelectedStaff] = useState<Record<number, number>>({});
   const [assigning, setAssigning] = useState<number | null>(null);
   const [calendarData, setCalendarData] = useState<{ date: string; total: number; unassigned: number; assigned: number; urgent: number }[]>([]);
+  const [showTodayList, setShowTodayList] = useState(false);
 
   const token = getAdminToken();
   if (!token) { navigate("/admin/login"); return null; }
@@ -228,14 +229,23 @@ export default function AdminDashboard() {
         {/* 통계 */}
         <div className="grid grid-cols-3 gap-2">
           {[
-            { label: "전체 예약",      id: "total",     value: stats.total,     color: "text-slate-700" },
-            { label: "오늘 예약",      id: "today",     value: stats.today,     color: "text-indigo-600" },
-            { label: "담당자 배정",    id: "assigned",  value: stats.assigned,  color: "text-blue-600" },
-            { label: "처리 완료",      id: "completed", value: stats.completed, color: "text-emerald-600" },
-            { label: "취소",           id: "cancelled", value: stats.cancelled, color: "text-slate-400" },
-          ].map(({ label, id, value, color }) => (
-            <div key={id} className="bg-white rounded-2xl border border-slate-100 shadow-sm px-4 py-3">
-              <p className="text-[11px] text-slate-400 font-medium">{label}</p>
+            { label: "전체 예약",   id: "total",     value: stats.total,     color: "text-slate-700",   clickable: false },
+            { label: "오늘 예약",   id: "today",     value: stats.today,     color: "text-indigo-600",  clickable: true  },
+            { label: "담당자 배정", id: "assigned",  value: stats.assigned,  color: "text-blue-600",    clickable: false },
+            { label: "처리 완료",   id: "completed", value: stats.completed, color: "text-emerald-600", clickable: false },
+            { label: "취소",        id: "cancelled", value: stats.cancelled, color: "text-slate-400",   clickable: false },
+          ].map(({ label, id, value, color, clickable }) => (
+            <div
+              key={id}
+              onClick={clickable ? () => setShowTodayList((p) => !p) : undefined}
+              className={`bg-white rounded-2xl border shadow-sm px-4 py-3 transition-all
+                ${clickable
+                  ? showTodayList && id === "today"
+                    ? "border-indigo-300 bg-indigo-50 cursor-pointer"
+                    : "border-slate-100 cursor-pointer hover:border-indigo-200 hover:bg-indigo-50/40 active:scale-[0.98]"
+                  : "border-slate-100"}`}
+            >
+              <p className="text-[11px] text-slate-400 font-medium">{label}{clickable && <span className="ml-1 text-indigo-300">{showTodayList ? "▲" : "▼"}</span>}</p>
               <p id={id} className={`text-[24px] font-black mt-0.5 ${color}`}>{value}</p>
             </div>
           ))}
@@ -265,6 +275,56 @@ export default function AdminDashboard() {
             </div>
           </>
         )}
+
+        {/* 오늘 예약 — 시간대순 목록 (캘린더 위) */}
+        {showTodayList && (() => {
+          const todayEntries = [...allEntries.filter((r) => r.date === today)]
+            .sort((a, b) => (a.time ?? "").localeCompare(b.time ?? ""));
+          return (
+            <div className="space-y-2">
+              <div className="flex items-center justify-between px-1">
+                <p className="text-[14px] font-bold text-indigo-700 flex items-center gap-1.5">
+                  📅 오늘 예약
+                  <span className="text-[12px] font-bold bg-indigo-100 text-indigo-600 px-2 py-0.5 rounded-full">{todayEntries.length}건</span>
+                </p>
+                <button
+                  onClick={() => setShowTodayList(false)}
+                  className="text-[11px] text-slate-400 hover:text-rose-500 font-medium transition-colors"
+                >닫기 ✕</button>
+              </div>
+              {todayEntries.length === 0 ? (
+                <div className="bg-white rounded-2xl border border-slate-100 shadow-sm px-4 py-6 text-center text-[13px] text-slate-400">
+                  오늘 예약이 없습니다
+                </div>
+              ) : (
+                todayEntries.map((r) => {
+                  const sl = STATUS_LABELS[r.status] ?? { label: r.status, color: "bg-slate-100 text-slate-500" };
+                  return (
+                    <div
+                      key={r.id}
+                      onClick={() => { window.location.href = `/admin/detail.html?id=${r.id}`; }}
+                      className="bg-white rounded-2xl border border-indigo-100 shadow-sm px-4 py-3.5 flex items-center justify-between gap-2 cursor-pointer hover:border-indigo-300 hover:bg-indigo-50/30 transition-colors active:scale-[0.99]"
+                    >
+                      <div className="flex-1 min-w-0">
+                        <p className="text-[14px] font-bold text-slate-800 flex items-center gap-1.5">
+                          {r.isUrgent && <span className="text-red-500">🚨</span>}
+                          👤 {r.name ?? r.phone}
+                        </p>
+                        <p className="text-[12px] text-slate-400 mt-0.5">
+                          🕐 {r.time ?? "시간 미정"} · 📍 {r.location} · 💰 {formatKRW(r.totalPayment)}
+                        </p>
+                        {r.assignedTo && (
+                          <p className="text-[11px] text-blue-500 mt-0.5 font-medium">👨‍🔧 {r.assignedTo}</p>
+                        )}
+                      </div>
+                      <span className={`text-[11px] font-bold px-2.5 py-1 rounded-full whitespace-nowrap flex-shrink-0 ${sl.color}`}>{sl.label}</span>
+                    </div>
+                  );
+                })
+              )}
+            </div>
+          );
+        })()}
 
         {/* 예약 캘린더 */}
         <h2 className="text-[15px] font-bold text-slate-700">📅 예약 캘린더</h2>
