@@ -27,9 +27,9 @@ const RATE_GROUPS = [
   { label: "이랜드상품권",       display: "이랜드",    rate: 91, color: "#06b6d4" },
   { label: "AK(애경)상품권",     display: "AK(애경)",  rate: 91, color: "#10b981" },
   { label: "농협상품권",         display: "농협",      rate: 91, color: "#22c55e" },
-  { label: "지류문화상품권",     display: "지류문화",  rate: 90, color: "#c084fc" },
+  { label: "지류문화상품권",     display: "지류문화",  rate: 90, color: "#c084fc", sub: "컬쳐·북앤라이프·문화" },
   { label: "온누리상품권",       display: "온누리",    rate: 90, color: "#f59e0b" },
-  { label: "주유권",             display: "주유권",    rate: 95, color: "#6366f1" },
+  { label: "주유권",             display: "주유권",    rate: 95, color: "#6366f1", sub: "SK·GS·현대·S-OIL" },
 ];
 
 
@@ -337,11 +337,12 @@ function HomePage({ onGoUrgent }: { onGoUrgent: () => void }) {
                   <div
                     key={g.label}
                     onClick={() => { window.location.href = `/terms.html?type=${encodeURIComponent(g.label)}`; }}
-                    className="flex flex-col items-center justify-center px-2 py-3.5 rounded-2xl cursor-pointer active:scale-[0.97] transition-all text-center"
+                    className="flex flex-col items-center justify-center px-2 py-3 rounded-2xl cursor-pointer active:scale-[0.97] transition-all text-center"
                     style={{ backgroundColor: g.color + "12" }}
                   >
-                    <span className="text-[12px] font-semibold text-slate-600 leading-tight mb-1.5">{g.display}</span>
+                    <span className="text-[12px] font-semibold text-slate-600 leading-tight mb-1">{g.display}</span>
                     <span className="text-[18px] font-black tabular-nums leading-none" style={{ color: g.color }}>{g.rate}%</span>
+                    {g.sub && <span className="text-[9px] text-slate-400 leading-tight mt-1.5 whitespace-pre-wrap">{g.sub}</span>}
                   </div>
                 ))}
               </div>
