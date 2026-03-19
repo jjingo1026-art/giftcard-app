@@ -27,10 +27,10 @@ const STATUS_LABELS: Record<string, { label: string; color: string }> = {
 };
 
 const statusText: Record<string, string> = {
-  pending:   "🟡 예약",
+  pending:   "🟡 접수",
   assigned:  "🟠 배정",
   completed: "🟢 완료",
-  cancelled: "⚫ 취소",
+  cancelled: "🔴 취소",
 };
 
 function formatKRW(n: number) { return n.toLocaleString("ko-KR") + "원"; }
