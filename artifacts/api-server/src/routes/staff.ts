@@ -44,6 +44,29 @@ router.get("/reservations/pending", requireStaffAuth, async (req, res) => {
   }
 });
 
+// GET /api/staff/reservations/completed
+router.get("/reservations/completed", requireStaffAuth, async (req, res) => {
+  const staffId = (req as any).staffId as number;
+
+  try {
+    const rows = await db
+      .select()
+      .from(reservationsTable)
+      .where(
+        and(
+          eq(reservationsTable.assignedStaffId, staffId),
+          eq(reservationsTable.status, "completed")
+        )
+      )
+      .orderBy(desc(reservationsTable.createdAt));
+
+    res.json(rows);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Failed to fetch reservations" });
+  }
+});
+
 // GET /api/staff/reservations?status=pending|assigned|completed|cancelled
 router.get("/reservations", requireStaffAuth, async (req, res) => {
   const staffId = (req as any).staffId as number;
