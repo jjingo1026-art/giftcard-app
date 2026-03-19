@@ -59,6 +59,7 @@ export default function AdminDashboard() {
   const [selectedStaff, setSelectedStaff] = useState<Record<number, number>>({});
   const [assigning, setAssigning] = useState<number | null>(null);
   const [showUnassignedSlots, setShowUnassignedSlots] = useState(false);
+  const [calendarData, setCalendarData] = useState<{ date: string; total: number; unassigned: number; assigned: number }[]>([]);
 
   const token = getAdminToken();
   if (!token) { navigate("/admin/login"); return null; }
@@ -92,6 +93,11 @@ export default function AdminDashboard() {
       .then((r) => r.json())
       .then((data: any[]) => setStaffList(data.map((s) => ({ id: s.id, name: s.name }))))
       .catch(() => {});
+
+    fetch("/api/admin/reservations/calendar", { headers })
+      .then((r) => r.json())
+      .then(setCalendarData)
+      .catch(() => {});
   }, []);
 
   async function assignStaff(reservationId: number) {
@@ -124,17 +130,24 @@ export default function AdminDashboard() {
     cancelled: allEntries.filter((r) => r.status === "cancelled").length,
   };
 
-  // 날짜별 건수 집계
-  const countByDate = allEntries.reduce<Record<string, number>>((acc, r) => {
-    if (r.date) acc[r.date] = (acc[r.date] ?? 0) + 1;
-    return acc;
-  }, {});
-
-  const calendarEvents = Object.keys(countByDate).map((date) => ({
-    title: countByDate[date] + "건",
-    start: date,
-    color: countByDate[date] > 5 ? "red" : "blue",
-  }));
+  // 캘린더 이벤트 — 서버 집계 우선, 없으면 allEntries로 fallback
+  const calendarEvents = calendarData.length > 0
+    ? calendarData.map((d) => ({
+        title: d.unassigned > 0 ? `총 ${d.total}건 / 미배정 ${d.unassigned}` : `${d.total}건`,
+        start: d.date!,
+        color: d.unassigned > 0 ? "#ef4444" : "#6366f1",
+      }))
+    : (() => {
+        const countByDate = allEntries.reduce<Record<string, number>>((acc, r) => {
+          if (r.date) acc[r.date] = (acc[r.date] ?? 0) + 1;
+          return acc;
+        }, {});
+        return Object.keys(countByDate).map((date) => ({
+          title: countByDate[date] + "건",
+          start: date,
+          color: countByDate[date] > 5 ? "#ef4444" : "#6366f1",
+        }));
+      })();
 
   async function filter(date = dateFilter) {
     setLoading(true);

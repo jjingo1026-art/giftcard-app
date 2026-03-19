@@ -338,6 +338,28 @@ router.get("/dashboard", requireAuth, requireAdmin, async (req, res) => {
   }
 });
 
+// GET /api/admin/reservations/calendar — 날짜별 총·미배정·배정 집계
+router.get("/reservations/calendar", requireAuth, requireAdmin, async (_req, res) => {
+  try {
+    const rows = await db
+      .select({
+        date:       reservationsTable.date,
+        total:      sql<number>`COUNT(*)`,
+        unassigned: sql<number>`COUNT(*) FILTER (WHERE ${reservationsTable.assignedStaffId} IS NULL)`,
+        assigned:   sql<number>`COUNT(*) FILTER (WHERE ${reservationsTable.assignedStaffId} IS NOT NULL)`,
+      })
+      .from(reservationsTable)
+      .where(sql`${reservationsTable.date} IS NOT NULL`)
+      .groupBy(reservationsTable.date)
+      .orderBy(reservationsTable.date);
+
+    res.json(rows);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Failed to fetch calendar data" });
+  }
+});
+
 // 배정되지 않은 예약 조회 (assignedStaffId IS NULL)
 // GET /api/admin/reservations/unassigned?date=YYYY-MM-DD&status=pending
 router.get("/reservations/unassigned", requireAuth, requireAdmin, async (req, res) => {
