@@ -13,9 +13,9 @@ interface Reservation {
 }
 
 const statusText: Record<string, string> = {
-  pending:   "🟡 예약",
+  pending:   "🟡 처리 대기",
   assigned:  "🟠 배정",
-  completed: "🟢 완료",
+  completed: "🟢 처리 완료",
 };
 
 function formatKRW(n: number) { return n.toLocaleString("ko-KR") + "원"; }

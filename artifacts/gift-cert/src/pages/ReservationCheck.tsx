@@ -167,7 +167,7 @@ export default function ReservationCheck() {
         {reservation && reservation.status === "completed" && (
           <div className="bg-slate-50 border border-slate-200 rounded-2xl px-5 py-8 text-center space-y-2">
             <div className="w-14 h-14 rounded-full bg-slate-100 flex items-center justify-center text-[28px] mx-auto">✅</div>
-            <p className="text-[16px] font-bold text-slate-700">매입 완료</p>
+            <p className="text-[16px] font-bold text-slate-700">처리 완료</p>
             <p className="text-[13px] text-slate-500">거래가 완료된 예약입니다.</p>
           </div>
         )}
@@ -177,7 +177,7 @@ export default function ReservationCheck() {
           <div className="bg-white rounded-2xl border border-slate-100 shadow-sm px-5 py-8 text-center space-y-3">
             <div className="w-14 h-14 rounded-full bg-amber-50 flex items-center justify-center text-[28px] mx-auto">📋</div>
             <div>
-              <p className="text-[16px] font-bold text-slate-800">예약 접수 완료</p>
+              <p className="text-[16px] font-bold text-slate-800">처리 대기</p>
               <p className="text-[13px] text-slate-500 mt-1.5">현재 담당자 배정 중입니다.</p>
               <p className="text-[12px] text-slate-400 mt-1">곧 매입담당자가 배정될 예정입니다.</p>
             </div>
