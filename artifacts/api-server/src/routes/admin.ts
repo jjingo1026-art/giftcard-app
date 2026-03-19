@@ -262,6 +262,20 @@ router.get("/reservations", requireAuth, requireAdmin, async (req, res) => {
   res.json(rows);
 });
 
+router.get("/reservations/stats", requireAuth, requireAdmin, async (_req, res) => {
+  const rows = await db.select().from(reservationsTable);
+
+  const stats = {
+    total:     rows.length,
+    pending:   rows.filter(r => r.status === "pending").length,
+    assigned:  rows.filter(r => r.status === "assigned").length,
+    completed: rows.filter(r => r.status === "completed").length,
+    cancelled: rows.filter(r => r.status === "cancelled").length,
+  };
+
+  res.json(stats);
+});
+
 router.get("/reservations/:id", requireAuth, async (req, res) => {
   const id = parseInt(req.params.id);
   if (isNaN(id)) { res.status(400).json({ error: "잘못된 ID" }); return; }
