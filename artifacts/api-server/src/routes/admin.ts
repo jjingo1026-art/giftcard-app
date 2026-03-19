@@ -619,7 +619,7 @@ router.post("/reservations/:id/status", async (req, res) => {
       reservationId: id,
       sender: "admin",
       senderName: "관리자",
-      message: "노쇼 처리되었습니다. 반복 노쇼 시 예약이 제한될 수 있습니다.",
+      message: "고객 미방문으로 처리되었습니다.",
     }).returning();
     emitToRoom(id, "newMessage", { ...autoMsg, time: autoMsg.time.toISOString() });
   }
