@@ -23,10 +23,11 @@ interface Reservation {
 interface StaffMember { id: number; name: string; phone: string; }
 
 const STATUS_LABELS: Record<string, { label: string; color: string }> = {
-  pending:   { label: "처리 대기", color: "bg-amber-100 text-amber-700" },
+  pending:   { label: "처리 대기",       color: "bg-amber-100 text-amber-700" },
   assigned:  { label: "매입담당자 배정", color: "bg-blue-100 text-blue-700" },
-  completed: { label: "처리 완료", color: "bg-emerald-100 text-emerald-700" },
-  cancelled: { label: "취소",     color: "bg-slate-100 text-slate-500" },
+  completed: { label: "처리 완료",       color: "bg-emerald-100 text-emerald-700" },
+  cancelled: { label: "취소",           color: "bg-slate-100 text-slate-500" },
+  no_show:   { label: "노쇼",           color: "bg-red-100 text-red-600" },
 };
 
 function formatKRW(n: number) { return n.toLocaleString("ko-KR") + "원"; }
@@ -338,21 +339,30 @@ export default function AdminDetail() {
         </div>
 
         {/* 액션 버튼 */}
-        <div className="pb-6 flex gap-2">
+        <div className="pb-6 space-y-2">
+          <div className="flex gap-2">
+            <button
+              onClick={() => setStatus("completed")}
+              disabled={saving || entry.status === "completed" || entry.status === "cancelled" || entry.status === "no_show"}
+              className="flex-1 py-3.5 rounded-2xl text-white text-[15px] font-bold transition-all active:scale-95 disabled:opacity-40"
+              style={{ background: "linear-gradient(135deg,#10b981,#059669)" }}
+            >
+              매입 완료
+            </button>
+            <button
+              onClick={() => { if (confirm("예약을 취소하시겠습니까?")) setStatus("cancelled"); }}
+              disabled={saving || entry.status === "cancelled" || entry.status === "completed" || entry.status === "no_show"}
+              className="flex-1 py-3.5 rounded-2xl border border-rose-200 text-rose-500 text-[15px] font-bold transition-all active:scale-95 disabled:opacity-40 hover:bg-rose-50"
+            >
+              예약 취소
+            </button>
+          </div>
           <button
-            onClick={() => setStatus("completed")}
-            disabled={saving || entry.status === "completed" || entry.status === "cancelled"}
-            className="flex-1 py-3.5 rounded-2xl text-white text-[15px] font-bold transition-all active:scale-95 disabled:opacity-40"
-            style={{ background: "linear-gradient(135deg,#10b981,#059669)" }}
+            onClick={() => { if (confirm("노쇼 처리하시겠습니까?\n3회 누적 시 해당 고객의 예약이 제한됩니다.")) setStatus("no_show"); }}
+            disabled={saving || entry.status === "completed" || entry.status === "cancelled" || entry.status === "no_show"}
+            className="w-full py-3 rounded-2xl border border-red-200 text-red-500 text-[14px] font-bold transition-all active:scale-95 disabled:opacity-40 hover:bg-red-50"
           >
-            매입 완료
-          </button>
-          <button
-            onClick={() => { if (confirm("예약을 취소하시겠습니까?")) setStatus("cancelled"); }}
-            disabled={saving || entry.status === "cancelled" || entry.status === "completed"}
-            className="flex-1 py-3.5 rounded-2xl border border-rose-200 text-rose-500 text-[15px] font-bold transition-all active:scale-95 disabled:opacity-40 hover:bg-rose-50"
-          >
-            예약 취소
+            🚫 노쇼 처리
           </button>
         </div>
       </div>

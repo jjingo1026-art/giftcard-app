@@ -559,7 +559,7 @@ router.post("/reservations/:id/status", async (req, res) => {
   const id = parseInt(req.params.id);
   if (isNaN(id)) { res.status(400).json({ error: "잘못된 ID" }); return; }
   const { status } = req.body as { status?: string };
-  const allowed = ["pending", "assigned", "completed", "cancelled"];
+  const allowed = ["pending", "assigned", "completed", "cancelled", "no_show"];
   if (!status || !allowed.includes(status)) {
     res.status(400).json({ error: "유효하지 않은 상태값입니다.", allowed });
     return;
@@ -572,6 +572,18 @@ router.post("/reservations/:id/status", async (req, res) => {
       cancelledAt: status === "cancelled" ? new Date() : null,
     })
     .where(eq(reservationsTable.id, id));
+
+  // 노쇼 처리 시 채팅방 자동 메시지
+  if (status === "no_show") {
+    const [autoMsg] = await db.insert(chatsTable).values({
+      reservationId: id,
+      sender: "admin",
+      senderName: "관리자",
+      message: "노쇼 처리되었습니다. 반복 노쇼 시 예약이 제한될 수 있습니다.",
+    }).returning();
+    emitToRoom(id, "newMessage", { ...autoMsg, time: autoMsg.time.toISOString() });
+  }
+
   res.json({ success: true });
 });
 
@@ -770,7 +782,7 @@ router.get("/customer/reservation", async (req, res) => {
     .where(
       and(
         eq(reservationsTable.phone, normalizedPhone),
-        inArray(reservationsTable.status, ["pending", "assigned", "cancelled"])
+        inArray(reservationsTable.status, ["pending", "assigned", "cancelled", "no_show"])
       )
     )
     .orderBy(desc(reservationsTable.createdAt));

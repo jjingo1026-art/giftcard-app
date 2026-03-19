@@ -105,7 +105,7 @@ export default function ReservationPage() {
       } else {
         const d = await res.json().catch(() => ({}));
         if (d.error) {
-          if (d.error.includes("번호") || d.error.includes("진행 중인")) {
+          if (d.error.includes("번호") || d.error.includes("진행 중인") || d.error.includes("노쇼")) {
             setErrors(p => ({ ...p, phone: d.error }));
           } else if (d.error.includes("일치")) {
             setNameAlert(true);

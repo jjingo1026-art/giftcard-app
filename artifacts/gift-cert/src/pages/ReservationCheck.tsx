@@ -183,6 +183,16 @@ export default function ReservationCheck() {
           </div>
         )}
 
+        {/* 노쇼 예약 */}
+        {reservation && reservation.status === "no_show" && (
+          <div className="bg-red-50 border border-red-200 rounded-2xl px-5 py-8 text-center space-y-2">
+            <div className="w-14 h-14 rounded-full bg-red-100 flex items-center justify-center text-[28px] mx-auto">🚫</div>
+            <p className="text-[16px] font-bold text-red-700">노쇼 처리됨</p>
+            <p className="text-[13px] text-red-500">해당 예약은 노쇼 처리되었습니다.</p>
+            <p className="text-[12px] text-slate-400 pt-1">반복 노쇼 시 예약이 제한될 수 있습니다.<br />문의: 관리자에게 연락해주세요.</p>
+          </div>
+        )}
+
         {/* 예약 확인 (배정 전 / pending) */}
         {reservation && reservation.status === "pending" && (
           <div className="space-y-3">
