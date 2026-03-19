@@ -349,6 +349,24 @@ router.get("/reservations/revenue/daily", requireAuth, requireAdmin, async (req,
   res.json(rows);
 });
 
+router.get("/reservations/revenue/today", requireAuth, requireAdmin, async (_req, res) => {
+  const today = new Date().toISOString().slice(0, 10);
+
+  const result = await db
+    .select({
+      total: sql<number>`COALESCE(SUM(${reservationsTable.amount}), 0)`
+    })
+    .from(reservationsTable)
+    .where(
+      and(
+        eq(reservationsTable.date, today),
+        eq(reservationsTable.status, "completed")
+      )
+    );
+
+  res.json({ today, revenue: result[0].total });
+});
+
 router.get("/reservations/:id", requireAuth, async (req, res) => {
   const id = parseInt(req.params.id);
   if (isNaN(id)) { res.status(400).json({ error: "잘못된 ID" }); return; }
