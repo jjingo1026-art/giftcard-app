@@ -12,6 +12,7 @@ interface ReservationItem {
 
 interface ReservationInfo {
   id: number;
+  kind?: string;
   name?: string;
   phone: string;
   date?: string;
@@ -224,17 +225,26 @@ export default function ReservationCheck() {
                     )}
                   </>
                 }
-                {reservation.date && (
+                {reservation.kind === "urgent" ? (
                   <div className="flex justify-between items-center py-2.5 border-b border-slate-50">
-                    <span className="text-[13px] text-slate-400 font-medium">날짜</span>
-                    <span className="text-[13px] text-slate-800 font-semibold">{reservation.date}</span>
+                    <span className="text-[13px] text-slate-400 font-medium">구분</span>
+                    <span className="text-[13px] font-bold text-rose-500 bg-rose-50 px-2.5 py-0.5 rounded-full">🚨 긴급</span>
                   </div>
-                )}
-                {reservation.time && (
-                  <div className="flex justify-between items-center py-2.5 border-b border-slate-50">
-                    <span className="text-[13px] text-slate-400 font-medium">시간</span>
-                    <span className="text-[13px] text-slate-800 font-semibold">{reservation.time}</span>
-                  </div>
+                ) : (
+                  <>
+                    {reservation.date && (
+                      <div className="flex justify-between items-center py-2.5 border-b border-slate-50">
+                        <span className="text-[13px] text-slate-400 font-medium">날짜</span>
+                        <span className="text-[13px] text-slate-800 font-semibold">{reservation.date}</span>
+                      </div>
+                    )}
+                    {reservation.time && (
+                      <div className="flex justify-between items-center py-2.5 border-b border-slate-50">
+                        <span className="text-[13px] text-slate-400 font-medium">시간</span>
+                        <span className="text-[13px] text-slate-800 font-semibold">{reservation.time}</span>
+                      </div>
+                    )}
+                  </>
                 )}
                 {reservation.location && (
                   <div className="flex justify-between items-center py-2.5 border-b border-slate-50">
@@ -297,12 +307,17 @@ export default function ReservationCheck() {
 
             <div className="bg-white rounded-2xl border border-slate-100 shadow-sm px-5 py-4 space-y-0">
               <p className="text-[11px] font-bold text-slate-400 uppercase tracking-wide mb-3">예약 정보</p>
-              {reservation.date && (
+              {reservation.kind === "urgent" ? (
+                <div className="flex justify-between items-center py-2.5 border-b border-slate-50">
+                  <span className="text-[12px] text-slate-400 font-medium flex items-center gap-1.5">📅 날짜 / 시간</span>
+                  <span className="text-[13px] font-bold text-rose-500 bg-rose-50 px-2.5 py-0.5 rounded-full">🚨 긴급</span>
+                </div>
+              ) : reservation.date ? (
                 <div className="flex justify-between items-center py-2.5 border-b border-slate-50">
                   <span className="text-[12px] text-slate-400 font-medium flex items-center gap-1.5">📅 날짜 / 시간</span>
                   <span className="text-[13px] text-slate-700 font-semibold">{reservation.date} {reservation.time ?? ""}</span>
                 </div>
-              )}
+              ) : null}
               {reservation.name && (
                 <div className="flex justify-between items-center py-2.5 border-b border-slate-50">
                   <span className="text-[12px] text-slate-400 font-medium flex items-center gap-1.5">👤 이름</span>
