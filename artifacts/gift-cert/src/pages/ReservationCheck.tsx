@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { formatPhone } from "@/lib/store";
 
 interface StaffInfo { id: number; name: string; phone: string; }
 interface ReservationInfo {
@@ -266,7 +267,7 @@ export default function ReservationCheck() {
                   <div>
                     <p className="text-[15px] font-bold text-slate-800">{staffInfo.name}</p>
                     <a href={`tel:${staffInfo.phone}`} className="text-[13px] text-indigo-500 font-semibold flex items-center gap-1 mt-0.5">
-                      📞 {staffInfo.phone}
+                      📞 {formatPhone(staffInfo.phone)}
                     </a>
                   </div>
                 </div>

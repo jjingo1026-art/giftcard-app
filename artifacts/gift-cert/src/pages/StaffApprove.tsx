@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { getAdminToken, clearAdminToken } from "./AdminLogin";
 import { useLocation } from "wouter";
+import { formatPhone } from "@/lib/store";
 
 interface StaffMember { id: number; name: string; phone: string; status: string; }
 
@@ -80,7 +81,7 @@ export default function StaffApprove() {
             >
               <div>
                 <p className="text-[14px] font-semibold text-slate-800">{s.name}</p>
-                <p className="text-[12px] text-slate-400 mt-0.5">{s.phone}</p>
+                <p className="text-[12px] text-slate-400 mt-0.5">{formatPhone(s.phone)}</p>
               </div>
               <div className="flex gap-2">
                 <button

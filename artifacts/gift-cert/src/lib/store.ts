@@ -1,3 +1,6 @@
+export const formatPhone = (phone: string) =>
+  phone.replace(/(\d{3})(\d{4})(\d{4})/, "$1-$2-$3");
+
 export interface StoredSavedItem {
   type: string;
   amount: number;
