@@ -1,6 +1,6 @@
 import { Router, type IRouter } from "express";
 import { db } from "@workspace/db";
-import { reservationsTable, chatsTable, staffTable, phonePenaltiesTable } from "@workspace/db/schema";
+import { reservationsTable, chatsTable, staffTable, penaltiesTable } from "@workspace/db/schema";
 import { eq, desc, asc, and, sql, gte, lte, inArray } from "drizzle-orm";
 import crypto from "crypto";
 import { emitToRoom } from "../socket";
@@ -573,24 +573,19 @@ router.post("/reservations/:id/status", async (req, res) => {
     })
     .where(eq(reservationsTable.id, id));
 
-  // 노쇼 처리 시 penalty upsert + 채팅 자동 메시지
+  // 노쇼 처리 시 penalty 레코드 삽입 + 채팅 자동 메시지
   if (status === "no_show") {
-    const NO_SHOW_BLOCK_THRESHOLD = 3;
-    const BLOCK_DAYS = 30;
+    const PENALTY_EXPIRE_DAYS = 30;
 
     const [row] = await db.select().from(reservationsTable).where(eq(reservationsTable.id, id));
     if (row?.phone) {
-      const [existing] = await db.select().from(phonePenaltiesTable).where(eq(phonePenaltiesTable.phone, row.phone));
-      const newCount = (existing?.noShowCount ?? 0) + 1;
-      const shouldBlock = newCount >= NO_SHOW_BLOCK_THRESHOLD;
-      const blockedUntil = shouldBlock ? new Date(Date.now() + BLOCK_DAYS * 24 * 60 * 60 * 1000) : (existing?.blockedUntil ?? null);
-
-      await db.insert(phonePenaltiesTable)
-        .values({ phone: row.phone, noShowCount: newCount, isBlocked: shouldBlock, blockedUntil, updatedAt: new Date() })
-        .onConflictDoUpdate({
-          target: phonePenaltiesTable.phone,
-          set: { noShowCount: newCount, isBlocked: shouldBlock || (existing?.isBlocked ?? false), blockedUntil, updatedAt: new Date() },
-        });
+      const expiresAt = new Date(Date.now() + PENALTY_EXPIRE_DAYS * 24 * 60 * 60 * 1000);
+      await db.insert(penaltiesTable).values({
+        userId: row.phone,
+        reservationId: id,
+        type: "no_show",
+        expiresAt,
+      });
     }
 
     const [autoMsg] = await db.insert(chatsTable).values({
