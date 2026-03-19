@@ -51,6 +51,7 @@ export default function ReservationPage() {
   const [errors, setErrors]   = useState<Record<string, string>>({});
   const [agreeMatch, setAgreeMatch] = useState(false);
   const [toast, setToast]     = useState(false);
+  const [nameAlert, setNameAlert] = useState(false);
 
   function total() {
     return items.reduce((s, it) => {
@@ -100,6 +101,8 @@ export default function ReservationPage() {
         if (d.error) {
           if (d.error.includes("번호")) {
             setErrors(p => ({ ...p, phone: d.error }));
+          } else if (d.error.includes("일치")) {
+            setNameAlert(true);
           } else {
             setErrors(p => ({ ...p, agreeMatch: d.error }));
           }
@@ -124,6 +127,43 @@ export default function ReservationPage() {
           ✓ 예약이 접수되었습니다!
         </div>
       </div>
+
+      {/* 성함/예금주 불일치 모달 */}
+      {nameAlert && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center px-6">
+          <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" onClick={() => setNameAlert(false)} />
+          <div className="relative bg-white rounded-3xl shadow-2xl w-full max-w-sm overflow-hidden">
+            <div className="bg-rose-500 px-6 py-5 flex items-center gap-3">
+              <div className="w-10 h-10 rounded-2xl bg-white/20 flex items-center justify-center text-[22px]">⚠️</div>
+              <p className="text-white font-bold text-[16px] leading-snug">
+                신청자 성함과 예금주명이<br />일치하지 않습니다.
+              </p>
+            </div>
+            <div className="px-6 py-5 space-y-4">
+              <p className="text-[14px] text-slate-600 leading-relaxed">
+                안전한 거래를 위해 <strong>동일한 명의의 계좌</strong>만 이용 가능합니다.<br />
+                정보를 다시 확인해주세요.
+              </p>
+              <div className="rounded-2xl bg-slate-50 border border-slate-100 overflow-hidden">
+                <div className="flex items-center px-4 py-2.5 border-b border-slate-100">
+                  <span className="text-[12px] font-semibold text-slate-400 w-16">성함</span>
+                  <span className="text-[14px] font-bold text-slate-800">{name || "—"}</span>
+                </div>
+                <div className="flex items-center px-4 py-2.5">
+                  <span className="text-[12px] font-semibold text-slate-400 w-16">예금주</span>
+                  <span className="text-[14px] font-bold text-slate-800">{holder || "—"}</span>
+                </div>
+              </div>
+              <button
+                onClick={() => setNameAlert(false)}
+                className="w-full py-3.5 rounded-2xl bg-rose-500 text-white font-bold text-[15px] active:scale-[0.98] transition-all"
+              >
+                확인
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       <header className="bg-white border-b border-slate-100 sticky top-0 z-40 shadow-sm">
         <div className="max-w-md mx-auto px-4 py-3.5 flex items-center gap-3">
