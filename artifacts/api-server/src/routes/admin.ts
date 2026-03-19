@@ -10,7 +10,7 @@ const router: IRouter = Router();
 const ADMIN_ID = process.env.ADMIN_ID ?? "admin";
 const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD ?? "1234";
 const tokens = new Map<string, number>();
-const staffTokens = new Map<string, { staffId: number; exp: number }>();
+export const staffTokens = new Map<string, { staffId: number; exp: number }>();
 
 
 // 기존 staff 데이터 시드 (서버 최초 기동 시 DB에 없을 경우 삽입)
