@@ -1,7 +1,7 @@
 import { Router, type IRouter } from "express";
 import { db } from "@workspace/db";
 import { reservationsTable, chatsTable, staffTable } from "@workspace/db/schema";
-import { eq, desc, asc, and, sql, gte, lte } from "drizzle-orm";
+import { eq, desc, asc, and, sql, gte, lte, inArray } from "drizzle-orm";
 import crypto from "crypto";
 import { emitToRoom } from "../socket";
 
@@ -767,9 +767,15 @@ router.get("/customer/reservation", async (req, res) => {
   const rows = await db
     .select()
     .from(reservationsTable)
+    .where(
+      and(
+        eq(reservationsTable.phone, normalizedPhone),
+        inArray(reservationsTable.status, ["pending", "assigned"])
+      )
+    )
     .orderBy(desc(reservationsTable.createdAt));
 
-  const result = rows.find((r) => r.phone === normalizedPhone);
+  const result = rows[0];
   if (!result) {
     res.json({ success: false });
     return;
