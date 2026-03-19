@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useLocation } from "wouter";
 import FullCalendar from "@fullcalendar/react";
 import dayGridPlugin from "@fullcalendar/daygrid";
@@ -163,9 +163,23 @@ export default function AdminDashboard() {
     }
   }
 
+  const unassignedListRef = useRef<HTMLDivElement>(null);
+
+  function selectDate(dateStr: string) {
+    setDateFilter(dateStr);
+    filter(dateStr);
+    setTimeout(() => {
+      unassignedListRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+    }, 80);
+  }
+
   function handleDateClick(info: { dateStr: string }) {
-    setDateFilter(info.dateStr);
-    filter(info.dateStr);
+    selectDate(info.dateStr);
+  }
+
+  function handleEventClick(info: { event: { startStr: string } }) {
+    const dateStr = info.event.startStr.slice(0, 10);
+    selectDate(dateStr);
   }
 
   return (
@@ -341,6 +355,7 @@ export default function AdminDashboard() {
             headerToolbar={{ left: "prev", center: "title", right: "next" }}
             events={calendarEvents}
             dateClick={handleDateClick}
+            eventClick={handleEventClick}
             height={680}
           />
           {dateFilter && (() => {
@@ -354,7 +369,7 @@ export default function AdminDashboard() {
             const dateUrgent = calDay?.urgent ?? dayUnassigned.filter((r) => r.isUrgent).length;
 
             return (
-              <div className="mt-3 space-y-3">
+              <div ref={unassignedListRef} className="mt-3 space-y-3">
                 {/* 날짜 요약 카드 */}
                 <div className="bg-white rounded-2xl border border-slate-100 shadow-sm overflow-hidden">
                   <div className="flex items-center justify-between px-4 py-3 border-b border-slate-50">
