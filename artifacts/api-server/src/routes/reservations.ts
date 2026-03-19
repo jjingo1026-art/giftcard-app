@@ -118,7 +118,7 @@ router.post("/", async (req, res) => {
     );
 
   if (exists.length > 0) {
-    res.status(400).json({ error: "이미 예약된 번호입니다" });
+    res.status(400).json({ error: "현재 진행 중인 예약이 있습니다.\n기존 예약을 취소하거나 완료 후 다시 예약해주세요." });
     return;
   }
 
