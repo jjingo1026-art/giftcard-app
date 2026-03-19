@@ -223,22 +223,31 @@ router.get("/staff/my-reservations", requireStaffAuth, async (req, res) => {
 const isValidDate = (d: string) => /^\d{4}-\d{2}-\d{2}$/.test(d);
 
 router.get("/reservations", requireAuth, requireAdmin, async (req, res) => {
-  const { date, page = "1", limit = "20" } = req.query as { date?: string; page?: string; limit?: string };
-
-  if (date && !isValidDate(date)) {
-    res.status(400).json({ error: "Invalid date format" }); return;
-  }
+  const { date, page = "1", limit = "20" } = req.query as {
+    date?: string;
+    page?: string;
+    limit?: string;
+  };
 
   const pageNum = parseInt(page);
   const limitNum = parseInt(limit);
 
-  const rows = await db
+  if (date && !/^\d{4}-\d{2}-\d{2}$/.test(date)) {
+    res.status(400).json({ error: "Invalid date format" }); return;
+  }
+
+  let query = db
     .select()
     .from(reservationsTable)
-    .where(date ? eq(reservationsTable.date, date) : undefined)
     .orderBy(desc(reservationsTable.createdAt))
     .limit(limitNum)
     .offset((pageNum - 1) * limitNum);
+
+  if (date) {
+    query = query.where(eq(reservationsTable.date, date));
+  }
+
+  const rows = await query;
 
   res.json(rows);
 });
