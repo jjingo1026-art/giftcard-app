@@ -19,8 +19,8 @@ export default function StaffDetail() {
 
   const [chatMessages, setChatMessages] = useState<Message[]>([]);
   const [msg, setMsg] = useState("");
-  const [completing, setCompleting] = useState(false);
-  const [completed, setCompleted] = useState(false);
+  const [acting, setActing] = useState(false);
+  const [status, setStatus] = useState<"pending" | "completed" | "no_show">("pending");
   const chatBoxRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -68,19 +68,20 @@ export default function StaffDetail() {
     if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); send(); }
   }
 
-  async function complete() {
-    if (!reservationId || completing || completed) return;
-    if (!confirm("매입 완료 처리하시겠습니까?")) return;
-    setCompleting(true);
+  async function handleAction(next: "completed" | "no_show") {
+    if (!reservationId || acting || status !== "pending") return;
+    const label = next === "completed" ? "매입 완료 처리" : "노쇼 처리";
+    if (!confirm(`${label}하시겠습니까?`)) return;
+    setActing(true);
     try {
       const res = await fetch(`/api/admin/reservations/${reservationId}/status`, {
         method: "POST",
         headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
-        body: JSON.stringify({ status: "completed" }),
+        body: JSON.stringify({ status: next }),
       });
       const data = await res.json();
       if (data.success) {
-        setCompleted(true);
+        setStatus(next);
         loadChat();
       } else {
         alert(data.error ?? "처리 중 오류가 발생했습니다.");
@@ -88,7 +89,7 @@ export default function StaffDetail() {
     } catch {
       alert("처리 중 오류가 발생했습니다.");
     } finally {
-      setCompleting(false);
+      setActing(false);
     }
   }
 
@@ -104,20 +105,34 @@ export default function StaffDetail() {
       </header>
 
       <div className="max-w-2xl mx-auto px-4 py-4 space-y-3">
-        {/* 매입 완료 버튼 */}
-        {completed ? (
+        {/* 상태 버튼 영역 */}
+        {status === "completed" ? (
           <div className="flex items-center gap-2 px-4 py-3 bg-emerald-50 border border-emerald-100 rounded-2xl">
             <span className="text-emerald-600 font-bold text-[14px]">✅ 매입 완료 처리되었습니다.</span>
           </div>
+        ) : status === "no_show" ? (
+          <div className="flex items-center gap-2 px-4 py-3 bg-rose-50 border border-rose-100 rounded-2xl">
+            <span className="text-rose-600 font-bold text-[14px]">🚫 노쇼 처리되었습니다.</span>
+          </div>
         ) : (
-          <button
-            onClick={complete}
-            disabled={completing}
-            className="w-full py-3.5 rounded-2xl text-white text-[15px] font-bold transition-all active:scale-95 disabled:opacity-50"
-            style={{ background: "linear-gradient(135deg,#10b981,#059669)" }}
-          >
-            {completing ? "처리 중…" : "✅ 매입 완료"}
-          </button>
+          <div className="flex gap-2">
+            <button
+              onClick={() => handleAction("completed")}
+              disabled={acting}
+              className="flex-1 py-3.5 rounded-2xl text-white text-[15px] font-bold transition-all active:scale-95 disabled:opacity-50"
+              style={{ background: "linear-gradient(135deg,#10b981,#059669)" }}
+            >
+              {acting ? "처리 중…" : "✅ 매입 완료"}
+            </button>
+            <button
+              onClick={() => handleAction("no_show")}
+              disabled={acting}
+              className="flex-1 py-3.5 rounded-2xl text-white text-[15px] font-bold transition-all active:scale-95 disabled:opacity-50"
+              style={{ background: "linear-gradient(135deg,#f43f5e,#e11d48)" }}
+            >
+              {acting ? "처리 중…" : "🚫 노쇼"}
+            </button>
+          </div>
         )}
 
         <h3 className="text-[15px] font-bold text-slate-700">채팅</h3>

@@ -18,7 +18,7 @@ function requireStaffAuth(req: any, res: any, next: any) {
   next();
 }
 
-const VALID_STATUSES = ["pending", "assigned", "completed", "cancelled"] as const;
+const VALID_STATUSES = ["pending", "assigned", "completed", "cancelled", "no_show"] as const;
 type Status = typeof VALID_STATUSES[number];
 
 // GET /api/staff/reservations/pending
