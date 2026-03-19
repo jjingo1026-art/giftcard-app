@@ -100,7 +100,7 @@ router.post("/", async (req, res) => {
     return;
   }
 
-  body.phone = normalizePhone(body.phone);
+  const normalizedPhone = normalizePhone(body.phone);
 
   const normalize = (str: string) => str.replace(/\s/g, "").toLowerCase();
 
@@ -128,7 +128,7 @@ router.post("/", async (req, res) => {
     .values({
       kind: body.kind ?? "reservation",
       name: body.name,
-      phone: body.phone,
+      phone: normalizedPhone,
       date: body.date,
       time: body.time,
       location: body.location ?? "",
