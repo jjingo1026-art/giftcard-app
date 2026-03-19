@@ -156,39 +156,52 @@ router.get("/staff-summary", requireAuth, async (_req, res) => {
   res.json(summary);
 });
 
-// 관리자용: 특정 매입담당자의 예약 조회 (status 필터 옵션)
+// 관리자용: 특정 매입담당자의 예약 조회
+// GET /staff/:staffId/reservations?status=pending|assigned|completed|cancelled
 router.get("/staff/:staffId/reservations", requireAuth, async (req, res) => {
   const staffId = Number(req.params.staffId);
   const { status } = req.query as { status?: string };
+  if (isNaN(staffId)) { res.status(400).json({ error: "잘못된 담당자 ID" }); return; }
+
+  const validStatuses = ["pending", "assigned", "completed", "cancelled"];
+  const conditions = [eq(reservationsTable.assignedStaffId, staffId)];
+  if (status && validStatuses.includes(status)) {
+    conditions.push(eq(reservationsTable.status, status));
+  }
 
   const rows = await db
     .select()
     .from(reservationsTable)
+    .where(and(...conditions))
     .orderBy(desc(reservationsTable.createdAt));
 
-  let result = rows.filter((r) => r.assignedStaffId === staffId);
-  if (status) {
-    result = result.filter((r) => r.status === status);
-  }
-
-  res.json(result);
+  res.json(rows);
 });
 
 // 관리자용: 매입담당자별 예약 조회 (assigned / completed)
 router.get("/staff/reservations", requireAuth, async (_req, res) => {
-  const [staffList, rows] = await Promise.all([
-    db.select().from(staffTable).where(eq(staffTable.status, "approved")),
-    db.select().from(reservationsTable).orderBy(desc(reservationsTable.createdAt)),
-  ]);
+  const staffList = await db
+    .select()
+    .from(staffTable)
+    .where(eq(staffTable.status, "approved"));
 
-  const grouped = staffList.map((s) => {
-    const mine = rows.filter((r) => r.assignedStaffId === s.id);
-    return {
-      staff: { id: s.id, name: s.name, phone: s.phone },
-      assigned:  mine.filter((r) => r.status === "assigned"),
-      completed: mine.filter((r) => r.status === "completed"),
-    };
-  });
+  const grouped = await Promise.all(
+    staffList.map(async (s) => {
+      const [assigned, completed] = await Promise.all([
+        db.select().from(reservationsTable)
+          .where(and(eq(reservationsTable.assignedStaffId, s.id), eq(reservationsTable.status, "assigned")))
+          .orderBy(desc(reservationsTable.createdAt)),
+        db.select().from(reservationsTable)
+          .where(and(eq(reservationsTable.assignedStaffId, s.id), eq(reservationsTable.status, "completed")))
+          .orderBy(desc(reservationsTable.createdAt)),
+      ]);
+      return {
+        staff: { id: s.id, name: s.name, phone: s.phone },
+        assigned,
+        completed,
+      };
+    })
+  );
 
   res.json(grouped);
 });
