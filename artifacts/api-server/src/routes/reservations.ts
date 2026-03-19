@@ -10,8 +10,14 @@ router.get("/", async (_req, res) => {
   res.json(data);
 });
 
+const isValidDate = (d: string) => /^\d{4}-\d{2}-\d{2}$/.test(d);
+
 router.get("/by-date", async (req, res) => {
   const { date } = req.query;
+
+  if (!date || !isValidDate(String(date))) {
+    res.status(400).json({ error: "Invalid date format" }); return;
+  }
 
   const data = await db
     .select()

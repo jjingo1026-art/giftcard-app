@@ -209,8 +209,14 @@ router.get("/staff/my-reservations", requireStaffAuth, async (req, res) => {
   res.json(rows.filter((r) => r.assignedStaffId === staffId));
 });
 
+const isValidDate = (d: string) => /^\d{4}-\d{2}-\d{2}$/.test(d);
+
 router.get("/reservations", requireAuth, async (req, res) => {
   const { date } = req.query as { date?: string };
+
+  if (date && !isValidDate(date)) {
+    res.status(400).json({ error: "Invalid date format" }); return;
+  }
 
   const query = db
     .select()
