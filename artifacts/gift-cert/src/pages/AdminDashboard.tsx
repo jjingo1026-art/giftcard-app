@@ -318,14 +318,20 @@ export default function AdminDashboard() {
 
         {/* 예약 캘린더 */}
         <h2 className="text-[15px] font-bold text-slate-700">📅 예약 캘린더</h2>
-        <div className="bg-white rounded-2xl border border-slate-100 shadow-sm p-3 overflow-hidden" style={{ maxWidth: 900, margin: "20px auto" }}>
+        <div className="bg-white rounded-2xl border border-slate-100 shadow-sm overflow-hidden">
           <style>{`
-            .fc { font-size: 13px; }
-            .fc-toolbar-title { font-size: 15px !important; font-weight: 700; }
-            .fc-button { font-size: 12px !important; padding: 4px 10px !important; }
+            .fc { font-size: 14px; }
+            .fc-toolbar { padding: 12px 16px 8px; }
+            .fc-toolbar-title { font-size: 18px !important; font-weight: 800; color: #1e293b; }
+            .fc-button { font-size: 13px !important; padding: 6px 14px !important; border-radius: 10px !important; }
+            .fc-daygrid-day { min-height: 72px !important; }
             .fc-daygrid-day:hover { background: #f0f0ff; cursor: pointer; }
+            .fc-daygrid-day-number { font-size: 14px !important; font-weight: 600; padding: 6px 8px !important; }
             .fc-day-today { background: #eef2ff !important; }
-            .fc-event { font-size: 11px !important; border-radius: 6px !important; }
+            .fc-day-today .fc-daygrid-day-number { color: #4f46e5; font-weight: 900; }
+            .fc-col-header-cell { padding: 8px 0 !important; font-size: 13px !important; font-weight: 700; color: #64748b; }
+            .fc-event { font-size: 12px !important; border-radius: 6px !important; padding: 2px 5px !important; font-weight: 600; }
+            .fc-daygrid-event-harness { margin: 2px 3px !important; }
           `}</style>
           <FullCalendar
             plugins={[dayGridPlugin, interactionPlugin]}
@@ -334,7 +340,7 @@ export default function AdminDashboard() {
             headerToolbar={{ left: "prev", center: "title", right: "next" }}
             events={calendarEvents}
             dateClick={handleDateClick}
-            height="auto"
+            height={680}
           />
           {dateFilter && (() => {
             const dayEntries   = allEntries.filter((r) => r.date === dateFilter);
