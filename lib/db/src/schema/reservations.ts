@@ -1,4 +1,4 @@
-import { pgTable, serial, text, integer, timestamp, jsonb, index } from "drizzle-orm/pg-core";
+import { pgTable, serial, text, integer, timestamp, jsonb, index, numeric } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod/v4";
 
@@ -17,7 +17,7 @@ export const reservationsTable = pgTable("reservations", {
   accountNumber: text("account_number").notNull(),
   accountHolder: text("account_holder").notNull(),
   giftcardType: text("giftcard_type"),
-  amount: integer("amount"),
+  amount: numeric("amount", { precision: 12, scale: 0 }),
   category: text("category"),
   status: text("status").notNull().default("pending"),
   assignedTo: text("assigned_to"),
