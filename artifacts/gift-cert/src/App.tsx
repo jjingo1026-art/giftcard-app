@@ -35,6 +35,13 @@ const RATE_GROUPS = [
 
 const DEFAULT_TYPE = Object.keys(RATES)[0];
 
+const isValidTime = (time: string) => {
+  const match = time.match(/^(\d{2}):(\d{2})$/);
+  if (!match) return false;
+  const minutes = parseInt(match[2], 10);
+  return minutes % 10 === 0;
+};
+
 const TIME_OPTIONS: string[] = (() => {
   const opts: string[] = [];
   for (let h = 9; h <= 18; h++) {
@@ -277,7 +284,7 @@ function HomePage({ onGoUrgent }: { onGoUrgent: () => void }) {
     if (!name.trim()) fe.name = "이름을 입력해주세요";
     if (!phone.trim()) fe.phone = "연락처를 입력해주세요";
     if (!date) fe.date = "날짜 선택";
-    if (!time) fe.time = "시간을 선택해주세요";
+    if (!time || !isValidTime(time)) fe.time = "시간을 선택해주세요";
     if (!location.trim()) fe.location = "거래 장소를 입력해주세요";
     if (!accountNumber.trim()) fe.accountNumber = "계좌번호를 입력해주세요";
     if (!accountHolder.trim()) fe.accountHolder = "예금주를 입력해주세요";
