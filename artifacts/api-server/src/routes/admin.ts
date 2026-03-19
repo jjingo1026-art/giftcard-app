@@ -1,7 +1,7 @@
 import { Router, type IRouter } from "express";
 import { db } from "@workspace/db";
 import { reservationsTable, chatsTable, staffTable, penaltiesTable, usersTable } from "@workspace/db/schema";
-import { eq, desc, asc, and, sql, gte, lte, inArray } from "drizzle-orm";
+import { eq, desc, asc, and, sql, gte, lte, inArray, isNull } from "drizzle-orm";
 import crypto from "crypto";
 import { emitToRoom } from "../socket";
 
@@ -359,6 +359,24 @@ router.get("/reservations/unassigned", requireAuth, requireAdmin, async (req, re
     console.error(err);
     res.status(500).json({ error: "Failed to fetch unassigned reservations" });
   }
+});
+
+router.get("/unassigned", requireAuth, requireAdmin, async (_req, res) => {
+  const rows = await db
+    .select({
+      id: reservationsTable.id,
+      date: reservationsTable.date,
+      time: reservationsTable.time,
+      location: reservationsTable.location,
+      isUrgent: reservationsTable.isUrgent,
+      name: reservationsTable.name,
+      phone: reservationsTable.phone,
+    })
+    .from(reservationsTable)
+    .where(isNull(reservationsTable.assignedStaffId))
+    .orderBy(desc(reservationsTable.createdAt));
+
+  res.json(rows);
 });
 
 const isValidDate = (d: string) => /^\d{4}-\d{2}-\d{2}$/.test(d);
