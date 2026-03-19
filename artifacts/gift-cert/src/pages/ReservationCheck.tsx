@@ -173,37 +173,61 @@ export default function ReservationCheck() {
           </div>
         )}
 
-        {/* 예약 접수 완료 (배정 전 / pending) */}
+        {/* 예약 확인 (배정 전 / pending) */}
         {reservation && reservation.status === "pending" && (
-          <div className="bg-white rounded-2xl border border-slate-100 shadow-sm px-5 py-8 text-center space-y-3">
-            <div className="w-14 h-14 rounded-full bg-amber-50 flex items-center justify-center text-[28px] mx-auto">📋</div>
-            <div>
-              <p className="text-[16px] font-bold text-slate-800">처리 대기</p>
-              <p className="text-[13px] text-slate-500 mt-1.5">현재 담당자 배정 중입니다.</p>
-              <p className="text-[12px] text-slate-400 mt-1">곧 매입담당자가 배정될 예정입니다.</p>
-            </div>
-            <div className="pt-2 border-t border-slate-50 space-y-1.5">
-              {reservation.giftcardType && (
-                <p className="text-[13px] text-slate-600">
-                  <span className="text-slate-400">상품권</span> {reservation.giftcardType}
+          <div className="space-y-3">
+            <div className="bg-white rounded-3xl border border-slate-100 shadow-sm overflow-hidden">
+              {/* 헤더 */}
+              <div className="px-5 pt-5 pb-4 border-b border-slate-50 flex items-center gap-2">
+                <span className="text-[20px]">📌</span>
+                <p className="text-[17px] font-bold text-slate-800">예약확인</p>
+              </div>
+              {/* 상세 정보 */}
+              <div className="px-5 py-4 space-y-0">
+                {reservation.giftcardType && (
+                  <div className="flex justify-between items-center py-2.5 border-b border-slate-50">
+                    <span className="text-[13px] text-slate-400 font-medium">권종</span>
+                    <span className="text-[13px] text-slate-800 font-semibold">{reservation.giftcardType}</span>
+                  </div>
+                )}
+                {reservation.amount != null && (
+                  <div className="flex justify-between items-center py-2.5 border-b border-slate-50">
+                    <span className="text-[13px] text-slate-400 font-medium">금액</span>
+                    <span className="text-[15px] text-indigo-600 font-black">{fmt(reservation.amount)}</span>
+                  </div>
+                )}
+                {reservation.date && (
+                  <div className="flex justify-between items-center py-2.5 border-b border-slate-50">
+                    <span className="text-[13px] text-slate-400 font-medium">예약일시</span>
+                    <span className="text-[13px] text-slate-800 font-semibold">
+                      {reservation.date}{reservation.time ? ` ${reservation.time}` : ""}
+                    </span>
+                  </div>
+                )}
+                {reservation.name && (
+                  <div className="flex justify-between items-center py-2.5 border-b border-slate-50">
+                    <span className="text-[13px] text-slate-400 font-medium">성함</span>
+                    <span className="text-[13px] text-slate-800 font-semibold">{reservation.name}</span>
+                  </div>
+                )}
+                <div className="flex justify-between items-center py-2.5">
+                  <span className="text-[13px] text-slate-400 font-medium">연락처</span>
+                  <span className="text-[13px] text-slate-800 font-semibold">{formatPhone(reservation.phone)}</span>
+                </div>
+              </div>
+              {/* 상태 안내 */}
+              <div className="mx-5 mb-5 rounded-2xl bg-amber-50 border border-amber-100 px-4 py-4 space-y-1.5">
+                <p className="text-[13px] font-bold text-amber-700">현재 상태</p>
+                <p className="text-[13px] text-amber-600 font-medium">매입 담당자 배정 대기중입니다.</p>
+                <p className="text-[12px] text-amber-500 pt-1 leading-relaxed">
+                  담당자가 배정되면<br />연락처 확인 및 채팅 이용이 가능합니다.
                 </p>
-              )}
-              {reservation.amount && (
-                <p className="text-[13px] text-slate-600">
-                  <span className="text-slate-400">금액</span> {fmt(reservation.amount)}
-                </p>
-              )}
+              </div>
             </div>
-            <a
-              href={`/chat.html?id=${reservation.id}`}
-              className="flex items-center justify-center gap-2 w-full py-3.5 rounded-xl text-white text-[14px] font-bold transition-all active:scale-95"
-              style={{ background: "linear-gradient(135deg,#6366f1,#8b5cf6)" }}
-            >
-              💬 상담하기
-            </a>
+
             {/* 취소 버튼 */}
             {canCancel && (
-              <div className="pt-1">
+              <div>
                 {tooLateToCancel
                   ? <p className="text-[12px] text-rose-400 text-center py-2">예약 1시간 전까지만 취소할 수 있습니다.</p>
                   : <>
