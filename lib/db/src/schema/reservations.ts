@@ -28,6 +28,15 @@ export const reservationsTable = pgTable("reservations", {
   index("idx_reservations_date_status").on(table.date, table.status),
 ]);
 
+export const RESERVATION_STATUS = {
+  PENDING:   "pending",
+  ASSIGNED:  "assigned",
+  COMPLETED: "completed",
+  CANCELLED: "cancelled",
+} as const;
+
+export type ReservationStatus = typeof RESERVATION_STATUS[keyof typeof RESERVATION_STATUS];
+
 interface SavedItem {
   type: string;
   amount: number;
