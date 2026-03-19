@@ -267,7 +267,12 @@ function HomePage({ onGoUrgent }: { onGoUrgent: () => void }) {
     if (!name.trim()) fe.name = "이름을 입력해주세요";
     if (!phone.trim()) fe.phone = "연락처를 입력해주세요";
     if (!date) fe.date = "날짜 선택";
-    if (!time) fe.time = "시간 선택";
+    if (!time) {
+      fe.time = "시간을 선택해주세요";
+    } else {
+      const mins = parseInt(time.split(":")[1] ?? "0", 10);
+      if (mins % 10 !== 0) fe.time = "10분 단위로만 선택 가능합니다 (예: 14:00, 14:10, 14:20)";
+    }
     if (!location.trim()) fe.location = "거래 장소를 입력해주세요";
     if (!accountNumber.trim()) fe.accountNumber = "계좌번호를 입력해주세요";
     if (!accountHolder.trim()) fe.accountHolder = "예금주를 입력해주세요";
@@ -428,7 +433,25 @@ function HomePage({ onGoUrgent }: { onGoUrgent: () => void }) {
                 <input type="date" value={date} onChange={(e) => { setDate(e.target.value); setFieldErrors((p) => ({ ...p, date: "" })); }} className={inputCls(!!fieldErrors.date)} />
               </Field>
               <Field label="예약 시간" required error={fieldErrors.time}>
-                <input type="time" value={time} onChange={(e) => { setTime(e.target.value); setFieldErrors((p) => ({ ...p, time: "" })); }} className={inputCls(!!fieldErrors.time)} />
+                <input
+                  type="time"
+                  step="600"
+                  value={time}
+                  onChange={(e) => {
+                    const v = e.target.value;
+                    setTime(v);
+                    if (!v) {
+                      setFieldErrors((p) => ({ ...p, time: "" }));
+                    } else {
+                      const mins = parseInt(v.split(":")[1] ?? "0", 10);
+                      setFieldErrors((p) => ({
+                        ...p,
+                        time: mins % 10 !== 0 ? "10분 단위로만 선택 가능합니다 (예: 14:00, 14:10)" : "",
+                      }));
+                    }
+                  }}
+                  className={inputCls(!!fieldErrors.time)}
+                />
               </Field>
             </div>
             <Field label="거래 장소" required error={fieldErrors.location}>
