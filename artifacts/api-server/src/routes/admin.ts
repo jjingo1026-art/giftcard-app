@@ -591,9 +591,6 @@ router.post("/reservations/:id/status", async (req, res) => {
       });
 
       // 유저 패널티 누적 카운트 증가
-      const NO_SHOW_BLOCK_THRESHOLD = 3;
-      const BLOCK_DAYS = 3;
-
       await db.insert(usersTable)
         .values({ id: userId, noShowCount: 1 })
         .onConflictDoUpdate({
@@ -604,15 +601,24 @@ router.post("/reservations/:id/status", async (req, res) => {
           },
         });
 
-      // 임계치 도달 시 isBlocked + blockedUntil 설정
+      // 단계별 제재 적용
       const [updatedUser] = await db.select().from(usersTable).where(eq(usersTable.id, userId));
-      if ((updatedUser?.noShowCount ?? 0) >= NO_SHOW_BLOCK_THRESHOLD) {
+      const noShowCount = updatedUser?.noShowCount ?? 0;
+
+      if (noShowCount === 2) {
+        // 2회: 5일 차단
         const blockedUntil = new Date();
-        blockedUntil.setDate(blockedUntil.getDate() + BLOCK_DAYS);
+        blockedUntil.setDate(blockedUntil.getDate() + 5);
         await db.update(usersTable)
           .set({ isBlocked: true, blockedUntil, updatedAt: new Date() })
           .where(eq(usersTable.id, userId));
+      } else if (noShowCount >= 3) {
+        // 3회: 영구 차단
+        await db.update(usersTable)
+          .set({ isBlocked: true, blockedUntil: null, updatedAt: new Date() })
+          .where(eq(usersTable.id, userId));
       }
+      // 1회: 경고만 (차단 없음)
     }
 
     const [autoMsg] = await db.insert(chatsTable).values({
