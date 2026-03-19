@@ -8,8 +8,13 @@ const RATES: Record<string, number> = {
   "주유권 (Fuel)": 0.95,
   "국민관광상품권 (Tourism)": 0.95,
   "갤러리아 (Galleria)": 0.94,
+  "삼성상품권": 0.92,
+  "이랜드상품권": 0.91,
+  "AK(애경)상품권": 0.91,
+  "농협상품권": 0.91,
   "컬쳐랜드 (Cultureland)": 0.90,
   "도서문화상품권 (BooknLife)": 0.90,
+  "온누리상품권": 0.90,
 };
 
 const RATE_GROUPS = [
@@ -18,7 +23,12 @@ const RATE_GROUPS = [
   { label: "현대백화점상품권",   sub: "", rate: 95, color: "#a78bfa" },
   { label: "국민관광상품권",     sub: "", rate: 95, color: "#818cf8" },
   { label: "갤러리아백화점상품권", sub: "", rate: 94, color: "#7c3aed" },
+  { label: "삼성상품권",           sub: "", rate: 92, color: "#0ea5e9" },
+  { label: "이랜드상품권",         sub: "", rate: 91, color: "#06b6d4" },
+  { label: "AK(애경)상품권",       sub: "", rate: 91, color: "#10b981" },
+  { label: "농협상품권",           sub: "", rate: 91, color: "#22c55e" },
   { label: "지류문화상품권", sub: "컬쳐랜드 · 북앤라이프 · 문화상품권", rate: 90, color: "#c084fc" },
+  { label: "온누리상품권",         sub: "", rate: 90, color: "#f59e0b" },
   { label: "주유권", sub: "SK · GS · 현대 · S-OIL", rate: 95, color: "#6366f1" },
 ];
 
