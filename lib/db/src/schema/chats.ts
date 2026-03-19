@@ -1,4 +1,4 @@
-import { pgTable, serial, integer, text, timestamp } from "drizzle-orm/pg-core";
+import { pgTable, serial, integer, text, timestamp, boolean } from "drizzle-orm/pg-core";
 
 export const chatsTable = pgTable("chats", {
   id: serial("id").primaryKey(),
@@ -7,6 +7,7 @@ export const chatsTable = pgTable("chats", {
   senderName: text("sender_name").notNull(),
   message: text("message").notNull(),
   time: timestamp("time").notNull().defaultNow(),
+  read: boolean("read").notNull().default(false),
 });
 
 export type Chat = typeof chatsTable.$inferSelect;

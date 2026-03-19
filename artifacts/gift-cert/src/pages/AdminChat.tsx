@@ -9,6 +9,7 @@ interface Message {
   senderName: string;
   message: string;
   time: string;
+  read: boolean;
 }
 
 function getReservationId() {
@@ -45,6 +46,8 @@ export default function AdminChat() {
 
     socket.on("connect", () => {
       socket.emit("joinRoom", Number(reservationId));
+      // 입장 시 고객/담당자 메시지 읽음 처리
+      socket.emit("markRead", { reservationId: Number(reservationId), readerRole: "admin" });
     });
 
     socket.on("newMessage", (newMsg: Message) => {
@@ -52,8 +55,21 @@ export default function AdminChat() {
         if (prev.some((m) => m.id === newMsg.id)) return prev;
         const next = [...prev, newMsg];
         scrollToBottom();
+        // 새 메시지가 내 것이 아니면 즉시 읽음 처리
+        if (newMsg.sender !== "admin") {
+          socket.emit("markRead", { reservationId: Number(reservationId), readerRole: "admin" });
+        }
         return next;
       });
+    });
+
+    // 상대방이 내 메시지를 읽었을 때 read 상태 업데이트
+    socket.on("messagesRead", ({ readerRole }: { readerRole: string }) => {
+      if (readerRole !== "admin") {
+        setMessages((prev) =>
+          prev.map((m) => m.sender === "admin" ? { ...m, read: true } : m)
+        );
+      }
     });
 
     return () => { socket.disconnect(); };
@@ -116,7 +132,7 @@ export default function AdminChat() {
           {messages.map((m) => {
             const isMine = m.sender === "admin";
             return (
-              <div key={m.id} className={`flex ${isMine ? "justify-end" : "justify-start"}`}>
+              <div key={m.id} className={`flex flex-col ${isMine ? "items-end" : "items-start"}`}>
                 <div className={`max-w-[75%] px-3.5 py-2.5 rounded-2xl text-[14px] shadow-sm ${
                   isMine
                     ? "bg-indigo-500 text-white rounded-br-sm"
@@ -132,6 +148,11 @@ export default function AdminChat() {
                     {new Date(m.time).toLocaleTimeString()}
                   </p>
                 </div>
+                {isMine && (
+                  <span className="text-[10px] text-slate-400 mt-0.5 mr-1">
+                    {m.read ? "읽음" : ""}
+                  </span>
+                )}
               </div>
             );
           })}

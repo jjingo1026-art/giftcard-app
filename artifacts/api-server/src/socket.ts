@@ -2,6 +2,7 @@ import { Server } from "socket.io";
 import type { HttpServer } from "http";
 import { db } from "@workspace/db";
 import { chatsTable } from "@workspace/db/schema";
+import { eq, and, ne } from "drizzle-orm";
 
 let _io: Server | null = null;
 
@@ -35,10 +36,31 @@ export function initSocket(httpServer: HttpServer) {
         sender,
         senderName: senderName ?? NAME_MAP[sender] ?? sender,
         message: message.trim(),
+        read: false,
       }).returning();
 
       const msg = { ...inserted, time: inserted.time.toISOString() };
       io.to("room_" + reservationId).emit("newMessage", msg);
+    });
+
+    // 읽음 처리: 내가 아닌 발신자의 메시지를 read=true 로 업데이트
+    socket.on("markRead", async (data: { reservationId: number; readerRole: string }) => {
+      const { reservationId, readerRole } = data;
+      if (!reservationId || !readerRole) return;
+
+      await db
+        .update(chatsTable)
+        .set({ read: true })
+        .where(
+          and(
+            eq(chatsTable.reservationId, reservationId),
+            ne(chatsTable.sender, readerRole),
+            eq(chatsTable.read, false)
+          )
+        );
+
+      // 방 전체에 읽음 알림 (누가 읽었는지 알림)
+      io.to("room_" + reservationId).emit("messagesRead", { readerRole });
     });
 
     socket.on("disconnect", () => {
