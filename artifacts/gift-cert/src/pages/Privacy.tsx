@@ -5,9 +5,9 @@ export default function Privacy() {
 
   function handleAgree() {
     if (isUrgent) {
-      location.href = "/?urgent=1";
+      location.href = "/?urgent=1&agreed=1";
     } else {
-      location.href = `/reservation.html?type=${encodeURIComponent(type)}`;
+      location.href = "/?agreed=1";
     }
   }
 
