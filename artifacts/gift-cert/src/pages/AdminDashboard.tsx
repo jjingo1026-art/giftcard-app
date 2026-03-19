@@ -227,23 +227,51 @@ export default function AdminDashboard() {
           ))}
         </div>
 
-        {/* 🚨 긴급판매신청 — 완료·취소 전까지 상시 표시 */}
+        {/* 매입담당자 현황 */}
+        {staffSummary.length > 0 && (
+          <>
+            <h2 className="text-[15px] font-bold text-slate-700">👨‍🔧 매입담당자 현황</h2>
+            <div className="grid grid-cols-1 gap-2">
+              {staffSummary.map((s) => (
+                <div
+                  key={s.id}
+                  onClick={() => { location.href = "/admin/staff/view.html"; }}
+                  className="bg-white rounded-2xl border border-slate-100 shadow-sm px-4 py-3.5 flex items-center justify-between cursor-pointer hover:border-indigo-200 hover:bg-indigo-50/30 transition-all active:scale-[0.99]"
+                >
+                  <div className="flex items-center gap-3">
+                    <div className="w-9 h-9 rounded-full bg-indigo-100 flex items-center justify-center text-[16px]">👨‍🔧</div>
+                    <p className="text-[14px] font-bold text-slate-800">{s.name}</p>
+                  </div>
+                  <div className="flex items-center gap-2 text-[12px] font-bold">
+                    <span className="bg-blue-50 text-blue-600 px-2.5 py-1 rounded-full">진행 {s.assigned}건</span>
+                    <span className="bg-emerald-50 text-emerald-600 px-2.5 py-1 rounded-full">완료 {s.completed}건</span>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </>
+        )}
+
+        {/* 예약 캘린더 */}
+        <h2 className="text-[15px] font-bold text-slate-700">📅 예약 캘린더</h2>
+
+        {/* 🚨 긴급판매신청 — 캘린더 상단, 완료·취소 전까지 상시 표시 */}
         {(() => {
           const urgentActive = allEntries.filter(
             (r) => r.isUrgent && r.status !== "completed" && r.status !== "cancelled"
           );
           if (urgentActive.length === 0) return null;
           return (
-            <>
-              <h2 className="text-[15px] font-bold text-red-600 flex items-center gap-1.5">
-                🚨 긴급판매신청
-                <span className="text-[12px] font-bold text-white bg-red-500 px-2 py-0.5 rounded-full">{urgentActive.length}건</span>
-              </h2>
-              <div className="space-y-2">
+            <div className="rounded-2xl border border-red-200 overflow-hidden">
+              <div className="flex items-center gap-2 px-4 py-2.5 bg-red-500">
+                <span className="text-[14px] font-black text-white">🚨 긴급판매신청</span>
+                <span className="text-[12px] font-bold bg-white text-red-500 px-2 py-0.5 rounded-full">{urgentActive.length}건</span>
+              </div>
+              <div className="divide-y divide-red-100">
                 {urgentActive.map((r) => {
                   const sl = STATUS_LABELS[r.status] ?? { label: r.status, color: "bg-slate-100 text-slate-500" };
                   return (
-                    <div key={r.id} className="bg-red-50 rounded-2xl border border-red-200 shadow-sm px-4 py-3.5 space-y-2.5">
+                    <div key={r.id} className="bg-red-50 px-4 py-3.5 space-y-2.5">
                       <div className="flex items-center justify-between gap-2">
                         <div
                           onClick={() => { window.location.href = `/admin/detail.html?id=${r.id}`; }}
@@ -287,37 +315,10 @@ export default function AdminDashboard() {
                   );
                 })}
               </div>
-            </>
+            </div>
           );
         })()}
 
-        {/* 매입담당자 현황 */}
-        {staffSummary.length > 0 && (
-          <>
-            <h2 className="text-[15px] font-bold text-slate-700">👨‍🔧 매입담당자 현황</h2>
-            <div className="grid grid-cols-1 gap-2">
-              {staffSummary.map((s) => (
-                <div
-                  key={s.id}
-                  onClick={() => { location.href = "/admin/staff/view.html"; }}
-                  className="bg-white rounded-2xl border border-slate-100 shadow-sm px-4 py-3.5 flex items-center justify-between cursor-pointer hover:border-indigo-200 hover:bg-indigo-50/30 transition-all active:scale-[0.99]"
-                >
-                  <div className="flex items-center gap-3">
-                    <div className="w-9 h-9 rounded-full bg-indigo-100 flex items-center justify-center text-[16px]">👨‍🔧</div>
-                    <p className="text-[14px] font-bold text-slate-800">{s.name}</p>
-                  </div>
-                  <div className="flex items-center gap-2 text-[12px] font-bold">
-                    <span className="bg-blue-50 text-blue-600 px-2.5 py-1 rounded-full">진행 {s.assigned}건</span>
-                    <span className="bg-emerald-50 text-emerald-600 px-2.5 py-1 rounded-full">완료 {s.completed}건</span>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </>
-        )}
-
-        {/* 예약 캘린더 */}
-        <h2 className="text-[15px] font-bold text-slate-700">📅 예약 캘린더</h2>
         <div className="bg-white rounded-2xl border border-slate-100 shadow-sm overflow-hidden">
           <style>{`
             .fc { font-size: 14px; }
