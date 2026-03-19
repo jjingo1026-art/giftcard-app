@@ -1,5 +1,3 @@
-import { useState } from "react";
-
 const NOTICES = [
   "우리동네상품권 예약판매 신청하기 입니다 원하는 날짜에 시간 장소에서 거래를 신청하실수 있습니다.",
   "불법적으로 취득한 상품권을 판매하시는 경우 민.형사상의 책임을 질 수 있습니다.",
@@ -13,13 +11,7 @@ const NOTICES = [
 ];
 
 export default function Terms() {
-  const [agree, setAgree] = useState(false);
-
-  function goNext() {
-    if (!agree) {
-      alert("개인정보 동의가 필요합니다.");
-      return;
-    }
+  function handleAgree() {
     const type = new URLSearchParams(location.search).get("type");
     location.href = `/reservation.html?type=${type}`;
   }
@@ -55,38 +47,17 @@ export default function Terms() {
         {/* 구분선 */}
         <div className="border-t border-slate-100" />
 
-        {/* 동의 체크박스 */}
+        {/* 동의 체크박스 → 체크 즉시 예약 페이지 이동 */}
         <div
-          onClick={() => setAgree((v) => !v)}
-          className={`flex items-center gap-3 px-5 py-4 rounded-2xl border-2 cursor-pointer transition-all ${
-            agree ? "border-indigo-400 bg-indigo-50" : "border-slate-200 bg-white"
-          }`}
+          onClick={handleAgree}
+          className="flex items-center gap-3 px-5 py-4 rounded-2xl border-2 border-slate-200 bg-white cursor-pointer hover:border-indigo-300 hover:bg-indigo-50/50 transition-all active:scale-[0.98]"
         >
-          <div className={`w-5 h-5 rounded-md border-2 flex items-center justify-center flex-shrink-0 transition-all ${
-            agree ? "bg-indigo-500 border-indigo-500" : "bg-white border-slate-300"
-          }`}>
-            {agree && (
-              <svg width="11" height="9" viewBox="0 0 11 9" fill="none">
-                <path d="M1 4l3 3 6-6" stroke="white" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
-              </svg>
-            )}
+          <div className="w-5 h-5 rounded-md border-2 border-slate-300 bg-white flex items-center justify-center flex-shrink-0">
           </div>
-          <span className={`text-[14px] font-semibold ${agree ? "text-indigo-700" : "text-slate-500"}`}>
-            개인정보 수집 및 이용에 동의합니다.
+          <span className="text-[14px] font-semibold text-slate-600">
+            개인정보 수집 및 이용에 동의하고 예약 신청하기
           </span>
         </div>
-
-        {/* 예약 진행 버튼 */}
-        <button
-          onClick={goNext}
-          className={`w-full py-4 rounded-2xl font-bold text-[15px] transition-all active:scale-[0.98] ${
-            agree
-              ? "bg-indigo-500 text-white hover:bg-indigo-600"
-              : "bg-slate-100 text-slate-400 cursor-not-allowed"
-          }`}
-        >
-          예약 진행
-        </button>
       </div>
     </div>
   );

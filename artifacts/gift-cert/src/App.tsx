@@ -23,7 +23,7 @@ const RATE_GROUPS = [
 ];
 
 function goNotice(type: string) {
-  location.href = `/notice.html?type=${encodeURIComponent(type)}`;
+  location.href = `/terms.html?type=${encodeURIComponent(type)}`;
 }
 
 const DEFAULT_TYPE = Object.keys(RATES)[0];
