@@ -139,7 +139,7 @@ export default function AdminLogin() {
           </button>
         </form>
 
-        <p className="text-center text-slate-600 text-[12px] mt-6">상품권 예약 관리 시스템</p>
+        <p className="text-center text-slate-600 text-[12px] mt-6">우리동네상품권 예약 관리 시스템</p>
       </div>
     </div>
   );

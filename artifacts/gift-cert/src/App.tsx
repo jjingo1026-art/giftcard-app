@@ -284,7 +284,7 @@ function HomePage({ onGoUrgent }: { onGoUrgent: () => void }) {
       <header className="bg-white/80 backdrop-blur-md border-b border-slate-100 sticky top-0 z-40">
         <div className="max-w-md mx-auto px-5 py-4 flex items-center justify-between">
           <div>
-            <h1 className="text-[17px] font-bold text-slate-800">상품권 예약</h1>
+            <h1 className="text-[17px] font-bold text-slate-800">우리동네상품권 예약</h1>
             <p className="text-[11px] text-slate-400 mt-0.5 font-medium tracking-wide">GIFT CERTIFICATE RESERVATION</p>
           </div>
           {submissions.length > 0 && <span className="bg-indigo-100 text-indigo-600 text-[12px] font-bold px-3 py-1.5 rounded-full">{submissions.length}건 접수</span>}
