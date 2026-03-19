@@ -297,69 +297,74 @@ function HomePage({ onGoUrgent }: { onGoUrgent: () => void }) {
         <div className="bg-emerald-500 text-white text-sm font-semibold px-5 py-3 rounded-2xl shadow-lg flex items-center gap-2"><span>✓</span> 예약이 접수되었습니다!</div>
       </div>
       <header className="bg-white/80 backdrop-blur-md border-b border-slate-100 sticky top-0 z-40">
-        <div className="max-w-md mx-auto px-5 py-4 flex items-center justify-between">
-          <div>
-            <h1 className="text-[17px] font-bold text-slate-800">우리동네상품권 예약</h1>
-            <p className="text-[11px] text-slate-400 mt-0.5 font-medium tracking-wide">GIFT CERTIFICATE RESERVATION</p>
+        <div className="max-w-md mx-auto px-5 py-4 flex items-center gap-3">
+          {agreedPrivacy && (
+            <button onClick={() => { window.location.href = "/"; }} className="text-slate-400 hover:text-slate-600 text-lg flex-shrink-0">←</button>
+          )}
+          <div className="flex-1 flex items-center justify-between">
+            <div>
+              <h1 className="text-[17px] font-bold text-slate-800">우리동네상품권 예약</h1>
+              <p className="text-[11px] text-slate-400 mt-0.5 font-medium tracking-wide">GIFT CERTIFICATE RESERVATION</p>
+            </div>
+            {submissions.length > 0 && <span className="bg-indigo-100 text-indigo-600 text-[12px] font-bold px-3 py-1.5 rounded-full">{submissions.length}건 접수</span>}
           </div>
-          {submissions.length > 0 && <span className="bg-indigo-100 text-indigo-600 text-[12px] font-bold px-3 py-1.5 rounded-full">{submissions.length}건 접수</span>}
         </div>
       </header>
 
       <div className="max-w-md mx-auto px-4 pt-5 pb-16 space-y-4">
-        {/* Rates */}
-        <div className="bg-white rounded-3xl shadow-sm border border-slate-100 overflow-hidden">
-          <div className="px-5 pt-5 pb-3 flex items-center justify-between">
-            <div><h2 className="text-[15px] font-bold text-slate-800">상품권 시세</h2><p className="text-[12px] text-slate-400 mt-0.5">Exchange Rates</p></div>
-            <div className="w-8 h-8 bg-indigo-50 rounded-xl flex items-center justify-center">💳</div>
-          </div>
-          <div className="px-5 pb-5 space-y-2">
-            {RATE_GROUPS.map((g) => (
-              <div
-                key={g.label}
-                onClick={() => { window.location.href = `/terms.html?type=${encodeURIComponent(g.label)}`; }}
-                className="flex items-center justify-between px-4 py-3.5 rounded-2xl cursor-pointer active:scale-[0.98] transition-all"
-                style={{ backgroundColor: g.color + "12" }}
-              >
+        {/* 동의 전: 시세 + 예약 확인 + 안내 */}
+        {!agreedPrivacy && (
+          <>
+            <div className="bg-white rounded-3xl shadow-sm border border-slate-100 overflow-hidden">
+              <div className="px-5 pt-5 pb-3 flex items-center justify-between">
+                <div><h2 className="text-[15px] font-bold text-slate-800">상품권 시세</h2><p className="text-[12px] text-slate-400 mt-0.5">Exchange Rates</p></div>
+                <div className="w-8 h-8 bg-indigo-50 rounded-xl flex items-center justify-center">💳</div>
+              </div>
+              <div className="px-5 pb-5 space-y-2">
+                {RATE_GROUPS.map((g) => (
+                  <div
+                    key={g.label}
+                    onClick={() => { window.location.href = `/terms.html?type=${encodeURIComponent(g.label)}`; }}
+                    className="flex items-center justify-between px-4 py-3.5 rounded-2xl cursor-pointer active:scale-[0.98] transition-all"
+                    style={{ backgroundColor: g.color + "12" }}
+                  >
+                    <div>
+                      <p className="text-[14px] font-semibold text-slate-700">{g.label}</p>
+                      {g.sub && <p className="text-[11px] text-slate-400 mt-0.5">{g.sub}</p>}
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <span className="text-[20px] font-black tabular-nums flex-shrink-0" style={{ color: g.color }}>{g.rate}%</span>
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#94a3b8" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M9 18l6-6-6-6"/></svg>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            <a
+              href="/check.html"
+              className="flex items-center justify-between px-5 py-4 bg-white rounded-3xl shadow-sm border border-slate-100 active:scale-[0.98] transition-all"
+            >
+              <div className="flex items-center gap-3">
+                <div className="w-9 h-9 rounded-2xl bg-indigo-50 flex items-center justify-center text-[18px]">🔍</div>
                 <div>
-                  <p className="text-[14px] font-semibold text-slate-700">{g.label}</p>
-                  {g.sub && <p className="text-[11px] text-slate-400 mt-0.5">{g.sub}</p>}
-                </div>
-                <div className="flex items-center gap-2">
-                  <span className="text-[20px] font-black tabular-nums flex-shrink-0" style={{ color: g.color }}>{g.rate}%</span>
-                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#94a3b8" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M9 18l6-6-6-6"/></svg>
+                  <p className="text-[14px] font-bold text-slate-800">예약 확인</p>
+                  <p className="text-[11px] text-slate-400 mt-0.5">전화번호로 예약 현황 조회</p>
                 </div>
               </div>
-            ))}
-          </div>
-        </div>
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#94a3b8" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M9 18l6-6-6-6"/>
+              </svg>
+            </a>
 
-        {/* 예약 확인 바로가기 */}
-        <a
-          href="/check.html"
-          className="flex items-center justify-between px-5 py-4 bg-white rounded-3xl shadow-sm border border-slate-100 active:scale-[0.98] transition-all"
-        >
-          <div className="flex items-center gap-3">
-            <div className="w-9 h-9 rounded-2xl bg-indigo-50 flex items-center justify-center text-[18px]">🔍</div>
-            <div>
-              <p className="text-[14px] font-bold text-slate-800">예약 확인</p>
-              <p className="text-[11px] text-slate-400 mt-0.5">전화번호로 예약 현황 조회</p>
+            <div className="flex items-center gap-3 px-4 py-3.5 bg-indigo-50 rounded-2xl border border-indigo-100">
+              <span className="text-[22px]">👆</span>
+              <div>
+                <p className="text-[13px] font-semibold text-indigo-700">위 권종을 클릭해주세요</p>
+                <p className="text-[11px] text-indigo-400 mt-0.5">공지사항 확인 및 개인정보 동의 후 예약 가능합니다</p>
+              </div>
             </div>
-          </div>
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#94a3b8" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-            <path d="M9 18l6-6-6-6"/>
-          </svg>
-        </a>
-
-        {/* 권종 미선택 시 안내 */}
-        {!agreedPrivacy && (
-          <div className="flex items-center gap-3 px-4 py-3.5 bg-indigo-50 rounded-2xl border border-indigo-100">
-            <span className="text-[22px]">👆</span>
-            <div>
-              <p className="text-[13px] font-semibold text-indigo-700">위 권종을 클릭해주세요</p>
-              <p className="text-[11px] text-indigo-400 mt-0.5">공지사항 확인 및 개인정보 동의 후 예약 가능합니다</p>
-            </div>
-          </div>
+          </>
         )}
 
         {/* 예약신청 버튼 or 폼 */}
