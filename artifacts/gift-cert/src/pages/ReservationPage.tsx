@@ -1,6 +1,11 @@
 import { useState } from "react";
 import { getNextId, saveEntry } from "@/lib/store";
 
+interface SavedItem { type: string; amount: number; rate: number; payment: number; isGift: boolean; }
+interface ReservationEntry { id: number; name: string; phone: string; date: string; time: string; location: string; items: SavedItem[]; totalPayment: number; bankName: string; accountNumber: string; accountHolder: string; }
+
+function formatKRW(n: number) { return n.toLocaleString("ko-KR") + "원"; }
+
 const RATES: Record<string, number> = {
   "신세계백화점상품권": 0.95,
   "롯데백화점상품권":   0.95,
@@ -52,6 +57,7 @@ export default function ReservationPage() {
   const [agreeMatch, setAgreeMatch] = useState(false);
   const [toast, setToast]     = useState(false);
   const [nameAlert, setNameAlert] = useState(false);
+  const [submissions, setSubmissions] = useState<ReservationEntry[]>([]);
 
   function total() {
     return items.reduce((s, it) => {
@@ -111,8 +117,11 @@ export default function ReservationPage() {
       }
     } catch {}
     saveEntry({ kind: "reservation", id, createdAt: new Date().toISOString(), name, phone, date, time, location: loc, items: savedItems, totalPayment, bankName: bank, accountNumber: acct, accountHolder: holder, giftcardType: items[0]?.type ?? "" });
+    setSubmissions((p) => [{ id, name, phone, date, time, location: loc, items: savedItems, totalPayment, bankName: bank, accountNumber: acct, accountHolder: holder }, ...p]);
+    setName(""); setPhone(""); setDate(""); setTime(""); setLoc(""); setAcct(""); setHolder(""); setAgreeMatch(false);
+    setItems([{ type: getDefaultType(), amount: "", isGift: false }]);
     setToast(true);
-    setTimeout(() => { setToast(false); location.href = "/"; }, 2500);
+    setTimeout(() => setToast(false), 3000);
   }
 
   const inp = (err?: boolean) =>
@@ -363,6 +372,88 @@ export default function ReservationPage() {
           예약 신청
         </button>
       </form>
+
+      {/* 예약 접수 내역 */}
+      {submissions.length > 0 && (
+        <div className="max-w-lg mx-auto px-4 pb-8 space-y-3 mt-6">
+          <div className="flex items-center gap-2 px-1">
+            <h2 className="text-[15px] font-bold text-slate-700">예약 접수 내역</h2>
+            <span className="text-[12px] text-slate-400">최신순</span>
+          </div>
+          {submissions.map((s) => (
+            <div key={s.id} className="bg-white rounded-3xl shadow-sm border border-slate-100 px-5 py-4">
+              <div className="flex items-start justify-between mb-3">
+                <div className="flex items-center gap-3">
+                  <div className="w-9 h-9 rounded-2xl flex items-center justify-center text-white text-[13px] font-bold flex-shrink-0"
+                    style={{ background: "linear-gradient(135deg,#6366f1,#8b5cf6)" }}>
+                    {s.id}
+                  </div>
+                  <div>
+                    <p className="text-[15px] font-bold text-slate-800">{s.name}</p>
+                    <p className="text-[12px] text-slate-400">{s.phone}</p>
+                  </div>
+                </div>
+                <span className="text-[11px] font-bold px-2 py-1 rounded-full bg-indigo-50 text-indigo-500">{s.items.length}종류</span>
+              </div>
+              <div className="grid grid-cols-2 gap-2 mb-3">
+                <div className="bg-slate-50 rounded-xl px-3 py-2">
+                  <p className="text-[10px] text-slate-400 font-semibold uppercase tracking-wide">날짜 · 시간</p>
+                  <p className="text-[12px] text-slate-700 font-semibold mt-0.5">{s.date} {s.time}</p>
+                </div>
+                <div className="bg-slate-50 rounded-xl px-3 py-2">
+                  <p className="text-[10px] text-slate-400 font-semibold uppercase tracking-wide">거래 장소</p>
+                  <p className="text-[12px] text-slate-700 font-semibold mt-0.5 truncate">{s.location}</p>
+                </div>
+              </div>
+              <div className="space-y-1.5 mb-3">
+                {s.items.map((it, i) => (
+                  <div key={i} className="px-3 py-2 rounded-xl text-[12px] bg-indigo-50">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-1.5">
+                        <span className="font-semibold text-slate-700">{it.type.split(" ")[0]}</span>
+                        <span className="text-indigo-500">{Math.round(it.rate * 100)}%</span>
+                        {it.isGift && <span className="text-[10px] bg-violet-100 text-violet-500 font-bold px-1.5 py-0.5 rounded-full">증정용</span>}
+                      </div>
+                      <div className="text-right">
+                        <span className="text-slate-400 mr-2">{formatKRW(it.amount)}</span>
+                        <span className="font-black text-indigo-500">{formatKRW(it.payment)}</span>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+              <div className="flex items-center justify-between px-4 py-3 rounded-2xl border bg-indigo-50 border-indigo-100 mb-2">
+                <div>
+                  <p className="text-[11px] text-slate-400">총 액면가</p>
+                  <p className="text-[13px] font-semibold text-slate-600">{formatKRW(s.items.reduce((acc, it) => acc + it.amount, 0))}</p>
+                </div>
+                <div className="text-right">
+                  <p className="text-[11px] text-slate-400">합산 입금받을 금액</p>
+                  <p className="text-[18px] font-black text-indigo-500">{formatKRW(s.totalPayment)}</p>
+                </div>
+              </div>
+              <div className="px-4 py-3 rounded-2xl bg-slate-50 border border-slate-100 space-y-1.5">
+                <div className="flex items-center gap-1.5 mb-1">
+                  <svg width="12" height="12" viewBox="0 0 20 20" fill="none" className="text-slate-400"><rect x="1" y="5" width="18" height="12" rx="2" stroke="currentColor" strokeWidth="1.6"/><path d="M1 9h18" stroke="currentColor" strokeWidth="1.6"/></svg>
+                  <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wide">입금 계좌 정보</span>
+                </div>
+                <div className="flex items-center justify-between">
+                  <span className="text-[11px] text-slate-400">은행</span>
+                  <span className="text-[13px] font-semibold text-slate-700">{s.bankName}</span>
+                </div>
+                <div className="flex items-center justify-between">
+                  <span className="text-[11px] text-slate-400">계좌번호</span>
+                  <span className="text-[13px] font-semibold text-slate-700">{s.accountNumber}</span>
+                </div>
+                <div className="flex items-center justify-between">
+                  <span className="text-[11px] text-slate-400">예금주</span>
+                  <span className="text-[13px] font-semibold text-slate-700">{s.accountHolder}</span>
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
     </div>
   );
 }
