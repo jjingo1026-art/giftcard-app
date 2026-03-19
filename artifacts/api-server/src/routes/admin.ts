@@ -352,7 +352,7 @@ router.get("/reservations/unassigned", requireAuth, requireAdmin, async (req, re
       .select()
       .from(reservationsTable)
       .where(and(...conditions))
-      .orderBy(desc(reservationsTable.createdAt));
+      .orderBy(desc(reservationsTable.isUrgent), desc(reservationsTable.createdAt));
 
     res.json(rows);
   } catch (err) {
@@ -374,7 +374,7 @@ router.get("/unassigned", requireAuth, requireAdmin, async (_req, res) => {
     })
     .from(reservationsTable)
     .where(isNull(reservationsTable.assignedStaffId))
-    .orderBy(desc(reservationsTable.createdAt));
+    .orderBy(desc(reservationsTable.isUrgent), desc(reservationsTable.createdAt));
 
   res.json(rows);
 });
