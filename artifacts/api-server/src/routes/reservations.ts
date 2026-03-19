@@ -43,6 +43,19 @@ router.post("/:id/status", async (req, res) => {
   res.json({ success: true });
 });
 
+router.get("/count-by-date", async (_req, res) => {
+  const data = await db.select().from(reservationsTable);
+
+  const result: Record<string, number> = {};
+
+  data.forEach(r => {
+    if (!r.date) return;
+    result[r.date] = (result[r.date] || 0) + 1;
+  });
+
+  res.json(result);
+});
+
 router.post("/:id/assign", async (req, res) => {
   const { staffId } = req.body;
 
