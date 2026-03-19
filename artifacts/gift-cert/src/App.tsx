@@ -18,18 +18,18 @@ const RATES: Record<string, number> = {
 };
 
 const RATE_GROUPS = [
-  { label: "신세계백화점상품권", sub: "", rate: 95, color: "#6366f1" },
-  { label: "롯데백화점상품권",   sub: "", rate: 95, color: "#8b5cf6" },
-  { label: "현대백화점상품권",   sub: "", rate: 95, color: "#a78bfa" },
-  { label: "국민관광상품권",     sub: "", rate: 95, color: "#818cf8" },
-  { label: "갤러리아백화점상품권", sub: "", rate: 94, color: "#7c3aed" },
-  { label: "삼성상품권",           sub: "", rate: 92, color: "#0ea5e9" },
-  { label: "이랜드상품권",         sub: "", rate: 91, color: "#06b6d4" },
-  { label: "AK(애경)상품권",       sub: "", rate: 91, color: "#10b981" },
-  { label: "농협상품권",           sub: "", rate: 91, color: "#22c55e" },
-  { label: "지류문화상품권", sub: "컬쳐랜드 · 북앤라이프 · 문화상품권", rate: 90, color: "#c084fc" },
-  { label: "온누리상품권",         sub: "", rate: 90, color: "#f59e0b" },
-  { label: "주유권", sub: "SK · GS · 현대 · S-OIL", rate: 95, color: "#6366f1" },
+  { label: "신세계백화점상품권", display: "신세계",    rate: 95, color: "#6366f1" },
+  { label: "롯데백화점상품권",   display: "롯데",      rate: 95, color: "#8b5cf6" },
+  { label: "현대백화점상품권",   display: "현대",      rate: 95, color: "#a78bfa" },
+  { label: "국민관광상품권",     display: "국민관광",  rate: 95, color: "#818cf8" },
+  { label: "갤러리아백화점상품권", display: "갤러리아", rate: 94, color: "#7c3aed" },
+  { label: "삼성상품권",         display: "삼성",      rate: 92, color: "#0ea5e9" },
+  { label: "이랜드상품권",       display: "이랜드",    rate: 91, color: "#06b6d4" },
+  { label: "AK(애경)상품권",     display: "AK(애경)",  rate: 91, color: "#10b981" },
+  { label: "농협상품권",         display: "농협",      rate: 91, color: "#22c55e" },
+  { label: "지류문화상품권",     display: "지류문화",  rate: 90, color: "#c084fc" },
+  { label: "온누리상품권",       display: "온누리",    rate: 90, color: "#f59e0b" },
+  { label: "주유권",             display: "주유권",    rate: 95, color: "#6366f1" },
 ];
 
 
@@ -332,22 +332,16 @@ function HomePage({ onGoUrgent }: { onGoUrgent: () => void }) {
                 <div><h2 className="text-[15px] font-bold text-slate-800">상품권 시세</h2><p className="text-[12px] text-slate-400 mt-0.5">Exchange Rates</p></div>
                 <div className="w-8 h-8 bg-indigo-50 rounded-xl flex items-center justify-center">💳</div>
               </div>
-              <div className="px-5 pb-5 space-y-2">
+              <div className="px-4 pb-4 grid grid-cols-3 gap-2">
                 {RATE_GROUPS.map((g) => (
                   <div
                     key={g.label}
                     onClick={() => { window.location.href = `/terms.html?type=${encodeURIComponent(g.label)}`; }}
-                    className="flex items-center justify-between px-4 py-3.5 rounded-2xl cursor-pointer active:scale-[0.98] transition-all"
+                    className="flex flex-col items-center justify-center px-2 py-3.5 rounded-2xl cursor-pointer active:scale-[0.97] transition-all text-center"
                     style={{ backgroundColor: g.color + "12" }}
                   >
-                    <div>
-                      <p className="text-[14px] font-semibold text-slate-700">{g.label}</p>
-                      {g.sub && <p className="text-[11px] text-slate-400 mt-0.5">{g.sub}</p>}
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <span className="text-[20px] font-black tabular-nums flex-shrink-0" style={{ color: g.color }}>{g.rate}%</span>
-                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#94a3b8" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M9 18l6-6-6-6"/></svg>
-                    </div>
+                    <span className="text-[12px] font-semibold text-slate-600 leading-tight mb-1.5">{g.display}</span>
+                    <span className="text-[18px] font-black tabular-nums leading-none" style={{ color: g.color }}>{g.rate}%</span>
                   </div>
                 ))}
               </div>
