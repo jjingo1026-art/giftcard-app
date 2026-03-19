@@ -43,6 +43,20 @@ router.post("/:id/status", async (req, res) => {
   res.json({ success: true });
 });
 
+router.post("/:id/assign", async (req, res) => {
+  const { staffId } = req.body;
+
+  await db
+    .update(reservationsTable)
+    .set({
+      assignedStaffId: staffId,
+      status: "assigned"
+    })
+    .where(eq(reservationsTable.id, Number(req.params.id)));
+
+  res.json({ success: true });
+});
+
 router.post("/", async (req, res) => {
   const body = req.body as {
     kind?: string;
