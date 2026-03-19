@@ -606,49 +606,59 @@ function HomePage({ onGoUrgent }: { onGoUrgent: () => void }) {
 
 // ─── SUBMISSION CARD ──────────────────────────────────────────────────────────
 function SubmissionCard({ entry, accent }: { entry: ReservationEntry | UrgentEntry; accent: "indigo" | "rose" }) {
-  const isRes = "name" in entry;
-  const ac = accent === "rose" ? { text: "text-rose-500", bg: "bg-rose-50", border: "border-rose-100", badge: "bg-rose-50 text-rose-500" } : { text: "text-indigo-500", bg: "bg-indigo-50", border: "border-indigo-100", badge: "bg-indigo-50 text-indigo-500" };
+  const isRes = "date" in entry && !!(entry as ReservationEntry).date;
+  const ac = accent === "rose"
+    ? { text: "text-rose-500", bg: "bg-rose-50", border: "border-rose-100", pill: "bg-rose-100 text-rose-600" }
+    : { text: "text-indigo-500", bg: "bg-indigo-50", border: "border-indigo-100", pill: "bg-indigo-100 text-indigo-600" };
 
   return (
-    <div className={`bg-white rounded-3xl shadow-sm border px-5 py-4 ${accent === "rose" ? "border-rose-100" : "border-slate-100"}`}>
-      <div className="flex items-start justify-between mb-3">
-        <div className="flex items-center gap-3">
-          <div className={`w-9 h-9 rounded-2xl flex items-center justify-center text-white text-[13px] font-bold flex-shrink-0`}
-            style={{ background: accent === "rose" ? "linear-gradient(135deg,#f43f5e,#e11d48)" : "linear-gradient(135deg,#6366f1,#8b5cf6)" }}>
-            {entry.id}
-          </div>
-          <div>
-            <p className={`text-[15px] font-bold text-slate-800 flex items-center gap-1.5`}>
-              {isRes ? (entry as ReservationEntry).name : (entry as UrgentEntry).name}
-              {accent === "rose" && <span className="text-[10px] bg-rose-100 text-rose-500 font-bold px-1.5 py-0.5 rounded-full">긴급</span>}
-            </p>
-            <p className="text-[12px] text-slate-400">{isRes ? (entry as ReservationEntry).phone : (entry as UrgentEntry).phone}</p>
-          </div>
+    <div className={`bg-white rounded-3xl shadow-sm border overflow-hidden ${accent === "rose" ? "border-rose-100" : "border-slate-100"}`}>
+
+      {/* ── 카드 헤더 라벨 ── */}
+      <div className={`px-5 pt-4 pb-2 flex items-center justify-between`}>
+        <div className="flex items-center gap-2">
+          <span className={`text-[11px] font-bold px-2.5 py-1 rounded-full tracking-wide ${ac.pill}`}>
+            {accent === "rose" ? "🚨 긴급 판매 카드" : "📋 예약 카드"}
+          </span>
+          <span className="text-[11px] text-slate-300">#{entry.id}</span>
         </div>
-        <span className={`text-[11px] font-bold px-2 py-1 rounded-full ${ac.badge}`}>{entry.items.length}종류</span>
+        <span className={`text-[11px] font-semibold ${ac.text}`}>{entry.items.length}종류</span>
       </div>
 
-      <div className="grid grid-cols-2 gap-2 mb-3">
+      {/* ── 날짜·장소·성함·연락처 ── */}
+      <div className="px-5 pb-3 space-y-1.5">
         {isRes && (
-          <div className="bg-slate-50 rounded-xl px-3 py-2">
-            <p className="text-[10px] text-slate-400 font-semibold uppercase tracking-wide">날짜 · 시간</p>
-            <p className="text-[12px] text-slate-700 font-semibold mt-0.5">{(entry as ReservationEntry).date} {(entry as ReservationEntry).time}</p>
-          </div>
+          <p className="text-[14px] font-semibold text-slate-700 flex items-center gap-2">
+            <span>📅</span>
+            <span>{(entry as ReservationEntry).date} {(entry as ReservationEntry).time}</span>
+          </p>
         )}
-        <div className={`bg-slate-50 rounded-xl px-3 py-2 ${isRes ? "col-span-1" : "col-span-2"}`}>
-          <p className="text-[10px] text-slate-400 font-semibold uppercase tracking-wide">거래 장소</p>
-          <p className="text-[12px] text-slate-700 font-semibold mt-0.5 truncate">{entry.location}</p>
+        <p className="text-[14px] font-semibold text-slate-700 flex items-center gap-2">
+          <span>📍</span>
+          <span className="truncate">{entry.location || "—"}</span>
+        </p>
+        <div className="flex items-center gap-4 pt-0.5">
+          <p className="text-[13px] text-slate-500">
+            <span className="font-semibold text-slate-400 mr-1">성함</span>
+            {(entry as ReservationEntry).name || "—"}
+          </p>
+          <p className="text-[13px] text-slate-500">
+            <span className="font-semibold text-slate-400 mr-1">연락처</span>
+            {entry.phone}
+          </p>
         </div>
       </div>
 
-      {/* Item breakdown */}
-      <div className="space-y-1.5 mb-3">
+      <div className="mx-4 h-px bg-slate-100 mb-3" />
+
+      {/* ── 상품권 내역 ── */}
+      <div className="px-4 space-y-1.5 mb-3">
         {entry.items.map((it, i) => (
           <div key={i} className={`px-3 py-2 rounded-xl text-[12px] ${ac.bg}`}>
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-1.5">
                 <span className="font-semibold text-slate-700">{it.type.split(" ")[0]}</span>
-                <span className={`${ac.text}`}>{Math.round(it.rate * 100)}%</span>
+                <span className={ac.text}>{Math.round(it.rate * 100)}%</span>
                 {it.isGift && <span className="text-[10px] bg-violet-100 text-violet-500 font-bold px-1.5 py-0.5 rounded-full">증정용</span>}
               </div>
               <div className="text-right">
@@ -660,34 +670,31 @@ function SubmissionCard({ entry, accent }: { entry: ReservationEntry | UrgentEnt
         ))}
       </div>
 
-      <div className={`flex items-center justify-between px-4 py-3 rounded-2xl border ${ac.bg} ${ac.border}`}>
+      {/* ── 합계 ── */}
+      <div className={`mx-4 mb-3 flex items-center justify-between px-4 py-3 rounded-2xl border ${ac.bg} ${ac.border}`}>
         <div>
           <p className="text-[11px] text-slate-400">총 액면가</p>
           <p className="text-[13px] font-semibold text-slate-600">{formatKRW(entry.items.reduce((s, it) => s + it.amount, 0))}</p>
         </div>
         <div className="text-right">
-          <p className="text-[11px] text-slate-400">합산 입금받을 금액</p>
+          <p className="text-[11px] text-slate-400">입금받을 금액</p>
           <p className={`text-[18px] font-black ${ac.text}`}>{formatKRW(entry.totalPayment)}</p>
         </div>
       </div>
 
-      <div className="mt-2.5 px-4 py-3 rounded-2xl bg-slate-50 border border-slate-100 space-y-1.5">
-        <div className="flex items-center gap-1.5 mb-1">
-          <svg width="12" height="12" viewBox="0 0 20 20" fill="none" className="text-slate-400"><rect x="1" y="5" width="18" height="12" rx="2" stroke="currentColor" strokeWidth="1.6"/><path d="M1 9h18" stroke="currentColor" strokeWidth="1.6"/></svg>
-          <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wide">입금 계좌 정보</span>
-        </div>
-        <div className="flex items-center justify-between">
-          <span className="text-[11px] text-slate-400">은행</span>
-          <span className="text-[13px] font-semibold text-slate-700">{entry.bankName}</span>
-        </div>
-        <div className="flex items-center justify-between">
-          <span className="text-[11px] text-slate-400">계좌번호</span>
-          <span className="text-[13px] font-semibold text-slate-700">{entry.accountNumber}</span>
-        </div>
-        <div className="flex items-center justify-between">
-          <span className="text-[11px] text-slate-400">예금주</span>
-          <span className="text-[13px] font-semibold text-slate-700">{entry.accountHolder}</span>
-        </div>
+      {/* ── 계좌 정보 ── */}
+      <div className="mx-4 mb-4 px-4 py-3 rounded-2xl bg-slate-50 border border-slate-100 space-y-1.5">
+        <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wide mb-1">입금 계좌 정보</p>
+        {[
+          { label: "은행", value: entry.bankName },
+          { label: "계좌번호", value: entry.accountNumber },
+          { label: "예금주", value: entry.accountHolder },
+        ].map(({ label, value }) => (
+          <div key={label} className="flex items-center justify-between">
+            <span className="text-[11px] text-slate-400">{label}</span>
+            <span className="text-[13px] font-semibold text-slate-700">{value}</span>
+          </div>
+        ))}
       </div>
     </div>
   );
