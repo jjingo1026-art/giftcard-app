@@ -144,7 +144,7 @@ export default function ReservationPage() {
             </div>
             <div className="space-y-1.5">
               <label className="block text-[13px] font-semibold text-slate-500 uppercase tracking-wide">시간 <span className="text-rose-400 normal-case">*</span></label>
-              <input type="time" value={time} onChange={e => setTime(e.target.value)} className={inp(!!errors.time)} />
+              <input type="time" value={time} step="600" onChange={e => setTime(e.target.value)} className={inp(!!errors.time)} />
               {errors.time && <p className="text-[12px] text-rose-500">⚠ {errors.time}</p>}
             </div>
           </div>
