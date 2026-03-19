@@ -455,6 +455,35 @@ router.get("/reservations/revenue/today", requireAuth, requireAdmin, async (_req
   res.json({ today, revenue: result[0].total });
 });
 
+// 시간대별 예약 건수 집계
+// GET /api/admin/reservations/by-hour?date=YYYY-MM-DD  (date 생략 시 오늘)
+router.get("/reservations/by-hour", requireAuth, requireAdmin, async (req, res) => {
+  const date = (req.query.date as string) || new Date().toISOString().slice(0, 10);
+
+  const rows = await db
+    .select({
+      hour:  sql<number>`CAST(SPLIT_PART(${reservationsTable.time}, ':', 1) AS INTEGER)`,
+      count: sql<number>`COUNT(*)`,
+    })
+    .from(reservationsTable)
+    .where(
+      and(
+        eq(reservationsTable.date, date),
+        sql`${reservationsTable.time} IS NOT NULL AND ${reservationsTable.time} != ''`
+      )
+    )
+    .groupBy(sql`SPLIT_PART(${reservationsTable.time}, ':', 1)`)
+    .orderBy(sql`SPLIT_PART(${reservationsTable.time}, ':', 1)`);
+
+  const result = rows.map((r) => ({
+    hour:    Number(r.hour),
+    label:   `${String(Number(r.hour)).padStart(2, "0")}:00`,
+    count:   Number(r.count),
+  }));
+
+  res.json({ date, byHour: result });
+});
+
 router.get("/reservations/:id", requireAuth, async (req, res) => {
   const id = parseInt(req.params.id);
   if (isNaN(id)) { res.status(400).json({ error: "잘못된 ID" }); return; }
