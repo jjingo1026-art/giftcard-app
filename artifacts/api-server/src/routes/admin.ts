@@ -601,6 +601,41 @@ router.post("/reservations/:id/assign", requireAuth, async (req, res) => {
   res.json({ success: true });
 });
 
+// PATCH /api/admin/reservations/:id/assign  { staffId: number }
+router.patch("/reservations/:id/assign", requireAuth, requireAdmin, async (req, res) => {
+  const id = parseInt(req.params.id);
+  if (isNaN(id)) { res.status(400).json({ error: "잘못된 ID" }); return; }
+
+  const { staffId } = req.body as { staffId?: number };
+  if (!staffId) { res.status(400).json({ error: "staffId가 필요합니다." }); return; }
+
+  try {
+    const [member] = await db.select().from(staffTable).where(eq(staffTable.id, staffId));
+    if (!member) { res.status(400).json({ error: "유효하지 않은 담당자 ID입니다." }); return; }
+
+    const [reservation] = await db.select().from(reservationsTable).where(eq(reservationsTable.id, id));
+    if (!reservation) { res.status(404).json({ error: "예약을 찾을 수 없습니다." }); return; }
+
+    await db
+      .update(reservationsTable)
+      .set({ assignedStaffId: member.id, assignedTo: member.name, status: "assigned" })
+      .where(eq(reservationsTable.id, id));
+
+    const [autoMsg] = await db.insert(chatsTable).values({
+      reservationId: id,
+      sender: "admin",
+      senderName: "관리자",
+      message: `담당자가 ${member.name}님으로 배정되었습니다.`,
+    }).returning();
+    emitToRoom(id, "newMessage", { ...autoMsg, time: autoMsg.time.toISOString() });
+
+    res.json({ success: true, assignedTo: member.name, assignedStaffId: member.id });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "담당자 배정에 실패했습니다." });
+  }
+});
+
 // ── 채팅: 예약 1개 = 채팅방 1개 ──────────────────────────────────────────────
 
 async function resolveAuth(req: any): Promise<{ ok: boolean; senderType: "admin" | "staff"; senderName: string }> {
