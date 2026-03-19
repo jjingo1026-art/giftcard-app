@@ -47,13 +47,7 @@ export default function ReservationPage() {
   const [bank, setBank]       = useState(KOREAN_BANKS[0]);
   const [acct, setAcct]       = useState("");
   const [holder, setHolder]   = useState("");
-  const [selectedType, setSelectedType] = useState(getDefaultType());
   const [items, setItems]     = useState<Item[]>([{ type: getDefaultType(), amount: "", isGift: false }]);
-
-  function selectType(type: string) {
-    setSelectedType(type);
-    setItems(p => p.map(it => ({ ...it, type })));
-  }
   const [errors, setErrors]   = useState<Record<string, string>>({});
   const [toast, setToast]     = useState(false);
 
@@ -95,11 +89,11 @@ export default function ReservationPage() {
       const res = await fetch("/api/reservations", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ kind: "reservation", name, phone, date, time, location: loc, items: savedItems, totalPayment, bankName: bank, accountNumber: acct, accountHolder: holder, giftcardType: selectedType }),
+        body: JSON.stringify({ kind: "reservation", name, phone, date, time, location: loc, items: savedItems, totalPayment, bankName: bank, accountNumber: acct, accountHolder: holder, giftcardType: items[0]?.type ?? "" }),
       });
       if (res.ok) { const d = await res.json(); id = d.id; }
     } catch {}
-    saveEntry({ kind: "reservation", id, createdAt: new Date().toISOString(), name, phone, date, time, location: loc, items: savedItems, totalPayment, bankName: bank, accountNumber: acct, accountHolder: holder, giftcardType: selectedType });
+    saveEntry({ kind: "reservation", id, createdAt: new Date().toISOString(), name, phone, date, time, location: loc, items: savedItems, totalPayment, bankName: bank, accountNumber: acct, accountHolder: holder, giftcardType: items[0]?.type ?? "" });
     setToast(true);
     setTimeout(() => { setToast(false); location.href = "/"; }, 2500);
   }
@@ -162,76 +156,64 @@ export default function ReservationPage() {
             {errors.loc && <p className="text-[12px] text-rose-500">⚠ {errors.loc}</p>}
           </div>
 
-          {/* 상품권 선택 - 가로 스크롤 칩 */}
+          {/* 상품권 선택 + 금액 */}
           <div className="space-y-2">
-            <label className="block text-[13px] font-semibold text-slate-500 uppercase tracking-wide">상품권 선택 <span className="text-rose-400 normal-case">*</span></label>
-            <div className="overflow-x-auto flex gap-2 pb-1 scrollbar-none -mx-5 px-5">
-              {CARD_OPTIONS.map((opt) => {
-                const active = selectedType === opt.key;
-                return (
-                  <button
-                    key={opt.key}
-                    type="button"
-                    onClick={() => selectType(opt.key)}
-                    className={`flex-shrink-0 px-4 py-2.5 rounded-full border-2 text-[13px] font-bold transition-all active:scale-95 whitespace-nowrap ${
-                      active
-                        ? "border-indigo-500 bg-indigo-500 text-white"
-                        : "border-slate-200 bg-white text-slate-500 hover:border-indigo-300 hover:text-indigo-500"
-                    }`}
-                  >
-                    {opt.label}
-                  </button>
-                );
-              })}
-            </div>
-          </div>
-
-          {/* 금액 입력 */}
-          <div className="space-y-2">
-            <label className="block text-[13px] font-semibold text-slate-500 uppercase tracking-wide">금액 <span className="text-rose-400 normal-case">*</span></label>
+            <label className="block text-[13px] font-semibold text-slate-500 uppercase tracking-wide">상품권 종류 &amp; 금액 <span className="text-rose-400 normal-case">*</span></label>
             {items.map((it, i) => {
               const n = parseFloat(it.amount) || 0;
-              const r = Math.max(0, (RATES[selectedType] ?? 0) - (it.isGift ? 0.01 : 0));
+              const r = Math.max(0, (RATES[it.type] ?? 0) - (it.isGift ? 0.01 : 0));
               const pay = Math.floor(n * r);
               return (
                 <div key={i} className="rounded-2xl border border-slate-200 bg-slate-50 p-3 space-y-2">
-                  {items.length > 1 && (
-                    <div className="flex justify-end">
-                      <button type="button" onClick={() => setItems(p => p.filter((_, j) => j !== i))}
-                        className="w-7 h-7 flex items-center justify-center rounded-xl bg-rose-100 text-rose-400 text-[13px]">✕</button>
+                  {/* Row 1: 상품권 select + 증정용 버튼 */}
+                  <div className="flex gap-2 items-stretch">
+                    <div className="flex-1 relative">
+                      <select
+                        value={it.type}
+                        onChange={e => setItems(p => p.map((x, j) => j === i ? { ...x, type: e.target.value } : x))}
+                        className="w-full h-full px-3 py-2.5 rounded-xl border border-slate-200 bg-white text-[14px] text-slate-700 outline-none focus:border-indigo-400 focus:ring-2 focus:ring-indigo-50 appearance-none pr-7 transition-all"
+                        style={{ backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 20 20'%3E%3Cpath fill='%236366f1' d='M5 8l5 5 5-5z'/%3E%3C/svg%3E")`, backgroundRepeat: "no-repeat", backgroundPosition: "right 10px center" }}
+                      >
+                        {RATE_KEYS.map(k => <option key={k} value={k}>{k}</option>)}
+                      </select>
                     </div>
-                  )}
-                  <div className="space-y-2">
-                    {/* 금액 입력 */}
-                    <input
-                      type="number" value={it.amount} min="0" step="10000"
-                      onChange={e => {
-                        setItems(p => p.map((x, j) => j === i ? { ...x, amount: e.target.value } : x));
-                        setErrors(p => { const q = { ...p }; delete q[`item${i}`]; return q; });
-                      }}
-                      placeholder="금액 입력 (원)"
-                      className={`w-full px-3 py-2.5 rounded-xl border text-[14px] outline-none ${errors[`item${i}`] ? "border-rose-300 bg-rose-50" : "border-slate-200 bg-white"}`}
-                    />
-                    {/* 증정용 토글 버튼 */}
                     <button
                       type="button"
                       onClick={() => setItems(p => p.map((x, j) => j === i ? { ...x, isGift: !x.isGift } : x))}
-                      className={`w-full py-3 rounded-xl font-bold text-[14px] border-2 transition-all duration-150 active:scale-[0.98] flex items-center justify-center gap-2
+                      className={`flex-shrink-0 px-3 py-2 rounded-xl font-bold text-[13px] border-2 transition-all duration-150 active:scale-95 flex items-center gap-1.5
                         ${it.isGift
-                          ? "bg-violet-500 border-violet-500 text-white shadow-sm"
-                          : "bg-white border-slate-200 text-slate-400 hover:border-violet-300 hover:text-violet-400"}`}
+                          ? "bg-violet-500 border-violet-500 text-white shadow-sm shadow-violet-200"
+                          : "bg-white border-slate-200 text-slate-400 hover:border-violet-400 hover:bg-violet-50 hover:text-violet-500"}`}
                     >
-                      <span>🎁</span>
-                      <span>증정용</span>
-                      {it.isGift
-                        ? <span className="text-[11px] bg-white/25 text-white font-bold px-2 py-0.5 rounded-full">선택됨 · -1%</span>
-                        : <span className="text-[11px] text-slate-300 font-normal">클릭하여 선택</span>}
+                      <span className="text-[15px]">🎁</span>
+                      <div className="flex flex-col items-center leading-tight">
+                        <span>증정용</span>
+                        {it.isGift && <span className="text-[9px] font-bold opacity-90">-1%</span>}
+                      </div>
                     </button>
+                    {items.length > 1 && (
+                      <button type="button" onClick={() => setItems(p => p.filter((_, j) => j !== i))}
+                        className="w-8 h-auto flex items-center justify-center rounded-xl bg-rose-100 text-rose-400 hover:bg-rose-200 active:scale-90 transition-all flex-shrink-0 text-[13px]">✕</button>
+                    )}
                   </div>
+                  {/* Row 2: 금액 입력 */}
+                  <input
+                    type="number" value={it.amount} min="0" step="10000"
+                    onChange={e => {
+                      setItems(p => p.map((x, j) => j === i ? { ...x, amount: e.target.value } : x));
+                      setErrors(p => { const q = { ...p }; delete q[`item${i}`]; return q; });
+                    }}
+                    placeholder="금액 입력 (원)"
+                    className={`w-full px-3 py-2.5 rounded-xl border text-[14px] outline-none ${errors[`item${i}`] ? "border-rose-300 bg-rose-50" : "border-slate-200 bg-white"}`}
+                  />
                   {errors[`item${i}`] && <p className="text-[11px] text-rose-500">⚠ {errors[`item${i}`]}</p>}
+                  {/* Row 3: 입금액 미리보기 */}
                   {n > 0 && (
                     <div className="flex justify-between px-3 py-2 rounded-xl bg-indigo-50 text-[12px] font-semibold text-indigo-500">
-                      <span>요율 {Math.round(r * 100)}%{it.isGift ? " (증정 -1%)" : ""}</span>
+                      <span className="flex items-center gap-1.5">
+                        요율 {Math.round(r * 100)}%
+                        {it.isGift && <span className="text-[10px] bg-violet-100 text-violet-500 font-bold px-1.5 py-0.5 rounded-full">증정 -1%</span>}
+                      </span>
                       <span className="text-[15px] font-black text-indigo-600">{fmt(pay)}</span>
                     </div>
                   )}
