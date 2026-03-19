@@ -21,6 +21,29 @@ function requireStaffAuth(req: any, res: any, next: any) {
 const VALID_STATUSES = ["pending", "assigned", "completed", "cancelled"] as const;
 type Status = typeof VALID_STATUSES[number];
 
+// GET /api/staff/reservations/pending
+router.get("/reservations/pending", requireStaffAuth, async (req, res) => {
+  const staffId = (req as any).staffId as number;
+
+  try {
+    const rows = await db
+      .select()
+      .from(reservationsTable)
+      .where(
+        and(
+          eq(reservationsTable.assignedStaffId, staffId),
+          eq(reservationsTable.status, "pending")
+        )
+      )
+      .orderBy(desc(reservationsTable.createdAt));
+
+    res.json(rows);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Failed to fetch reservations" });
+  }
+});
+
 // GET /api/staff/reservations?status=pending|assigned|completed|cancelled
 router.get("/reservations", requireStaffAuth, async (req, res) => {
   const staffId = (req as any).staffId as number;
