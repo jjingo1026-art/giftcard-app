@@ -3,7 +3,7 @@ import { db } from "@workspace/db";
 import { reservationsTable } from "@workspace/db/schema";
 import { eq } from "drizzle-orm";
 
-const normalizePhone = (s: string) => s.replace(/[\s\-]/g, "");
+const normalizePhone = (phone: string) => phone.replace(/[^0-9]/g, "");
 
 const router: IRouter = Router();
 
