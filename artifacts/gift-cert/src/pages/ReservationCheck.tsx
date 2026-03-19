@@ -28,6 +28,8 @@ export default function ReservationCheck() {
   const [reservation, setReservation] = useState<ReservationInfo | null>(null);
   const [staffInfo, setStaffInfo] = useState<StaffInfo | null>(null);
   const [searched, setSearched] = useState(false);
+  const [cancelling, setCancelling] = useState(false);
+  const [cancelError, setCancelError] = useState("");
 
   async function check() {
     const p = phone.trim();
@@ -51,9 +53,34 @@ export default function ReservationCheck() {
     }
   }
 
+  async function cancelReservation() {
+    if (!reservation) return;
+    if (!confirm("정말 예약을 취소하시겠습니까?")) return;
+    setCancelling(true);
+    setCancelError("");
+    try {
+      const res = await fetch("/api/admin/customer/cancel", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ phone: reservation.phone, reservationId: reservation.id }),
+      });
+      const data = await res.json();
+      if (data.success) {
+        setReservation({ ...reservation, status: "cancelled" });
+      } else {
+        setCancelError(data.error ?? "취소 중 오류가 발생했습니다.");
+      }
+    } catch {
+      setCancelError("취소 중 오류가 발생했습니다.");
+    } finally {
+      setCancelling(false);
+    }
+  }
+
+  const canCancel = reservation && !["cancelled", "completed"].includes(reservation.status);
+
   return (
     <div className="min-h-screen bg-slate-50">
-      {/* 헤더 */}
       <header className="bg-white border-b border-slate-100 shadow-sm sticky top-0 z-40">
         <div className="max-w-lg mx-auto px-4 py-3.5 flex items-center gap-3">
           <button onClick={() => history.back()} className="w-8 h-8 flex items-center justify-center rounded-xl hover:bg-slate-100 transition-colors">
@@ -102,8 +129,29 @@ export default function ReservationCheck() {
           </div>
         )}
 
-        {/* 예약 접수 완료 (배정 전) */}
-        {reservation && reservation.status !== "assigned" && (
+        {/* 취소된 예약 */}
+        {reservation && reservation.status === "cancelled" && (
+          <div className="bg-rose-50 border border-rose-100 rounded-2xl px-5 py-8 text-center space-y-2">
+            <div className="w-14 h-14 rounded-full bg-rose-100 flex items-center justify-center text-[28px] mx-auto">❌</div>
+            <p className="text-[16px] font-bold text-rose-700">예약 취소됨</p>
+            <p className="text-[13px] text-rose-500">해당 예약은 취소되었습니다.</p>
+            {reservation.giftcardType && (
+              <p className="text-[13px] text-slate-500 pt-2">{reservation.giftcardType} · {fmt(reservation.amount)}</p>
+            )}
+          </div>
+        )}
+
+        {/* 완료된 예약 */}
+        {reservation && reservation.status === "completed" && (
+          <div className="bg-slate-50 border border-slate-200 rounded-2xl px-5 py-8 text-center space-y-2">
+            <div className="w-14 h-14 rounded-full bg-slate-100 flex items-center justify-center text-[28px] mx-auto">✅</div>
+            <p className="text-[16px] font-bold text-slate-700">매입 완료</p>
+            <p className="text-[13px] text-slate-500">거래가 완료된 예약입니다.</p>
+          </div>
+        )}
+
+        {/* 예약 접수 완료 (배정 전 / pending) */}
+        {reservation && reservation.status === "pending" && (
           <div className="bg-white rounded-2xl border border-slate-100 shadow-sm px-5 py-8 text-center space-y-3">
             <div className="w-14 h-14 rounded-full bg-amber-50 flex items-center justify-center text-[28px] mx-auto">📋</div>
             <div>
@@ -130,13 +178,25 @@ export default function ReservationCheck() {
             >
               💬 상담하기
             </a>
+            {/* 취소 버튼 */}
+            {canCancel && (
+              <div className="pt-1">
+                {cancelError && <p className="text-[12px] text-rose-500 mb-2">{cancelError}</p>}
+                <button
+                  onClick={cancelReservation}
+                  disabled={cancelling}
+                  className="w-full py-3 rounded-xl border border-rose-200 text-rose-500 text-[14px] font-semibold hover:bg-rose-50 transition-colors active:scale-95 disabled:opacity-40"
+                >
+                  {cancelling ? "취소 처리 중…" : "예약 취소"}
+                </button>
+              </div>
+            )}
           </div>
         )}
 
         {/* 예약 확정 (매입담당자 배정 완료) */}
         {reservation && reservation.status === "assigned" && (
           <>
-            {/* 확정 헤더 */}
             <div className="bg-emerald-50 border border-emerald-100 rounded-2xl px-5 py-4 flex items-center gap-3">
               <div className="w-10 h-10 rounded-full bg-emerald-100 flex items-center justify-center text-[20px] flex-shrink-0">✅</div>
               <div>
@@ -145,7 +205,6 @@ export default function ReservationCheck() {
               </div>
             </div>
 
-            {/* 예약 상세 */}
             <div className="bg-white rounded-2xl border border-slate-100 shadow-sm px-5 py-4 space-y-0">
               <p className="text-[11px] font-bold text-slate-400 uppercase tracking-wide mb-3">예약 정보</p>
               {reservation.date && (
@@ -172,7 +231,6 @@ export default function ReservationCheck() {
               </div>
             </div>
 
-            {/* 담당자 정보 */}
             {staffInfo && (
               <div className="bg-white rounded-2xl border border-slate-100 shadow-sm px-5 py-4">
                 <p className="text-[11px] font-bold text-slate-400 uppercase tracking-wide mb-3">담당자 정보</p>
@@ -192,6 +250,20 @@ export default function ReservationCheck() {
                 >
                   💬 상담하기
                 </a>
+              </div>
+            )}
+
+            {/* 취소 버튼 */}
+            {canCancel && (
+              <div>
+                {cancelError && <p className="text-[12px] text-rose-500 mb-2">{cancelError}</p>}
+                <button
+                  onClick={cancelReservation}
+                  disabled={cancelling}
+                  className="w-full py-3 rounded-xl border border-rose-200 text-rose-500 text-[14px] font-semibold hover:bg-rose-50 transition-colors active:scale-95 disabled:opacity-40"
+                >
+                  {cancelling ? "취소 처리 중…" : "예약 취소"}
+                </button>
               </div>
             )}
           </>

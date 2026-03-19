@@ -356,6 +356,38 @@ router.post("/messages/:reservationId", async (req, res) => {
   res.json({ ...inserted, time: inserted.time.toISOString() });
 });
 
+// ── 고객용: 예약 취소 ─────────────────────────────────────────────────────────
+router.post("/customer/cancel", async (req, res) => {
+  const { phone, reservationId } = req.body as { phone?: string; reservationId?: number };
+  if (!phone || !reservationId) {
+    res.status(400).json({ success: false, error: "phone, reservationId 필수입니다." }); return;
+  }
+  const [row] = await db
+    .select()
+    .from(reservationsTable)
+    .where(eq(reservationsTable.id, reservationId));
+
+  if (!row) {
+    res.status(404).json({ success: false, error: "예약을 찾을 수 없습니다." }); return;
+  }
+  if (row.phone !== phone) {
+    res.status(403).json({ success: false, error: "전화번호가 일치하지 않습니다." }); return;
+  }
+  if (row.status === "cancelled") {
+    res.json({ success: false, error: "이미 취소된 예약입니다." }); return;
+  }
+  if (row.status === "completed") {
+    res.json({ success: false, error: "완료된 예약은 취소할 수 없습니다." }); return;
+  }
+
+  await db
+    .update(reservationsTable)
+    .set({ status: "cancelled" })
+    .where(eq(reservationsTable.id, reservationId));
+
+  res.json({ success: true });
+});
+
 // ── 고객용: 전화번호로 예약 조회 ─────────────────────────────────────────────
 router.get("/customer/reservation", async (req, res) => {
   const { phone } = req.query as { phone?: string };
