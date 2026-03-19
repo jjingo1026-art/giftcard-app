@@ -58,6 +58,7 @@ export default function AdminDashboard() {
   const [staffList, setStaffList] = useState<{ id: number; name: string }[]>([]);
   const [selectedStaff, setSelectedStaff] = useState<Record<number, number>>({});
   const [assigning, setAssigning] = useState<number | null>(null);
+  const [showUnassignedSlots, setShowUnassignedSlots] = useState(false);
 
   const token = getAdminToken();
   if (!token) { navigate("/admin/login"); return null; }
@@ -153,6 +154,7 @@ export default function AdminDashboard() {
 
   function handleDateClick(info: { dateStr: string }) {
     setDateFilter(info.dateStr);
+    setShowUnassignedSlots(false);
     filter(info.dateStr);
   }
 
@@ -309,26 +311,72 @@ export default function AdminDashboard() {
             dateClick={handleDateClick}
             height="auto"
           />
-          {dateFilter && (
-            <div className="mt-2 flex items-center justify-between px-1">
-              <span className="text-[12px] text-indigo-600 font-semibold">📅 {dateFilter} 필터 중</span>
-              <button
-                onClick={() => { setDateFilter(""); setEntries(allEntries); }}
-                className="text-[11px] text-slate-400 hover:text-rose-500 font-medium"
-              >
-                전체 보기
-              </button>
-            </div>
-          )}
+          {dateFilter && (() => {
+            const dayEntries = allEntries.filter((r) => r.date === dateFilter);
+            const dayUnassigned = unassigned.filter((r) => r.date === dateFilter);
+            const dateTotal    = dayEntries.length;
+            const dateUnassignedCount = dayUnassigned.length;
+            const dateAssigned = dayEntries.filter((r) => r.status === "assigned").length;
+            const slotMap: Record<string, number> = {};
+            dayUnassigned.forEach((r) => {
+              const t = r.time ?? "시간 미정";
+              slotMap[t] = (slotMap[t] ?? 0) + 1;
+            });
+            const slots = Object.entries(slotMap).sort(([a], [b]) => a.localeCompare(b));
+
+            return (
+              <div className="mt-3 space-y-2">
+                <div className="flex items-center justify-between px-1">
+                  <p className="text-[14px] font-black text-slate-800">📅 {formatDateKo(dateFilter)}</p>
+                  <button
+                    onClick={() => { setDateFilter(""); setEntries(allEntries); setShowUnassignedSlots(false); }}
+                    className="text-[11px] text-slate-400 hover:text-rose-500 font-medium"
+                  >전체 보기</button>
+                </div>
+                <div className="grid grid-cols-3 gap-2">
+                  <div className="text-center bg-slate-50 rounded-2xl py-3">
+                    <p className="text-[10px] text-slate-400 font-semibold mb-0.5">총</p>
+                    <p className="text-[20px] font-black text-slate-800">{dateTotal}</p>
+                  </div>
+                  <button
+                    onClick={() => setShowUnassignedSlots((v) => !v)}
+                    className="text-center bg-rose-50 rounded-2xl py-3 transition-all active:scale-95"
+                    style={{ border: showUnassignedSlots ? "2px solid #fca5a5" : "2px solid transparent" }}
+                  >
+                    <p className="text-[10px] text-rose-400 font-semibold mb-0.5">미배정</p>
+                    <p className="text-[20px] font-black text-rose-600">{dateUnassignedCount}</p>
+                  </button>
+                  <div className="text-center bg-blue-50 rounded-2xl py-3">
+                    <p className="text-[10px] text-blue-400 font-semibold mb-0.5">배정</p>
+                    <p className="text-[20px] font-black text-blue-600">{dateAssigned}</p>
+                  </div>
+                </div>
+                {showUnassignedSlots && (
+                  <div className="bg-white border border-rose-100 rounded-2xl overflow-hidden">
+                    <p className="px-4 pt-3 pb-2 text-[12px] font-bold text-slate-500 flex items-center gap-1.5">🕐 시간대별 미배정 리스트</p>
+                    {slots.length === 0 ? (
+                      <p className="px-4 pb-3 text-[13px] text-slate-400">미배정 건 없음</p>
+                    ) : (
+                      <ul className="divide-y divide-slate-50">
+                        {slots.map(([time, count]) => (
+                          <li key={time} className="flex items-center justify-between px-4 py-2.5">
+                            <span className="text-[13px] font-semibold text-slate-700">{time}</span>
+                            <span className="text-[13px] font-black text-rose-500">{count}건</span>
+                          </li>
+                        ))}
+                      </ul>
+                    )}
+                  </div>
+                )}
+              </div>
+            );
+          })()}
         </div>
 
         <hr className="border-slate-100" />
         <h2 className="text-[15px] font-bold text-slate-700">
-          📋 선택 날짜 예약 리스트
-          {dateFilter
-            ? <span className="text-[13px] text-indigo-500 font-normal ml-2">{dateFilter} 예약 ({entries.length}건)</span>
-            : <span className="text-[13px] text-slate-400 font-normal ml-2">({entries.length}건)</span>
-          }
+          📋 {dateFilter ? formatDateKo(dateFilter) : "전체"} 예약 리스트
+          <span className="text-[13px] text-slate-400 font-normal ml-2">({entries.length}건)</span>
         </h2>
 
         {error && <div className="py-8 text-center text-rose-500 text-[13px]">{error}</div>}
