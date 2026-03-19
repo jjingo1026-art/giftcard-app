@@ -256,6 +256,29 @@ export default function ReservationPage() {
           </div>
         </div>
 
+        {/* 안내사항 */}
+        <div className="rounded-2xl border border-amber-200 bg-amber-50 px-4 py-4 space-y-2.5">
+          <p className="text-[13px] font-bold text-amber-700 flex items-center gap-1.5">
+            <span>※</span> 안내사항 <span className="text-[11px] font-semibold bg-amber-200 text-amber-800 px-2 py-0.5 rounded-full">필수 확인</span>
+          </p>
+          <p className="text-[13px] text-amber-800 leading-relaxed">
+            안전한 거래를 위해 <strong>신청자 성함</strong>과 <strong>입금받을 계좌의 예금주명</strong>이 반드시 동일해야 합니다.
+          </p>
+          <ul className="space-y-1">
+            <li className="text-[12px] text-amber-700 flex items-start gap-1.5">
+              <span className="mt-0.5 flex-shrink-0">•</span>
+              <span>성함과 예금주명이 다를 경우 예약이 거절될 수 있습니다.</span>
+            </li>
+            <li className="text-[12px] text-amber-700 flex items-start gap-1.5">
+              <span className="mt-0.5 flex-shrink-0">•</span>
+              <span>타인 명의 계좌 사용 시 거래가 제한됩니다.</span>
+            </li>
+          </ul>
+          <p className="text-[12px] font-semibold text-amber-600 border-t border-amber-200 pt-2 mt-1">
+            위 내용을 확인하셨습니까?
+          </p>
+        </div>
+
         <button type="submit"
           className="w-full py-4 rounded-2xl bg-indigo-500 text-white font-bold text-[15px] hover:bg-indigo-600 transition-colors active:scale-[0.98] shadow-sm">
           예약 신청
