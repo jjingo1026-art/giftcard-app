@@ -369,6 +369,22 @@ function HomePage({ onGoUrgent }: { onGoUrgent: () => void }) {
           </>
         )}
 
+        {/* Urgent Banner */}
+        {agreedPrivacy && (
+          <div className="bg-white rounded-3xl shadow-sm border border-rose-100 overflow-hidden">
+            <div className="px-5 pt-5 pb-3 flex items-center justify-between">
+              <div><h2 className="text-[15px] font-bold text-slate-800">긴급 판매 신청</h2><p className="text-[12px] text-slate-400 mt-0.5">Urgent Sale Request</p></div>
+              <div className="w-8 h-8 bg-rose-50 rounded-xl flex items-center justify-center">🚨</div>
+            </div>
+            <div className="px-5 pb-5">
+              <p className="text-[13px] text-slate-500 mb-3">지금 바로 판매가 필요하신가요? 긴급 판매 신청 페이지로 이동합니다.</p>
+              <button type="button" onClick={onGoUrgent} className="w-full py-4 rounded-2xl text-white text-[15px] font-bold transition-all duration-150 active:scale-95 flex items-center justify-center gap-2" style={{ background: "linear-gradient(135deg, #f43f5e 0%, #e11d48 100%)" }}>
+                <span>🚨</span> 긴급 판매 신청
+              </button>
+            </div>
+          </div>
+        )}
+
         {/* 예약신청 버튼 or 폼 */}
         {agreedPrivacy && (!showForm ? (
           <button
@@ -519,21 +535,6 @@ function HomePage({ onGoUrgent }: { onGoUrgent: () => void }) {
           </div>
         )}
 
-        {/* Urgent Banner */}
-        {agreedPrivacy && (
-          <div className="bg-white rounded-3xl shadow-sm border border-rose-100 overflow-hidden">
-            <div className="px-5 pt-5 pb-3 flex items-center justify-between">
-              <div><h2 className="text-[15px] font-bold text-slate-800">긴급 판매 신청</h2><p className="text-[12px] text-slate-400 mt-0.5">Urgent Sale Request</p></div>
-              <div className="w-8 h-8 bg-rose-50 rounded-xl flex items-center justify-center">🚨</div>
-            </div>
-            <div className="px-5 pb-5">
-              <p className="text-[13px] text-slate-500 mb-3">지금 바로 판매가 필요하신가요? 긴급 판매 신청 페이지로 이동합니다.</p>
-              <button type="button" onClick={onGoUrgent} className="w-full py-4 rounded-2xl text-white text-[15px] font-bold transition-all duration-150 active:scale-95 flex items-center justify-center gap-2" style={{ background: "linear-gradient(135deg, #f43f5e 0%, #e11d48 100%)" }}>
-                <span>🚨</span> 긴급 판매 신청
-              </button>
-            </div>
-          </div>
-        )}
       </div>
     </div>
   );
