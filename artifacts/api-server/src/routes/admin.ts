@@ -846,4 +846,34 @@ router.get("/customer/reservation", async (req, res) => {
   });
 });
 
+// PATCH /admin/users/:id/block — 사용자 차단
+router.patch("/users/:id/block", requireAuth, async (req, res) => {
+  const userId = req.params.id;
+  if (!userId) { res.status(400).json({ error: "사용자 ID가 필요합니다." }); return; }
+
+  await db.insert(usersTable)
+    .values({ id: userId, isBlocked: true, updatedAt: new Date() })
+    .onConflictDoUpdate({
+      target: usersTable.id,
+      set: { isBlocked: true, updatedAt: new Date() },
+    });
+
+  res.json({ success: true });
+});
+
+// PATCH /admin/users/:id/unblock — 사용자 차단 해제
+router.patch("/users/:id/unblock", requireAuth, async (req, res) => {
+  const userId = req.params.id;
+  if (!userId) { res.status(400).json({ error: "사용자 ID가 필요합니다." }); return; }
+
+  await db.insert(usersTable)
+    .values({ id: userId, isBlocked: false, blockedUntil: null, updatedAt: new Date() })
+    .onConflictDoUpdate({
+      target: usersTable.id,
+      set: { isBlocked: false, blockedUntil: null, updatedAt: new Date() },
+    });
+
+  res.json({ success: true });
+});
+
 export default router;
