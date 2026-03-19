@@ -4,6 +4,11 @@ import { reservationsTable } from "@workspace/db/schema";
 
 const router: IRouter = Router();
 
+router.get("/", async (_req, res) => {
+  const data = await db.select().from(reservationsTable);
+  res.json(data);
+});
+
 router.post("/", async (req, res) => {
   const body = req.body as {
     kind?: string;
