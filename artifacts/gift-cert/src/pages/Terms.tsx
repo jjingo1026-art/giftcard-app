@@ -7,20 +7,16 @@ const NOTICES = [
   "매입담당자가 배정되면 판매자와 매입담당자간 채팅이 가능합니다.",
   "매입담당자는 차량으로 이동하므로 거래장소를 지정할시 주정차 가능한 곳으로 입력해 주셔야 합니다.",
   "증정용 상품권의 경우 상품권 판매 신청시 증정용 체크를 반드시 해주셔야 하며 1만원권 증정용은 매입하지 않습니다.",
-  "거래를 위한 판매자의 개인정보를 수집합니다. (성함, 전화번호, 입금 계좌번호, 예금주)",
 ];
 
 export default function Terms() {
   const params = new URLSearchParams(location.search);
   const isUrgent = params.get("urgent") === "1";
+  const type = params.get("type") ?? "";
 
-  function handleAgree() {
-    if (isUrgent) {
-      location.href = "/?urgent=1";
-    } else {
-      const type = params.get("type");
-      location.href = `/reservation.html?type=${type}`;
-    }
+  function goPrivacy() {
+    const q = isUrgent ? "urgent=1" : `type=${encodeURIComponent(type)}`;
+    location.href = `/privacy.html?${q}`;
   }
 
   return (
@@ -33,7 +29,7 @@ export default function Terms() {
       </header>
 
       <div className="max-w-md mx-auto px-4 py-5 space-y-4 pb-10">
-        {/* 주의사항 카드 */}
+        {/* 공지사항 카드 */}
         <div className="bg-white rounded-3xl border border-slate-100 shadow-sm overflow-hidden">
           <div className="px-5 pt-5 pb-3 flex items-center gap-2">
             <span className="text-[18px]">📢</span>
@@ -51,20 +47,13 @@ export default function Terms() {
           </div>
         </div>
 
-        {/* 구분선 */}
-        <div className="border-t border-slate-100" />
-
-        {/* 동의 체크박스 → 체크 즉시 예약 페이지 이동 */}
-        <div
-          onClick={handleAgree}
-          className="flex items-center gap-3 px-5 py-4 rounded-2xl border-2 border-slate-200 bg-white cursor-pointer hover:border-indigo-300 hover:bg-indigo-50/50 transition-all active:scale-[0.98]"
+        {/* 확인 버튼 → 개인정보 동의 페이지 이동 */}
+        <button
+          onClick={goPrivacy}
+          className="w-full py-4 rounded-2xl bg-indigo-500 text-white text-[15px] font-bold transition-all active:scale-[0.98] hover:bg-indigo-600 shadow-sm"
         >
-          <div className="w-5 h-5 rounded-md border-2 border-slate-300 bg-white flex items-center justify-center flex-shrink-0">
-          </div>
-          <span className="text-[14px] font-semibold text-slate-600">
-            개인정보 수집 및 이용에 동의하고 {isUrgent ? "긴급 판매 신청하기" : "예약 신청하기"}
-          </span>
-        </div>
+          확인
+        </button>
       </div>
     </div>
   );

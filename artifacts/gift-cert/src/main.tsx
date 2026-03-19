@@ -12,6 +12,7 @@ import StaffDetail from "./pages/StaffDetail";
 import CustomerChat from "./pages/CustomerChat";
 import Notice from "./pages/Notice";
 import Terms from "./pages/Terms";
+import Privacy from "./pages/Privacy";
 import ReservationPage from "./pages/ReservationPage";
 import ReservationCheck from "./pages/ReservationCheck";
 import AdminStaffView from "./pages/AdminStaffView";
@@ -45,6 +46,8 @@ createRoot(document.getElementById("root")!).render(
       <Route path="/notice.html" component={Notice} />
       <Route path="/terms" component={Terms} />
       <Route path="/terms.html" component={Terms} />
+      <Route path="/privacy" component={Privacy} />
+      <Route path="/privacy.html" component={Privacy} />
       <Route path="/reservation" component={ReservationPage} />
       <Route path="/reservation.html" component={ReservationPage} />
       <Route path="/chat" component={CustomerChat} />
