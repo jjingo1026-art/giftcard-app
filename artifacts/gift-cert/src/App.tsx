@@ -243,6 +243,7 @@ function HomePage({ onGoUrgent }: { onGoUrgent: () => void }) {
   const [submissions, setSubmissions] = useState<ReservationEntry[]>([]);
   const [toast, setToast] = useState(false);
   const [counter, setCounter] = useState(0);
+  const [showForm, setShowForm] = useState(false);
 
   function addItem() { setItems((p) => [...p, { type: DEFAULT_TYPE, amount: "", isGift: false }]); setItemErrors((p) => [...p, ""]); }
   function removeItem(idx: number) { setItems((p) => p.filter((_, i) => i !== idx)); setItemErrors((p) => p.filter((_, i) => i !== idx)); }
@@ -349,10 +350,31 @@ function HomePage({ onGoUrgent }: { onGoUrgent: () => void }) {
           </svg>
         </a>
 
-        {/* Form */}
+        {/* 예약신청 버튼 or 폼 */}
+        {!showForm ? (
+          <button
+            type="button"
+            onClick={() => setShowForm(true)}
+            className="w-full flex items-center justify-between px-5 py-4 bg-indigo-500 rounded-3xl shadow-sm active:scale-[0.98] transition-all"
+          >
+            <div className="flex items-center gap-3">
+              <div className="w-9 h-9 rounded-2xl bg-white/20 flex items-center justify-center text-[18px]">📋</div>
+              <div className="text-left">
+                <p className="text-[14px] font-bold text-white">예약 신청</p>
+                <p className="text-[11px] text-indigo-200 mt-0.5">상품권 매입 예약하기</p>
+              </div>
+            </div>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M9 18l6-6-6-6"/>
+            </svg>
+          </button>
+        ) : (
         <div className="bg-white rounded-3xl shadow-sm border border-slate-100 overflow-hidden">
           <div className="px-5 pt-5 pb-3 flex items-center justify-between">
             <div><h2 className="text-[15px] font-bold text-slate-800">예약 신청</h2><p className="text-[12px] text-slate-400 mt-0.5">Reservation Form</p></div>
+            <button type="button" onClick={() => setShowForm(false)} className="w-8 h-8 flex items-center justify-center rounded-xl bg-slate-100 text-slate-400 hover:bg-slate-200 transition-colors">
+              <svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M2 2l8 8M10 2l-8 8" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round"/></svg>
+            </button>
           </div>
           <form onSubmit={handleSubmit} className="px-5 pb-5 space-y-4">
             <Field label="이름" required error={fieldErrors.name}>
@@ -419,6 +441,7 @@ function HomePage({ onGoUrgent }: { onGoUrgent: () => void }) {
             </button>
           </form>
         </div>
+        )}
 
         {/* Submissions */}
         {submissions.length > 0 && (
