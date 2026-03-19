@@ -1,13 +1,14 @@
 import { useState } from "react";
 
 const NOTICES = [
-  "훼손되거나 심하게 구겨진 상품권은 매입이 거절됩니다.",
+  "우리동네상품권 예약판매 신청하기 입니다 원하는 날짜에 시간 장소에서 거래를 신청하실수 있습니다.",
   "불법적으로 취득한 상품권을 판매하시는 경우 민.형사상의 책임을 질 수 있습니다.",
-  "같은 날짜의 같은 시간대 예약이 집중되는 경우 원하시는 시간대 예약이 안될수 있습니다.",
-  "매입담당자 배정이 되면 예약신청 페이지에서 매입담당자의 연락처를 확인할 수 있습니다.",
-  "매입당당자가 배정되면 판매자와 매입담당자간 채팅이 가능합니다.",
+  "훼손되거나 심하게 구겨진 및 유효기간이 지난 상품권은 매입이 거절됩니다 반드시 확인 바랍니다.",
+  "같은 날짜의 같은 시간대 예약이 집중되는 경우 원하시는 시간대 예약이 안될 수 있습니다.",
+  "매입당당자 배정이 되면 예약신청 페이지에서 매입담당자의 연락처를 확인할 수 있습니다.",
+  "매입담당자가 배정되면 판매자와 매입담당자간 채팅이 가능합니다.",
   "매입담당자는 차량으로 이동하므로 거래장소를 지정할시 주정차 가능한 곳으로 입력해 주셔야 합니다.",
-  "증정용 상품권의 경우 상품권 판매 신청시 증정용 체크를 반드시 해주셔야 합니다.",
+  "증정용 상품권의 경우 상품권 판매 신청시 증정용 체크를 반드시 해주셔야 하며 1만원권 증정용은 매입하지 않습니다.",
   "거래를 위한 판매자의 개인정보를 수집합니다. (성함, 전화번호, 입금 계좌번호, 예금주)",
 ];
 
@@ -28,7 +29,7 @@ export default function Terms() {
       <header className="bg-white border-b border-slate-100 sticky top-0 z-40 shadow-sm">
         <div className="max-w-md mx-auto px-4 py-3.5 flex items-center gap-3">
           <button onClick={() => history.back()} className="text-slate-400 hover:text-slate-600 text-lg">←</button>
-          <h1 className="text-[16px] font-bold text-slate-800">예약 전 주의사항</h1>
+          <h1 className="text-[16px] font-bold text-slate-800">공지사항 · 필독</h1>
         </div>
       </header>
 
@@ -36,8 +37,8 @@ export default function Terms() {
         {/* 주의사항 카드 */}
         <div className="bg-white rounded-3xl border border-slate-100 shadow-sm overflow-hidden">
           <div className="px-5 pt-5 pb-3 flex items-center gap-2">
-            <span className="text-[18px]">⚠️</span>
-            <h2 className="text-[15px] font-bold text-slate-800">주의사항</h2>
+            <span className="text-[18px]">📢</span>
+            <h2 className="text-[15px] font-bold text-slate-800">공지사항 · 필독</h2>
           </div>
           <div className="px-5 pb-5 space-y-3.5">
             {NOTICES.map((text, i) => (
