@@ -133,7 +133,7 @@ export default function AdminDashboard() {
             ? `총 ${d.total}건 / 미배정 ${d.unassigned}`
             : `${d.total}건`,
         start: d.date!,
-        color: d.urgent > 0 ? "#dc2626" : d.unassigned > 0 ? "#ef4444" : "#6366f1",
+        color: d.urgent > 0 ? "#dc2626" : d.unassigned > 0 ? "#ef4444" : "#2563eb",
       }))
     : (() => {
         const countByDate = allEntries.reduce<Record<string, number>>((acc, r) => {
@@ -143,7 +143,7 @@ export default function AdminDashboard() {
         return Object.keys(countByDate).map((date) => ({
           title: countByDate[date] + "건",
           start: date,
-          color: countByDate[date] > 5 ? "#ef4444" : "#6366f1",
+          color: countByDate[date] > 5 ? "#ef4444" : "#2563eb",
         }));
       })();
 
