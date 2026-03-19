@@ -17,7 +17,9 @@ interface Reservation {
   location: string;
   totalPayment: number;
   status: string;
+  isUrgent: boolean;
   assignedTo?: string;
+  assignedStaffId?: number;
 }
 
 const STATUS_LABELS: Record<string, { label: string; color: string }> = {
@@ -54,17 +56,10 @@ export default function AdminDashboard() {
   const [error, setError] = useState("");
   const [staffSummary, setStaffSummary] = useState<StaffSummary[]>([]);
   const [dashboardStats, setDashboardStats] = useState<DashboardStats | null>(null);
-  const [unassigned, setUnassigned] = useState<Reservation[]>([]);
   const [staffList, setStaffList] = useState<{ id: number; name: string }[]>([]);
   const [selectedStaff, setSelectedStaff] = useState<Record<number, number>>({});
   const [assigning, setAssigning] = useState<number | null>(null);
-  const [showUnassignedSlots, setShowUnassignedSlots] = useState(false);
   const [calendarData, setCalendarData] = useState<{ date: string; total: number; unassigned: number; assigned: number; urgent: number }[]>([]);
-  const [timeSlots, setTimeSlots] = useState<{ time: string | null; count: number }[]>([]);
-  const [slotsLoading, setSlotsLoading] = useState(false);
-  const [expandedSlot, setExpandedSlot] = useState<string | null>(null);
-  const [slotDetail, setSlotDetail] = useState<Reservation[]>([]);
-  const [slotDetailLoading, setSlotDetailLoading] = useState(false);
 
   const token = getAdminToken();
   if (!token) { navigate("/admin/login"); return null; }
@@ -89,11 +84,6 @@ export default function AdminDashboard() {
       .then((data) => setDashboardStats(data))
       .catch(() => {});
 
-    fetch("/api/admin/reservations/unassigned", { headers })
-      .then((r) => r.json())
-      .then(setUnassigned)
-      .catch(() => {});
-
     fetch("/api/admin/staff", { headers })
       .then((r) => r.json())
       .then((data: any[]) => setStaffList(data.map((s) => ({ id: s.id, name: s.name }))))
@@ -115,10 +105,9 @@ export default function AdminDashboard() {
         headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
         body: JSON.stringify({ staffId }),
       });
-      setUnassigned((prev) => prev.filter((r) => r.id !== reservationId));
       setAllEntries((prev) => prev.map((r) =>
         r.id === reservationId
-          ? { ...r, status: "assigned", assignedTo: staffList.find((s) => s.id === staffId)?.name }
+          ? { ...r, status: "assigned", assignedStaffId: staffId, assignedTo: staffList.find((s) => s.id === staffId)?.name }
           : r
       ));
     } finally {
@@ -176,10 +165,6 @@ export default function AdminDashboard() {
 
   function handleDateClick(info: { dateStr: string }) {
     setDateFilter(info.dateStr);
-    setShowUnassignedSlots(false);
-    setTimeSlots([]);
-    setExpandedSlot(null);
-    setSlotDetail([]);
     filter(info.dateStr);
   }
 
@@ -242,54 +227,69 @@ export default function AdminDashboard() {
           ))}
         </div>
 
-        {/* 미배정 예약 */}
-        {unassigned.length > 0 && (
-          <>
-            <h2 className="text-[15px] font-bold text-slate-700 flex items-center gap-1.5">
-              🔴 미배정 예약
-              <span className="text-[12px] font-semibold text-rose-500 bg-rose-50 px-2 py-0.5 rounded-full">{unassigned.length}건</span>
-            </h2>
-            <div className="space-y-2">
-              {unassigned.map((r) => (
-                <div key={r.id} className="bg-white rounded-2xl border border-rose-100 shadow-sm px-4 py-3.5 space-y-2.5">
-                  <div className="flex items-center justify-between gap-2">
-                    <div
-                      onClick={() => { location.href = `/admin/detail.html?id=${r.id}`; }}
-                      className="cursor-pointer flex-1 min-w-0"
-                    >
-                      <p className="text-[14px] font-bold text-slate-800 truncate">
-                        👤 {r.name ?? r.phone}
-                      </p>
-                      <p className="text-[12px] text-slate-400 mt-0.5">
-                        {formatDateKo(r.date)} {r.time && `· ${r.time}`} · {formatKRW(r.totalPayment)}
-                      </p>
+        {/* 🚨 긴급판매신청 — 완료·취소 전까지 상시 표시 */}
+        {(() => {
+          const urgentActive = allEntries.filter(
+            (r) => r.isUrgent && r.status !== "completed" && r.status !== "cancelled"
+          );
+          if (urgentActive.length === 0) return null;
+          return (
+            <>
+              <h2 className="text-[15px] font-bold text-red-600 flex items-center gap-1.5">
+                🚨 긴급판매신청
+                <span className="text-[12px] font-bold text-white bg-red-500 px-2 py-0.5 rounded-full">{urgentActive.length}건</span>
+              </h2>
+              <div className="space-y-2">
+                {urgentActive.map((r) => {
+                  const sl = STATUS_LABELS[r.status] ?? { label: r.status, color: "bg-slate-100 text-slate-500" };
+                  return (
+                    <div key={r.id} className="bg-red-50 rounded-2xl border border-red-200 shadow-sm px-4 py-3.5 space-y-2.5">
+                      <div className="flex items-center justify-between gap-2">
+                        <div
+                          onClick={() => { window.location.href = `/admin/detail.html?id=${r.id}`; }}
+                          className="cursor-pointer flex-1 min-w-0"
+                        >
+                          <p className="text-[14px] font-bold text-slate-800 truncate">
+                            👤 {r.name ?? r.phone}
+                            {r.phone && r.name && <span className="text-slate-400 font-normal ml-1.5">📞 {r.phone}</span>}
+                          </p>
+                          <p className="text-[12px] text-slate-500 mt-0.5">
+                            📍 {r.location} · 💰 {formatKRW(r.totalPayment)}
+                          </p>
+                        </div>
+                        <span className={`text-[11px] font-bold px-2.5 py-1 rounded-full whitespace-nowrap ${sl.color}`}>{sl.label}</span>
+                      </div>
+                      {!r.assignedStaffId && (
+                        <div className="flex items-center gap-2">
+                          <select
+                            value={selectedStaff[r.id] ?? ""}
+                            onChange={(e) => setSelectedStaff((prev) => ({ ...prev, [r.id]: Number(e.target.value) }))}
+                            className="flex-1 text-[13px] border border-red-200 rounded-xl px-3 py-2 bg-white focus:outline-none focus:ring-2 focus:ring-red-300"
+                          >
+                            <option value="">담당자 선택</option>
+                            {staffList.map((s) => (
+                              <option key={s.id} value={s.id}>{s.name}</option>
+                            ))}
+                          </select>
+                          <button
+                            disabled={!selectedStaff[r.id] || assigning === r.id}
+                            onClick={() => assignStaff(r.id)}
+                            className="text-[13px] font-bold px-4 py-2 rounded-xl bg-red-500 text-white hover:bg-red-600 disabled:opacity-40 disabled:cursor-not-allowed transition-colors whitespace-nowrap active:scale-95"
+                          >
+                            {assigning === r.id ? "배정 중…" : "담당자 지정"}
+                          </button>
+                        </div>
+                      )}
+                      {r.assignedStaffId && (
+                        <p className="text-[12px] text-emerald-600 font-semibold">✅ 담당자 배정 완료 — {r.assignedTo ?? ""}</p>
+                      )}
                     </div>
-                    <span className="text-[11px] bg-amber-50 text-amber-600 font-bold px-2.5 py-1 rounded-full whitespace-nowrap">🟡 처리 대기</span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <select
-                      value={selectedStaff[r.id] ?? ""}
-                      onChange={(e) => setSelectedStaff((prev) => ({ ...prev, [r.id]: Number(e.target.value) }))}
-                      className="flex-1 text-[13px] border border-slate-200 rounded-xl px-3 py-2 bg-white focus:outline-none focus:ring-2 focus:ring-indigo-300"
-                    >
-                      <option value="">담당자 선택</option>
-                      {staffList.map((s) => (
-                        <option key={s.id} value={s.id}>{s.name}</option>
-                      ))}
-                    </select>
-                    <button
-                      disabled={!selectedStaff[r.id] || assigning === r.id}
-                      onClick={() => assignStaff(r.id)}
-                      className="text-[13px] font-bold px-4 py-2 rounded-xl bg-indigo-500 text-white hover:bg-indigo-600 disabled:opacity-40 disabled:cursor-not-allowed transition-colors whitespace-nowrap active:scale-95"
-                    >
-                      {assigning === r.id ? "배정 중…" : "담당자 지정"}
-                    </button>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </>
-        )}
+                  );
+                })}
+              </div>
+            </>
+          );
+        })()}
 
         {/* 매입담당자 현황 */}
         {staffSummary.length > 0 && (
@@ -337,131 +337,95 @@ export default function AdminDashboard() {
             height="auto"
           />
           {dateFilter && (() => {
-            const dayEntries = allEntries.filter((r) => r.date === dateFilter);
-            const dayUnassigned = unassigned.filter((r) => r.date === dateFilter);
-            const dateTotal    = dayEntries.length;
+            const dayEntries   = allEntries.filter((r) => r.date === dateFilter);
+            const dayUnassigned = [...dayEntries.filter((r) => !r.assignedStaffId)]
+              .sort((a, b) => (a.time ?? "").localeCompare(b.time ?? ""));
+            const dateTotal          = dayEntries.length;
             const dateUnassignedCount = dayUnassigned.length;
-            const dateAssigned = dayEntries.filter((r) => r.status === "assigned").length;
-            const calDay = calendarData.find((d) => d.date === dateFilter);
+            const dateAssigned        = dayEntries.filter((r) => r.assignedStaffId).length;
+            const calDay   = calendarData.find((d) => d.date === dateFilter);
             const dateUrgent = calDay?.urgent ?? dayUnassigned.filter((r) => r.isUrgent).length;
-            const slotMap: Record<string, number> = {};
-            dayUnassigned.forEach((r) => {
-              const t = r.time ?? "시간 미정";
-              slotMap[t] = (slotMap[t] ?? 0) + 1;
-            });
-            const slots = Object.entries(slotMap).sort(([a], [b]) => a.localeCompare(b));
 
             return (
-              <div className="mt-3 space-y-2">
+              <div className="mt-3 space-y-3">
+                {/* 날짜 요약 카드 */}
                 <div className="bg-white rounded-2xl border border-slate-100 shadow-sm overflow-hidden">
-                  {/* 헤더 */}
                   <div className="flex items-center justify-between px-4 py-3 border-b border-slate-50">
                     <p className="text-[15px] font-black text-slate-800">📅 {formatDateKo(dateFilter)}</p>
                     <button
-                      onClick={() => { setDateFilter(""); setEntries(allEntries); setShowUnassignedSlots(false); setTimeSlots([]); setExpandedSlot(null); setSlotDetail([]); }}
+                      onClick={() => { setDateFilter(""); setEntries(allEntries); }}
                       className="text-[11px] text-slate-400 hover:text-rose-500 font-medium transition-colors"
                     >전체 보기</button>
                   </div>
-                  {/* 총 */}
-                  <div className="flex items-center justify-between px-4 py-2.5 border-b border-slate-50">
-                    <span className="text-[13px] text-slate-500 font-medium">총</span>
-                    <span className="text-[14px] font-black text-slate-800">{dateTotal}건</span>
-                  </div>
-                  {/* 🚨 긴급 미배정 (0건이면 숨김) */}
-                  {dateUrgent > 0 && (
-                    <div className="flex items-center justify-between px-4 py-2.5 border-b border-slate-50" style={{ background: "#fff1f2" }}>
-                      <span className="text-[13px] font-bold text-red-600 flex items-center gap-1.5">🚨 긴급 미배정</span>
-                      <span className="text-[14px] font-black text-red-600">{dateUrgent}건</span>
+                  <div className="flex divide-x divide-slate-100">
+                    <div className="flex-1 px-3 py-3 text-center">
+                      <p className="text-[11px] text-slate-400 font-medium">총</p>
+                      <p className="text-[18px] font-black text-slate-800">{dateTotal}</p>
                     </div>
-                  )}
-                  {/* 🔴 미배정 — 클릭 (0건이면 숨김) */}
-                  {dateUnassignedCount > 0 && <button
-                    className="w-full flex items-center justify-between px-4 py-2.5 border-b border-slate-50 transition-colors active:scale-[0.99]"
-                    style={{ background: showUnassignedSlots ? "#fff1f2" : "transparent" }}
-                    onClick={async () => {
-                      const next = !showUnassignedSlots;
-                      setShowUnassignedSlots(next);
-                      if (next && timeSlots.length === 0) {
-                        setSlotsLoading(true);
-                        try {
-                          const r = await fetch(
-                            `/api/admin/reservations/unassigned-by-time?date=${dateFilter}`,
-                            { headers: { Authorization: `Bearer ${token}` } }
-                          );
-                          if (r.ok) setTimeSlots(await r.json());
-                        } finally { setSlotsLoading(false); }
-                      }
-                    }}
-                  >
-                    <span className="text-[13px] font-bold text-rose-500 flex items-center gap-1.5">🔴 미배정</span>
-                    <div className="flex items-center gap-2">
-                      <span className="text-[14px] font-black text-rose-600">{dateUnassignedCount}건</span>
-                      <span className="text-[11px] text-slate-300">{showUnassignedSlots ? "▲" : "▼"}</span>
+                    {dateUrgent > 0 && (
+                      <div className="flex-1 px-3 py-3 text-center bg-red-50">
+                        <p className="text-[11px] text-red-500 font-bold">🚨 긴급</p>
+                        <p className="text-[18px] font-black text-red-600">{dateUrgent}</p>
+                      </div>
+                    )}
+                    <div className="flex-1 px-3 py-3 text-center">
+                      <p className="text-[11px] text-rose-400 font-medium">미배정</p>
+                      <p className="text-[18px] font-black text-rose-600">{dateUnassignedCount}</p>
                     </div>
-                  </button>}
-                  {/* 배정 */}
-                  <div className="flex items-center justify-between px-4 py-2.5">
-                    <span className="text-[13px] text-slate-500 font-medium">배정</span>
-                    <span className="text-[14px] font-black text-blue-600">{dateAssigned}건</span>
+                    <div className="flex-1 px-3 py-3 text-center">
+                      <p className="text-[11px] text-blue-400 font-medium">배정</p>
+                      <p className="text-[18px] font-black text-blue-600">{dateAssigned}</p>
+                    </div>
                   </div>
                 </div>
-                {showUnassignedSlots && (
-                  <div className="bg-white border border-rose-100 rounded-2xl overflow-hidden">
-                    <p className="px-4 pt-3 pb-2 text-[12px] font-bold text-slate-500 flex items-center gap-1.5">🕐 시간대별 미배정 리스트</p>
-                    {slotsLoading ? (
-                      <p className="px-4 pb-3 text-[13px] text-slate-400">불러오는 중...</p>
-                    ) : timeSlots.length === 0 ? (
-                      <p className="px-4 pb-3 text-[13px] text-slate-400">미배정 건 없음</p>
-                    ) : (
-                      <ul className="divide-y divide-slate-50">
-                        {timeSlots.map((s) => {
-                          const t = s.time ?? "시간 미정";
-                          const isExpanded = expandedSlot === t;
-                          return (
-                            <li key={t}>
-                              <button
-                                className="w-full flex items-center justify-between px-4 py-2.5 hover:bg-rose-50/60 transition-colors"
-                                onClick={async () => {
-                                  if (isExpanded) { setExpandedSlot(null); return; }
-                                  setExpandedSlot(t);
-                                  setSlotDetailLoading(true);
-                                  setSlotDetail([]);
-                                  try {
-                                    const r = await fetch(
-                                      `/api/admin/reservations/unassigned-detail?date=${dateFilter}&time=${encodeURIComponent(s.time ?? "")}`,
-                                      { headers: { Authorization: `Bearer ${token}` } }
-                                    );
-                                    if (r.ok) setSlotDetail(await r.json());
-                                  } finally { setSlotDetailLoading(false); }
-                                }}
-                              >
-                                <span className="text-[13px] font-semibold text-slate-700">🕐 {t}</span>
-                                <div className="flex items-center gap-2">
-                                  <span className="text-[13px] font-black text-rose-500">{s.count}건</span>
-                                  <span className="text-[11px] text-slate-300">{isExpanded ? "▲" : "▼"}</span>
-                                </div>
-                              </button>
-                              {isExpanded && (
-                                <div className="px-4 pb-2.5 space-y-1.5">
-                                  {slotDetailLoading ? (
-                                    <p className="text-[12px] text-slate-400 py-1">불러오는 중...</p>
-                                  ) : slotDetail.map((r) => (
-                                    <button
-                                      key={r.id}
-                                      onClick={() => { location.href = `/admin/detail.html?id=${r.id}`; }}
-                                      className="w-full text-left bg-white border border-rose-100 rounded-xl px-3 py-2 hover:bg-rose-50 transition-colors"
-                                    >
-                                      <p className="text-[13px] font-bold text-slate-800">👤 {r.name ?? r.phone}</p>
-                                      <p className="text-[11px] text-slate-400 mt-0.5">📍 {r.location || "—"}</p>
-                                    </button>
-                                  ))}
-                                </div>
-                              )}
-                            </li>
-                          );
-                        })}
-                      </ul>
-                    )}
+
+                {/* 미배정 예약 — 시간대순 카드 목록 */}
+                {dayUnassigned.length > 0 && (
+                  <div className="space-y-2">
+                    <p className="text-[13px] font-bold text-slate-500 flex items-center gap-1.5 px-1">
+                      🔴 미배정 예약 <span className="text-rose-500">{dayUnassigned.length}건</span>
+                    </p>
+                    {dayUnassigned.map((r) => (
+                      <div
+                        key={r.id}
+                        className={`bg-white rounded-2xl border shadow-sm px-4 py-3.5 space-y-2.5 ${r.isUrgent ? "border-red-200 bg-red-50/40" : "border-rose-100"}`}
+                      >
+                        <div className="flex items-center justify-between gap-2">
+                          <div
+                            onClick={() => { window.location.href = `/admin/detail.html?id=${r.id}`; }}
+                            className="cursor-pointer flex-1 min-w-0"
+                          >
+                            <p className="text-[14px] font-bold text-slate-800 flex items-center gap-1.5">
+                              {r.isUrgent && <span className="text-red-500">🚨</span>}
+                              👤 {r.name ?? r.phone}
+                            </p>
+                            <p className="text-[12px] text-slate-400 mt-0.5">
+                              🕐 {r.time ?? "시간 미정"} · 📍 {r.location} · 💰 {formatKRW(r.totalPayment)}
+                            </p>
+                          </div>
+                          <span className="text-[11px] bg-amber-50 text-amber-600 font-bold px-2.5 py-1 rounded-full whitespace-nowrap">대기</span>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <select
+                            value={selectedStaff[r.id] ?? ""}
+                            onChange={(e) => setSelectedStaff((prev) => ({ ...prev, [r.id]: Number(e.target.value) }))}
+                            className="flex-1 text-[13px] border border-slate-200 rounded-xl px-3 py-2 bg-white focus:outline-none focus:ring-2 focus:ring-indigo-300"
+                          >
+                            <option value="">담당자 선택</option>
+                            {staffList.map((s) => (
+                              <option key={s.id} value={s.id}>{s.name}</option>
+                            ))}
+                          </select>
+                          <button
+                            disabled={!selectedStaff[r.id] || assigning === r.id}
+                            onClick={() => assignStaff(r.id)}
+                            className="text-[13px] font-bold px-4 py-2 rounded-xl bg-indigo-500 text-white hover:bg-indigo-600 disabled:opacity-40 disabled:cursor-not-allowed transition-colors whitespace-nowrap active:scale-95"
+                          >
+                            {assigning === r.id ? "배정 중…" : "담당자 지정"}
+                          </button>
+                        </div>
+                      </div>
+                    ))}
                   </div>
                 )}
               </div>
