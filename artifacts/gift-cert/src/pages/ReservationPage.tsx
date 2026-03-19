@@ -93,7 +93,12 @@ export default function ReservationPage() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ kind: "reservation", name, phone, date, time, location: loc, items: savedItems, totalPayment, bankName: bank, accountNumber: acct, accountHolder: holder, giftcardType: items[0]?.type ?? "" }),
       });
-      if (res.ok) { const d = await res.json(); id = d.id; }
+      if (res.ok) {
+        const d = await res.json(); id = d.id;
+      } else {
+        const d = await res.json().catch(() => ({}));
+        if (d.error) { setErrors(p => ({ ...p, agreeMatch: d.error })); return; }
+      }
     } catch {}
     saveEntry({ kind: "reservation", id, createdAt: new Date().toISOString(), name, phone, date, time, location: loc, items: savedItems, totalPayment, bankName: bank, accountNumber: acct, accountHolder: holder, giftcardType: items[0]?.type ?? "" });
     setToast(true);

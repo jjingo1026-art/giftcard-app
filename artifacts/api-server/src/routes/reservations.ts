@@ -99,6 +99,18 @@ router.post("/", async (req, res) => {
     return;
   }
 
+  const normalize = (str: string) => str.replace(/\s/g, "").toLowerCase();
+
+  if (
+    body.kind !== "urgent" &&
+    body.name &&
+    body.accountHolder &&
+    normalize(body.name) !== normalize(body.accountHolder)
+  ) {
+    res.status(400).json({ error: "신청자와 예금주가 일치하지 않습니다" });
+    return;
+  }
+
   // amount: 명시된 값 → items 합산 → totalPayment 순으로 결정
   const totalAmount =
     body.amount ??
