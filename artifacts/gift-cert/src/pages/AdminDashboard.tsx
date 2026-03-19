@@ -30,6 +30,7 @@ const statusText: Record<string, string> = {
   pending:   "🟡 예약",
   assigned:  "🟠 배정",
   completed: "🟢 완료",
+  cancelled: "⚫ 취소",
 };
 
 function formatKRW(n: number) { return n.toLocaleString("ko-KR") + "원"; }
@@ -68,6 +69,7 @@ export default function AdminDashboard() {
     today:     allEntries.filter((r) => r.date === today).length,
     assigned:  allEntries.filter((r) => r.status === "assigned").length,
     completed: allEntries.filter((r) => r.status === "completed").length,
+    cancelled: allEntries.filter((r) => r.status === "cancelled").length,
   };
 
   // 날짜별 건수 집계
@@ -130,12 +132,13 @@ export default function AdminDashboard() {
 
       <div className="max-w-2xl mx-auto px-4 py-4 space-y-3">
         {/* 통계 */}
-        <div className="grid grid-cols-2 gap-2">
+        <div className="grid grid-cols-3 gap-2">
           {[
-            { label: "전체 예약",  id: "total",     value: stats.total,     color: "text-slate-700" },
-            { label: "오늘 예약",  id: "today",     value: stats.today,     color: "text-indigo-600" },
-            { label: "매입담당자 배정",  id: "assigned",  value: stats.assigned,  color: "text-blue-600" },
-            { label: "매입 완료",  id: "completed", value: stats.completed, color: "text-emerald-600" },
+            { label: "전체 예약",      id: "total",     value: stats.total,     color: "text-slate-700" },
+            { label: "오늘 예약",      id: "today",     value: stats.today,     color: "text-indigo-600" },
+            { label: "담당자 배정",    id: "assigned",  value: stats.assigned,  color: "text-blue-600" },
+            { label: "매입 완료",      id: "completed", value: stats.completed, color: "text-emerald-600" },
+            { label: "취소",           id: "cancelled", value: stats.cancelled, color: "text-slate-400" },
           ].map(({ label, id, value, color }) => (
             <div key={id} className="bg-white rounded-2xl border border-slate-100 shadow-sm px-4 py-3">
               <p className="text-[11px] text-slate-400 font-medium">{label}</p>

@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from "react";
 import { useLocation, useParams } from "wouter";
+import { io, Socket } from "socket.io-client";
 import { getAdminToken, clearAdminToken } from "./AdminLogin";
 
 interface ChatMessage {
@@ -57,6 +58,7 @@ export default function AdminDetail() {
   const [chatMessages, setChatMessages] = useState<ChatMessage[]>([]);
   const [chatMsg, setChatMsg] = useState("");
   const chatBoxRef = useRef<HTMLDivElement>(null);
+  const socketRef = useRef<Socket | null>(null);
 
   const token = getAdminToken();
   if (!token) { navigate("/admin/login"); return null; }
@@ -73,15 +75,14 @@ export default function AdminDetail() {
       .catch(() => {});
   }
 
-  async function sendChat() {
-    if (!chatMsg.trim()) return;
-    await fetch("/api/admin/chat/send", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ reservationId: Number(resolvedId), sender: "admin", message: chatMsg }),
+  function sendChat() {
+    if (!chatMsg.trim() || !socketRef.current) return;
+    socketRef.current.emit("sendMessage", {
+      reservationId: Number(resolvedId),
+      sender: "admin",
+      message: chatMsg,
     });
     setChatMsg("");
-    loadChat();
   }
 
   async function load() {
@@ -103,17 +104,28 @@ export default function AdminDetail() {
   useEffect(() => {
     load();
     loadChat();
-    const es = new EventSource(`/api/admin/chat/stream/${resolvedId}`);
-    es.onmessage = (e) => {
-      const msg = JSON.parse(e.data);
+
+    const socket = io({ transports: ["websocket", "polling"] });
+    socketRef.current = socket;
+
+    socket.on("connect", () => {
+      socket.emit("joinRoom", Number(resolvedId));
+      socket.emit("markRead", { reservationId: Number(resolvedId), readerRole: "admin" });
+    });
+
+    socket.on("newMessage", (msg: ChatMessage) => {
       setChatMessages((prev) => {
         if (prev.some((m) => m.id === msg.id)) return prev;
         const next = [...prev, msg];
         setTimeout(() => { if (chatBoxRef.current) chatBoxRef.current.scrollTop = chatBoxRef.current.scrollHeight; }, 50);
         return next;
       });
-    };
-    return () => es.close();
+      if ((msg as any).sender !== "admin") {
+        socket.emit("markRead", { reservationId: Number(resolvedId), readerRole: "admin" });
+      }
+    });
+
+    return () => { socket.disconnect(); };
   }, []);
 
   async function setStatus(status: string) {
@@ -324,15 +336,22 @@ export default function AdminDetail() {
           </div>
         </div>
 
-        {/* 매입완료 */}
-        <div className="pb-6">
+        {/* 액션 버튼 */}
+        <div className="pb-6 flex gap-2">
           <button
             onClick={() => setStatus("completed")}
-            disabled={saving || entry.status === "completed"}
-            className="w-full py-3.5 rounded-2xl text-white text-[15px] font-bold transition-all active:scale-95 disabled:opacity-40"
+            disabled={saving || entry.status === "completed" || entry.status === "cancelled"}
+            className="flex-1 py-3.5 rounded-2xl text-white text-[15px] font-bold transition-all active:scale-95 disabled:opacity-40"
             style={{ background: "linear-gradient(135deg,#10b981,#059669)" }}
           >
             매입 완료
+          </button>
+          <button
+            onClick={() => { if (confirm("예약을 취소하시겠습니까?")) setStatus("cancelled"); }}
+            disabled={saving || entry.status === "cancelled" || entry.status === "completed"}
+            className="flex-1 py-3.5 rounded-2xl border border-rose-200 text-rose-500 text-[15px] font-bold transition-all active:scale-95 disabled:opacity-40 hover:bg-rose-50"
+          >
+            예약 취소
           </button>
         </div>
       </div>
