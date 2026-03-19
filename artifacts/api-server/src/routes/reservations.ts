@@ -92,6 +92,7 @@ router.post("/:id/assign", async (req, res) => {
 router.post("/", async (req, res) => {
   const body = req.body as {
     kind?: string;
+    isUrgent?: boolean;
     name?: string;
     phone: string;
     date?: string;
@@ -190,6 +191,7 @@ router.post("/", async (req, res) => {
     .insert(reservationsTable)
     .values({
       kind: body.kind ?? "reservation",
+      isUrgent: body.isUrgent ?? body.kind === "urgent",
       name: body.name,
       phone: normalizedPhone,
       date: body.date,

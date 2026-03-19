@@ -309,7 +309,7 @@ function HomePage({ onGoUrgent }: { onGoUrgent: () => void }) {
       const res = await fetch("/api/reservations", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ kind: "reservation", name, phone, date, time, location, items: savedItems, totalPayment, bankName, accountNumber, accountHolder }),
+        body: JSON.stringify({ kind: "reservation", isUrgent: false, name, phone, date, time, location, items: savedItems, totalPayment, bankName, accountNumber, accountHolder }),
       });
       if (res.ok) { const data = await res.json(); id = data.id; }
     } catch {}
@@ -744,7 +744,7 @@ function UrgentPage({ onBack }: { onBack: () => void }) {
       const res = await fetch("/api/reservations", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ kind: "urgent", name, phone, location, items: savedItems, totalPayment, bankName, accountNumber, accountHolder }),
+        body: JSON.stringify({ kind: "urgent", isUrgent: true, name, phone, location, items: savedItems, totalPayment, bankName, accountNumber, accountHolder }),
       });
       if (res.ok) { const data = await res.json(); id = data.id; }
     } catch {}
