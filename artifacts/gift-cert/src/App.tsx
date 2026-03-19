@@ -317,7 +317,7 @@ function HomePage({ onGoUrgent }: { onGoUrgent: () => void }) {
             {RATE_GROUPS.map((g) => (
               <div
                 key={g.label}
-                onClick={() => { window.location.href = `/notice.html?type=${encodeURIComponent(g.label)}`; }}
+                onClick={() => { window.location.href = `/terms.html?type=${encodeURIComponent(g.label)}`; }}
                 className="flex items-center justify-between px-4 py-3.5 rounded-2xl cursor-pointer active:scale-[0.98] transition-all"
                 style={{ backgroundColor: g.color + "12" }}
               >
