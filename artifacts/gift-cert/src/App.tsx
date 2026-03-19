@@ -623,12 +623,21 @@ function SubmissionCard({ entry }: { entry: ReservationEntry | UrgentEntry }) {
       }
     >
 
+      {/* ── 긴급 상단 배너 ── */}
+      {isUrgent && (
+        <div className="w-full px-4 py-1.5 flex items-center gap-1.5" style={{ background: "#ef4444" }}>
+          <span className="text-white text-[12px] font-black tracking-wide">🚨 긴급</span>
+        </div>
+      )}
+
       {/* ── 카드 헤더 라벨 ── */}
       <div className={`px-5 pt-4 pb-2 flex items-center justify-between`}>
         <div className="flex items-center gap-2">
-          <span className={`text-[11px] font-bold px-2.5 py-1 rounded-full tracking-wide ${ac.pill}`}>
-            {isUrgent ? "🚨 긴급" : "📋 예약 카드"}
-          </span>
+          {!isUrgent && (
+            <span className={`text-[11px] font-bold px-2.5 py-1 rounded-full tracking-wide ${ac.pill}`}>
+              📋 예약 카드
+            </span>
+          )}
           <span className="text-[11px] text-slate-300">#{entry.id}</span>
         </div>
         <span className={`text-[11px] font-semibold ${ac.text}`}>{entry.items.length}종류</span>
