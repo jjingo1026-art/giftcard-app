@@ -2,6 +2,14 @@ import { useState } from "react";
 import { formatPhone } from "@/lib/store";
 
 interface StaffInfo { id: number; name: string; phone: string; }
+interface ReservationItem {
+  type: string;
+  amount: number;
+  rate: number;
+  payment: number;
+  isGift: boolean;
+}
+
 interface ReservationInfo {
   id: number;
   name?: string;
@@ -12,6 +20,7 @@ interface ReservationInfo {
   giftcardType?: string;
   amount?: number;
   totalPayment?: number;
+  items?: ReservationItem[];
   status: string;
   assignedTo?: string;
   createdAt: string;
@@ -183,25 +192,54 @@ export default function ReservationCheck() {
                 <p className="text-[17px] font-bold text-slate-800">예약확인</p>
               </div>
               {/* 상세 정보 */}
-              <div className="px-5 py-4 space-y-0">
-                {reservation.giftcardType && (
-                  <div className="flex justify-between items-center py-2.5 border-b border-slate-50">
-                    <span className="text-[13px] text-slate-400 font-medium">권종</span>
-                    <span className="text-[13px] text-slate-800 font-semibold">{reservation.giftcardType}</span>
-                  </div>
-                )}
-                {reservation.amount != null && (
-                  <div className="flex justify-between items-center py-2.5 border-b border-slate-50">
-                    <span className="text-[13px] text-slate-400 font-medium">금액</span>
-                    <span className="text-[15px] text-indigo-600 font-black">{fmt(reservation.amount)}</span>
-                  </div>
-                )}
+              <div className="px-5 py-2 space-y-0">
+                {/* 권종 & 금액 — items 배열 우선, 없으면 giftcardType/amount 폴백 */}
+                {(reservation.items && reservation.items.length > 0)
+                  ? reservation.items.map((it, i) => (
+                    <div key={i} className="py-2.5 border-b border-slate-50">
+                      <div className="flex justify-between items-center">
+                        <span className="text-[13px] text-slate-400 font-medium">권종{reservation.items!.length > 1 ? ` ${i + 1}` : ""}</span>
+                        <span className="text-[13px] text-slate-800 font-semibold">
+                          {it.type}{it.isGift ? " 🎁" : ""}
+                        </span>
+                      </div>
+                      <div className="flex justify-between items-center mt-1">
+                        <span className="text-[13px] text-slate-400 font-medium">금액</span>
+                        <span className="text-[14px] text-indigo-600 font-black">{fmt(it.amount)}</span>
+                      </div>
+                    </div>
+                  ))
+                  : <>
+                    {reservation.giftcardType && (
+                      <div className="flex justify-between items-center py-2.5 border-b border-slate-50">
+                        <span className="text-[13px] text-slate-400 font-medium">권종</span>
+                        <span className="text-[13px] text-slate-800 font-semibold">{reservation.giftcardType}</span>
+                      </div>
+                    )}
+                    {reservation.amount != null && (
+                      <div className="flex justify-between items-center py-2.5 border-b border-slate-50">
+                        <span className="text-[13px] text-slate-400 font-medium">금액</span>
+                        <span className="text-[14px] text-indigo-600 font-black">{fmt(reservation.amount)}</span>
+                      </div>
+                    )}
+                  </>
+                }
                 {reservation.date && (
                   <div className="flex justify-between items-center py-2.5 border-b border-slate-50">
-                    <span className="text-[13px] text-slate-400 font-medium">예약일시</span>
-                    <span className="text-[13px] text-slate-800 font-semibold">
-                      {reservation.date}{reservation.time ? ` ${reservation.time}` : ""}
-                    </span>
+                    <span className="text-[13px] text-slate-400 font-medium">날짜</span>
+                    <span className="text-[13px] text-slate-800 font-semibold">{reservation.date}</span>
+                  </div>
+                )}
+                {reservation.time && (
+                  <div className="flex justify-between items-center py-2.5 border-b border-slate-50">
+                    <span className="text-[13px] text-slate-400 font-medium">시간</span>
+                    <span className="text-[13px] text-slate-800 font-semibold">{reservation.time}</span>
+                  </div>
+                )}
+                {reservation.location && (
+                  <div className="flex justify-between items-center py-2.5 border-b border-slate-50">
+                    <span className="text-[13px] text-slate-400 font-medium">장소</span>
+                    <span className="text-[13px] text-slate-800 font-semibold text-right max-w-[60%]">{reservation.location}</span>
                   </div>
                 )}
                 {reservation.name && (

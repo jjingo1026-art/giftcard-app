@@ -762,12 +762,14 @@ router.get("/customer/reservation", async (req, res) => {
     return;
   }
 
+  const normalizedPhone = phone.replace(/[^0-9]/g, "");
+
   const rows = await db
     .select()
     .from(reservationsTable)
     .orderBy(desc(reservationsTable.createdAt));
 
-  const result = rows.find((r) => r.phone === phone);
+  const result = rows.find((r) => r.phone === normalizedPhone);
   if (!result) {
     res.json({ success: false });
     return;
