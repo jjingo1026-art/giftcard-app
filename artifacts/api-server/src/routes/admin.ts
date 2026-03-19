@@ -324,6 +324,31 @@ router.get("/reservations/revenue/range", requireAuth, requireAdmin, async (req,
   res.json({ startDate, endDate, revenue: result[0].total });
 });
 
+router.get("/reservations/revenue/daily", requireAuth, requireAdmin, async (req, res) => {
+  const { startDate, endDate } = req.query as {
+    startDate?: string;
+    endDate?: string;
+  };
+
+  const rows = await db
+    .select({
+      date: reservationsTable.date,
+      total: sql<number>`SUM(${reservationsTable.amount})`
+    })
+    .from(reservationsTable)
+    .where(
+      and(
+        gte(reservationsTable.date, startDate!),
+        lte(reservationsTable.date, endDate!),
+        eq(reservationsTable.status, "completed")
+      )
+    )
+    .groupBy(reservationsTable.date)
+    .orderBy(reservationsTable.date);
+
+  res.json(rows);
+});
+
 router.get("/reservations/:id", requireAuth, async (req, res) => {
   const id = parseInt(req.params.id);
   if (isNaN(id)) { res.status(400).json({ error: "잘못된 ID" }); return; }
