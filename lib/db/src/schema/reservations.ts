@@ -26,6 +26,7 @@ export const reservationsTable = pgTable("reservations", {
   cancelledAt: timestamp("cancelled_at"),
 }, (table) => [
   index("idx_reservations_date_status").on(table.date, table.status),
+  index("idx_phone_status").on(table.phone, table.status),
 ]);
 
 export const RESERVATION_STATUS = {
