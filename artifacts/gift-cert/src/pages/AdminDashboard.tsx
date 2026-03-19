@@ -63,6 +63,8 @@ export default function AdminDashboard() {
   const [showTodayList, setShowTodayList] = useState(false);
   const [showCompletedSearch, setShowCompletedSearch] = useState(false);
   const [completedQuery, setCompletedQuery] = useState("");
+  const [showCancelledSearch, setShowCancelledSearch] = useState(false);
+  const [cancelledQuery, setCancelledQuery] = useState("");
 
   const token = getAdminToken();
   if (!token) { navigate("/admin/login"); return null; }
@@ -232,10 +234,10 @@ export default function AdminDashboard() {
         <div className="grid grid-cols-3 gap-2">
           {[
             { label: "전체 예약",   id: "total",     value: stats.total,     color: "text-slate-700",   onClick: undefined as (() => void) | undefined,         active: false },
-            { label: "오늘 예약",   id: "today",     value: stats.today,     color: "text-indigo-600",  onClick: () => { setShowTodayList((p) => !p); setShowCompletedSearch(false); }, active: showTodayList },
+            { label: "오늘 예약",   id: "today",     value: stats.today,     color: "text-indigo-600",  onClick: () => { setShowTodayList((p) => !p); setShowCompletedSearch(false); setShowCancelledSearch(false); }, active: showTodayList },
             { label: "담당자 배정", id: "assigned",  value: stats.assigned,  color: "text-blue-600",    onClick: undefined,                                                             active: false },
             { label: "처리 완료",   id: "completed", value: stats.completed, color: "text-emerald-600", onClick: () => { setShowCompletedSearch((p) => !p); setShowTodayList(false); setCompletedQuery(""); }, active: showCompletedSearch },
-            { label: "취소",        id: "cancelled", value: stats.cancelled, color: "text-slate-400",   onClick: undefined,                                                             active: false },
+            { label: "취소",        id: "cancelled", value: stats.cancelled, color: "text-rose-500",   onClick: () => { setShowCancelledSearch((p) => !p); setShowTodayList(false); setShowCompletedSearch(false); setCancelledQuery(""); }, active: showCancelledSearch },
           ].map(({ label, id, value, color, onClick, active }) => (
             <div
               key={id}
@@ -354,6 +356,84 @@ export default function AdminDashboard() {
                           <p className="text-[15px] font-black text-emerald-600 flex-shrink-0">{formatKRW(r.totalPayment)}</p>
                         </div>
                       ))}
+                  </div>
+                )
+              )}
+            </div>
+          );
+        })()}
+
+        {/* 취소 고객 검색 (캘린더 위) */}
+        {showCancelledSearch && (() => {
+          const q = cancelledQuery.trim().toLowerCase();
+          const cancelledAll = allEntries.filter((r) => r.status === "cancelled");
+          const results = q
+            ? cancelledAll.filter((r) =>
+                (r.name ?? "").toLowerCase().includes(q) ||
+                r.phone.replace(/-/g, "").includes(q.replace(/-/g, ""))
+              )
+            : [];
+
+          return (
+            <div className="space-y-2">
+              <div className="flex items-center justify-between px-1">
+                <p className="text-[14px] font-bold text-rose-600 flex items-center gap-1.5">
+                  🚫 취소 내역 검색
+                </p>
+                <button
+                  onClick={() => { setShowCancelledSearch(false); setCancelledQuery(""); }}
+                  className="text-[11px] text-slate-400 hover:text-rose-500 font-medium transition-colors"
+                >닫기 ✕</button>
+              </div>
+
+              <div className="relative">
+                <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-300 text-[15px]">🔍</span>
+                <input
+                  type="text"
+                  value={cancelledQuery}
+                  onChange={(e) => setCancelledQuery(e.target.value)}
+                  placeholder="고객 이름 또는 전화번호 검색"
+                  className="w-full pl-9 pr-4 py-3 rounded-2xl border border-rose-200 text-[14px] text-slate-800 outline-none focus:border-rose-400 focus:ring-2 focus:ring-rose-50 bg-white placeholder:text-slate-300 transition-all"
+                />
+              </div>
+
+              {q.length > 0 && (
+                results.length === 0 ? (
+                  <div className="bg-white rounded-2xl border border-slate-100 shadow-sm px-4 py-6 text-center text-[13px] text-slate-400">
+                    "{cancelledQuery}" 검색 결과 없음
+                  </div>
+                ) : (
+                  <div className="space-y-2">
+                    <div className="flex items-center justify-between px-1">
+                      <p className="text-[12px] font-bold text-rose-600">
+                        {results[0].name ?? results[0].phone} 취소 내역 {results.length}건
+                      </p>
+                    </div>
+                    {[...results]
+                      .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
+                      .map((r) => {
+                        return (
+                          <div
+                            key={r.id}
+                            onClick={() => { window.location.href = `/admin/detail.html?id=${r.id}`; }}
+                            className="bg-white rounded-2xl border border-rose-100 shadow-sm px-4 py-3.5 flex items-center justify-between gap-2 cursor-pointer hover:border-rose-300 hover:bg-rose-50/30 transition-colors active:scale-[0.99]"
+                          >
+                            <div className="flex-1 min-w-0">
+                              <p className="text-[14px] font-bold text-slate-800 flex items-center gap-1.5">
+                                {r.isUrgent && <span className="text-red-500">🚨</span>}
+                                👤 {r.name ?? r.phone}
+                              </p>
+                              <p className="text-[12px] text-slate-400 mt-0.5">
+                                📅 {formatDateKo(r.date)} {r.time && `· 🕐 ${r.time}`} · 📍 {r.location}
+                              </p>
+                              {r.assignedTo && (
+                                <p className="text-[11px] text-blue-500 mt-0.5 font-medium">👨‍🔧 {r.assignedTo}</p>
+                              )}
+                            </div>
+                            <p className="text-[15px] font-black text-rose-400 flex-shrink-0 line-through">{formatKRW(r.totalPayment)}</p>
+                          </div>
+                        );
+                      })}
                   </div>
                 )
               )}
