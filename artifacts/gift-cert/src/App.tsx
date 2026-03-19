@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { getNextId, saveEntry } from "@/lib/store";
+import { getNextId, saveEntry, formatDateKo } from "@/lib/store";
 
 const RATES: Record<string, number> = {
   "신세계 (Shinsegae)": 0.95,
@@ -77,11 +77,6 @@ interface UrgentEntry {
 }
 
 function formatKRW(n: number) { return n.toLocaleString("ko-KR") + "원"; }
-function formatDateKo(dateStr?: string) {
-  if (!dateStr) return "";
-  const [, m, d] = dateStr.split("-");
-  return `${parseInt(m)}월 ${parseInt(d)}일`;
-}
 
 // baseDeduct: extra deduction applied on top (e.g. 0.01 for urgent)
 function computeItem(item: VoucherItem, baseDeduct: number): { amountNum: number; rate: number; payment: number } {

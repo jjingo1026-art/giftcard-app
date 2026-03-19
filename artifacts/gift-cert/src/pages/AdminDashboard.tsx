@@ -4,6 +4,7 @@ import FullCalendar from "@fullcalendar/react";
 import dayGridPlugin from "@fullcalendar/daygrid";
 import interactionPlugin from "@fullcalendar/interaction";
 import { getAdminToken, clearAdminToken } from "./AdminLogin";
+import { formatDateKo } from "@/lib/store";
 
 interface Reservation {
   id: number;
@@ -233,7 +234,7 @@ export default function AdminDashboard() {
                         👤 {r.name ?? r.phone}
                       </p>
                       <p className="text-[12px] text-slate-400 mt-0.5">
-                        {r.date} {r.time && `· ${r.time}`} · {formatKRW(r.totalPayment)}
+                        {formatDateKo(r.date)} {r.time && `· ${r.time}`} · {formatKRW(r.totalPayment)}
                       </p>
                     </div>
                     <span className="text-[11px] bg-amber-50 text-amber-600 font-bold px-2.5 py-1 rounded-full whitespace-nowrap">🟡 처리 대기</span>

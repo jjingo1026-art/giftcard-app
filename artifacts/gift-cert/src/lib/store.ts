@@ -1,6 +1,13 @@
 export const formatPhone = (phone: string) =>
   phone.replace(/(\d{3})(\d{4})(\d{4})/, "$1-$2-$3");
 
+export function formatDateKo(dateStr?: string | null, includeTime?: string | null): string {
+  if (!dateStr) return "";
+  const [, m, d] = dateStr.split("-");
+  const base = `${parseInt(m)}월 ${parseInt(d)}일`;
+  return includeTime ? `${base} ${includeTime}` : base;
+}
+
 export interface StoredSavedItem {
   type: string;
   amount: number;

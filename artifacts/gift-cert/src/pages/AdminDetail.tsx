@@ -2,7 +2,7 @@ import { useState, useEffect, useRef } from "react";
 import { useLocation, useParams } from "wouter";
 import { io, Socket } from "socket.io-client";
 import { getAdminToken, clearAdminToken } from "./AdminLogin";
-import { formatPhone } from "@/lib/store";
+import { formatPhone, formatDateKo } from "@/lib/store";
 
 interface ChatMessage {
   id: number;
@@ -224,7 +224,7 @@ export default function AdminDetail() {
           <div className="space-y-0.5 bg-slate-50 rounded-xl px-3 py-2">
             <Row label="이름"   value={entry.name} />
             <Row label="전화번호" value={formatPhone(entry.phone ?? "")} />
-            {entry.date && <Row label="날짜" value={`${entry.date} ${entry.time ?? ""}`} />}
+            {entry.date && <Row label="날짜" value={formatDateKo(entry.date, entry.time)} />}
             <Row label="거래 장소" value={entry.location} />
             {entry.assignedTo && <Row label="매입담당자" value={entry.assignedTo} />}
           </div>

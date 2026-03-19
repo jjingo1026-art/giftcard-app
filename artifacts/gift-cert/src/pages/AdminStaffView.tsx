@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { useLocation } from "wouter";
 import { getAdminToken, clearAdminToken } from "./AdminLogin";
+import { formatDateKo } from "@/lib/store";
 
 interface Reservation {
   id: number;
@@ -43,7 +44,7 @@ function ReservationCard({ r }: { r: Reservation }) {
     >
       <div className="flex items-center justify-between mb-2">
         <p className="text-[12px] text-slate-400 font-medium">
-          {r.date ? `📅 ${r.date} ${r.time ?? ""}` : `#${r.id}`}
+          {r.date ? `📅 ${formatDateKo(r.date, r.time)}` : `#${r.id}`}
         </p>
         <span className={`text-[11px] font-bold px-2.5 py-0.5 rounded-full ${STATUS_CHIP[r.status] ?? "bg-slate-100 text-slate-500"}`}>
           {STATUS_LABEL[r.status] ?? r.status}

@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { formatPhone } from "@/lib/store";
+import { formatPhone, formatDateKo } from "@/lib/store";
 
 interface StaffInfo { id: number; name: string; phone: string; }
 interface ReservationItem {
@@ -245,7 +245,7 @@ export default function ReservationCheck() {
                     {reservation.date && (
                       <div className="flex justify-between items-center py-2.5 border-b border-slate-50">
                         <span className="text-[13px] text-slate-400 font-medium">날짜</span>
-                        <span className="text-[13px] text-slate-800 font-semibold">{reservation.date}</span>
+                        <span className="text-[13px] text-slate-800 font-semibold">{formatDateKo(reservation.date)}</span>
                       </div>
                     )}
                     {reservation.time && (
@@ -325,7 +325,7 @@ export default function ReservationCheck() {
               ) : reservation.date ? (
                 <div className="flex justify-between items-center py-2.5 border-b border-slate-50">
                   <span className="text-[12px] text-slate-400 font-medium flex items-center gap-1.5">📅 날짜 / 시간</span>
-                  <span className="text-[13px] text-slate-700 font-semibold">{reservation.date} {reservation.time ?? ""}</span>
+                  <span className="text-[13px] text-slate-700 font-semibold">{formatDateKo(reservation.date, reservation.time)}</span>
                 </div>
               ) : null}
               {reservation.name && (
