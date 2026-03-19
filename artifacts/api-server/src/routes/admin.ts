@@ -1,6 +1,6 @@
 import { Router, type IRouter } from "express";
 import { db } from "@workspace/db";
-import { reservationsTable, chatsTable } from "@workspace/db/schema";
+import { reservationsTable, chatsTable, staffTable } from "@workspace/db/schema";
 import { eq, desc, asc } from "drizzle-orm";
 import crypto from "crypto";
 import { emitToRoom } from "../socket";
@@ -13,9 +13,16 @@ const tokens = new Map<string, number>();
 const staffTokens = new Map<string, { staffId: number; exp: number }>();
 
 
-const staff = [
-  { id: 2, name: "김철수", phone: "010-2222-3333", password: "1234", status: "approved" },
-];
+// 기존 staff 데이터 시드 (서버 최초 기동 시 DB에 없을 경우 삽입)
+async function seedStaff() {
+  const existing = await db.select().from(staffTable);
+  if (existing.length === 0) {
+    await db.insert(staffTable).values({
+      name: "김철수", phone: "010-2222-3333", password: "1234", status: "approved",
+    });
+  }
+}
+seedStaff().catch(console.error);
 
 
 function requireStaffAuth(req: any, res: any, next: any) {
@@ -53,41 +60,42 @@ router.post("/login", async (req, res) => {
   res.json({ token, expiresAt });
 });
 
-router.get("/staff", requireAuth, (_req, res) => {
-  res.json(staff.map(({ password: _pw, ...s }) => s));
+router.get("/staff", requireAuth, async (_req, res) => {
+  const rows = await db.select({ id: staffTable.id, name: staffTable.name, phone: staffTable.phone, status: staffTable.status }).from(staffTable);
+  res.json(rows);
 });
 
-router.get("/staff/pending", requireAuth, (_req, res) => {
-  const pending = staff.filter((s) => s.status === "pending").map(({ password: _pw, ...s }) => s);
-  res.json(pending);
+router.get("/staff/pending", requireAuth, async (_req, res) => {
+  const rows = await db.select({ id: staffTable.id, name: staffTable.name, phone: staffTable.phone, status: staffTable.status })
+    .from(staffTable).where(eq(staffTable.status, "pending"));
+  res.json(rows);
 });
 
-router.post("/staff/:id/approve", requireAuth, (req, res) => {
+router.post("/staff/:id/approve", requireAuth, async (req, res) => {
   const id = Number(req.params.id);
-  const user = staff.find((s) => s.id === id);
+  const [user] = await db.select().from(staffTable).where(eq(staffTable.id, id));
   if (!user) { res.status(404).json({ success: false, error: "직원을 찾을 수 없습니다." }); return; }
-  user.status = "approved";
+  await db.update(staffTable).set({ status: "approved" }).where(eq(staffTable.id, id));
   res.json({ success: true });
 });
 
-router.post("/staff/:id/reject", requireAuth, (req, res) => {
+router.post("/staff/:id/reject", requireAuth, async (req, res) => {
   const id = Number(req.params.id);
-  const user = staff.find((s) => s.id === id);
+  const [user] = await db.select().from(staffTable).where(eq(staffTable.id, id));
   if (!user) { res.status(404).json({ success: false, error: "직원을 찾을 수 없습니다." }); return; }
-  user.status = "rejected";
+  await db.update(staffTable).set({ status: "rejected" }).where(eq(staffTable.id, id));
   res.json({ success: true });
 });
 
-router.post("/staff/login", (req, res) => {
+router.post("/staff/login", async (req, res) => {
   const { phone, password } = req.body as { phone?: string; password?: string };
-  const user = staff.find((s) => s.phone === phone && s.password === password);
-  if (!user) {
-    res.json({ success: false, message: "정보 틀림" });
-    return;
+  const [user] = await db.select().from(staffTable)
+    .where(eq(staffTable.phone, phone ?? ""));
+  if (!user || user.password !== password) {
+    res.json({ success: false, message: "정보 틀림" }); return;
   }
   if (user.status !== "approved") {
-    res.json({ success: false, message: "승인 대기중" });
-    return;
+    res.json({ success: false, message: "승인 대기중" }); return;
   }
   const token = crypto.randomUUID();
   const expiresAt = Date.now() + 1000 * 60 * 60 * 8;
@@ -95,36 +103,32 @@ router.post("/staff/login", (req, res) => {
   res.json({ success: true, token, expiresAt, staffId: user.id, name: user.name });
 });
 
-router.post("/staff/register", (req, res) => {
+router.post("/staff/register", async (req, res) => {
   const { name, phone, password } = req.body as { name?: string; phone?: string; password?: string };
   if (!name || !phone || !password) {
-    res.status(400).json({ success: false, error: "name, phone, password는 필수입니다." });
-    return;
+    res.status(400).json({ success: false, error: "name, phone, password는 필수입니다." }); return;
   }
-  if (staff.find((s) => s.phone === phone)) {
-    res.json({ success: false, message: "이미 등록됨" });
-    return;
+  const [existing] = await db.select().from(staffTable).where(eq(staffTable.phone, phone));
+  if (existing) {
+    res.json({ success: false, message: "이미 등록됨" }); return;
   }
-  const newStaff = { id: Date.now(), name, phone, password, status: "pending" };
-  staff.push(newStaff);
+  await db.insert(staffTable).values({ name, phone, password, status: "pending" });
   res.json({ success: true, message: "신청 완료 (승인 대기)" });
 });
 
 // 관리자용: 매입담당자별 요약 (진행중/완료 건수)
-router.get("/staff-summary", requireAuth, async (req, res) => {
-  const rows = await db
-    .select()
-    .from(reservationsTable)
-    .orderBy(desc(reservationsTable.createdAt));
+router.get("/staff-summary", requireAuth, async (_req, res) => {
+  const [staffList, rows] = await Promise.all([
+    db.select().from(staffTable).where(eq(staffTable.status, "approved")),
+    db.select().from(reservationsTable),
+  ]);
 
-  const summary = staff
-    .filter((s) => s.status === "approved")
-    .map((s) => ({
-      id: s.id,
-      name: s.name,
-      assigned:  rows.filter((r) => r.assignedStaffId === s.id && r.status === "assigned").length,
-      completed: rows.filter((r) => r.assignedStaffId === s.id && r.status === "completed").length,
-    }));
+  const summary = staffList.map((s) => ({
+    id: s.id,
+    name: s.name,
+    assigned:  rows.filter((r) => r.assignedStaffId === s.id && r.status === "assigned").length,
+    completed: rows.filter((r) => r.assignedStaffId === s.id && r.status === "completed").length,
+  }));
 
   res.json(summary);
 });
@@ -148,22 +152,20 @@ router.get("/staff/:staffId/reservations", requireAuth, async (req, res) => {
 });
 
 // 관리자용: 매입담당자별 예약 조회 (assigned / completed)
-router.get("/staff/reservations", requireAuth, async (req, res) => {
-  const rows = await db
-    .select()
-    .from(reservationsTable)
-    .orderBy(desc(reservationsTable.createdAt));
+router.get("/staff/reservations", requireAuth, async (_req, res) => {
+  const [staffList, rows] = await Promise.all([
+    db.select().from(staffTable).where(eq(staffTable.status, "approved")),
+    db.select().from(reservationsTable).orderBy(desc(reservationsTable.createdAt)),
+  ]);
 
-  const grouped = staff
-    .filter((s) => s.status === "approved")
-    .map((s) => {
-      const mine = rows.filter((r) => r.assignedStaffId === s.id);
-      return {
-        staff: { id: s.id, name: s.name, phone: s.phone },
-        assigned:  mine.filter((r) => r.status === "assigned"),
-        completed: mine.filter((r) => r.status === "completed"),
-      };
-    });
+  const grouped = staffList.map((s) => {
+    const mine = rows.filter((r) => r.assignedStaffId === s.id);
+    return {
+      staff: { id: s.id, name: s.name, phone: s.phone },
+      assigned:  mine.filter((r) => r.status === "assigned"),
+      completed: mine.filter((r) => r.status === "completed"),
+    };
+  });
 
   res.json(grouped);
 });
@@ -186,7 +188,7 @@ router.post("/reservations/:id/complete", requireStaffAuth, async (req, res) => 
     .where(eq(reservationsTable.id, id));
 
   // 채팅방에 자동 완료 메시지
-  const member = staff.find((s) => s.id === staffId);
+  const [member] = await db.select().from(staffTable).where(eq(staffTable.id, staffId));
   const [autoComplete] = await db.insert(chatsTable).values({
     reservationId: id,
     sender: "staff",
@@ -261,7 +263,7 @@ router.post("/reservations/:id/assign", requireAuth, async (req, res) => {
   const id = parseInt(req.params.id);
   if (isNaN(id)) { res.status(400).json({ error: "잘못된 ID" }); return; }
   const { staffId } = req.body as { staffId?: number };
-  const member = staff.find((s) => s.id === staffId);
+  const [member] = staffId ? await db.select().from(staffTable).where(eq(staffTable.id, staffId)) : [];
   if (!member) {
     res.status(400).json({ error: "유효하지 않은 직원 ID입니다." });
     return;
@@ -285,7 +287,7 @@ router.post("/reservations/:id/assign", requireAuth, async (req, res) => {
 
 // ── 채팅: 예약 1개 = 채팅방 1개 ──────────────────────────────────────────────
 
-function resolveAuth(req: any): { ok: boolean; senderType: "admin" | "staff"; senderName: string } {
+async function resolveAuth(req: any): Promise<{ ok: boolean; senderType: "admin" | "staff"; senderName: string }> {
   const auth = req.headers.authorization ?? "";
   const token = auth.startsWith("Bearer ") ? auth.slice(7) : "";
 
@@ -298,7 +300,7 @@ function resolveAuth(req: any): { ok: boolean; senderType: "admin" | "staff"; se
   // 직원 토큰 확인
   const staffEntry = staffTokens.get(token);
   if (staffEntry && Date.now() <= staffEntry.exp) {
-    const member = staff.find((s) => s.id === staffEntry.staffId);
+    const [member] = await db.select().from(staffTable).where(eq(staffTable.id, staffEntry.staffId));
     return { ok: true, senderType: "staff", senderName: member?.name ?? "직원" };
   }
 
@@ -334,7 +336,7 @@ router.post("/chat/send", async (req, res) => {
 });
 
 router.get("/messages/:reservationId", async (req, res) => {
-  const auth = resolveAuth(req);
+  const auth = await resolveAuth(req);
   if (!auth.ok) { res.status(401).json({ error: "인증이 필요합니다." }); return; }
   const reservationId = parseInt(req.params.reservationId);
   const rows = await db
@@ -346,7 +348,7 @@ router.get("/messages/:reservationId", async (req, res) => {
 });
 
 router.post("/messages/:reservationId", async (req, res) => {
-  const auth = resolveAuth(req);
+  const auth = await resolveAuth(req);
   if (!auth.ok) { res.status(401).json({ error: "인증이 필요합니다." }); return; }
   const reservationId = parseInt(req.params.reservationId);
   const { message } = req.body as { message?: string };
@@ -420,9 +422,9 @@ router.get("/customer/reservation", async (req, res) => {
     return;
   }
 
-  const assignedStaff = result.assignedStaffId
-    ? staff.find((s) => s.id === result.assignedStaffId) ?? null
-    : null;
+  const [assignedStaff] = result.assignedStaffId
+    ? await db.select().from(staffTable).where(eq(staffTable.id, result.assignedStaffId))
+    : [];
 
   res.json({
     success: true,
