@@ -28,6 +28,7 @@ export const reservationsTable = pgTable("reservations", {
 }, (table) => [
   index("idx_reservations_date_status").on(table.date, table.status),
   index("idx_phone_status").on(table.phone, table.status),
+  index("idx_date_staff_time").on(table.date, table.assignedStaffId, table.time),
 ]);
 
 export const RESERVATION_STATUS = {
