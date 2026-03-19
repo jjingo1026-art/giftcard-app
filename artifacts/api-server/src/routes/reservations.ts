@@ -5,6 +5,13 @@ import { eq, and, inArray } from "drizzle-orm";
 
 const normalizePhone = (phone: string) => phone.replace(/[^0-9]/g, "");
 
+const isValidTime = (time: string) => {
+  const match = time.match(/^(\d{2}):(\d{2})$/);
+  if (!match) return false;
+  const minutes = parseInt(match[2], 10);
+  return minutes % 10 === 0;
+};
+
 const router: IRouter = Router();
 
 router.get("/", async (_req, res) => {
@@ -103,6 +110,13 @@ router.post("/", async (req, res) => {
   if (!body.phone) {
     res.status(400).json({ error: "필수 항목이 누락되었습니다." });
     return;
+  }
+
+  if (body.kind !== "urgent" && body.time) {
+    if (!isValidTime(body.time)) {
+      res.status(400).json({ error: "예약 시간은 10분 단위로만 가능합니다" });
+      return;
+    }
   }
 
   const normalizedPhone = normalizePhone(body.phone);
