@@ -60,6 +60,8 @@ export default function AdminDashboard() {
   const [assigning, setAssigning] = useState<number | null>(null);
   const [showUnassignedSlots, setShowUnassignedSlots] = useState(false);
   const [calendarData, setCalendarData] = useState<{ date: string; total: number; unassigned: number; assigned: number }[]>([]);
+  const [timeSlots, setTimeSlots] = useState<{ time: string | null; count: number }[]>([]);
+  const [slotsLoading, setSlotsLoading] = useState(false);
 
   const token = getAdminToken();
   if (!token) { navigate("/admin/login"); return null; }
@@ -168,6 +170,7 @@ export default function AdminDashboard() {
   function handleDateClick(info: { dateStr: string }) {
     setDateFilter(info.dateStr);
     setShowUnassignedSlots(false);
+    setTimeSlots([]);
     filter(info.dateStr);
   }
 
@@ -342,7 +345,7 @@ export default function AdminDashboard() {
                 <div className="flex items-center justify-between px-1">
                   <p className="text-[14px] font-black text-slate-800">📅 {formatDateKo(dateFilter)}</p>
                   <button
-                    onClick={() => { setDateFilter(""); setEntries(allEntries); setShowUnassignedSlots(false); }}
+                    onClick={() => { setDateFilter(""); setEntries(allEntries); setShowUnassignedSlots(false); setTimeSlots([]); }}
                     className="text-[11px] text-slate-400 hover:text-rose-500 font-medium"
                   >전체 보기</button>
                 </div>
@@ -352,7 +355,20 @@ export default function AdminDashboard() {
                     <p className="text-[20px] font-black text-slate-800">{dateTotal}</p>
                   </div>
                   <button
-                    onClick={() => setShowUnassignedSlots((v) => !v)}
+                    onClick={async () => {
+                      const next = !showUnassignedSlots;
+                      setShowUnassignedSlots(next);
+                      if (next && timeSlots.length === 0) {
+                        setSlotsLoading(true);
+                        try {
+                          const r = await fetch(
+                            `/api/admin/reservations/unassigned-by-time?date=${dateFilter}`,
+                            { headers: { Authorization: `Bearer ${token}` } }
+                          );
+                          if (r.ok) setTimeSlots(await r.json());
+                        } finally { setSlotsLoading(false); }
+                      }
+                    }}
                     className="text-center bg-rose-50 rounded-2xl py-3 transition-all active:scale-95"
                     style={{ border: showUnassignedSlots ? "2px solid #fca5a5" : "2px solid transparent" }}
                   >
@@ -367,14 +383,16 @@ export default function AdminDashboard() {
                 {showUnassignedSlots && (
                   <div className="bg-white border border-rose-100 rounded-2xl overflow-hidden">
                     <p className="px-4 pt-3 pb-2 text-[12px] font-bold text-slate-500 flex items-center gap-1.5">🕐 시간대별 미배정 리스트</p>
-                    {slots.length === 0 ? (
+                    {slotsLoading ? (
+                      <p className="px-4 pb-3 text-[13px] text-slate-400">불러오는 중...</p>
+                    ) : timeSlots.length === 0 ? (
                       <p className="px-4 pb-3 text-[13px] text-slate-400">미배정 건 없음</p>
                     ) : (
                       <ul className="divide-y divide-slate-50">
-                        {slots.map(([time, count]) => (
-                          <li key={time} className="flex items-center justify-between px-4 py-2.5">
-                            <span className="text-[13px] font-semibold text-slate-700">{time}</span>
-                            <span className="text-[13px] font-black text-rose-500">{count}건</span>
+                        {timeSlots.map((s) => (
+                          <li key={s.time ?? "—"} className="flex items-center justify-between px-4 py-2.5">
+                            <span className="text-[13px] font-semibold text-slate-700">{s.time ?? "시간 미정"}</span>
+                            <span className="text-[13px] font-black text-rose-500">{s.count}건</span>
                           </li>
                         ))}
                       </ul>

@@ -360,6 +360,32 @@ router.get("/reservations/calendar", requireAuth, requireAdmin, async (_req, res
   }
 });
 
+// GET /api/admin/reservations/unassigned-by-time?date=YYYY-MM-DD — 시간대별 미배정 집계
+router.get("/reservations/unassigned-by-time", requireAuth, requireAdmin, async (req, res) => {
+  const { date } = req.query as { date?: string };
+  if (!date) { res.status(400).json({ error: "date 필요" }); return; }
+
+  try {
+    const rows = await db
+      .select({
+        time:  reservationsTable.time,
+        count: sql<number>`COUNT(*)`,
+      })
+      .from(reservationsTable)
+      .where(and(
+        eq(reservationsTable.date, date),
+        isNull(reservationsTable.assignedStaffId),
+      ))
+      .groupBy(reservationsTable.time)
+      .orderBy(reservationsTable.time);
+
+    res.json(rows);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Failed to fetch unassigned-by-time" });
+  }
+});
+
 // 배정되지 않은 예약 조회 (assignedStaffId IS NULL)
 // GET /api/admin/reservations/unassigned?date=YYYY-MM-DD&status=pending
 router.get("/reservations/unassigned", requireAuth, requireAdmin, async (req, res) => {
