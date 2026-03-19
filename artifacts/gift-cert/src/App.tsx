@@ -353,9 +353,6 @@ function HomePage({ onGoUrgent }: { onGoUrgent: () => void }) {
         <div className="bg-white rounded-3xl shadow-sm border border-slate-100 overflow-hidden">
           <div className="px-5 pt-5 pb-3 flex items-center justify-between">
             <div><h2 className="text-[15px] font-bold text-slate-800">예약 신청</h2><p className="text-[12px] text-slate-400 mt-0.5">Reservation Form</p></div>
-            <a href="/terms.html" className="text-[12px] font-semibold text-amber-500 hover:text-amber-600 flex items-center gap-1">
-              ⚠️ 주의사항
-            </a>
           </div>
           <form onSubmit={handleSubmit} className="px-5 pb-5 space-y-4">
             <Field label="이름" required error={fieldErrors.name}>
