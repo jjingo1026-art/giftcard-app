@@ -136,6 +136,24 @@ router.post("/", async (req, res) => {
     return;
   }
 
+  if (body.kind !== "urgent" && body.date && body.time) {
+    const slotTaken = await db
+      .select()
+      .from(reservationsTable)
+      .where(
+        and(
+          eq(reservationsTable.date, body.date),
+          eq(reservationsTable.time, body.time),
+          inArray(reservationsTable.status, ["pending", "assigned"])
+        )
+      );
+
+    if (slotTaken.length > 0) {
+      res.status(400).json({ error: "이미 예약된 시간입니다" });
+      return;
+    }
+  }
+
   // 노쇼 차단 여부 확인
   const [user] = await db.select().from(usersTable).where(eq(usersTable.id, normalizedPhone));
   if (user?.isBlocked) {
