@@ -67,11 +67,13 @@ interface ReservationEntry {
   id: number; name: string; phone: string; date: string; time: string;
   location: string; items: SavedItem[]; totalPayment: number;
   bankName: string; accountNumber: string; accountHolder: string;
+  isUrgent: boolean;
 }
 interface UrgentEntry {
   id: number; name: string; phone: string;
   location: string; items: SavedItem[]; totalPayment: number;
   bankName: string; accountNumber: string; accountHolder: string;
+  isUrgent: boolean;
 }
 
 function formatKRW(n: number) { return n.toLocaleString("ko-KR") + "원"; }
@@ -314,7 +316,7 @@ function HomePage({ onGoUrgent }: { onGoUrgent: () => void }) {
       if (res.ok) { const data = await res.json(); id = data.id; }
     } catch {}
     setCounter(id);
-    setSubmissions((p) => [{ id, name, phone, date, time, location, items: savedItems, totalPayment, bankName, accountNumber, accountHolder }, ...p]);
+    setSubmissions((p) => [{ id, name, phone, date, time, location, items: savedItems, totalPayment, bankName, accountNumber, accountHolder, isUrgent: false }, ...p]);
     saveEntry({ kind: "reservation", id, createdAt: new Date().toISOString(), name, phone, date, time, location, items: savedItems, totalPayment, bankName, accountNumber, accountHolder });
     setName(""); setPhone(""); setDate(""); setTime(""); setLocation(""); setAccountNumber(""); setAccountHolder("");
     setItems([{ type: DEFAULT_TYPE, amount: "", isGift: false }]); setItemErrors([""]);
@@ -594,7 +596,7 @@ function HomePage({ onGoUrgent }: { onGoUrgent: () => void }) {
               <span className="text-[12px] text-slate-400">최신순</span>
             </div>
             {submissions.map((s) => (
-              <SubmissionCard key={s.id} entry={s} accent="indigo" />
+              <SubmissionCard key={s.id} entry={s} />
             ))}
           </div>
         )}
@@ -605,20 +607,21 @@ function HomePage({ onGoUrgent }: { onGoUrgent: () => void }) {
 }
 
 // ─── SUBMISSION CARD ──────────────────────────────────────────────────────────
-function SubmissionCard({ entry, accent }: { entry: ReservationEntry | UrgentEntry; accent: "indigo" | "rose" }) {
+function SubmissionCard({ entry }: { entry: ReservationEntry | UrgentEntry }) {
+  const isUrgent = entry.isUrgent;
   const isRes = "date" in entry && !!(entry as ReservationEntry).date;
-  const ac = accent === "rose"
+  const ac = isUrgent
     ? { text: "text-rose-500", bg: "bg-rose-50", border: "border-rose-100", pill: "bg-rose-100 text-rose-600" }
     : { text: "text-indigo-500", bg: "bg-indigo-50", border: "border-indigo-100", pill: "bg-indigo-100 text-indigo-600" };
 
   return (
-    <div className={`bg-white rounded-3xl shadow-sm border overflow-hidden ${accent === "rose" ? "border-rose-100" : "border-slate-100"}`}>
+    <div className={`bg-white rounded-3xl shadow-sm border overflow-hidden ${isUrgent ? "border-rose-100" : "border-slate-100"}`}>
 
       {/* ── 카드 헤더 라벨 ── */}
       <div className={`px-5 pt-4 pb-2 flex items-center justify-between`}>
         <div className="flex items-center gap-2">
           <span className={`text-[11px] font-bold px-2.5 py-1 rounded-full tracking-wide ${ac.pill}`}>
-            {accent === "rose" ? "🚨 긴급" : "📋 예약 카드"}
+            {isUrgent ? "🚨 긴급" : "📋 예약 카드"}
           </span>
           <span className="text-[11px] text-slate-300">#{entry.id}</span>
         </div>
@@ -756,7 +759,7 @@ function UrgentPage({ onBack }: { onBack: () => void }) {
       if (res.ok) { const data = await res.json(); id = data.id; }
     } catch {}
     setCounter(id);
-    setSubmissions((p) => [{ id, name, phone, location, items: savedItems, totalPayment, bankName, accountNumber, accountHolder }, ...p]);
+    setSubmissions((p) => [{ id, name, phone, location, items: savedItems, totalPayment, bankName, accountNumber, accountHolder, isUrgent: true }, ...p]);
     saveEntry({ kind: "urgent", id, createdAt: new Date().toISOString(), name, phone, location, items: savedItems, totalPayment, bankName, accountNumber, accountHolder });
     setName(""); setPhone(""); setLocation(""); setAccountNumber(""); setAccountHolder("");
     setItems([{ type: DEFAULT_TYPE, amount: "", isGift: false }]); setItemErrors([""]); setAgreeMatch(false);
@@ -904,7 +907,7 @@ function UrgentPage({ onBack }: { onBack: () => void }) {
               <h2 className="text-[15px] font-bold text-slate-700">긴급 접수 내역</h2>
               <span className="text-[12px] text-slate-400">최신순</span>
             </div>
-            {submissions.map((s) => <SubmissionCard key={s.id} entry={s} accent="rose" />)}
+            {submissions.map((s) => <SubmissionCard key={s.id} entry={s} />)}
           </div>
         )}
       </div>
