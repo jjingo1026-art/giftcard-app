@@ -21,6 +21,17 @@ router.get("/by-date", async (req, res) => {
   res.json(data);
 });
 
+router.get("/customer", async (req, res) => {
+  const { phone } = req.query;
+
+  const data = await db
+    .select()
+    .from(reservationsTable)
+    .where(eq(reservationsTable.phone, String(phone)));
+
+  res.json(data);
+});
+
 router.post("/", async (req, res) => {
   const body = req.body as {
     kind?: string;
