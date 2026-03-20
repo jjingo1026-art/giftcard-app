@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from "react";
+import { useImageUpload } from "@/hooks/useImageUpload";
 
 interface Message {
   id: number;
@@ -20,6 +21,20 @@ export default function StaffDetail() {
   const [chatMessages, setChatMessages] = useState<Message[]>([]);
   const [msg, setMsg] = useState("");
   const chatBoxRef = useRef<HTMLDivElement>(null);
+
+  const { inputRef: imgInputRef, openPicker, onChange: onImgChange, isUploading: imgUploading } = useImageUpload(async ({ serveUrl }) => {
+    await fetch("/api/admin/chat/send", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        reservationId: Number(reservationId),
+        sender: "staff",
+        senderName: staffName,
+        message: `[IMG:${serveUrl}]`,
+      }),
+    });
+    loadChat();
+  });
 
   useEffect(() => {
     if (!token) { window.location.href = "/staff/login"; return; }
@@ -78,6 +93,9 @@ export default function StaffDetail() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-100 to-slate-200 flex items-center justify-center p-4">
+      {/* 숨김 파일 input */}
+      <input ref={imgInputRef} type="file" accept="image/*" className="hidden" onChange={onImgChange} />
+
       {/* 채팅 창 */}
       <div
         className="w-full max-w-lg flex flex-col rounded-3xl overflow-hidden shadow-2xl"
@@ -100,7 +118,6 @@ export default function StaffDetail() {
             <p className="text-white font-bold text-[15px] truncate">예약 #{reservationId} 채팅</p>
             <p className="text-indigo-200 text-[11px]">담당자: {staffName}</p>
           </div>
-          {/* 창 조작 버튼 (데코) */}
           <div className="flex gap-1.5 flex-shrink-0">
             <div className="w-3 h-3 rounded-full bg-white/30" />
             <div className="w-3 h-3 rounded-full bg-white/30" />
@@ -122,6 +139,8 @@ export default function StaffDetail() {
           )}
           {chatMessages.map((m) => {
             const isMine = m.sender === "staff";
+            const isImg = m.message.startsWith("[IMG:");
+            const imgUrl = isImg ? m.message.slice(5, -1) : "";
             return (
               <div key={m.id} className={`flex items-end gap-2 ${isMine ? "justify-end" : "justify-start"}`}>
                 {/* 상대방 아바타 */}
@@ -131,17 +150,26 @@ export default function StaffDetail() {
                   </div>
                 )}
                 <div className={`flex flex-col ${isMine ? "items-end" : "items-start"} max-w-[72%]`}>
-                  {!isMine && (
+                  {!isMine && !isImg && (
                     <p className="text-[11px] text-slate-400 font-semibold ml-1 mb-1">{m.senderName}</p>
                   )}
-                  <div className={`px-3.5 py-2.5 rounded-2xl text-[14px] leading-relaxed ${
-                    isMine
-                      ? "bg-indigo-500 text-white rounded-br-sm"
-                      : "bg-white border border-slate-100 shadow-sm text-slate-800 rounded-bl-sm"
-                  }`}>
-                    <p className="whitespace-pre-wrap">{m.message}</p>
-                  </div>
-                  <p className={`text-[10px] mt-1 mx-1 ${isMine ? "text-slate-400" : "text-slate-400"}`}>
+                  {isImg ? (
+                    <img
+                      src={imgUrl}
+                      alt="이미지"
+                      className="max-w-[200px] max-h-[260px] rounded-2xl object-cover cursor-pointer shadow-sm"
+                      onClick={() => window.open(imgUrl, "_blank")}
+                    />
+                  ) : (
+                    <div className={`px-3.5 py-2.5 rounded-2xl text-[14px] leading-relaxed ${
+                      isMine
+                        ? "bg-indigo-500 text-white rounded-br-sm"
+                        : "bg-white border border-slate-100 shadow-sm text-slate-800 rounded-bl-sm"
+                    }`}>
+                      <p className="whitespace-pre-wrap">{m.message}</p>
+                    </div>
+                  )}
+                  <p className="text-[10px] mt-1 mx-1 text-slate-400">
                     {new Date(m.time).toLocaleTimeString("ko-KR", { hour: "2-digit", minute: "2-digit" })}
                   </p>
                 </div>
@@ -159,6 +187,15 @@ export default function StaffDetail() {
         {/* 입력 영역 */}
         <div className="flex-shrink-0 bg-white border-t border-slate-100 px-4 py-3">
           <div className="flex items-center gap-2">
+            {/* 사진 첨부 버튼 */}
+            <button
+              onClick={openPicker}
+              disabled={imgUploading}
+              className="w-10 h-10 flex items-center justify-center rounded-2xl bg-slate-100 text-[18px] hover:bg-slate-200 transition-colors active:scale-95 disabled:opacity-50 flex-shrink-0"
+              title="사진 첨부"
+            >
+              {imgUploading ? <span className="text-[11px] text-slate-500 font-bold">…</span> : "📷"}
+            </button>
             <input
               value={msg}
               onChange={(e) => setMsg(e.target.value)}

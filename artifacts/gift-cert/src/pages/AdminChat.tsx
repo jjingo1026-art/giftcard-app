@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from "react";
 import { useLocation } from "wouter";
 import { io, Socket } from "socket.io-client";
 import { getAdminToken } from "./AdminLogin";
+import { useImageUpload } from "@/hooks/useImageUpload";
 
 interface Message {
   id: number;
@@ -26,6 +27,15 @@ export default function AdminChat() {
 
   const token = getAdminToken();
   if (!token) { navigate("/admin/login"); return null; }
+
+  const { inputRef: imgInputRef, openPicker, onChange: onImgChange, isUploading: imgUploading } = useImageUpload(({ serveUrl }) => {
+    if (!socketRef.current) return;
+    socketRef.current.emit("sendMessage", {
+      reservationId: Number(reservationId),
+      sender: "admin",
+      message: `[IMG:${serveUrl}]`,
+    });
+  });
 
   function scrollToBottom() {
     setTimeout(() => {
@@ -131,24 +141,43 @@ export default function AdminChat() {
           )}
           {messages.map((m) => {
             const isMine = m.sender === "admin";
+            const isImg = m.message.startsWith("[IMG:");
+            const imgUrl = isImg ? m.message.slice(5, -1) : "";
             return (
               <div key={m.id} className={`flex flex-col ${isMine ? "items-end" : "items-start"}`}>
-                <div className={`max-w-[75%] px-3.5 py-2.5 rounded-2xl text-[14px] shadow-sm ${
+                <div className={`max-w-[75%] rounded-2xl text-[14px] shadow-sm overflow-hidden ${
+                  isImg ? "p-0 bg-transparent shadow-none" :
                   isMine
-                    ? "bg-indigo-500 text-white rounded-br-sm"
+                    ? "px-3.5 py-2.5 bg-indigo-500 text-white rounded-br-sm"
                     : m.sender === "staff"
-                      ? "bg-violet-100 text-violet-800 rounded-bl-sm"
-                      : "bg-slate-100 text-slate-800 rounded-bl-sm"
+                      ? "px-3.5 py-2.5 bg-violet-100 text-violet-800 rounded-bl-sm"
+                      : "px-3.5 py-2.5 bg-slate-100 text-slate-800 rounded-bl-sm"
                 }`}>
-                  {!isMine && (
+                  {!isMine && !isImg && (
                     <p className="text-[10px] font-bold mb-0.5 opacity-60">{m.senderName}</p>
                   )}
-                  <p>{m.message}</p>
-                  <p className={`text-[10px] mt-0.5 ${isMine ? "text-indigo-200" : "text-slate-400"}`}>
+                  {isImg ? (
+                    <img
+                      src={imgUrl}
+                      alt="이미지"
+                      className="max-w-[220px] max-h-[280px] rounded-2xl object-cover cursor-pointer"
+                      onClick={() => window.open(imgUrl, "_blank")}
+                    />
+                  ) : (
+                    <p className="whitespace-pre-wrap">{m.message}</p>
+                  )}
+                  {!isImg && (
+                    <p className={`text-[10px] mt-0.5 ${isMine ? "text-indigo-200" : "text-slate-400"}`}>
+                      {new Date(m.time).toLocaleTimeString()}
+                    </p>
+                  )}
+                </div>
+                {isImg && (
+                  <p className={`text-[10px] mt-0.5 text-slate-400 ${isMine ? "mr-1" : "ml-1"}`}>
                     {new Date(m.time).toLocaleTimeString()}
                   </p>
-                </div>
-                {isMine && (
+                )}
+                {isMine && !isImg && (
                   <span className="text-[10px] text-slate-400 mt-0.5 mr-1">
                     {m.read ? "읽음" : ""}
                   </span>
@@ -158,7 +187,21 @@ export default function AdminChat() {
           })}
         </div>
 
+        {/* 숨김 파일 input */}
+        <input ref={imgInputRef} type="file" accept="image/*" className="hidden" onChange={onImgChange} />
+
         <div className="flex gap-2 mt-3">
+          {/* 사진 첨부 버튼 */}
+          <button
+            onClick={openPicker}
+            disabled={imgUploading}
+            className="w-11 h-11 rounded-2xl bg-slate-100 flex items-center justify-center text-[18px] hover:bg-slate-200 transition-colors active:scale-95 disabled:opacity-50 flex-shrink-0"
+            title="사진 첨부"
+          >
+            {imgUploading ? (
+              <span className="text-[11px] text-slate-500 font-bold">...</span>
+            ) : "📷"}
+          </button>
           <input
             value={msg}
             onChange={(e) => setMsg(e.target.value)}
@@ -168,7 +211,7 @@ export default function AdminChat() {
           />
           <button
             onClick={send}
-            className="px-5 py-3 rounded-2xl bg-indigo-500 text-white text-[14px] font-bold hover:bg-indigo-600 transition-colors active:scale-95"
+            className="px-5 py-3 rounded-2xl bg-indigo-500 text-white text-[14px] font-bold hover:bg-indigo-600 transition-colors active:scale-95 flex-shrink-0"
           >
             전송
           </button>
