@@ -989,6 +989,41 @@ router.post("/customer/cancel", async (req, res) => {
   res.json({ success: true });
 });
 
+// ── 고객용: 예약 수정 ─────────────────────────────────────────────────────────
+router.post("/customer/update", async (req, res) => {
+  const { phone, reservationId, date, time, location } = req.body as {
+    phone?: string; reservationId?: number;
+    date?: string; time?: string; location?: string;
+  };
+  if (!phone || !reservationId) {
+    res.status(400).json({ success: false, error: "phone, reservationId 필수입니다." }); return;
+  }
+  const [row] = await db.select().from(reservationsTable).where(eq(reservationsTable.id, reservationId));
+  if (!row) { res.status(404).json({ success: false, error: "예약을 찾을 수 없습니다." }); return; }
+  const normalizePhone = (p: string) => p.replace(/\D/g, "");
+  if (normalizePhone(row.phone ?? "") !== normalizePhone(phone)) {
+    res.status(403).json({ success: false, error: "전화번호가 일치하지 않습니다." }); return;
+  }
+  if (["cancelled", "completed", "no_show"].includes(row.status ?? "")) {
+    res.json({ success: false, error: "수정할 수 없는 상태의 예약입니다." }); return;
+  }
+  if (row.date && row.time) {
+    const scheduled = new Date(`${row.date}T${row.time}`);
+    if (scheduled.getTime() - Date.now() < 60 * 60 * 1000) {
+      res.json({ success: false, error: "예약 1시간 전까지만 수정할 수 있습니다." }); return;
+    }
+  }
+  const updates: Record<string, any> = {};
+  if (date !== undefined) updates.date = date || null;
+  if (time !== undefined) updates.time = time || null;
+  if (location !== undefined) updates.location = location || null;
+  if (Object.keys(updates).length === 0) {
+    res.json({ success: false, error: "변경할 내용이 없습니다." }); return;
+  }
+  await db.update(reservationsTable).set(updates).where(eq(reservationsTable.id, reservationId));
+  res.json({ success: true });
+});
+
 // ── 고객용: 전화번호로 예약 조회 ─────────────────────────────────────────────
 router.get("/customer/reservation", async (req, res) => {
   const { phone } = req.query as { phone?: string };
