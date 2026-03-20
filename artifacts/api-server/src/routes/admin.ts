@@ -991,10 +991,12 @@ router.post("/customer/cancel", async (req, res) => {
 
 // ── 고객용: 예약 수정 ─────────────────────────────────────────────────────────
 router.post("/customer/update", async (req, res) => {
-  const { phone, reservationId, date, time, location, giftcardType, amount, isGift } = req.body as {
+  type ReqItem = { type: string; amount: number; rate: number; payment: number; isGift: boolean };
+  const { phone, reservationId, date, time, location, giftcardType, amount, isGift, items } = req.body as {
     phone?: string; reservationId?: number;
     date?: string; time?: string; location?: string;
     giftcardType?: string; amount?: number; isGift?: boolean;
+    items?: ReqItem[];
   };
   if (!phone || !reservationId) {
     res.status(400).json({ success: false, error: "phone, reservationId 필수입니다." }); return;
@@ -1024,20 +1026,31 @@ router.post("/customer/update", async (req, res) => {
   if (date !== undefined) updates.date = date || null;
   if (time !== undefined) updates.time = time || null;
   if (location !== undefined) updates.location = location || null;
-  if (giftcardType !== undefined) {
-    updates.giftcardType = giftcardType || null;
-    if (giftcardType && GIFT_RATES[giftcardType]) updates.rate = GIFT_RATES[giftcardType];
-  }
-  // isGift: rate에서 1% 차감
-  const baseRate = updates.rate ?? row.rate ?? 0;
-  const effectiveRate = isGift !== undefined ? baseRate - (isGift ? 1 : 0) : baseRate;
-  if (amount !== undefined && !isNaN(Number(amount))) {
-    const amt = Number(amount);
-    updates.amount = amt;
-    if (effectiveRate) updates.totalPayment = Math.floor(amt * (effectiveRate / 100));
-  } else if (isGift !== undefined && row.amount) {
-    // 금액 변경 없어도 isGift 변경 시 totalPayment 재계산
-    if (effectiveRate) updates.totalPayment = Math.floor(row.amount * (effectiveRate / 100));
+
+  // items 배열 우선 처리 (멀티 권종)
+  if (items && items.length > 0) {
+    const total = items.reduce((s, it) => s + (it.payment ?? 0), 0);
+    updates.items = items;
+    updates.totalPayment = total;
+    // 첫 번째 아이템을 대표 필드로 사용
+    updates.giftcardType = items[0].type;
+    updates.amount = items[0].amount;
+    updates.rate = items[0].rate;
+  } else {
+    // 단일 필드 처리 (하위 호환)
+    if (giftcardType !== undefined) {
+      updates.giftcardType = giftcardType || null;
+      if (giftcardType && GIFT_RATES[giftcardType]) updates.rate = GIFT_RATES[giftcardType];
+    }
+    const baseRate = updates.rate ?? row.rate ?? 0;
+    const effectiveRate = isGift !== undefined ? baseRate - (isGift ? 1 : 0) : baseRate;
+    if (amount !== undefined && !isNaN(Number(amount))) {
+      const amt = Number(amount);
+      updates.amount = amt;
+      if (effectiveRate) updates.totalPayment = Math.floor(amt * (effectiveRate / 100));
+    } else if (isGift !== undefined && row.amount) {
+      if (effectiveRate) updates.totalPayment = Math.floor(row.amount * (effectiveRate / 100));
+    }
   }
   if (Object.keys(updates).length === 0) {
     res.json({ success: false, error: "변경할 내용이 없습니다." }); return;

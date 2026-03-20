@@ -1,6 +1,8 @@
 import { useState } from "react";
 import { formatPhone, formatDateKo } from "@/lib/store";
 
+interface EditItem { type: string; amount: string; isGift: boolean; }
+
 interface StaffInfo { id: number; name: string; phone: string; }
 interface ReservationItem {
   type: string;
@@ -48,13 +50,11 @@ export default function ReservationCheck() {
 
   // 수정
   const [editMode, setEditMode] = useState(false);
-  const [typeOpen, setTypeOpen] = useState(false);
+  const [editItems, setEditItems] = useState<EditItem[]>([{ type: "", amount: "", isGift: false }]);
+  const [openTypeIdx, setOpenTypeIdx] = useState<number | null>(null);
   const [editDate, setEditDate] = useState("");
   const [editTime, setEditTime] = useState("");
   const [editLocation, setEditLocation] = useState("");
-  const [editGiftcardType, setEditGiftcardType] = useState("");
-  const [editAmount, setEditAmount] = useState("");
-  const [editIsGift, setEditIsGift] = useState(false);
   const [saving, setSaving] = useState(false);
   const [editError, setEditError] = useState("");
   const [editSuccess, setEditSuccess] = useState(false);
@@ -136,21 +136,56 @@ export default function ReservationCheck() {
     setEditDate(reservation.date ?? "");
     setEditTime(reservation.time ?? "");
     setEditLocation(reservation.location ?? "");
-    setEditGiftcardType(reservation.giftcardType ?? "");
-    setEditAmount(reservation.amount ? String(reservation.amount) : "");
-    setEditIsGift(reservation.items?.[0]?.isGift ?? false);
+    if (reservation.items && reservation.items.length > 0) {
+      setEditItems(reservation.items.map(it => ({
+        type: it.type,
+        amount: String(it.amount),
+        isGift: it.isGift,
+      })));
+    } else {
+      setEditItems([{
+        type: reservation.giftcardType ?? "",
+        amount: reservation.amount ? String(reservation.amount) : "",
+        isGift: false,
+      }]);
+    }
+    setOpenTypeIdx(null);
     setEditError("");
-    setTypeOpen(false);
     setEditMode(true);
+  }
+
+  function updateItem(idx: number, field: keyof EditItem, val: string | boolean) {
+    setEditItems(prev => prev.map((it, i) => i === idx ? { ...it, [field]: val } : it));
+  }
+
+  function addItem() {
+    setEditItems(prev => [...prev, { type: "", amount: "", isGift: false }]);
+  }
+
+  function removeItem(idx: number) {
+    setEditItems(prev => prev.filter((_, i) => i !== idx));
+    setOpenTypeIdx(null);
   }
 
   async function submitEdit(e: React.FormEvent) {
     e.preventDefault();
     if (!reservation) return;
-    if (editAmount && (isNaN(Number(editAmount)) || Number(editAmount) <= 0)) {
-      setEditError("올바른 금액을 입력해주세요."); return;
+    for (let i = 0; i < editItems.length; i++) {
+      const it = editItems[i];
+      if (!it.type) { setEditError(`${i + 1}번 항목의 권종을 선택해주세요.`); return; }
+      const amt = Number(it.amount);
+      if (!it.amount || isNaN(amt) || amt <= 0) { setEditError(`${i + 1}번 항목의 금액을 입력해주세요.`); return; }
     }
     setSaving(true); setEditError("");
+
+    const itemsPayload = editItems.map(it => {
+      const giftType = GIFT_TYPES.find(g => g.label === it.type);
+      const rate = (giftType?.rate ?? 0) - (it.isGift ? 1 : 0);
+      const amountNum = Number(it.amount);
+      return { type: it.type, amount: amountNum, rate, payment: Math.floor(amountNum * rate / 100), isGift: it.isGift };
+    });
+    const totalPayment = itemsPayload.reduce((s, it) => s + it.payment, 0);
+
     try {
       const res = await fetch("/api/admin/customer/update", {
         method: "POST",
@@ -161,9 +196,7 @@ export default function ReservationCheck() {
           date: editDate || undefined,
           time: editTime || undefined,
           location: editLocation || undefined,
-          giftcardType: editGiftcardType || undefined,
-          amount: editAmount ? Number(editAmount) : undefined,
-          isGift: editIsGift,
+          items: itemsPayload,
         }),
       });
       const data = await res.json();
@@ -173,8 +206,10 @@ export default function ReservationCheck() {
           date: editDate || reservation.date,
           time: editTime || reservation.time,
           location: editLocation || reservation.location,
-          giftcardType: editGiftcardType || reservation.giftcardType,
-          amount: editAmount ? Number(editAmount) : reservation.amount,
+          items: itemsPayload,
+          giftcardType: itemsPayload[0]?.type,
+          amount: itemsPayload[0]?.amount,
+          totalPayment,
         });
         setEditMode(false);
         setEditSuccess(true);
@@ -213,119 +248,122 @@ export default function ReservationCheck() {
           <button type="button" onClick={() => setEditMode(false)} className="text-[12px] text-slate-400 hover:text-slate-600">닫기</button>
         </div>
         <div className="px-5 py-4 space-y-4">
-          {/* 권종 + 증정용 */}
+          {/* 권종 멀티 아이템 */}
           <div className="space-y-2">
-            <div className="flex items-center justify-between">
-              <label className="block text-[12px] font-bold text-slate-500 uppercase tracking-wide">상품권 권종</label>
-              {/* 증정용 토글 버튼 */}
-              <button
-                type="button"
-                onClick={() => setEditIsGift((g) => !g)}
-                className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-full font-bold text-[13px] border-2 transition-all duration-150 active:scale-95
-                  ${editIsGift
-                    ? "bg-violet-500 border-violet-500 text-white shadow-sm shadow-violet-200"
-                    : "bg-white border-slate-200 text-slate-400 hover:border-violet-400 hover:bg-violet-50 hover:text-violet-500"}`}
-              >
-                <span className="text-[16px] leading-none">🎁</span>
-                <span>증정용</span>
-                {editIsGift && (
-                  <span className="text-[10px] font-black bg-violet-400 text-white px-1.5 py-0.5 rounded-full">-1%</span>
-                )}
-              </button>
-            </div>
-
-            <div className="relative">
-              {/* 트리거 버튼 */}
-              <button
-                type="button"
-                onClick={() => setTypeOpen((o) => !o)}
-                className={`w-full flex items-center justify-between px-4 py-3 rounded-xl border-2 text-[14px] font-semibold transition-all
-                  ${typeOpen
-                    ? "border-indigo-400 bg-white text-slate-800"
-                    : editGiftcardType
-                      ? "border-indigo-300 bg-indigo-50 text-indigo-700"
-                      : "border-slate-200 bg-slate-50 text-slate-400"}`}
-              >
-                <span>{editGiftcardType || "권종 선택"}</span>
-                <svg
-                  width="16" height="16" viewBox="0 0 20 20" fill="none"
-                  className={`transition-transform duration-200 flex-shrink-0 ${typeOpen ? "rotate-180 text-indigo-500" : "text-slate-400"}`}
-                >
-                  <path d="M5 8l5 5 5-5" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
-                </svg>
-              </button>
-
-              {/* 드롭다운 목록 */}
-              {typeOpen && (
-                <div className="absolute z-20 top-full left-0 right-0 mt-1.5 bg-white border border-slate-200 rounded-2xl shadow-lg overflow-hidden">
-                  <div className="overflow-y-auto max-h-52">
-                    {GIFT_TYPES.map(({ label, rate }) => (
-                      <button
-                        key={label}
-                        type="button"
-                        onClick={() => { setEditGiftcardType(label); setTypeOpen(false); }}
-                        className={`w-full flex items-center justify-between px-4 py-3 text-left text-[14px] transition-colors border-b border-slate-50 last:border-0
-                          ${editGiftcardType === label
-                            ? "bg-indigo-50 text-indigo-700 font-bold"
-                            : "text-slate-700 hover:bg-slate-50 font-medium"}`}
+            <label className="block text-[12px] font-bold text-slate-500 uppercase tracking-wide">상품권 종류 &amp; 금액</label>
+            <div className="space-y-2">
+              {editItems.map((item, idx) => {
+                const giftType = GIFT_TYPES.find(g => g.label === item.type);
+                const effectiveRate = giftType ? giftType.rate - (item.isGift ? 1 : 0) : 0;
+                const amt = Number(item.amount);
+                const payment = (amt > 0 && giftType) ? Math.floor(amt * effectiveRate / 100) : 0;
+                const isOpen = openTypeIdx === idx;
+                return (
+                  <div key={idx} className="rounded-2xl border border-slate-200 bg-slate-50 p-3 space-y-2">
+                    {/* 권종 선택 드롭다운 + 증정용 + 삭제 */}
+                    <div className="flex gap-2 items-stretch">
+                      <div className="flex-1 relative">
+                        <button
+                          type="button"
+                          onClick={() => setOpenTypeIdx(isOpen ? null : idx)}
+                          className={`w-full h-full flex items-center justify-between px-3 py-2.5 rounded-xl border-2 text-[13px] font-semibold transition-all
+                            ${isOpen ? "border-indigo-400 bg-white text-slate-800"
+                              : item.type ? "border-indigo-300 bg-white text-indigo-700"
+                              : "border-slate-200 bg-white text-slate-400"}`}
+                        >
+                          <span className="truncate">{item.type || "권종 선택"}</span>
+                          <svg width="14" height="14" viewBox="0 0 20 20" fill="none"
+                            className={`transition-transform duration-200 flex-shrink-0 ml-1 ${isOpen ? "rotate-180 text-indigo-500" : "text-slate-400"}`}>
+                            <path d="M5 8l5 5 5-5" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
+                          </svg>
+                        </button>
+                        {isOpen && (
+                          <div className="absolute z-30 top-full left-0 right-0 mt-1 bg-white border border-slate-200 rounded-2xl shadow-xl overflow-hidden">
+                            <div className="overflow-y-auto max-h-48">
+                              {GIFT_TYPES.map(({ label, rate }) => (
+                                <button key={label} type="button"
+                                  onClick={() => { updateItem(idx, "type", label); setOpenTypeIdx(null); }}
+                                  className={`w-full flex items-center justify-between px-4 py-2.5 text-[13px] transition-colors border-b border-slate-50 last:border-0
+                                    ${item.type === label ? "bg-indigo-50 text-indigo-700 font-bold" : "text-slate-700 hover:bg-slate-50 font-medium"}`}
+                                >
+                                  <span>{label}</span>
+                                  <span className={`text-[11px] font-bold px-2 py-0.5 rounded-full ${item.type === label ? "bg-indigo-100 text-indigo-500" : "bg-slate-100 text-slate-400"}`}>{rate}%</span>
+                                </button>
+                              ))}
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                      {/* 증정용 버튼 */}
+                      <button type="button" onClick={() => updateItem(idx, "isGift", !item.isGift)}
+                        className={`flex-shrink-0 px-3 py-2 rounded-xl font-bold text-[12px] border-2 transition-all duration-150 active:scale-95 flex items-center gap-1
+                          ${item.isGift
+                            ? "bg-violet-500 border-violet-500 text-white shadow-sm shadow-violet-200"
+                            : "bg-white border-slate-200 text-slate-400 hover:border-violet-400 hover:bg-violet-50 hover:text-violet-500"}`}
                       >
-                        <span>{label}</span>
-                        <span className={`text-[12px] font-bold px-2 py-0.5 rounded-full ${editGiftcardType === label ? "bg-indigo-100 text-indigo-500" : "bg-slate-100 text-slate-400"}`}>
-                          {rate}%
-                        </span>
+                        <span className="text-[14px]">🎁</span>
+                        <div className="flex flex-col items-center leading-tight">
+                          <span>증정용</span>
+                          {item.isGift && <span className="text-[9px] font-black opacity-90">-1%</span>}
+                        </div>
                       </button>
-                    ))}
-                  </div>
-                </div>
-              )}
-            </div>
-            {editGiftcardType && !typeOpen && (
-              <p className="text-[11px] text-indigo-500 pl-1 font-semibold">
-                요율 {GIFT_TYPES.find(g => g.label === editGiftcardType)?.rate ?? "-"}%
-                {editIsGift && <span className="text-violet-500"> (증정 -1% 적용)</span>}
-              </p>
-            )}
-          </div>
-
-          {/* 금액 */}
-          <div className="space-y-2">
-            <label className="block text-[12px] font-bold text-slate-500 uppercase tracking-wide">금액 (원)</label>
-            <input
-              type="number"
-              value={editAmount}
-              onChange={(e) => setEditAmount(e.target.value)}
-              placeholder="금액 입력 (원)"
-              min={1}
-              step={10000}
-              inputMode="numeric"
-              className="w-full px-3 py-2.5 rounded-xl border border-slate-200 bg-white text-[14px] text-slate-800 outline-none transition-all focus:border-indigo-400 focus:ring-2 focus:ring-indigo-50 placeholder:text-slate-300"
-            />
-            {(() => {
-              const amt = Number(editAmount);
-              const giftType = GIFT_TYPES.find(g => g.label === editGiftcardType);
-              if (amt > 0 && giftType) {
-                const effectiveRate = giftType.rate - (editIsGift ? 1 : 0);
-                const payment = Math.floor(amt * (effectiveRate / 100));
-                return (
-                  <div className="flex items-center justify-between px-3 py-2.5 rounded-xl text-[12px] font-semibold bg-indigo-50 text-indigo-500">
-                    <span className="flex items-center gap-1.5">
-                      요율 {effectiveRate}%
-                      {editIsGift && (
-                        <span className="text-[10px] bg-violet-100 text-violet-500 font-bold px-1.5 py-0.5 rounded-full">증정 -1%</span>
+                      {/* 삭제 버튼 */}
+                      {editItems.length > 1 && (
+                        <button type="button" onClick={() => removeItem(idx)}
+                          className="w-8 flex items-center justify-center rounded-xl bg-rose-100 text-rose-400 hover:bg-rose-200 active:scale-90 transition-all flex-shrink-0">
+                          <svg width="11" height="11" viewBox="0 0 12 12" fill="none">
+                            <path d="M2 2l8 8M10 2l-8 8" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" />
+                          </svg>
+                        </button>
                       )}
-                    </span>
-                    <span className="font-black text-[15px] text-indigo-600">{payment.toLocaleString("ko-KR")}원</span>
+                    </div>
+                    {/* 금액 입력 */}
+                    <input
+                      type="number"
+                      value={item.amount}
+                      onChange={(e) => updateItem(idx, "amount", e.target.value)}
+                      placeholder="금액 입력 (원)"
+                      min={1}
+                      step={10000}
+                      inputMode="numeric"
+                      className="w-full px-3 py-2.5 rounded-xl border border-slate-200 bg-white text-[14px] text-slate-800 outline-none transition-all focus:border-indigo-400 focus:ring-2 focus:ring-indigo-50 placeholder:text-slate-300"
+                    />
+                    {/* 매입금액 미리보기 */}
+                    {amt > 0 && giftType && (
+                      <div className="flex items-center justify-between px-3 py-2 rounded-xl text-[12px] font-semibold bg-indigo-50 text-indigo-500">
+                        <span className="flex items-center gap-1.5">
+                          요율 {effectiveRate}%
+                          {item.isGift && <span className="text-[10px] bg-violet-100 text-violet-500 font-bold px-1.5 py-0.5 rounded-full">증정 -1%</span>}
+                        </span>
+                        <span className="font-black text-[15px] text-indigo-600">{payment.toLocaleString("ko-KR")}원</span>
+                      </div>
+                    )}
                   </div>
                 );
-              }
-              if (amt > 0) {
-                return (
-                  <p className="text-[11px] text-indigo-500 pl-1">
-                    입력 금액: {amt.toLocaleString("ko-KR")}원
-                  </p>
-                );
-              }
-              return null;
+              })}
+            </div>
+            {/* 권종 추가 버튼 */}
+            <button type="button" onClick={addItem}
+              className="w-full py-2.5 rounded-2xl border-2 border-dashed border-indigo-200 text-[13px] font-bold text-indigo-400 hover:bg-indigo-50 transition-all duration-150 active:scale-95 flex items-center justify-center gap-1.5">
+              <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+                <path d="M7 2v10M2 7h10" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
+              </svg>
+              권종 추가
+            </button>
+            {/* 합계 */}
+            {editItems.length > 1 && (() => {
+              const total = editItems.reduce((sum, it) => {
+                const g = GIFT_TYPES.find(g => g.label === it.type);
+                const r = g ? g.rate - (it.isGift ? 1 : 0) : 0;
+                const a = Number(it.amount);
+                return sum + (a > 0 && g ? Math.floor(a * r / 100) : 0);
+              }, 0);
+              return total > 0 ? (
+                <div className="flex items-center justify-between px-4 py-2.5 rounded-xl bg-indigo-100 text-indigo-700">
+                  <span className="text-[13px] font-bold">총 매입금액</span>
+                  <span className="font-black text-[16px]">{total.toLocaleString("ko-KR")}원</span>
+                </div>
+              ) : null;
             })()}
           </div>
 
