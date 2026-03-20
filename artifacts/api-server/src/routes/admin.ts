@@ -161,6 +161,18 @@ router.post("/staff/:id/reject", requireAuth, async (req, res) => {
   res.json({ success: true });
 });
 
+router.delete("/staff/:id", requireAuth, async (req, res) => {
+  const id = Number(req.params.id);
+  if (isNaN(id)) { res.status(400).json({ success: false, error: "잘못된 ID" }); return; }
+  const [user] = await db.select().from(staffTable).where(eq(staffTable.id, id));
+  if (!user) { res.status(404).json({ success: false, error: "담당자를 찾을 수 없습니다." }); return; }
+  await db.update(reservationsTable)
+    .set({ assignedStaffId: null, status: "pending" })
+    .where(eq(reservationsTable.assignedStaffId, id));
+  await db.delete(staffTable).where(eq(staffTable.id, id));
+  res.json({ success: true });
+});
+
 router.post("/staff/login", async (req, res) => {
   const { phone, password } = req.body as { phone?: string; password?: string };
   const normalizePhone = (p: string) => p.replace(/\D/g, "");
