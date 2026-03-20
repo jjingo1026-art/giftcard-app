@@ -35,6 +35,21 @@ const RATE_GROUPS = [
 
 const DEFAULT_TYPE = Object.keys(RATES)[0];
 
+const RATE_LABEL_TO_TYPE: Record<string, string> = {
+  "신세계백화점상품권":   "신세계 (Shinsegae)",
+  "롯데백화점상품권":     "롯데 (Lotte)",
+  "현대백화점상품권":     "현대 (Hyundai)",
+  "국민관광상품권":       "국민관광상품권 (Tourism)",
+  "갤러리아백화점상품권": "갤러리아 (Galleria)",
+  "삼성상품권":           "삼성상품권",
+  "이랜드상품권":         "이랜드상품권",
+  "AK(애경)상품권":       "AK(애경)상품권",
+  "농협상품권":           "농협상품권",
+  "지류문화상품권":       "컬쳐랜드 (Cultureland)",
+  "온누리상품권":         "온누리상품권",
+  "주유권":               "주유권 (Fuel)",
+};
+
 const isValidTime = (time: string) => {
   const match = time.match(/^(\d{2}):(\d{2})$/);
   if (!match) return false;
@@ -254,7 +269,7 @@ function VoucherItems({
 }
 
 // ─── HOME PAGE ────────────────────────────────────────────────────────────────
-function HomePage({ onGoUrgent }: { onGoUrgent: () => void }) {
+function HomePage({ onGoUrgent, initialType = DEFAULT_TYPE, onTypeChange }: { onGoUrgent: () => void; initialType?: string; onTypeChange?: (t: string) => void }) {
   const [name, setName] = useState("");
   const [phone, setPhone] = useState("");
   const [date, setDate] = useState("");
@@ -264,7 +279,7 @@ function HomePage({ onGoUrgent }: { onGoUrgent: () => void }) {
   const [bankName, setBankName] = useState(KOREAN_BANKS[0]);
   const [accountNumber, setAccountNumber] = useState("");
   const [accountHolder, setAccountHolder] = useState("");
-  const [items, setItems] = useState<VoucherItem[]>([{ type: DEFAULT_TYPE, amount: "", isGift: false }]);
+  const [items, setItems] = useState<VoucherItem[]>([{ type: initialType, amount: "", isGift: false }]);
   const [fieldErrors, setFieldErrors] = useState<{ name?: string; phone?: string; date?: string; time?: string; location?: string; accountNumber?: string; accountHolder?: string; agreeMatch?: string }>({});
   const [itemErrors, setItemErrors] = useState<string[]>([""]);
   const [agreeMatch, setAgreeMatch] = useState(false);
@@ -280,6 +295,7 @@ function HomePage({ onGoUrgent }: { onGoUrgent: () => void }) {
   function updateItem(idx: number, field: "type" | "amount", val: string) {
     setItems((p) => p.map((it, i) => i === idx ? { ...it, [field]: val } : it));
     setItemErrors((p) => p.map((e, i) => i === idx ? "" : e));
+    if (idx === 0 && field === "type") onTypeChange?.(val);
   }
   function toggleGift(idx: number) { setItems((p) => p.map((it, i) => i === idx ? { ...it, isGift: !it.isGift } : it)); }
 
@@ -824,14 +840,14 @@ function SubmissionCard({ entry }: { entry: ReservationEntry | UrgentEntry }) {
 }
 
 // ─── URGENT SALE PAGE ─────────────────────────────────────────────────────────
-function UrgentPage({ onBack }: { onBack: () => void }) {
+function UrgentPage({ onBack, initialType = DEFAULT_TYPE }: { onBack: () => void; initialType?: string }) {
   const [name, setName] = useState("");
   const [phone, setPhone] = useState("");
   const [location, setLocation] = useState("");
   const [bankName, setBankName] = useState(KOREAN_BANKS[0]);
   const [accountNumber, setAccountNumber] = useState("");
   const [accountHolder, setAccountHolder] = useState("");
-  const [items, setItems] = useState<VoucherItem[]>([{ type: DEFAULT_TYPE, amount: "", isGift: false }]);
+  const [items, setItems] = useState<VoucherItem[]>([{ type: initialType, amount: "", isGift: false }]);
   const [fieldErrors, setFieldErrors] = useState<{ name?: string; phone?: string; location?: string; accountNumber?: string; accountHolder?: string; agreeMatch?: string }>({});
   const [itemErrors, setItemErrors] = useState<string[]>([""]);
   const [agreeMatch, setAgreeMatch] = useState(false);
@@ -1052,9 +1068,19 @@ function UrgentPage({ onBack }: { onBack: () => void }) {
 
 // ─── ROOT ─────────────────────────────────────────────────────────────────────
 export default function App() {
-  const isUrgent = new URLSearchParams(window.location.search).get("urgent") === "1";
+  const params = new URLSearchParams(window.location.search);
+  const isUrgent = params.get("urgent") === "1";
+  const urlLabel = params.get("type") ?? "";
+  const resolvedType = (urlLabel && RATE_LABEL_TO_TYPE[urlLabel]) ? RATE_LABEL_TO_TYPE[urlLabel] : DEFAULT_TYPE;
+
   const [page, setPage] = useState<"home" | "urgent">(isUrgent ? "urgent" : "home");
+  const [selectedType, setSelectedType] = useState<string>(resolvedType);
+
   return page === "home"
-    ? <HomePage onGoUrgent={() => setPage("urgent")} />
-    : <UrgentPage onBack={() => setPage("home")} />;
+    ? <HomePage
+        onGoUrgent={() => setPage("urgent")}
+        initialType={selectedType}
+        onTypeChange={setSelectedType}
+      />
+    : <UrgentPage onBack={() => setPage("home")} initialType={selectedType} />;
 }

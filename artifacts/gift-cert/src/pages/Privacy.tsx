@@ -7,7 +7,8 @@ export default function Privacy() {
     if (isUrgent) {
       location.href = "/?urgent=1&agreed=1";
     } else {
-      location.href = "/?agreed=1";
+      const typeParam = type ? `&type=${encodeURIComponent(type)}` : "";
+      location.href = `/?agreed=1${typeParam}`;
     }
   }
 
