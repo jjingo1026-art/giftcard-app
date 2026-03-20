@@ -250,53 +250,53 @@ export default function StaffDashboard() {
                       </div>
                     </div>
 
-                    <div className="space-y-1.5">
-                      {/* 1행: 채팅 + 완료 */}
-                      <div className="flex gap-1.5">
+                    {r.status !== "completed" && r.status !== "cancelled" && r.status !== "no_show" ? (
+                      <div className="grid grid-cols-2 gap-2.5">
+                        <a
+                          href={`/staff/chat?id=${r.id}`}
+                          className="py-2.5 rounded-xl bg-indigo-50 border border-indigo-100 text-indigo-600 text-[13px] font-bold text-center hover:bg-indigo-100 transition-colors"
+                        >
+                          💬 채팅하기
+                        </a>
+                        <button
+                          onClick={() => handlePaymentRequest(r.id)}
+                          disabled={sendingPayment === r.id}
+                          className="py-2.5 rounded-xl text-[13px] font-bold transition-all active:scale-95 disabled:opacity-60 flex items-center justify-center gap-1"
+                          style={{ background: "linear-gradient(135deg,#6366f1,#4f46e5)", color: "#fff" }}
+                        >
+                          <span>💰</span>
+                          {sendingPayment === r.id ? "발송중..." : "입금 요청"}
+                        </button>
+                        <button
+                          onClick={() => { setDefectModalId(r.id); setDefectDetail(""); }}
+                          disabled={sendingDefect}
+                          className="py-2.5 rounded-xl text-[13px] font-bold transition-all active:scale-95 disabled:opacity-60 flex items-center justify-center gap-1"
+                          style={{ background: "linear-gradient(135deg,#f59e0b,#d97706)", color: "#fff" }}
+                        >
+                          <span>⚠️</span>
+                          일부 하자
+                        </button>
+                        <button
+                          onClick={() => markComplete(r.id)}
+                          disabled={completing === r.id}
+                          className="py-2.5 rounded-xl bg-emerald-500 text-white text-[13px] font-bold hover:bg-emerald-600 transition-colors disabled:opacity-60"
+                        >
+                          {completing === r.id ? "처리중..." : "✓ 완료 처리"}
+                        </button>
+                      </div>
+                    ) : (
+                      <div className="flex gap-2.5">
                         <a
                           href={`/staff/chat?id=${r.id}`}
                           className="flex-1 py-2.5 rounded-xl bg-indigo-50 border border-indigo-100 text-indigo-600 text-[13px] font-bold text-center hover:bg-indigo-100 transition-colors"
                         >
                           💬 채팅하기
                         </a>
-                        {r.status !== "completed" && r.status !== "cancelled" && r.status !== "no_show" ? (
-                          <button
-                            onClick={() => markComplete(r.id)}
-                            disabled={completing === r.id}
-                            className="flex-1 py-2.5 rounded-xl bg-emerald-500 text-white text-[13px] font-bold hover:bg-emerald-600 transition-colors disabled:opacity-60"
-                          >
-                            {completing === r.id ? "처리중..." : "✓ 완료 처리"}
-                          </button>
-                        ) : (
-                          <div className="flex-1 py-2.5 rounded-xl bg-slate-50 border border-slate-100 text-slate-400 text-[13px] font-bold text-center">
-                            {r.status === "completed" ? "✅ 완료" : r.status === "no_show" ? "🚫 노쇼" : "취소됨"}
-                          </div>
-                        )}
-                      </div>
-                      {/* 2행: 입금요청 + 일부하자 (진행중인 예약만) */}
-                      {r.status !== "completed" && r.status !== "cancelled" && r.status !== "no_show" && (
-                        <div className="flex gap-1.5">
-                          <button
-                            onClick={() => handlePaymentRequest(r.id)}
-                            disabled={sendingPayment === r.id}
-                            className="flex-1 py-2.5 rounded-xl text-[13px] font-bold transition-all active:scale-95 disabled:opacity-60 flex items-center justify-center gap-1"
-                            style={{ background: "linear-gradient(135deg,#6366f1,#4f46e5)", color: "#fff" }}
-                          >
-                            <span>💰</span>
-                            {sendingPayment === r.id ? "발송중..." : "입금 요청"}
-                          </button>
-                          <button
-                            onClick={() => { setDefectModalId(r.id); setDefectDetail(""); }}
-                            disabled={sendingDefect}
-                            className="flex-1 py-2.5 rounded-xl text-[13px] font-bold transition-all active:scale-95 disabled:opacity-60 flex items-center justify-center gap-1"
-                            style={{ background: "linear-gradient(135deg,#f59e0b,#d97706)", color: "#fff" }}
-                          >
-                            <span>⚠️</span>
-                            일부 하자
-                          </button>
+                        <div className="flex-1 py-2.5 rounded-xl bg-slate-50 border border-slate-100 text-slate-400 text-[13px] font-bold text-center">
+                          {r.status === "completed" ? "✅ 완료" : r.status === "no_show" ? "🚫 노쇼" : "취소됨"}
                         </div>
-                      )}
-                    </div>
+                      </div>
+                    )}
                   </div>
                 </div>
               );
