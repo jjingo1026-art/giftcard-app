@@ -1014,16 +1014,26 @@ router.post("/customer/update", async (req, res) => {
       res.json({ success: false, error: "예약 1시간 전까지만 수정할 수 있습니다." }); return;
     }
   }
+  const GIFT_RATES: Record<string, number> = {
+    "신세계백화점상품권": 95, "롯데백화점상품권": 95, "현대백화점상품권": 95,
+    "국민관광상품권": 95, "갤러리아백화점상품권": 94, "삼성상품권": 92,
+    "이랜드상품권": 91, "AK(애경)상품권": 91, "농협상품권": 91,
+    "지류문화상품권": 90, "온누리상품권": 90, "주유권": 95,
+  };
   const updates: Record<string, any> = {};
   if (date !== undefined) updates.date = date || null;
   if (time !== undefined) updates.time = time || null;
   if (location !== undefined) updates.location = location || null;
-  if (giftcardType !== undefined) updates.giftcardType = giftcardType || null;
+  if (giftcardType !== undefined) {
+    updates.giftcardType = giftcardType || null;
+    if (giftcardType && GIFT_RATES[giftcardType]) updates.rate = GIFT_RATES[giftcardType];
+  }
   if (amount !== undefined && !isNaN(Number(amount))) {
     const amt = Number(amount);
     updates.amount = amt;
-    // totalPayment 재계산 (기존 rate 유지, 없으면 그대로)
-    if (row.rate) updates.totalPayment = Math.floor(amt * (row.rate / 100));
+    // totalPayment 재계산: 새 rate 우선, 없으면 기존 rate
+    const effectiveRate = updates.rate ?? row.rate;
+    if (effectiveRate) updates.totalPayment = Math.floor(amt * (effectiveRate / 100));
   }
   if (Object.keys(updates).length === 0) {
     res.json({ success: false, error: "변경할 내용이 없습니다." }); return;

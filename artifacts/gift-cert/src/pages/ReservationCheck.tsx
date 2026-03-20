@@ -58,10 +58,29 @@ export default function ReservationCheck() {
   const [editSuccess, setEditSuccess] = useState(false);
 
   const GIFT_TYPES = [
-    "신세계백화점상품권", "롯데백화점상품권", "현대백화점상품권", "국민관광상품권",
-    "갤러리아백화점상품권", "삼성상품권", "이랜드상품권", "AK(애경)상품권",
-    "농협상품권", "지류문화상품권", "온누리상품권", "주유권",
+    { label: "신세계백화점상품권", rate: 95 },
+    { label: "롯데백화점상품권",   rate: 95 },
+    { label: "현대백화점상품권",   rate: 95 },
+    { label: "국민관광상품권",     rate: 95 },
+    { label: "갤러리아백화점상품권", rate: 94 },
+    { label: "삼성상품권",         rate: 92 },
+    { label: "이랜드상품권",       rate: 91 },
+    { label: "AK(애경)상품권",     rate: 91 },
+    { label: "농협상품권",         rate: 91 },
+    { label: "지류문화상품권",     rate: 90 },
+    { label: "온누리상품권",       rate: 90 },
+    { label: "주유권",             rate: 95 },
   ];
+
+  const TIME_OPTIONS: string[] = (() => {
+    const opts: string[] = [];
+    for (let h = 9; h <= 18; h++) {
+      for (let m = 0; m < 60; m += 10) {
+        opts.push(`${String(h).padStart(2, "0")}:${String(m).padStart(2, "0")}`);
+      }
+    }
+    return opts;
+  })();
 
   async function check() {
     const p = phone.trim().replace(/[^0-9]/g, "");
@@ -188,61 +207,104 @@ export default function ReservationCheck() {
           <p className="text-[14px] font-bold text-slate-800">✏️ 예약 수정</p>
           <button type="button" onClick={() => setEditMode(false)} className="text-[12px] text-slate-400 hover:text-slate-600">닫기</button>
         </div>
-        <div className="px-5 py-4 space-y-3">
-          {/* 권종 선택 */}
-          <div className="space-y-1.5">
-            <label className="block text-[12px] font-bold text-slate-500">상품권 권종</label>
-            <select
-              value={editGiftcardType}
-              onChange={(e) => setEditGiftcardType(e.target.value)}
-              className={inputCls + " appearance-none"}
-            >
-              <option value="">권종 선택</option>
-              {GIFT_TYPES.map((t) => (
-                <option key={t} value={t}>{t}</option>
+        <div className="px-5 py-4 space-y-4">
+          {/* 권종 — 가로 스크롤 칩 */}
+          <div className="space-y-2">
+            <label className="block text-[12px] font-bold text-slate-500 uppercase tracking-wide">상품권 권종</label>
+            <div className="overflow-x-auto flex gap-2 pb-1 scrollbar-none -mx-3 px-3">
+              {GIFT_TYPES.map(({ label }) => (
+                <button
+                  key={label}
+                  type="button"
+                  onClick={() => setEditGiftcardType(label)}
+                  className={`flex-shrink-0 px-3.5 py-2 rounded-full text-[12px] font-bold border-2 transition-all whitespace-nowrap active:scale-95
+                    ${editGiftcardType === label
+                      ? "bg-indigo-500 text-white border-indigo-500"
+                      : "bg-white text-slate-500 border-slate-200 hover:border-indigo-300 hover:text-indigo-400"}`}
+                >
+                  {label}
+                </button>
               ))}
-            </select>
-          </div>
-
-          {/* 금액 */}
-          <div className="space-y-1.5">
-            <label className="block text-[12px] font-bold text-slate-500">금액 (원)</label>
-            <input
-              type="number"
-              value={editAmount}
-              onChange={(e) => setEditAmount(e.target.value)}
-              placeholder="예) 500000"
-              min={1}
-              className={inputCls}
-              inputMode="numeric"
-            />
-            {editAmount && !isNaN(Number(editAmount)) && Number(editAmount) > 0 && (
-              <p className="text-[11px] text-indigo-500 pl-1">
-                입력 금액: {Number(editAmount).toLocaleString("ko-KR")}원
+            </div>
+            {editGiftcardType && (
+              <p className="text-[11px] text-indigo-500 pl-1 font-semibold">
+                선택: {editGiftcardType} · 요율 {GIFT_TYPES.find(g => g.label === editGiftcardType)?.rate ?? "-"}%
               </p>
             )}
           </div>
 
+          {/* 금액 */}
+          <div className="space-y-2">
+            <label className="block text-[12px] font-bold text-slate-500 uppercase tracking-wide">금액 (원)</label>
+            <input
+              type="number"
+              value={editAmount}
+              onChange={(e) => setEditAmount(e.target.value)}
+              placeholder="금액 입력 (원)"
+              min={1}
+              step={10000}
+              inputMode="numeric"
+              className="w-full px-3 py-2.5 rounded-xl border border-slate-200 bg-white text-[14px] text-slate-800 outline-none transition-all focus:border-indigo-400 focus:ring-2 focus:ring-indigo-50 placeholder:text-slate-300"
+            />
+            {(() => {
+              const amt = Number(editAmount);
+              const giftType = GIFT_TYPES.find(g => g.label === editGiftcardType);
+              if (amt > 0 && giftType) {
+                const payment = Math.floor(amt * (giftType.rate / 100));
+                return (
+                  <div className="flex items-center justify-between px-3 py-2 rounded-xl text-[12px] font-semibold bg-indigo-50 text-indigo-500">
+                    <span>요율 {giftType.rate}%</span>
+                    <span className="font-black text-[15px] text-indigo-600">{payment.toLocaleString("ko-KR")}원</span>
+                  </div>
+                );
+              }
+              if (amt > 0) {
+                return (
+                  <p className="text-[11px] text-indigo-500 pl-1">
+                    입력 금액: {amt.toLocaleString("ko-KR")}원
+                  </p>
+                );
+              }
+              return null;
+            })()}
+          </div>
+
           {reservation?.kind !== "urgent" && (
             <>
-              <div className="space-y-1.5">
-                <label className="block text-[12px] font-bold text-slate-500">날짜</label>
-                <input type="date" value={editDate} onChange={(e) => setEditDate(e.target.value)} className={inputCls} />
+              <div className="space-y-2">
+                <label className="block text-[12px] font-bold text-slate-500 uppercase tracking-wide">날짜</label>
+                <input
+                  type="date"
+                  value={editDate}
+                  onChange={(e) => setEditDate(e.target.value)}
+                  className="w-full px-3 py-2.5 rounded-xl border border-slate-200 bg-white text-[14px] text-slate-800 outline-none transition-all focus:border-indigo-400 focus:ring-2 focus:ring-indigo-50"
+                />
               </div>
-              <div className="space-y-1.5">
-                <label className="block text-[12px] font-bold text-slate-500">시간</label>
-                <input type="time" value={editTime} onChange={(e) => setEditTime(e.target.value)} className={inputCls} />
+              <div className="space-y-2">
+                <label className="block text-[12px] font-bold text-slate-500 uppercase tracking-wide">시간</label>
+                <select
+                  value={editTime}
+                  onChange={(e) => setEditTime(e.target.value)}
+                  className={`w-full px-3 py-2.5 rounded-xl border text-[14px] outline-none transition-all bg-white appearance-none
+                    border-slate-200 focus:border-indigo-400 focus:ring-2 focus:ring-indigo-50 ${!editTime ? "text-slate-400" : "text-slate-800"}`}
+                  style={{ backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 20 20'%3E%3Cpath fill='%236366f1' d='M5 8l5 5 5-5z'/%3E%3C/svg%3E")`, backgroundRepeat: "no-repeat", backgroundPosition: "right 12px center" }}
+                >
+                  <option value="">시간 선택</option>
+                  {TIME_OPTIONS.map((t) => (
+                    <option key={t} value={t}>⭕ {t}</option>
+                  ))}
+                </select>
               </div>
             </>
           )}
-          <div className="space-y-1.5">
-            <label className="block text-[12px] font-bold text-slate-500">거래장소</label>
+          <div className="space-y-2">
+            <label className="block text-[12px] font-bold text-slate-500 uppercase tracking-wide">거래장소</label>
             <input
               type="text"
               value={editLocation}
               onChange={(e) => setEditLocation(e.target.value)}
               placeholder="거래 장소 입력"
-              className={inputCls}
+              className="w-full px-3 py-2.5 rounded-xl border border-slate-200 bg-white text-[14px] text-slate-800 outline-none transition-all focus:border-indigo-400 focus:ring-2 focus:ring-indigo-50 placeholder:text-slate-300"
             />
           </div>
           {editError && (
