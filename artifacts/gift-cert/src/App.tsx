@@ -270,6 +270,7 @@ function HomePage({ onGoUrgent }: { onGoUrgent: () => void }) {
   const [agreeMatch, setAgreeMatch] = useState(false);
   const [submissions, setSubmissions] = useState<ReservationEntry[]>([]);
   const [toast, setToast] = useState(false);
+  const [errorMsg, setErrorMsg] = useState("");
   const [counter, setCounter] = useState(0);
   const [agreedPrivacy] = useState(() => new URLSearchParams(window.location.search).get("agreed") === "1");
   const [showForm, setShowForm] = useState(() => new URLSearchParams(window.location.search).get("agreed") === "1");
@@ -313,8 +314,19 @@ function HomePage({ onGoUrgent }: { onGoUrgent: () => void }) {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ kind: "reservation", isUrgent: false, name, phone, date, time, location, items: savedItems, totalPayment, bankName, accountNumber, accountHolder }),
       });
-      if (res.ok) { const data = await res.json(); id = data.id; }
-    } catch {}
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        setErrorMsg(data.error ?? "오류가 발생했습니다.");
+        setTimeout(() => setErrorMsg(""), 4000);
+        return;
+      }
+      const data = await res.json();
+      id = data.id;
+    } catch {
+      setErrorMsg("서버 연결에 실패했습니다. 잠시 후 다시 시도해주세요.");
+      setTimeout(() => setErrorMsg(""), 4000);
+      return;
+    }
     setCounter(id);
     setSubmissions((p) => [{ id, name, phone, date, time, location, items: savedItems, totalPayment, bankName, accountNumber, accountHolder, isUrgent: false }, ...p]);
     saveEntry({ kind: "reservation", id, createdAt: new Date().toISOString(), name, phone, date, time, location, items: savedItems, totalPayment, bankName, accountNumber, accountHolder });
@@ -327,6 +339,9 @@ function HomePage({ onGoUrgent }: { onGoUrgent: () => void }) {
     <div className="min-h-screen bg-gradient-to-b from-slate-50 to-slate-100/60">
       <div className={`fixed top-4 left-1/2 -translate-x-1/2 z-50 transition-all duration-300 ${toast ? "opacity-100 translate-y-0" : "opacity-0 -translate-y-2 pointer-events-none"}`}>
         <div className="bg-emerald-500 text-white text-sm font-semibold px-5 py-3 rounded-2xl shadow-lg flex items-center gap-2"><span>✓</span> 예약이 접수되었습니다!</div>
+      </div>
+      <div className={`fixed top-4 left-1/2 -translate-x-1/2 z-50 transition-all duration-300 ${errorMsg ? "opacity-100 translate-y-0" : "opacity-0 -translate-y-2 pointer-events-none"}`}>
+        <div className="bg-rose-500 text-white text-sm font-semibold px-5 py-3 rounded-2xl shadow-lg flex items-center gap-2 max-w-xs text-center"><span>⚠</span> {errorMsg}</div>
       </div>
       <header className="bg-white/80 backdrop-blur-md border-b border-slate-100 sticky top-0 z-40">
         <div className="max-w-md mx-auto px-5 py-4 flex items-center gap-3">
@@ -822,6 +837,7 @@ function UrgentPage({ onBack }: { onBack: () => void }) {
   const [agreeMatch, setAgreeMatch] = useState(false);
   const [submissions, setSubmissions] = useState<UrgentEntry[]>([]);
   const [toast, setToast] = useState(false);
+  const [errorMsg, setErrorMsg] = useState("");
   const [counter, setCounter] = useState(0);
 
   function addItem() { setItems((p) => [...p, { type: DEFAULT_TYPE, amount: "", isGift: false }]); setItemErrors((p) => [...p, ""]); }
@@ -861,8 +877,19 @@ function UrgentPage({ onBack }: { onBack: () => void }) {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ kind: "urgent", isUrgent: true, name, phone, location, items: savedItems, totalPayment, bankName, accountNumber, accountHolder }),
       });
-      if (res.ok) { const data = await res.json(); id = data.id; }
-    } catch {}
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        setErrorMsg(data.error ?? "오류가 발생했습니다.");
+        setTimeout(() => setErrorMsg(""), 4000);
+        return;
+      }
+      const data = await res.json();
+      id = data.id;
+    } catch {
+      setErrorMsg("서버 연결에 실패했습니다. 잠시 후 다시 시도해주세요.");
+      setTimeout(() => setErrorMsg(""), 4000);
+      return;
+    }
     setCounter(id);
     setSubmissions((p) => [{ id, name, phone, location, items: savedItems, totalPayment, bankName, accountNumber, accountHolder, isUrgent: true }, ...p]);
     saveEntry({ kind: "urgent", id, createdAt: new Date().toISOString(), name, phone, location, items: savedItems, totalPayment, bankName, accountNumber, accountHolder });
@@ -875,6 +902,9 @@ function UrgentPage({ onBack }: { onBack: () => void }) {
     <div className="min-h-screen bg-gradient-to-b from-rose-50/60 to-slate-100/60">
       <div className={`fixed top-4 left-1/2 -translate-x-1/2 z-50 transition-all duration-300 ${toast ? "opacity-100 translate-y-0" : "opacity-0 -translate-y-2 pointer-events-none"}`}>
         <div className="bg-rose-500 text-white text-sm font-semibold px-5 py-3 rounded-2xl shadow-lg flex items-center gap-2"><span>✓</span> 긴급 판매 신청이 접수되었습니다!</div>
+      </div>
+      <div className={`fixed top-16 left-1/2 -translate-x-1/2 z-50 transition-all duration-300 ${errorMsg ? "opacity-100 translate-y-0" : "opacity-0 -translate-y-2 pointer-events-none"}`}>
+        <div className="bg-slate-800 text-white text-sm font-semibold px-5 py-3 rounded-2xl shadow-lg flex items-center gap-2 max-w-xs text-center"><span>⚠</span> {errorMsg}</div>
       </div>
       <header className="bg-white/80 backdrop-blur-md border-b border-slate-100 sticky top-0 z-40">
         <div className="max-w-md mx-auto px-5 py-4 flex items-center gap-3">
