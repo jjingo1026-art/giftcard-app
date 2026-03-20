@@ -81,11 +81,11 @@
     box-sizing: border-box;
   }
   body {
-    @apply font-sans antialiased bg-background text-foreground;
-    font-family: "Noto Sans KR", sans-serif;
+    @apply antialiased bg-background text-foreground;
+    font-family: "Noto Sans KR", sans-serif !important;
     line-height: 1.5;
   }
-  input, button {
-    font-family: inherit;
+  input, button, textarea, select {
+    font-family: "Noto Sans KR", sans-serif !important;
   }
 }
