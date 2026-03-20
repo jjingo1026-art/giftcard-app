@@ -187,6 +187,15 @@ router.post("/staff/register", async (req, res) => {
   const normalizePhone = (p: string) => p.replace(/\D/g, "");
   const existing = allStaff.find((s) => normalizePhone(s.phone ?? "") === normalizePhone(phone));
   if (existing) {
+    if (existing.status === "rejected") {
+      await db.update(staffTable)
+        .set({ name, phone, password, status: "pending", preferredLocation: preferredLocation ?? null })
+        .where(eq(staffTable.id, existing.id));
+      res.json({ success: true, message: "재신청 완료 (승인 대기)" }); return;
+    }
+    if (existing.status === "pending") {
+      res.json({ success: false, message: "이미 신청 중입니다. 관리자 승인을 기다려주세요." }); return;
+    }
     res.json({ success: false, message: "이미 등록된 전화번호입니다." }); return;
   }
   await db.insert(staffTable).values({ name, phone, password, status: "pending", preferredLocation: preferredLocation ?? null });
