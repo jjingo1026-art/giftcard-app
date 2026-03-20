@@ -48,6 +48,7 @@ export default function ReservationCheck() {
 
   // 수정
   const [editMode, setEditMode] = useState(false);
+  const [typeOpen, setTypeOpen] = useState(false);
   const [editDate, setEditDate] = useState("");
   const [editTime, setEditTime] = useState("");
   const [editLocation, setEditLocation] = useState("");
@@ -137,6 +138,7 @@ export default function ReservationCheck() {
     setEditGiftcardType(reservation.giftcardType ?? "");
     setEditAmount(reservation.amount ? String(reservation.amount) : "");
     setEditError("");
+    setTypeOpen(false);
     setEditMode(true);
   }
 
@@ -208,27 +210,57 @@ export default function ReservationCheck() {
           <button type="button" onClick={() => setEditMode(false)} className="text-[12px] text-slate-400 hover:text-slate-600">닫기</button>
         </div>
         <div className="px-5 py-4 space-y-4">
-          {/* 권종 — 가로 스크롤 칩 */}
+          {/* 권종 — 클릭 시 아래로 열리는 드롭다운 */}
           <div className="space-y-2">
             <label className="block text-[12px] font-bold text-slate-500 uppercase tracking-wide">상품권 권종</label>
-            <div className="overflow-x-auto flex gap-2 pb-1 scrollbar-none -mx-3 px-3">
-              {GIFT_TYPES.map(({ label }) => (
-                <button
-                  key={label}
-                  type="button"
-                  onClick={() => setEditGiftcardType(label)}
-                  className={`flex-shrink-0 px-3.5 py-2 rounded-full text-[12px] font-bold border-2 transition-all whitespace-nowrap active:scale-95
-                    ${editGiftcardType === label
-                      ? "bg-indigo-500 text-white border-indigo-500"
-                      : "bg-white text-slate-500 border-slate-200 hover:border-indigo-300 hover:text-indigo-400"}`}
+            <div className="relative">
+              {/* 트리거 버튼 */}
+              <button
+                type="button"
+                onClick={() => setTypeOpen((o) => !o)}
+                className={`w-full flex items-center justify-between px-4 py-3 rounded-xl border-2 text-[14px] font-semibold transition-all
+                  ${typeOpen
+                    ? "border-indigo-400 bg-white text-slate-800"
+                    : editGiftcardType
+                      ? "border-indigo-300 bg-indigo-50 text-indigo-700"
+                      : "border-slate-200 bg-slate-50 text-slate-400"}`}
+              >
+                <span>{editGiftcardType || "권종 선택"}</span>
+                <svg
+                  width="16" height="16" viewBox="0 0 20 20" fill="none"
+                  className={`transition-transform duration-200 flex-shrink-0 ${typeOpen ? "rotate-180 text-indigo-500" : "text-slate-400"}`}
                 >
-                  {label}
-                </button>
-              ))}
+                  <path d="M5 8l5 5 5-5" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
+                </svg>
+              </button>
+
+              {/* 드롭다운 목록 */}
+              {typeOpen && (
+                <div className="absolute z-20 top-full left-0 right-0 mt-1.5 bg-white border border-slate-200 rounded-2xl shadow-lg overflow-hidden">
+                  <div className="overflow-y-auto max-h-52">
+                    {GIFT_TYPES.map(({ label, rate }) => (
+                      <button
+                        key={label}
+                        type="button"
+                        onClick={() => { setEditGiftcardType(label); setTypeOpen(false); }}
+                        className={`w-full flex items-center justify-between px-4 py-3 text-left text-[14px] transition-colors border-b border-slate-50 last:border-0
+                          ${editGiftcardType === label
+                            ? "bg-indigo-50 text-indigo-700 font-bold"
+                            : "text-slate-700 hover:bg-slate-50 font-medium"}`}
+                      >
+                        <span>{label}</span>
+                        <span className={`text-[12px] font-bold px-2 py-0.5 rounded-full ${editGiftcardType === label ? "bg-indigo-100 text-indigo-500" : "bg-slate-100 text-slate-400"}`}>
+                          {rate}%
+                        </span>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
             </div>
-            {editGiftcardType && (
+            {editGiftcardType && !typeOpen && (
               <p className="text-[11px] text-indigo-500 pl-1 font-semibold">
-                선택: {editGiftcardType} · 요율 {GIFT_TYPES.find(g => g.label === editGiftcardType)?.rate ?? "-"}%
+                요율 {GIFT_TYPES.find(g => g.label === editGiftcardType)?.rate ?? "-"}%
               </p>
             )}
           </div>
