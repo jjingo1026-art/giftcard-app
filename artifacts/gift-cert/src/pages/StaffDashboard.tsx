@@ -212,18 +212,28 @@ export default function StaffDashboard() {
       {/* 헤더 */}
       <header className="bg-white border-b border-slate-100 sticky top-0 z-40 shadow-sm">
         <div className="max-w-2xl mx-auto px-4 py-3.5 flex items-center justify-between">
-          <div>
-            <div className="flex items-center gap-2">
-              <h1 className="text-[16px] font-black text-slate-800">내 배정 예약</h1>
-              {todayCount > 0 && (
-                <span className="text-[11px] font-bold text-white bg-rose-500 rounded-full px-2 py-0.5">
-                  오늘 {todayCount}건
-                </span>
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => { window.history.back(); }}
+              className="w-8 h-8 flex items-center justify-center rounded-xl hover:bg-slate-100 transition-colors text-slate-500 flex-shrink-0"
+            >
+              <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M19 12H5M12 19l-7-7 7-7"/>
+              </svg>
+            </button>
+            <div>
+              <div className="flex items-center gap-2">
+                <h1 className="text-[16px] font-black text-slate-800">내 배정 예약</h1>
+                {todayCount > 0 && (
+                  <span className="text-[11px] font-bold text-white bg-rose-500 rounded-full px-2 py-0.5">
+                    오늘 {todayCount}건
+                  </span>
+                )}
+              </div>
+              {!loading && (
+                <p className="text-[11px] text-slate-400 mt-0.5">👨‍🔧 {staffName} · 전체 {entries.length}건</p>
               )}
             </div>
-            {!loading && (
-              <p className="text-[11px] text-slate-400 mt-0.5">👨‍🔧 {staffName} · 전체 {entries.length}건</p>
-            )}
           </div>
           <button
             onClick={() => {
