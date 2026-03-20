@@ -129,11 +129,15 @@ export default function StaffCard() {
       const account = r.accountNumber || "-";
       const holder = r.accountHolder || "-";
       const message =
-        `💰 입금요청\n` +
-        `판매자 ${name}  예금주 ${holder}\n` +
-        `은행 ${bank} ${account}\n` +
-        `입금금액 ${amount}원\n` +
-        `판매자 계좌로 위 금액을 입금해 주세요`;
+        `💰 입금 요청 — ${name}\n` +
+        `━━━━━━━━━━━━━━━━━━\n` +
+        `🏦 은행: ${bank}\n` +
+        `📋 계좌번호: ${account}\n` +
+        `👤 예금주: ${holder}\n` +
+        `━━━━━━━━━━━━━━━━━━\n` +
+        `💵 입금 금액: ${amount}원\n` +
+        `━━━━━━━━━━━━━━━━━━\n` +
+        `판매자 계좌로 위 금액을 입금해 주세요.`;
       await sendChatMessage(message);
       setPaymentSent(true);
       setTimeout(() => setPaymentSent(false), 3000);
