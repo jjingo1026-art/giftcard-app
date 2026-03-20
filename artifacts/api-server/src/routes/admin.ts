@@ -1,15 +1,32 @@
 import { Router, type IRouter } from "express";
 import { db } from "@workspace/db";
-import { reservationsTable, chatsTable, staffTable, penaltiesTable, usersTable } from "@workspace/db/schema";
+import { reservationsTable, chatsTable, staffTable, penaltiesTable, usersTable, adminSettingsTable } from "@workspace/db/schema";
 import { eq, desc, asc, and, sql, gte, lte, inArray, isNull } from "drizzle-orm";
 import crypto from "crypto";
 import { emitToRoom } from "../socket";
 
 const router: IRouter = Router();
 
-const ADMIN_ID = process.env.ADMIN_ID ?? "admin";
-const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD ?? "1234";
+const DEFAULT_ADMIN_ID = process.env.ADMIN_ID ?? "admin";
+const DEFAULT_ADMIN_PASSWORD = process.env.ADMIN_PASSWORD ?? "1234";
 const tokens = new Map<string, number>();
+
+async function getAdminCredentials(): Promise<{ adminId: string; adminPassword: string }> {
+  const rows = await db.select().from(adminSettingsTable).limit(1);
+  if (rows.length > 0) return rows[0];
+  return { adminId: DEFAULT_ADMIN_ID, adminPassword: DEFAULT_ADMIN_PASSWORD };
+}
+
+async function seedAdminSettings() {
+  const existing = await db.select().from(adminSettingsTable).limit(1);
+  if (existing.length === 0) {
+    await db.insert(adminSettingsTable).values({
+      adminId: DEFAULT_ADMIN_ID,
+      adminPassword: DEFAULT_ADMIN_PASSWORD,
+    });
+  }
+}
+seedAdminSettings().catch(console.error);
 export const staffTokens = new Map<string, { staffId: number; exp: number }>();
 
 
@@ -61,7 +78,8 @@ function requireAdmin(req: any, res: any, next: any) {
 
 router.post("/login", async (req, res) => {
   const { id, password } = req.body as { id?: string; password?: string };
-  if (id !== ADMIN_ID || password !== ADMIN_PASSWORD) {
+  const creds = await getAdminCredentials();
+  if (id !== creds.adminId || password !== creds.adminPassword) {
     res.status(401).json({ success: false, error: "아이디 또는 비밀번호가 올바르지 않습니다." });
     return;
   }
@@ -69,6 +87,40 @@ router.post("/login", async (req, res) => {
   const expiresAt = Date.now() + 1000 * 60 * 60 * 8;
   tokens.set(token, expiresAt);
   res.json({ token, expiresAt });
+});
+
+router.patch("/credentials", requireAuth, async (req, res) => {
+  const { currentPassword, newId, newPassword } = req.body as {
+    currentPassword?: string;
+    newId?: string;
+    newPassword?: string;
+  };
+  if (!currentPassword) {
+    res.status(400).json({ error: "현재 비밀번호를 입력해주세요." });
+    return;
+  }
+  const creds = await getAdminCredentials();
+  if (currentPassword !== creds.adminPassword) {
+    res.status(401).json({ error: "현재 비밀번호가 올바르지 않습니다." });
+    return;
+  }
+  if (!newId && !newPassword) {
+    res.status(400).json({ error: "변경할 아이디 또는 비밀번호를 입력해주세요." });
+    return;
+  }
+  const updatedId = newId?.trim() || creds.adminId;
+  const updatedPassword = newPassword || creds.adminPassword;
+
+  const rows = await db.select().from(adminSettingsTable).limit(1);
+  if (rows.length > 0) {
+    await db.update(adminSettingsTable)
+      .set({ adminId: updatedId, adminPassword: updatedPassword })
+      .where(eq(adminSettingsTable.id, rows[0].id));
+  } else {
+    await db.insert(adminSettingsTable).values({ adminId: updatedId, adminPassword: updatedPassword });
+  }
+  tokens.clear();
+  res.json({ success: true });
 });
 
 router.get("/staff", requireAuth, async (_req, res) => {

@@ -21,6 +21,7 @@ import AdminWeeklyRevenue from "./pages/AdminWeeklyRevenue";
 import AdminRevenue from "./pages/AdminRevenue";
 import AdminAllReservations from "./pages/AdminAllReservations";
 import AdminAssign from "./pages/AdminAssign";
+import AdminSettings from "./pages/AdminSettings";
 import "./index.css";
 
 const base = import.meta.env.BASE_URL.replace(/\/$/, "");
@@ -50,6 +51,8 @@ createRoot(document.getElementById("root")!).render(
       <Route path="/admin/all-reservations.html" component={AdminAllReservations} />
       <Route path="/admin/assign" component={AdminAssign} />
       <Route path="/admin/assign.html" component={AdminAssign} />
+      <Route path="/admin/settings" component={AdminSettings} />
+      <Route path="/admin/settings.html" component={AdminSettings} />
       <Route path="/staff/dashboard" component={StaffDashboard} />
       <Route path="/staff/dashboard.html" component={StaffDashboard} />
       <Route path="/staff/detail" component={StaffDetail} />

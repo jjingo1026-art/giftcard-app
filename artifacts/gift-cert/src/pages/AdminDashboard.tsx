@@ -259,6 +259,13 @@ export default function AdminDashboard() {
               👨‍🔧 담당자별
             </button>
             <button
+              onClick={() => { window.location.href = "/admin/settings.html"; }}
+              className="text-[12px] text-slate-400 hover:text-slate-700 font-semibold transition-colors px-2 py-1.5 rounded-xl hover:bg-slate-100"
+              title="계정 설정"
+            >
+              ⚙️
+            </button>
+            <button
               onClick={() => { clearAdminToken(); navigate("/admin/login"); }}
               className="text-[12px] text-slate-400 hover:text-rose-500 font-semibold transition-colors px-3 py-1.5 rounded-xl hover:bg-rose-50"
             >
