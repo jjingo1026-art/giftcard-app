@@ -991,10 +991,10 @@ router.post("/customer/cancel", async (req, res) => {
 
 // ── 고객용: 예약 수정 ─────────────────────────────────────────────────────────
 router.post("/customer/update", async (req, res) => {
-  const { phone, reservationId, date, time, location, giftcardType, amount } = req.body as {
+  const { phone, reservationId, date, time, location, giftcardType, amount, isGift } = req.body as {
     phone?: string; reservationId?: number;
     date?: string; time?: string; location?: string;
-    giftcardType?: string; amount?: number;
+    giftcardType?: string; amount?: number; isGift?: boolean;
   };
   if (!phone || !reservationId) {
     res.status(400).json({ success: false, error: "phone, reservationId 필수입니다." }); return;
@@ -1028,12 +1028,16 @@ router.post("/customer/update", async (req, res) => {
     updates.giftcardType = giftcardType || null;
     if (giftcardType && GIFT_RATES[giftcardType]) updates.rate = GIFT_RATES[giftcardType];
   }
+  // isGift: rate에서 1% 차감
+  const baseRate = updates.rate ?? row.rate ?? 0;
+  const effectiveRate = isGift !== undefined ? baseRate - (isGift ? 1 : 0) : baseRate;
   if (amount !== undefined && !isNaN(Number(amount))) {
     const amt = Number(amount);
     updates.amount = amt;
-    // totalPayment 재계산: 새 rate 우선, 없으면 기존 rate
-    const effectiveRate = updates.rate ?? row.rate;
     if (effectiveRate) updates.totalPayment = Math.floor(amt * (effectiveRate / 100));
+  } else if (isGift !== undefined && row.amount) {
+    // 금액 변경 없어도 isGift 변경 시 totalPayment 재계산
+    if (effectiveRate) updates.totalPayment = Math.floor(row.amount * (effectiveRate / 100));
   }
   if (Object.keys(updates).length === 0) {
     res.json({ success: false, error: "변경할 내용이 없습니다." }); return;

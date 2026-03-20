@@ -54,6 +54,7 @@ export default function ReservationCheck() {
   const [editLocation, setEditLocation] = useState("");
   const [editGiftcardType, setEditGiftcardType] = useState("");
   const [editAmount, setEditAmount] = useState("");
+  const [editIsGift, setEditIsGift] = useState(false);
   const [saving, setSaving] = useState(false);
   const [editError, setEditError] = useState("");
   const [editSuccess, setEditSuccess] = useState(false);
@@ -137,6 +138,7 @@ export default function ReservationCheck() {
     setEditLocation(reservation.location ?? "");
     setEditGiftcardType(reservation.giftcardType ?? "");
     setEditAmount(reservation.amount ? String(reservation.amount) : "");
+    setEditIsGift(reservation.items?.[0]?.isGift ?? false);
     setEditError("");
     setTypeOpen(false);
     setEditMode(true);
@@ -161,6 +163,7 @@ export default function ReservationCheck() {
           location: editLocation || undefined,
           giftcardType: editGiftcardType || undefined,
           amount: editAmount ? Number(editAmount) : undefined,
+          isGift: editIsGift,
         }),
       });
       const data = await res.json();
@@ -210,9 +213,27 @@ export default function ReservationCheck() {
           <button type="button" onClick={() => setEditMode(false)} className="text-[12px] text-slate-400 hover:text-slate-600">닫기</button>
         </div>
         <div className="px-5 py-4 space-y-4">
-          {/* 권종 — 클릭 시 아래로 열리는 드롭다운 */}
+          {/* 권종 + 증정용 */}
           <div className="space-y-2">
-            <label className="block text-[12px] font-bold text-slate-500 uppercase tracking-wide">상품권 권종</label>
+            <div className="flex items-center justify-between">
+              <label className="block text-[12px] font-bold text-slate-500 uppercase tracking-wide">상품권 권종</label>
+              {/* 증정용 토글 버튼 */}
+              <button
+                type="button"
+                onClick={() => setEditIsGift((g) => !g)}
+                className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-full font-bold text-[13px] border-2 transition-all duration-150 active:scale-95
+                  ${editIsGift
+                    ? "bg-violet-500 border-violet-500 text-white shadow-sm shadow-violet-200"
+                    : "bg-white border-slate-200 text-slate-400 hover:border-violet-400 hover:bg-violet-50 hover:text-violet-500"}`}
+              >
+                <span className="text-[16px] leading-none">🎁</span>
+                <span>증정용</span>
+                {editIsGift && (
+                  <span className="text-[10px] font-black bg-violet-400 text-white px-1.5 py-0.5 rounded-full">-1%</span>
+                )}
+              </button>
+            </div>
+
             <div className="relative">
               {/* 트리거 버튼 */}
               <button
@@ -261,6 +282,7 @@ export default function ReservationCheck() {
             {editGiftcardType && !typeOpen && (
               <p className="text-[11px] text-indigo-500 pl-1 font-semibold">
                 요율 {GIFT_TYPES.find(g => g.label === editGiftcardType)?.rate ?? "-"}%
+                {editIsGift && <span className="text-violet-500"> (증정 -1% 적용)</span>}
               </p>
             )}
           </div>
@@ -282,10 +304,16 @@ export default function ReservationCheck() {
               const amt = Number(editAmount);
               const giftType = GIFT_TYPES.find(g => g.label === editGiftcardType);
               if (amt > 0 && giftType) {
-                const payment = Math.floor(amt * (giftType.rate / 100));
+                const effectiveRate = giftType.rate - (editIsGift ? 1 : 0);
+                const payment = Math.floor(amt * (effectiveRate / 100));
                 return (
-                  <div className="flex items-center justify-between px-3 py-2 rounded-xl text-[12px] font-semibold bg-indigo-50 text-indigo-500">
-                    <span>요율 {giftType.rate}%</span>
+                  <div className="flex items-center justify-between px-3 py-2.5 rounded-xl text-[12px] font-semibold bg-indigo-50 text-indigo-500">
+                    <span className="flex items-center gap-1.5">
+                      요율 {effectiveRate}%
+                      {editIsGift && (
+                        <span className="text-[10px] bg-violet-100 text-violet-500 font-bold px-1.5 py-0.5 rounded-full">증정 -1%</span>
+                      )}
+                    </span>
                     <span className="font-black text-[15px] text-indigo-600">{payment.toLocaleString("ko-KR")}원</span>
                   </div>
                 );
