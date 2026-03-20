@@ -974,6 +974,62 @@ router.get("/chat-inbox", requireAuth, async (req, res) => {
   res.json(result);
 });
 
+// ── 전체 채팅 목록 (채팅이 있는 모든 예약, 최신순) ─────────────────────────
+router.get("/chat-list", requireAuth, async (req, res) => {
+  const allChats = await db
+    .select()
+    .from(chatsTable)
+    .orderBy(desc(chatsTable.time));
+
+  if (allChats.length === 0) { res.json([]); return; }
+
+  const ids = [...new Set(allChats.map((c) => c.reservationId))];
+  const reservations = await db
+    .select({ id: reservationsTable.id, name: reservationsTable.name, phone: reservationsTable.phone, location: reservationsTable.location, status: reservationsTable.status, date: reservationsTable.date })
+    .from(reservationsTable)
+    .where(inArray(reservationsTable.id, ids));
+
+  const resvMap = new Map(reservations.map((r) => [r.id, r]));
+
+  // 예약별로 그룹: 가장 최근 메시지, 미읽은 수(admin이 안 읽은 것)
+  const grouped = new Map<number, { last: typeof allChats[0]; unread: number }>();
+  for (const chat of allChats) {
+    const existing = grouped.get(chat.reservationId);
+    if (!existing) {
+      grouped.set(chat.reservationId, {
+        last: chat,
+        unread: (!chat.read && chat.sender !== "admin" && chat.sender !== "system") ? 1 : 0,
+      });
+    } else {
+      if (!chat.read && chat.sender !== "admin" && chat.sender !== "system") {
+        existing.unread += 1;
+      }
+    }
+  }
+
+  const result = ids
+    .filter((id) => resvMap.has(id))
+    .map((id) => {
+      const { last, unread } = grouped.get(id)!;
+      const r = resvMap.get(id)!;
+      return {
+        reservationId: id,
+        name: r.name,
+        phone: r.phone,
+        location: r.location,
+        status: r.status,
+        date: r.date,
+        unreadCount: unread,
+        lastMessage: last.message,
+        lastSender: last.senderName,
+        lastSenderRole: last.sender,
+        lastTime: last.time.toISOString(),
+      };
+    });
+
+  res.json(result);
+});
+
 router.get("/messages/:reservationId", async (req, res) => {
   const auth = await resolveAuth(req);
   if (!auth.ok) { res.status(401).json({ error: "인증이 필요합니다." }); return; }

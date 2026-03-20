@@ -365,13 +365,14 @@ export default function AdminDashboard() {
             {allEntries.length > 0 && <p className="text-[11px] text-slate-400 mt-0.5">총 {allEntries.length}건</p>}
           </div>
           <div className="flex items-center gap-2">
-            {/* 채팅 인박스 뱃지 버튼 */}
+            {/* 채팅 목록 버튼 */}
             <button
-              onClick={() => setChatInboxOpen((p) => !p)}
+              onClick={() => { window.location.href = "/admin/chats"; }}
               className="relative text-[12px] text-indigo-500 hover:text-indigo-700 font-semibold transition-colors px-3 py-1.5 rounded-xl hover:bg-indigo-50"
+              title="채팅 전체 목록"
             >
               💬
-              {chatInbox.length > 0 && (
+              {chatInbox.reduce((s, c) => s + c.unreadCount, 0) > 0 && (
                 <span className="absolute -top-1 -right-1 min-w-[18px] h-[18px] rounded-full bg-rose-500 text-white text-[10px] font-black flex items-center justify-center px-1 leading-none">
                   {chatInbox.reduce((s, c) => s + c.unreadCount, 0)}
                 </span>
