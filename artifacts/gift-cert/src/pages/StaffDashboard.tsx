@@ -31,6 +31,14 @@ type Tab = "today" | "upcoming" | "completed";
 
 const TODAY = new Date().toISOString().split("T")[0];
 
+const STATUS_LABEL: Record<string, { text: string; cls: string }> = {
+  pending:   { text: "대기중",  cls: "bg-yellow-50 text-yellow-600 border-yellow-200" },
+  assigned:  { text: "배정됨", cls: "bg-blue-50 text-blue-600 border-blue-200" },
+  completed: { text: "완료",   cls: "bg-emerald-50 text-emerald-600 border-emerald-200" },
+  no_show:   { text: "노쇼",   cls: "bg-slate-100 text-slate-500 border-slate-200" },
+  cancelled: { text: "취소",   cls: "bg-rose-50 text-rose-400 border-rose-100" },
+};
+
 function faceValue(r: Reservation): number {
   if (Array.isArray(r.items) && r.items.length > 0)
     return r.items.reduce((s, it) => s + Number(it.amount), 0);
@@ -45,16 +53,16 @@ function weekday(date: string) {
   return ["일", "월", "화", "수", "목", "금", "토"][new Date(date).getDay()];
 }
 
-function formatDateLabel(date: string) {
-  const d = new Date(date);
-  return `${d.getMonth() + 1}/${d.getDate()}(${weekday(date)})`;
-}
-
 function formatDateFull(date?: string, time?: string) {
   if (!date) return "날짜 미정";
   const d = new Date(date);
   const label = `${d.getMonth() + 1}월 ${d.getDate()}일 (${weekday(date)})`;
   return time ? `${label} ${time}` : label;
+}
+
+function formatDateLabel(date: string) {
+  const d = new Date(date);
+  return `${d.getMonth() + 1}/${d.getDate()}(${weekday(date)})`;
 }
 
 function sevenDaysAgo() {
@@ -71,7 +79,6 @@ export default function StaffDashboard() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [tab, setTab] = useState<Tab>("today");
-  const [selectedId, setSelectedId] = useState<number | null>(null);
 
   const [upcomingDate, setUpcomingDate] = useState(TODAY);
   const [fromDate, setFromDate] = useState(sevenDaysAgo());
@@ -170,188 +177,9 @@ export default function StaffDashboard() {
     { key: "completed", label: "완료된배정", emoji: "✅" },
   ];
 
-  /* ── 상세 카드 뷰 ── */
-  const selectedReservation = selectedId !== null ? entries.find((e) => e.id === selectedId) : null;
-  if (selectedReservation) {
-    const r = selectedReservation;
-    const items: SavedItem[] = Array.isArray(r.items) && r.items.length > 0
-      ? r.items
-      : r.giftcardType
-        ? [{ type: r.giftcardType, amount: Number(r.amount ?? 0), rate: 0, payment: r.totalPayment, isGift: false }]
-        : [];
-    const totalFace = items.reduce((s, it) => s + Number(it.amount), 0);
-    const isActive = r.status !== "completed" && r.status !== "cancelled" && r.status !== "no_show";
-
-    return (
-      <div className="min-h-screen bg-slate-50">
-        {/* 상세 헤더 */}
-        <header className="bg-white border-b border-slate-100 sticky top-0 z-40 shadow-sm">
-          <div className="max-w-2xl mx-auto px-4 py-3.5 flex items-center gap-3">
-            <button
-              onClick={() => setSelectedId(null)}
-              className="w-9 h-9 flex items-center justify-center rounded-xl bg-slate-100 hover:bg-slate-200 transition-colors flex-shrink-0"
-            >
-              <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
-                <path d="M11 14l-5-5 5-5" stroke="#64748b" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/>
-              </svg>
-            </button>
-            <div className="flex-1 min-w-0">
-              <h1 className="text-[15px] font-black text-slate-800 truncate">
-                {r.name || r.phone}
-                {r.isUrgent && <span className="ml-2 text-[10px] font-black bg-rose-100 text-rose-500 px-1.5 py-0.5 rounded-full">긴급</span>}
-              </h1>
-              <p className="text-[11px] text-slate-400 mt-0.5">예약 #{r.id}</p>
-            </div>
-          </div>
-        </header>
-
-        <div className="max-w-2xl mx-auto px-4 py-4 space-y-3 pb-36">
-          {/* 기본 정보 */}
-          <div className="bg-white rounded-2xl border border-slate-100 shadow-sm overflow-hidden">
-            <div className="px-4 py-3 border-b border-slate-50">
-              <p className="text-[10px] font-black text-slate-400 uppercase tracking-wide">기본 정보</p>
-            </div>
-            <div className="divide-y divide-slate-50">
-              <InfoRow label="성명" value={r.name || "-"} />
-              <InfoRow label="연락처" value={formatPhone(r.phone)} />
-              <InfoRow label="일시" value={formatDateFull(r.date, r.time)} />
-              <InfoRow label="거래장소" value={r.location || "-"} />
-            </div>
-          </div>
-
-          {/* 상품권 정보 */}
-          {items.length > 0 && (
-            <div className="bg-white rounded-2xl border border-slate-100 shadow-sm overflow-hidden">
-              <div className="px-4 py-3 border-b border-slate-50">
-                <p className="text-[10px] font-black text-slate-400 uppercase tracking-wide">상품권 정보</p>
-              </div>
-              <div className="overflow-hidden">
-                {/* 헤더 */}
-                <div className="grid grid-cols-3 bg-indigo-50 border-b border-indigo-100">
-                  <div className="px-4 py-2 text-[10px] font-black text-indigo-400">권종</div>
-                  <div className="px-4 py-2 text-[10px] font-black text-indigo-400 text-right">액면금액</div>
-                  <div className="px-4 py-2 text-[10px] font-black text-indigo-400 text-right">입금금액</div>
-                </div>
-                {/* 아이템 */}
-                {items.map((it, i) => (
-                  <div key={i} className="grid grid-cols-3 border-b border-slate-50 last:border-0">
-                    <div className="px-4 py-3 flex items-center gap-1.5 min-w-0">
-                      <span className="text-[13px] font-semibold text-slate-700 truncate">{it.type}</span>
-                      {it.isGift && <span className="text-[9px] font-black bg-violet-100 text-violet-500 px-1 py-0.5 rounded-full flex-shrink-0">증정</span>}
-                    </div>
-                    <div className="px-4 py-3 text-right">
-                      <span className="text-[13px] font-semibold text-slate-500 tabular-nums">{Number(it.amount).toLocaleString("ko-KR")}원</span>
-                    </div>
-                    <div className="px-4 py-3 text-right">
-                      <span className="text-[14px] font-black text-indigo-600 tabular-nums">{Number(it.payment).toLocaleString("ko-KR")}원</span>
-                    </div>
-                  </div>
-                ))}
-                {/* 합계 */}
-                {items.length > 1 && (
-                  <div className="grid grid-cols-3 bg-indigo-50/60 border-t-2 border-indigo-100">
-                    <div className="px-4 py-3 text-[12px] font-black text-slate-600">합계</div>
-                    <div className="px-4 py-3 text-right text-[13px] font-bold text-slate-500 tabular-nums">{totalFace.toLocaleString("ko-KR")}원</div>
-                    <div className="px-4 py-3 text-right text-[15px] font-black text-indigo-700 tabular-nums">{r.totalPayment.toLocaleString("ko-KR")}원</div>
-                  </div>
-                )}
-              </div>
-            </div>
-          )}
-
-          {/* 입금 계좌 */}
-          {(r.bankName || r.accountNumber) && (
-            <div className="bg-white rounded-2xl border border-slate-100 shadow-sm overflow-hidden">
-              <div className="px-4 py-3 border-b border-slate-50">
-                <p className="text-[10px] font-black text-slate-400 uppercase tracking-wide">입금 계좌</p>
-              </div>
-              <div className="px-4 py-3.5 flex items-center justify-between gap-3">
-                <div className="space-y-1">
-                  <p className="text-[14px] font-bold text-slate-800">
-                    {r.bankName} <span className="text-slate-500 font-medium">{r.accountNumber}</span>
-                  </p>
-                  <p className="text-[12px] text-slate-500">예금주: {r.accountHolder}</p>
-                </div>
-                <button
-                  type="button"
-                  onClick={() => navigator.clipboard?.writeText(r.accountNumber)}
-                  className="flex-shrink-0 text-[12px] font-bold text-emerald-600 bg-emerald-50 hover:bg-emerald-100 border border-emerald-100 px-3 py-2 rounded-xl transition-colors active:scale-95"
-                >
-                  복사
-                </button>
-              </div>
-            </div>
-          )}
-
-        </div>
-
-        {/* 하단 고정 버튼 */}
-        <div className="fixed bottom-0 left-0 right-0 z-30 bg-white border-t border-slate-100 shadow-[0_-4px_24px_rgba(0,0,0,0.06)]">
-          <div className="max-w-2xl mx-auto px-4 pt-3 pb-4">
-            {isActive ? (
-              <div className="grid grid-cols-2 gap-2.5">
-                <a
-                  href={`/staff/chat?id=${r.id}`}
-                  className="py-3.5 rounded-2xl bg-indigo-50 border border-indigo-100 text-indigo-600 text-[14px] font-bold text-center hover:bg-indigo-100 transition-colors"
-                >
-                  💬 채팅하기
-                </a>
-                <button
-                  onClick={() => handlePaymentRequest(r)}
-                  disabled={sendingPayment === r.id}
-                  className="py-3.5 rounded-2xl text-[14px] font-bold transition-all active:scale-95 disabled:opacity-60"
-                  style={{ background: "linear-gradient(135deg,#6366f1,#4f46e5)", color: "#fff" }}
-                >
-                  {sendingPayment === r.id ? "발송 중..." : "💰 입금요청"}
-                </button>
-                <button
-                  onClick={() => { setDefectModalId(r.id); setDefectDetail(""); }}
-                  className="py-3.5 rounded-2xl text-[14px] font-bold transition-all active:scale-95"
-                  style={{ background: "linear-gradient(135deg,#f59e0b,#d97706)", color: "#fff" }}
-                >
-                  ⚠️ 일부하자
-                </button>
-                <button
-                  onClick={() => markComplete(r.id)}
-                  disabled={completing === r.id}
-                  className="py-3.5 rounded-2xl bg-emerald-500 text-white text-[14px] font-bold hover:bg-emerald-600 transition-colors disabled:opacity-60"
-                >
-                  {completing === r.id ? "처리 중..." : "✓ 완료처리"}
-                </button>
-              </div>
-            ) : (
-              <div className="flex gap-2.5">
-                <a
-                  href={`/staff/chat?id=${r.id}`}
-                  className="flex-1 py-3.5 rounded-2xl bg-indigo-50 border border-indigo-100 text-indigo-600 text-[14px] font-bold text-center hover:bg-indigo-100 transition-colors"
-                >
-                  💬 채팅하기
-                </a>
-                <div className="flex-1 py-3.5 rounded-2xl bg-slate-50 border border-slate-100 text-slate-400 text-[14px] font-bold text-center">
-                  {r.status === "completed" ? "✅ 완료됨" : r.status === "no_show" ? "🚫 노쇼" : "취소됨"}
-                </div>
-              </div>
-            )}
-          </div>
-        </div>
-
-        {/* 일부하자 모달 */}
-        {defectModalId !== null && (
-          <DefectModal
-            onClose={() => { setDefectModalId(null); setDefectDetail(""); }}
-            value={defectDetail}
-            onChange={setDefectDetail}
-            onSubmit={handleDefectSubmit}
-            sending={sendingDefect}
-          />
-        )}
-      </div>
-    );
-  }
-
-  /* ── 리스트 뷰 ── */
   return (
     <div className="min-h-screen bg-slate-50">
+      {/* 헤더 */}
       <header className="bg-white border-b border-slate-100 sticky top-0 z-40 shadow-sm">
         <div className="max-w-2xl mx-auto px-4 py-3.5 flex items-center justify-between">
           <div>
@@ -392,14 +220,13 @@ export default function StaffDashboard() {
                   : "bg-slate-100 text-slate-500 hover:bg-slate-200"
               }`}
             >
-              <span>{emoji}</span>
-              {label}
+              {emoji} {label}
             </button>
           ))}
         </div>
       </header>
 
-      <div className="max-w-2xl mx-auto px-4 py-4 space-y-3">
+      <div className="max-w-2xl mx-auto px-4 py-4 space-y-4">
         {loading && (
           <div className="py-16 text-center">
             <div className="w-8 h-8 border-2 border-indigo-200 border-t-indigo-500 rounded-full animate-spin mx-auto" />
@@ -408,208 +235,282 @@ export default function StaffDashboard() {
         )}
         {error && <div className="py-8 text-center text-rose-500 text-[13px]">{error}</div>}
 
-        {/* 오늘배정 */}
+        {/* ── 오늘배정 ── */}
         {!loading && !error && tab === "today" && (
           <>
             <div className="flex items-center gap-2">
-              <p className="text-[13px] font-black text-slate-700">
-                {(() => { const d = new Date(TODAY); return `${d.getMonth()+1}월 ${d.getDate()}일 (${weekday(TODAY)})`; })()}
-              </p>
+              <span className="text-[12px] font-black px-3 py-1 rounded-xl bg-rose-500 text-white">오늘</span>
               <span className="text-[11px] text-slate-400">{todayList.length}건</span>
             </div>
-            <ListTable list={todayList} mode="today_upcoming" onSelect={setSelectedId} />
+            {todayList.length === 0 ? <EmptyState /> : todayList.map((r, i) => (
+              <ReservationCard
+                key={r.id} r={r} idx={i}
+                completing={completing} sendingPayment={sendingPayment}
+                onComplete={markComplete}
+                onPayment={handlePaymentRequest}
+                onDefect={(id) => { setDefectModalId(id); setDefectDetail(""); }}
+              />
+            ))}
           </>
         )}
 
-        {/* 진행예정 */}
+        {/* ── 진행예정 ── */}
         {!loading && !error && tab === "upcoming" && (
           <>
             <div className="bg-white rounded-2xl border border-slate-100 shadow-sm px-4 py-3 flex items-center gap-3">
               <span className="text-[13px] font-bold text-slate-600 flex-shrink-0">날짜 선택</span>
               <input
-                type="date"
-                value={upcomingDate}
+                type="date" value={upcomingDate}
                 onChange={(e) => setUpcomingDate(e.target.value)}
                 className="flex-1 text-[14px] font-bold text-indigo-600 bg-transparent outline-none"
               />
               <span className="text-[12px] text-slate-400 flex-shrink-0">{upcomingList.length}건</span>
             </div>
-            <ListTable list={upcomingList} mode="today_upcoming" onSelect={setSelectedId} />
+            {upcomingList.length === 0 ? <EmptyState /> : upcomingList.map((r, i) => (
+              <ReservationCard
+                key={r.id} r={r} idx={i}
+                completing={completing} sendingPayment={sendingPayment}
+                onComplete={markComplete}
+                onPayment={handlePaymentRequest}
+                onDefect={(id) => { setDefectModalId(id); setDefectDetail(""); }}
+              />
+            ))}
           </>
         )}
 
-        {/* 완료된 배정 */}
+        {/* ── 완료된배정 ── */}
         {!loading && !error && tab === "completed" && (
           <>
             <div className="bg-white rounded-2xl border border-slate-100 shadow-sm px-4 py-3 flex items-center gap-2">
               <span className="text-[13px] font-bold text-slate-600 flex-shrink-0">기간</span>
-              <input
-                type="date"
-                value={fromDate}
-                onChange={(e) => setFromDate(e.target.value)}
-                className="flex-1 text-[13px] font-bold text-slate-700 bg-transparent outline-none"
-              />
+              <input type="date" value={fromDate} onChange={(e) => setFromDate(e.target.value)}
+                className="flex-1 text-[13px] font-bold text-slate-700 bg-transparent outline-none" />
               <span className="text-[12px] text-slate-400">~</span>
-              <input
-                type="date"
-                value={toDate}
-                onChange={(e) => setToDate(e.target.value)}
-                className="flex-1 text-[13px] font-bold text-slate-700 bg-transparent outline-none"
-              />
+              <input type="date" value={toDate} onChange={(e) => setToDate(e.target.value)}
+                className="flex-1 text-[13px] font-bold text-slate-700 bg-transparent outline-none" />
               <span className="text-[12px] text-slate-400 flex-shrink-0">{completedList.length}건</span>
             </div>
-            <ListTable list={completedList} mode="completed" onSelect={setSelectedId} />
+            {completedList.length === 0 ? <EmptyState /> : (
+              <div className="bg-white rounded-2xl border border-slate-100 shadow-sm overflow-hidden">
+                <div className="grid grid-cols-[1fr_3.5rem_1fr_5rem] gap-2 px-3 py-2 bg-slate-50 border-b border-slate-100">
+                  <span className="text-[10px] font-black text-slate-400">성명</span>
+                  <span className="text-[10px] font-black text-slate-400 text-center">시간</span>
+                  <span className="text-[10px] font-black text-slate-400">장소</span>
+                  <span className="text-[10px] font-black text-slate-400 text-right">액면금액</span>
+                </div>
+                {completedList.map((r) => (
+                  <a key={r.id} href={`/staff/chat?id=${r.id}`}
+                    className="grid grid-cols-[1fr_3.5rem_1fr_5rem] gap-2 px-3 py-3 items-center border-b border-slate-50 last:border-0 hover:bg-slate-50 transition-colors"
+                  >
+                    <div className="min-w-0">
+                      <p className="text-[13px] font-bold text-slate-800 truncate">{r.name || "-"}</p>
+                      {r.date && <p className="text-[10px] text-slate-400">{formatDateLabel(r.date)}</p>}
+                    </div>
+                    <span className="text-[12px] font-bold text-slate-600 text-center tabular-nums">{r.time || "-"}</span>
+                    <span className="text-[12px] text-slate-600 truncate">{r.location || "-"}</span>
+                    <span className="text-[12px] font-black text-indigo-600 text-right tabular-nums">
+                      {faceValue(r).toLocaleString("ko-KR")}원
+                    </span>
+                  </a>
+                ))}
+              </div>
+            )}
           </>
         )}
       </div>
 
+      {/* 일부하자 모달 */}
       {defectModalId !== null && (
-        <DefectModal
-          onClose={() => { setDefectModalId(null); setDefectDetail(""); }}
-          value={defectDetail}
-          onChange={setDefectDetail}
-          onSubmit={handleDefectSubmit}
-          sending={sendingDefect}
-        />
-      )}
-    </div>
-  );
-}
-
-/* ── 공통 컴포넌트 ── */
-
-function InfoRow({ label, value }: { label: string; value: string }) {
-  return (
-    <div className="flex items-center gap-3 px-4 py-3">
-      <span className="text-[12px] font-bold text-slate-400 w-16 flex-shrink-0">{label}</span>
-      <span className="text-[14px] font-semibold text-slate-800">{value}</span>
-    </div>
-  );
-}
-
-interface ListTableProps {
-  list: Reservation[];
-  mode: "today_upcoming" | "completed";
-  onSelect: (id: number) => void;
-}
-
-function ListTable({ list, mode, onSelect }: ListTableProps) {
-  if (list.length === 0) {
-    return (
-      <div className="py-14 text-center">
-        <div className="text-4xl mb-3">📭</div>
-        <p className="text-[14px] font-semibold text-slate-400">해당 기간 배정 내역이 없습니다</p>
-      </div>
-    );
-  }
-
-  return (
-    <div className="bg-white rounded-2xl border border-slate-100 shadow-sm overflow-hidden">
-      {/* 헤더 */}
-      {mode === "today_upcoming" ? (
-        <div className="grid grid-cols-[2rem_1fr_3.5rem_1fr_5.5rem] gap-2 px-3 py-2 bg-slate-50 border-b border-slate-100">
-          <span className="text-[10px] font-black text-slate-400 text-center">순</span>
-          <span className="text-[10px] font-black text-slate-400">성함</span>
-          <span className="text-[10px] font-black text-slate-400 text-center">시간</span>
-          <span className="text-[10px] font-black text-slate-400">장소</span>
-          <span className="text-[10px] font-black text-slate-400">연락처</span>
-        </div>
-      ) : (
-        <div className="grid grid-cols-[1fr_3.5rem_1fr_5rem] gap-2 px-3 py-2 bg-slate-50 border-b border-slate-100">
-          <span className="text-[10px] font-black text-slate-400">성명</span>
-          <span className="text-[10px] font-black text-slate-400 text-center">시간</span>
-          <span className="text-[10px] font-black text-slate-400">장소</span>
-          <span className="text-[10px] font-black text-slate-400 text-right">액면금액</span>
-        </div>
-      )}
-
-      {/* 행 */}
-      {list.map((r, idx) => (
-        <button
-          key={r.id}
-          type="button"
-          onClick={() => onSelect(r.id)}
-          className={`w-full text-left border-b border-slate-50 last:border-0 hover:bg-indigo-50/40 active:bg-indigo-50 transition-colors ${
-            r.isUrgent ? "bg-rose-50/30" : ""
-          }`}
-        >
-          {mode === "today_upcoming" ? (
-            <div className="grid grid-cols-[2rem_1fr_3.5rem_1fr_5.5rem] gap-2 px-3 py-3 items-center">
-              <span className="text-[12px] font-black text-indigo-400 text-center">{idx + 1}</span>
-              <div className="min-w-0">
-                <p className="text-[13px] font-bold text-slate-800 truncate">
-                  {r.name || "-"}
-                  {r.isUrgent && <span className="ml-1 text-[9px] font-black bg-rose-100 text-rose-500 px-1 py-0.5 rounded-full">긴급</span>}
-                </p>
+        <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/40 px-4 pb-6">
+          <div className="w-full max-w-md bg-white rounded-3xl shadow-2xl p-5 space-y-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <h3 className="text-[16px] font-bold text-slate-800">⚠️ 일부 하자 안내</h3>
+                <p className="text-[12px] text-slate-400 mt-0.5">하자 내용을 입력하면 채팅으로 발송됩니다</p>
               </div>
-              <span className="text-[12px] font-bold text-indigo-600 text-center tabular-nums">{r.time || "-"}</span>
-              <span className="text-[12px] text-slate-600 truncate">{r.location || "-"}</span>
-              <span className="text-[11px] text-slate-500 tabular-nums">{formatPhone(r.phone)}</span>
+              <button onClick={() => { setDefectModalId(null); setDefectDetail(""); }}
+                className="w-8 h-8 flex items-center justify-center rounded-xl bg-slate-100 text-slate-400 hover:bg-slate-200">
+                <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
+                  <path d="M2 2l8 8M10 2l-8 8" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round"/>
+                </svg>
+              </button>
             </div>
-          ) : (
-            <div className="grid grid-cols-[1fr_3.5rem_1fr_5rem] gap-2 px-3 py-3 items-center">
-              <div className="min-w-0">
-                <p className="text-[13px] font-bold text-slate-800 truncate">{r.name || "-"}</p>
-                {r.date && <p className="text-[10px] text-slate-400">{formatDateLabel(r.date)}</p>}
-              </div>
-              <span className="text-[12px] font-bold text-slate-600 text-center tabular-nums">{r.time || "-"}</span>
-              <span className="text-[12px] text-slate-600 truncate">{r.location || "-"}</span>
-              <span className="text-[12px] font-black text-indigo-600 text-right tabular-nums">
-                {faceValue(r).toLocaleString("ko-KR")}원
-              </span>
+            <textarea value={defectDetail} onChange={(e) => setDefectDetail(e.target.value)}
+              placeholder="예: 신세계 50,000원권 2매에 찢김 발견. 나머지 정상 처리 가능합니다."
+              rows={4}
+              className="w-full px-4 py-3 rounded-2xl border border-slate-200 bg-slate-50 text-[14px] outline-none focus:border-amber-400 resize-none placeholder:text-slate-300"
+            />
+            <div className="flex gap-2">
+              <button onClick={() => { setDefectModalId(null); setDefectDetail(""); }}
+                className="flex-1 py-3 rounded-2xl border-2 border-slate-200 text-slate-600 text-[14px] font-bold hover:bg-slate-50">취소</button>
+              <button onClick={handleDefectSubmit} disabled={!defectDetail.trim() || sendingDefect}
+                className="flex-1 py-3 rounded-2xl text-white text-[14px] font-bold disabled:opacity-50"
+                style={{ background: "linear-gradient(135deg,#f59e0b,#d97706)" }}>
+                {sendingDefect ? "발송 중…" : "📨 발송하기"}
+              </button>
             </div>
-          )}
-        </button>
-      ))}
-    </div>
-  );
-}
-
-interface DefectModalProps {
-  onClose: () => void;
-  value: string;
-  onChange: (v: string) => void;
-  onSubmit: () => void;
-  sending: boolean;
-}
-
-function DefectModal({ onClose, value, onChange, onSubmit, sending }: DefectModalProps) {
-  return (
-    <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/40 px-4 pb-6">
-      <div className="w-full max-w-md bg-white rounded-3xl shadow-2xl p-5 space-y-4">
-        <div className="flex items-center justify-between">
-          <div>
-            <h3 className="text-[16px] font-bold text-slate-800">⚠️ 일부 하자 안내</h3>
-            <p className="text-[12px] text-slate-400 mt-0.5">하자 내용을 입력하면 채팅으로 발송됩니다</p>
           </div>
-          <button
-            onClick={onClose}
-            className="w-8 h-8 flex items-center justify-center rounded-xl bg-slate-100 text-slate-400 hover:bg-slate-200 transition-colors"
-          >
-            <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
-              <path d="M2 2l8 8M10 2l-8 8" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round"/>
-            </svg>
-          </button>
         </div>
-        <textarea
-          value={value}
-          onChange={(e) => onChange(e.target.value)}
-          placeholder="예: 신세계 50,000원권 2매에 찢김 발견. 나머지 정상 처리 가능합니다."
-          rows={4}
-          className="w-full px-4 py-3 rounded-2xl border border-slate-200 bg-slate-50 text-[14px] outline-none focus:border-amber-400 resize-none placeholder:text-slate-300"
-        />
-        <div className="flex gap-2">
-          <button
-            onClick={onClose}
-            className="flex-1 py-3 rounded-2xl border-2 border-slate-200 text-slate-600 text-[14px] font-bold hover:bg-slate-50 transition-colors"
-          >취소</button>
-          <button
-            onClick={onSubmit}
-            disabled={!value.trim() || sending}
-            className="flex-1 py-3 rounded-2xl text-white text-[14px] font-bold transition-all active:scale-95 disabled:opacity-50"
-            style={{ background: "linear-gradient(135deg,#f59e0b,#d97706)" }}
-          >{sending ? "발송 중…" : "📨 발송하기"}</button>
+      )}
+    </div>
+  );
+}
+
+function EmptyState() {
+  return (
+    <div className="py-14 text-center">
+      <div className="text-4xl mb-3">📭</div>
+      <p className="text-[14px] font-semibold text-slate-400">배정 내역이 없습니다</p>
+    </div>
+  );
+}
+
+interface CardProps {
+  r: Reservation;
+  idx: number;
+  completing: number | null;
+  sendingPayment: number | null;
+  onComplete: (id: number) => void;
+  onPayment: (r: Reservation) => void;
+  onDefect: (id: number) => void;
+}
+
+function ReservationCard({ r, completing, sendingPayment, onComplete, onPayment, onDefect }: CardProps) {
+  const sl = STATUS_LABEL[r.status] ?? { text: r.status, cls: "bg-slate-100 text-slate-500 border-slate-200" };
+  const items: { type: string; amount: number; payment: number; isGift: boolean }[] =
+    Array.isArray(r.items) && r.items.length > 0
+      ? r.items
+      : r.giftcardType
+        ? [{ type: r.giftcardType, amount: Number(r.amount ?? 0), payment: r.totalPayment, isGift: false }]
+        : [];
+  const totalFace = items.reduce((s, it) => s + Number(it.amount), 0);
+  const isActive = r.status !== "completed" && r.status !== "cancelled" && r.status !== "no_show";
+
+  return (
+    <div className={`bg-white rounded-2xl border shadow-sm overflow-hidden ${r.isUrgent ? "border-rose-200" : "border-slate-100"}`}>
+      {r.isUrgent && (
+        <div className="bg-rose-500 text-white text-[11px] font-black text-center py-1 tracking-wide">⚡ 긴급 매입</div>
+      )}
+
+      <div className="px-4 pt-4 pb-3 space-y-3">
+        {/* 이름 + 상태 */}
+        <div className="flex items-start justify-between gap-2">
+          <div>
+            <p className="text-[17px] font-black text-slate-800">{r.name ?? r.phone}</p>
+            <p className="text-[12px] text-slate-400 mt-0.5">{formatPhone(r.phone)}</p>
+          </div>
+          <span className={`text-[11px] font-bold px-2.5 py-1 rounded-full border flex-shrink-0 ${sl.cls}`}>
+            {sl.text}
+          </span>
         </div>
+
+        {/* 일시 + 거래장소 */}
+        <div className="grid grid-cols-2 gap-x-4 gap-y-1">
+          <div>
+            <p className="text-[10px] text-slate-400 font-semibold mb-0.5">일시</p>
+            <p className="text-[13px] text-slate-700 font-semibold">{formatDateFull(r.date, r.time)}</p>
+          </div>
+          <div>
+            <p className="text-[10px] text-slate-400 font-semibold mb-0.5">거래장소</p>
+            <p className="text-[13px] text-slate-700 font-semibold">{r.location || "-"}</p>
+          </div>
+        </div>
+
+        {/* 상품권 테이블 */}
+        {items.length > 0 && (
+          <div className="rounded-xl border border-indigo-100 overflow-hidden">
+            <div className="grid grid-cols-3 bg-indigo-50 border-b border-indigo-100">
+              <div className="px-3 py-1.5 text-[10px] font-black text-indigo-400">권종</div>
+              <div className="px-3 py-1.5 text-[10px] font-black text-indigo-400 text-right">액면금액</div>
+              <div className="px-3 py-1.5 text-[10px] font-black text-indigo-400 text-right">입금금액</div>
+            </div>
+            {items.map((it, i) => (
+              <div key={i} className="grid grid-cols-3 border-b border-slate-50 last:border-0">
+                <div className="px-3 py-2 flex items-center gap-1 min-w-0">
+                  <span className="text-[12px] font-semibold text-slate-700 truncate">{it.type}</span>
+                  {it.isGift && <span className="text-[9px] font-black bg-violet-100 text-violet-500 px-1 rounded-full flex-shrink-0">증정</span>}
+                </div>
+                <div className="px-3 py-2 text-right">
+                  <span className="text-[12px] text-slate-500 tabular-nums">{Number(it.amount).toLocaleString("ko-KR")}원</span>
+                </div>
+                <div className="px-3 py-2 text-right">
+                  <span className="text-[13px] font-black text-indigo-600 tabular-nums">{Number(it.payment).toLocaleString("ko-KR")}원</span>
+                </div>
+              </div>
+            ))}
+            {items.length > 1 && (
+              <div className="grid grid-cols-3 bg-indigo-50/60 border-t-2 border-indigo-100">
+                <div className="px-3 py-2 text-[11px] font-black text-slate-600">합계</div>
+                <div className="px-3 py-2 text-right text-[12px] font-bold text-slate-500 tabular-nums">{totalFace.toLocaleString("ko-KR")}원</div>
+                <div className="px-3 py-2 text-right text-[14px] font-black text-indigo-700 tabular-nums">{r.totalPayment.toLocaleString("ko-KR")}원</div>
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* 입금 계좌 */}
+        {(r.bankName || r.accountNumber) && (
+          <div className="rounded-xl bg-emerald-50 border border-emerald-100 px-3 py-2.5 flex items-center justify-between gap-2">
+            <div>
+              <p className="text-[10px] font-black text-emerald-500 mb-0.5">입금 계좌</p>
+              <p className="text-[13px] font-bold text-slate-800">
+                {r.bankName} <span className="text-slate-500 font-medium">{r.accountNumber}</span>
+              </p>
+              <p className="text-[11px] text-slate-500">예금주: {r.accountHolder}</p>
+            </div>
+            <button
+              type="button"
+              onClick={() => navigator.clipboard?.writeText(r.accountNumber)}
+              className="flex-shrink-0 text-[12px] font-bold text-emerald-600 bg-white hover:bg-emerald-100 border border-emerald-200 px-3 py-1.5 rounded-lg transition-colors active:scale-95"
+            >복사</button>
+          </div>
+        )}
+
+        {/* 액션 버튼 */}
+        {isActive ? (
+          <div className="grid grid-cols-2 gap-2 pt-1">
+            <a
+              href={`/staff/chat?id=${r.id}`}
+              className="py-3 rounded-2xl bg-slate-100 text-slate-600 text-[13px] font-bold text-center hover:bg-slate-200 transition-colors"
+            >
+              💬 채팅하기
+            </a>
+            <button
+              onClick={() => onPayment(r)}
+              disabled={sendingPayment === r.id}
+              className="py-3 rounded-2xl text-[13px] font-bold transition-all active:scale-95 disabled:opacity-60"
+              style={{ background: "linear-gradient(135deg,#6366f1,#4f46e5)", color: "#fff" }}
+            >
+              {sendingPayment === r.id ? "발송 중..." : "💰 입금 요청"}
+            </button>
+            <button
+              onClick={() => onDefect(r.id)}
+              className="py-3 rounded-2xl text-[13px] font-bold transition-all active:scale-95"
+              style={{ background: "linear-gradient(135deg,#f59e0b,#d97706)", color: "#fff" }}
+            >
+              ⚠️ 일부 하자
+            </button>
+            <button
+              onClick={() => onComplete(r.id)}
+              disabled={completing === r.id}
+              className="py-3 rounded-2xl bg-emerald-500 text-white text-[13px] font-bold hover:bg-emerald-600 transition-colors disabled:opacity-60"
+            >
+              {completing === r.id ? "처리 중..." : "✓ 완료 처리"}
+            </button>
+          </div>
+        ) : (
+          <div className="flex gap-2 pt-1">
+            <a
+              href={`/staff/chat?id=${r.id}`}
+              className="flex-1 py-3 rounded-2xl bg-slate-100 text-slate-600 text-[13px] font-bold text-center hover:bg-slate-200 transition-colors"
+            >
+              💬 채팅하기
+            </a>
+            <div className="flex-1 py-3 rounded-2xl bg-slate-50 border border-slate-100 text-slate-400 text-[13px] font-bold text-center">
+              {r.status === "completed" ? "✅ 완료됨" : r.status === "no_show" ? "🚫 노쇼" : "취소됨"}
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );
