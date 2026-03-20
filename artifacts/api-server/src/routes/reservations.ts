@@ -216,6 +216,8 @@ router.post("/", async (req, res) => {
     })
     .returning();
 
+  broadcast("newReservation", inserted);
+
   if (isUrgent) {
     broadcast("newUrgent", inserted);
   }

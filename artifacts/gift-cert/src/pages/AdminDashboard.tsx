@@ -136,7 +136,7 @@ export default function AdminDashboard() {
   useEffect(() => {
     const socket = io({ transports: ["websocket", "polling"] });
 
-    socket.on("newUrgent", (reservation: Reservation) => {
+    socket.on("newReservation", (reservation: Reservation) => {
       setAllEntries((prev) => {
         if (prev.some((r) => r.id === reservation.id)) return prev;
         return [reservation, ...prev];
@@ -145,7 +145,37 @@ export default function AdminDashboard() {
         if (prev.some((r) => r.id === reservation.id)) return prev;
         return [reservation, ...prev];
       });
+      // 캘린더 즉시 반영
+      if (reservation.date) {
+        setCalendarData((prev) => {
+          const exists = prev.find((c) => c.date === reservation.date);
+          if (exists) {
+            return prev.map((c) =>
+              c.date === reservation.date
+                ? {
+                    ...c,
+                    total: c.total + 1,
+                    unassigned: c.unassigned + 1,
+                    urgent: reservation.isUrgent ? c.urgent + 1 : c.urgent,
+                  }
+                : c
+            );
+          }
+          return [
+            ...prev,
+            {
+              date: reservation.date!,
+              total: 1,
+              unassigned: 1,
+              assigned: 0,
+              urgent: reservation.isUrgent ? 1 : 0,
+            },
+          ];
+        });
+      }
+    });
 
+    socket.on("newUrgent", (reservation: Reservation) => {
       if (urgentAlertTimerRef.current) clearTimeout(urgentAlertTimerRef.current);
       setNewUrgentAlert(reservation);
       urgentAlertTimerRef.current = setTimeout(() => setNewUrgentAlert(null), 8000);
