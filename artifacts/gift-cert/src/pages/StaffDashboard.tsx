@@ -1,5 +1,13 @@
 import { useState, useEffect } from "react";
 
+interface SavedItem {
+  type: string;
+  amount: number;
+  rate: number;
+  payment: number;
+  isGift: boolean;
+}
+
 interface Reservation {
   id: number;
   kind: string;
@@ -8,7 +16,10 @@ interface Reservation {
   date?: string;
   time?: string;
   location: string;
+  items: SavedItem[];
   totalPayment: number;
+  giftcardType?: string;
+  amount?: string | number;
   status: string;
   isUrgent?: boolean;
   bankName: string;
@@ -244,7 +255,7 @@ export default function StaffDashboard() {
                       </span>
                     </div>
 
-                    <div className="grid grid-cols-2 gap-x-3 gap-y-1.5 mb-3">
+                    <div className="grid grid-cols-2 gap-x-3 gap-y-1.5 mb-2.5">
                       <div>
                         <p className="text-[10px] text-slate-400 font-semibold">일시</p>
                         <p className="text-[13px] text-slate-700 font-medium">{formatDate(r.date, r.time)}</p>
@@ -253,15 +264,45 @@ export default function StaffDashboard() {
                         <p className="text-[10px] text-slate-400 font-semibold">거래장소</p>
                         <p className="text-[13px] text-slate-700 font-medium">{r.location || "-"}</p>
                       </div>
-                      <div>
-                        <p className="text-[10px] text-slate-400 font-semibold">금액</p>
-                        <p className="text-[14px] font-black text-indigo-600">{formatKRW(r.totalPayment)}</p>
-                      </div>
-                      <div>
-                        <p className="text-[10px] text-slate-400 font-semibold">종류</p>
-                        <p className="text-[13px] text-slate-700 font-medium">{r.kind === "urgent" ? "긴급" : "일반"}</p>
-                      </div>
                     </div>
+
+                    {/* 상품권 정보 */}
+                    {(() => {
+                      const items: SavedItem[] = Array.isArray(r.items) && r.items.length > 0
+                        ? r.items
+                        : r.giftcardType
+                          ? [{ type: r.giftcardType, amount: Number(r.amount ?? 0), rate: 0, payment: r.totalPayment, isGift: false }]
+                          : [];
+                      const totalFace = items.reduce((s, it) => s + Number(it.amount), 0);
+                      return items.length > 0 ? (
+                        <div className="mb-2.5 rounded-xl bg-indigo-50 border border-indigo-100 p-2.5 space-y-1.5">
+                          {items.map((it, i) => (
+                            <div key={i} className="flex items-center justify-between gap-2">
+                              <div className="flex items-center gap-1.5 min-w-0">
+                                <span className="text-[10px] font-black text-indigo-400 flex-shrink-0">#{i + 1}</span>
+                                <span className="text-[12px] font-semibold text-slate-700 truncate">{it.type}</span>
+                                {it.isGift && <span className="text-[9px] font-black bg-violet-100 text-violet-500 px-1 py-0.5 rounded-full flex-shrink-0">증정</span>}
+                              </div>
+                              <div className="flex items-center gap-2 flex-shrink-0 text-right">
+                                <span className="text-[11px] text-slate-400">{Number(it.amount).toLocaleString("ko-KR")}원</span>
+                                <span className="text-[10px] text-indigo-400">→</span>
+                                <span className="text-[12px] font-black text-indigo-600">{Number(it.payment).toLocaleString("ko-KR")}원</span>
+                              </div>
+                            </div>
+                          ))}
+                          {items.length > 1 && (
+                            <div className="flex items-center justify-between pt-1.5 border-t border-indigo-200 mt-1">
+                              <span className="text-[11px] font-bold text-slate-500">합계</span>
+                              <div className="flex items-center gap-2">
+                                <span className="text-[11px] text-slate-400">{totalFace.toLocaleString("ko-KR")}원</span>
+                                <span className="text-[10px] text-indigo-400">→</span>
+                                <span className="text-[13px] font-black text-indigo-700">{r.totalPayment.toLocaleString("ko-KR")}원</span>
+                              </div>
+                            </div>
+                          )}
+                        </div>
+                      ) : null;
+                    })()}
 
                     {r.status !== "completed" && r.status !== "cancelled" && r.status !== "no_show" ? (
                       <div className="grid grid-cols-2 gap-3">
