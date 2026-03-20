@@ -1,4 +1,5 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
+import { io } from "socket.io-client";
 
 interface SavedItem {
   type: string;
@@ -196,6 +197,7 @@ function MiniCalendar({
 export default function StaffDashboard() {
   const token = localStorage.getItem("gc_staff_token");
   const staffName = localStorage.getItem("gc_staff_name") ?? "담당자";
+  const myStaffId = Number(localStorage.getItem("gc_staff_id") ?? "0");
 
   const [entries, setEntries] = useState<Reservation[]>([]);
   const [loading, setLoading] = useState(true);
@@ -205,6 +207,8 @@ export default function StaffDashboard() {
   const [fromDate, setFromDate] = useState(sevenDaysAgo());
   const [toDate, setToDate] = useState(TODAY);
   const [unreadCount, setUnreadCount] = useState(0);
+  const [newAssignAlert, setNewAssignAlert] = useState<Reservation | null>(null);
+  const alertTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
     if (!token) { window.location.href = "/staff/login"; return; }
@@ -230,6 +234,31 @@ export default function StaffDashboard() {
       })
       .catch(() => {});
   }, []);
+
+  /* ── Socket.IO: 실시간 배정 알림 ── */
+  useEffect(() => {
+    if (!myStaffId) return;
+    const socket = io({ transports: ["websocket", "polling"] });
+
+    socket.on("staffAssigned", ({ staffId, reservation }: { staffId: number; reservation: Reservation }) => {
+      if (staffId !== myStaffId) return;
+
+      // 예약 목록에 추가 (중복 방지)
+      setEntries((prev) => {
+        if (prev.some((r) => r.id === reservation.id)) {
+          return prev.map((r) => r.id === reservation.id ? { ...r, ...reservation } : r);
+        }
+        return [reservation, ...prev];
+      });
+
+      // 알림 토스트 표시
+      if (alertTimerRef.current) clearTimeout(alertTimerRef.current);
+      setNewAssignAlert(reservation);
+      alertTimerRef.current = setTimeout(() => setNewAssignAlert(null), 7000);
+    });
+
+    return () => { socket.disconnect(); };
+  }, [myStaffId]);
 
   /* 날짜별 건수 맵 (upcoming 탭용) */
   const upcomingCountMap: Record<string, number> = {};
@@ -432,6 +461,46 @@ export default function StaffDashboard() {
           </>
         )}
       </div>
+
+      {/* ── 새 배정 알림 토스트 ── */}
+      {newAssignAlert && (
+        <div
+          className="fixed top-4 left-1/2 -translate-x-1/2 z-50 w-[calc(100%-32px)] max-w-sm"
+          style={{ animation: "slideDown 0.3s ease" }}
+        >
+          <button
+            onClick={() => { setNewAssignAlert(null); window.location.href = `/staff/card?id=${newAssignAlert.id}`; }}
+            className="w-full bg-indigo-600 text-white rounded-2xl shadow-2xl p-4 flex items-center gap-3 text-left active:scale-95 transition-all"
+          >
+            <div className="w-10 h-10 rounded-xl bg-white/20 flex items-center justify-center flex-shrink-0 text-[20px]">
+              📋
+            </div>
+            <div className="flex-1 min-w-0">
+              <p className="text-[13px] font-black text-indigo-100 mb-0.5">새 예약 배정!</p>
+              <p className="text-[14px] font-bold text-white truncate">
+                {newAssignAlert.name || newAssignAlert.phone}
+              </p>
+              <p className="text-[11px] text-indigo-200 truncate mt-0.5">
+                📍 {newAssignAlert.location || "-"} {newAssignAlert.date ? `· ${newAssignAlert.date}` : ""}
+              </p>
+            </div>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="text-indigo-200 flex-shrink-0">
+              <path d="M9 18l6-6-6-6"/>
+            </svg>
+          </button>
+          <button
+            onClick={() => setNewAssignAlert(null)}
+            className="absolute -top-2 -right-2 w-6 h-6 bg-slate-700 text-white rounded-full text-[11px] font-black hover:bg-slate-900 transition-colors flex items-center justify-center"
+          >✕</button>
+        </div>
+      )}
+
+      <style>{`
+        @keyframes slideDown {
+          from { opacity: 0; transform: translateX(-50%) translateY(-12px); }
+          to   { opacity: 1; transform: translateX(-50%) translateY(0); }
+        }
+      `}</style>
     </div>
   );
 }

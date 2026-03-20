@@ -891,6 +891,10 @@ router.post("/reservations/:id/assign", requireAuth, async (req, res) => {
   }).returning();
   emitToRoom(id, "newMessage", { ...autoAssign, time: autoAssign.time.toISOString() });
 
+  // 담당자 페이지 실시간 업데이트
+  const [updatedRow] = await db.select().from(reservationsTable).where(eq(reservationsTable.id, id));
+  if (updatedRow) broadcast("staffAssigned", { staffId: member.id, reservation: updatedRow });
+
   res.json({ success: true });
 });
 
@@ -921,6 +925,10 @@ router.patch("/reservations/:id/assign", requireAuth, requireAdmin, async (req, 
       message: `담당자가 ${member.name}님으로 배정되었습니다.`,
     }).returning();
     emitToRoom(id, "newMessage", { ...autoMsg, time: autoMsg.time.toISOString() });
+
+    // 담당자 페이지 실시간 업데이트
+    const [updatedRow] = await db.select().from(reservationsTable).where(eq(reservationsTable.id, id));
+    if (updatedRow) broadcast("staffAssigned", { staffId: member.id, reservation: updatedRow });
 
     res.json({ success: true, assignedTo: member.name, assignedStaffId: member.id });
   } catch (err) {
