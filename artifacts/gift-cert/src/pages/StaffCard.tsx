@@ -124,11 +124,13 @@ export default function StaffCard() {
     setSendingPayment(true);
     try {
       const name = r.name || r.phone;
+      const staffName = localStorage.getItem("gc_staff_name") || "-";
       const amount = (r.totalPayment ?? 0).toLocaleString("ko-KR");
       const bank = r.bankName || "-";
       const account = r.accountNumber || "-";
       const holder = r.accountHolder || "-";
       const message =
+        `매입담당자 ${staffName}\n` +
         `💰 입금 요청 — ${name}\n` +
         `━━━━━━━━━━━━━━━━━━\n` +
         `🏦 은행: ${bank}\n` +
