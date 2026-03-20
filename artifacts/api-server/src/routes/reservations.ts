@@ -134,7 +134,7 @@ router.post("/", async (req, res) => {
     );
 
   if (exists.length > 0) {
-    res.status(400).json({ error: "현재 진행 중인 예약이 있습니다." });
+    res.status(400).json({ error: "현재 진행중인 예약이 있습니다.\n예약을 취소하시거나 거래가 완료되어야 예약신청이 가능합니다." });
     return;
   }
 

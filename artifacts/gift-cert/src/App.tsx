@@ -340,8 +340,8 @@ function HomePage({ onGoUrgent }: { onGoUrgent: () => void }) {
       <div className={`fixed top-4 left-1/2 -translate-x-1/2 z-50 transition-all duration-300 ${toast ? "opacity-100 translate-y-0" : "opacity-0 -translate-y-2 pointer-events-none"}`}>
         <div className="bg-emerald-500 text-white text-sm font-semibold px-5 py-3 rounded-2xl shadow-lg flex items-center gap-2"><span>✓</span> 예약이 접수되었습니다!</div>
       </div>
-      <div className={`fixed top-4 left-1/2 -translate-x-1/2 z-50 transition-all duration-300 ${errorMsg ? "opacity-100 translate-y-0" : "opacity-0 -translate-y-2 pointer-events-none"}`}>
-        <div className="bg-rose-500 text-white text-sm font-semibold px-5 py-3 rounded-2xl shadow-lg flex items-center gap-2 max-w-xs text-center"><span>⚠</span> {errorMsg}</div>
+      <div className={`fixed top-4 left-1/2 -translate-x-1/2 z-50 transition-all duration-300 w-[calc(100%-2rem)] max-w-sm ${errorMsg ? "opacity-100 translate-y-0" : "opacity-0 -translate-y-2 pointer-events-none"}`}>
+        <div className="bg-rose-500 text-white text-[13px] font-semibold px-5 py-3.5 rounded-2xl shadow-lg flex items-start gap-2.5 whitespace-pre-line"><span className="flex-shrink-0 mt-0.5">⚠</span><span>{errorMsg}</span></div>
       </div>
       <header className="bg-white/80 backdrop-blur-md border-b border-slate-100 sticky top-0 z-40">
         <div className="max-w-md mx-auto px-5 py-4 flex items-center gap-3">
@@ -903,8 +903,8 @@ function UrgentPage({ onBack }: { onBack: () => void }) {
       <div className={`fixed top-4 left-1/2 -translate-x-1/2 z-50 transition-all duration-300 ${toast ? "opacity-100 translate-y-0" : "opacity-0 -translate-y-2 pointer-events-none"}`}>
         <div className="bg-rose-500 text-white text-sm font-semibold px-5 py-3 rounded-2xl shadow-lg flex items-center gap-2"><span>✓</span> 긴급 판매 신청이 접수되었습니다!</div>
       </div>
-      <div className={`fixed top-16 left-1/2 -translate-x-1/2 z-50 transition-all duration-300 ${errorMsg ? "opacity-100 translate-y-0" : "opacity-0 -translate-y-2 pointer-events-none"}`}>
-        <div className="bg-slate-800 text-white text-sm font-semibold px-5 py-3 rounded-2xl shadow-lg flex items-center gap-2 max-w-xs text-center"><span>⚠</span> {errorMsg}</div>
+      <div className={`fixed top-16 left-1/2 -translate-x-1/2 z-50 transition-all duration-300 w-[calc(100%-2rem)] max-w-sm ${errorMsg ? "opacity-100 translate-y-0" : "opacity-0 -translate-y-2 pointer-events-none"}`}>
+        <div className="bg-slate-800 text-white text-[13px] font-semibold px-5 py-3.5 rounded-2xl shadow-lg flex items-start gap-2.5 whitespace-pre-line"><span className="flex-shrink-0 mt-0.5">⚠</span><span>{errorMsg}</span></div>
       </div>
       <header className="bg-white/80 backdrop-blur-md border-b border-slate-100 sticky top-0 z-40">
         <div className="max-w-md mx-auto px-5 py-4 flex items-center gap-3">
