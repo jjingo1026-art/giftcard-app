@@ -319,13 +319,15 @@ export default function ReservationCheck() {
                     </div>
                     {/* 금액 입력 */}
                     <input
-                      type="number"
-                      value={item.amount}
-                      onChange={(e) => updateItem(idx, "amount", e.target.value)}
-                      placeholder="금액 입력 (원)"
-                      min={1}
-                      step={10000}
+                      type="text"
                       inputMode="numeric"
+                      pattern="[0-9]*"
+                      value={item.amount}
+                      onChange={(e) => {
+                        const v = e.target.value.replace(/[^0-9]/g, "");
+                        updateItem(idx, "amount", v);
+                      }}
+                      placeholder="금액 입력 (원)"
                       className="w-full px-3 py-2.5 rounded-xl border border-slate-200 bg-white text-[14px] text-slate-800 outline-none transition-all focus:border-indigo-400 focus:ring-2 focus:ring-indigo-50 placeholder:text-slate-300"
                     />
                     {/* 매입금액 미리보기 */}
