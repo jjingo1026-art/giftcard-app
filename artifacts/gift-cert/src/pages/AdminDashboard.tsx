@@ -296,7 +296,7 @@ export default function AdminDashboard() {
           {[
             { label: "전체 예약",   id: "total",     value: stats.total,     color: "text-slate-700",   onClick: (() => { window.location.href = "/admin/all-reservations.html"; }) as (() => void) | undefined, active: false },
             { label: "오늘 예약",   id: "today",     value: stats.today,     color: "text-indigo-600",  onClick: () => { setShowTodayList((p) => !p); setShowCompletedSearch(false); setShowCancelledSearch(false); }, active: showTodayList },
-            { label: "담당자 배정", id: "assigned",  value: stats.assigned,  color: "text-blue-600",    onClick: undefined,                                                             active: false },
+            { label: "담당자 배정", id: "assigned",  value: stats.assigned,  color: "text-blue-600",    onClick: (() => { window.location.href = "/admin/assign.html"; }) as (() => void) | undefined, active: false },
             { label: "처리 완료",   id: "completed", value: stats.completed, color: "text-emerald-600", onClick: () => { setShowCompletedSearch((p) => !p); setShowTodayList(false); setCompletedQuery(""); }, active: showCompletedSearch },
             { label: "취소",        id: "cancelled", value: stats.cancelled, color: "text-rose-500",   onClick: () => { setShowCancelledSearch((p) => !p); setShowTodayList(false); setShowCompletedSearch(false); setCancelledQuery(""); }, active: showCancelledSearch },
           ].map(({ label, id, value, color, onClick, active }) => (
