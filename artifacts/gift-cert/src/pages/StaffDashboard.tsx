@@ -27,33 +27,34 @@ interface Reservation {
   accountHolder: string;
 }
 
-const statusLabel: Record<string, { text: string; cls: string }> = {
-  pending:   { text: "처리 대기",  cls: "bg-yellow-50 text-yellow-600 border-yellow-200" },
-  assigned:  { text: "배정됨",    cls: "bg-blue-50 text-blue-600 border-blue-200" },
-  completed: { text: "완료",      cls: "bg-emerald-50 text-emerald-600 border-emerald-200" },
-  no_show:   { text: "노쇼",      cls: "bg-slate-100 text-slate-500 border-slate-200" },
-};
+type Tab = "today" | "upcoming" | "completed";
 
-function formatKRW(n: number) {
-  return n.toLocaleString("ko-KR") + "원";
+const TODAY = new Date().toISOString().split("T")[0];
+
+function faceValue(r: Reservation): number {
+  if (Array.isArray(r.items) && r.items.length > 0) {
+    return r.items.reduce((s, it) => s + Number(it.amount), 0);
+  }
+  return Number(r.amount ?? 0);
 }
 
-function formatDate(date?: string, time?: string) {
-  if (!date) return "날짜 미정";
+function formatPhone(p: string) {
+  return p.replace(/(\d{3})(\d{3,4})(\d{4})/, "$1-$2-$3");
+}
+
+function weekday(date: string) {
+  return ["일", "월", "화", "수", "목", "금", "토"][new Date(date).getDay()];
+}
+
+function formatDateLabel(date: string) {
   const d = new Date(date);
-  const weekdays = ["일", "월", "화", "수", "목", "금", "토"];
-  const formatted = `${d.getMonth() + 1}월 ${d.getDate()}일 (${weekdays[d.getDay()]})`;
-  return time ? `${formatted} ${time}` : formatted;
+  return `${d.getMonth() + 1}/${d.getDate()}(${weekday(date)})`;
 }
 
-function isToday(date?: string) {
-  if (!date) return false;
-  return date === new Date().toISOString().split("T")[0];
-}
-
-function isFuture(date?: string) {
-  if (!date) return false;
-  return date > new Date().toISOString().split("T")[0];
+function sevenDaysAgo() {
+  const d = new Date();
+  d.setDate(d.getDate() - 7);
+  return d.toISOString().split("T")[0];
 }
 
 export default function StaffDashboard() {
@@ -63,7 +64,12 @@ export default function StaffDashboard() {
   const [entries, setEntries] = useState<Reservation[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
-  const [tab, setTab] = useState<"upcoming" | "all">("upcoming");
+  const [tab, setTab] = useState<Tab>("today");
+
+  const [upcomingDate, setUpcomingDate] = useState(TODAY);
+  const [fromDate, setFromDate] = useState(sevenDaysAgo());
+  const [toDate, setToDate] = useState(TODAY);
+
   const [completing, setCompleting] = useState<number | null>(null);
   const [sendingPayment, setSendingPayment] = useState<number | null>(null);
   const [defectModalId, setDefectModalId] = useState<number | null>(null);
@@ -111,14 +117,11 @@ export default function StaffDashboard() {
     try {
       const amount = r.totalPayment?.toLocaleString("ko-KR") ?? "-";
       const message =
-        `💰 입금 요청\n` +
-        `──────────────\n` +
+        `💰 입금 요청\n──────────────\n` +
         `▸ 은행: ${r.bankName || "-"}\n` +
         `▸ 계좌: ${r.accountNumber || "-"}\n` +
         `▸ 예금주: ${r.accountHolder || "-"}\n` +
-        `▸ 입금 금액: ${amount}원\n` +
-        `──────────────\n` +
-        `확인 후 입금해 주세요.`;
+        `▸ 입금 금액: ${amount}원\n──────────────\n확인 후 입금해 주세요.`;
       await sendChatMessage(r.id, message);
     } finally {
       setSendingPayment(null);
@@ -137,24 +140,32 @@ export default function StaffDashboard() {
     }
   }
 
-  const sorted = [...entries].sort((a, b) =>
-    (a.date ?? "").localeCompare(b.date ?? "") || (a.time ?? "").localeCompare(b.time ?? "")
-  );
+  const byTime = (a: Reservation, b: Reservation) =>
+    (a.time ?? "").localeCompare(b.time ?? "");
 
-  const upcoming = sorted.filter((r) => r.status !== "completed" && r.status !== "cancelled" && r.status !== "no_show" && (isToday(r.date) || isFuture(r.date) || !r.date));
-  const displayed = tab === "upcoming" ? upcoming : sorted;
+  const todayList = entries
+    .filter((r) => r.date === TODAY && r.status !== "cancelled")
+    .sort(byTime);
 
-  const grouped: Record<string, Reservation[]> = {};
-  displayed.forEach((r) => {
-    const key = r.date ?? "날짜 미정";
-    if (!grouped[key]) grouped[key] = [];
-    grouped[key].push(r);
-  });
+  const upcomingList = entries
+    .filter((r) => r.date === upcomingDate && r.status !== "completed" && r.status !== "cancelled" && r.status !== "no_show")
+    .sort(byTime);
 
-  const todayCount = entries.filter((r) => isToday(r.date) && r.status !== "completed").length;
+  const completedList = entries
+    .filter((r) => r.status === "completed" && r.date && r.date >= fromDate && r.date <= toDate)
+    .sort((a, b) => ((a.date ?? "") + (a.time ?? "")).localeCompare((b.date ?? "") + (b.time ?? "")));
+
+  const todayCount = todayList.length;
+
+  const TABS: { key: Tab; label: string; emoji: string }[] = [
+    { key: "today",     label: "오늘배정",   emoji: "📍" },
+    { key: "upcoming",  label: "진행예정",   emoji: "📅" },
+    { key: "completed", label: "완료된배정", emoji: "✅" },
+  ];
 
   return (
     <div className="min-h-screen bg-slate-50">
+      {/* 헤더 */}
       <header className="bg-white border-b border-slate-100 sticky top-0 z-40 shadow-sm">
         <div className="max-w-2xl mx-auto px-4 py-3.5 flex items-center justify-between">
           <div>
@@ -171,31 +182,38 @@ export default function StaffDashboard() {
             )}
           </div>
           <button
-            onClick={() => { localStorage.removeItem("gc_staff_token"); localStorage.removeItem("gc_staff_id"); localStorage.removeItem("gc_staff_name"); window.location.href = "/staff/login"; }}
+            onClick={() => {
+              localStorage.removeItem("gc_staff_token");
+              localStorage.removeItem("gc_staff_id");
+              localStorage.removeItem("gc_staff_name");
+              window.location.href = "/staff/login";
+            }}
             className="text-[12px] text-slate-400 hover:text-rose-500 font-bold px-3 py-1.5 rounded-xl hover:bg-rose-50 transition-colors"
           >
             로그아웃
           </button>
         </div>
-      </header>
 
-      <div className="max-w-2xl mx-auto px-4 py-4 space-y-4">
-        <div className="flex gap-2">
-          {(["upcoming", "all"] as const).map((t) => (
+        {/* 탭 */}
+        <div className="max-w-2xl mx-auto px-4 pb-3 flex gap-2">
+          {TABS.map(({ key, label, emoji }) => (
             <button
-              key={t}
-              onClick={() => setTab(t)}
-              className={`flex-1 py-2.5 rounded-2xl text-[13px] font-bold transition-all ${
-                tab === t
+              key={key}
+              onClick={() => setTab(key)}
+              className={`flex-1 py-2 rounded-2xl text-[12px] font-bold transition-all flex items-center justify-center gap-1 ${
+                tab === key
                   ? "bg-indigo-500 text-white shadow-sm shadow-indigo-200"
-                  : "bg-white border border-slate-200 text-slate-500 hover:border-indigo-200"
+                  : "bg-slate-100 text-slate-500 hover:bg-slate-200"
               }`}
             >
-              {t === "upcoming" ? `📅 진행 예정 (${upcoming.length})` : `📋 전체 (${entries.length})`}
+              <span>{emoji}</span>
+              {label}
             </button>
           ))}
         </div>
+      </header>
 
+      <div className="max-w-2xl mx-auto px-4 py-4 space-y-3">
         {loading && (
           <div className="py-16 text-center">
             <div className="w-8 h-8 border-2 border-indigo-200 border-t-indigo-500 rounded-full animate-spin mx-auto" />
@@ -204,186 +222,67 @@ export default function StaffDashboard() {
         )}
         {error && <div className="py-8 text-center text-rose-500 text-[13px]">{error}</div>}
 
-        {!loading && !error && displayed.length === 0 && (
-          <div className="py-16 text-center">
-            <div className="text-4xl mb-3">📭</div>
-            <p className="text-[14px] font-semibold text-slate-400">
-              {tab === "upcoming" ? "진행 예정 예약이 없습니다" : "배정된 예약이 없습니다"}
-            </p>
-          </div>
+        {/* ── 오늘배정 ── */}
+        {!loading && !error && tab === "today" && (
+          <>
+            <div className="flex items-center gap-2">
+              <p className="text-[13px] font-black text-slate-700">
+                {(() => { const d = new Date(TODAY); return `${d.getMonth()+1}월 ${d.getDate()}일 (${weekday(TODAY)})`; })()}
+              </p>
+              <span className="text-[11px] text-slate-400">{todayList.length}건</span>
+            </div>
+            <ReservationTable list={todayList} mode="today_upcoming"
+              completing={completing} sendingPayment={sendingPayment}
+              onComplete={markComplete} onPayment={handlePaymentRequest}
+              onDefect={(id) => { setDefectModalId(id); setDefectDetail(""); }}
+            />
+          </>
         )}
 
-        {Object.keys(grouped).map((date) => (
-          <div key={date} className="space-y-2">
-            <div className="flex items-center gap-2">
-              <p className={`text-[12px] font-black px-3 py-1 rounded-xl ${
-                isToday(date) ? "bg-rose-500 text-white" : "bg-slate-200 text-slate-600"
-              }`}>
-                {isToday(date) ? "오늘" : date === "날짜 미정" ? "날짜 미정" : (() => {
-                  const d = new Date(date);
-                  const w = ["일","월","화","수","목","금","토"][d.getDay()];
-                  return `${d.getMonth()+1}/${d.getDate()} (${w})`;
-                })()}
-              </p>
-              <span className="text-[11px] text-slate-400 font-medium">{grouped[date].length}건</span>
+        {/* ── 진행예정 ── */}
+        {!loading && !error && tab === "upcoming" && (
+          <>
+            <div className="bg-white rounded-2xl border border-slate-100 shadow-sm px-4 py-3 flex items-center gap-3">
+              <span className="text-[13px] font-bold text-slate-600 flex-shrink-0">날짜 선택</span>
+              <input
+                type="date"
+                value={upcomingDate}
+                onChange={(e) => setUpcomingDate(e.target.value)}
+                className="flex-1 text-[14px] font-bold text-indigo-600 bg-transparent outline-none"
+              />
+              <span className="text-[12px] text-slate-400 flex-shrink-0">{upcomingList.length}건</span>
             </div>
+            <ReservationTable list={upcomingList} mode="today_upcoming"
+              completing={completing} sendingPayment={sendingPayment}
+              onComplete={markComplete} onPayment={handlePaymentRequest}
+              onDefect={(id) => { setDefectModalId(id); setDefectDetail(""); }}
+            />
+          </>
+        )}
 
-            {grouped[date].map((r) => {
-              const sl = statusLabel[r.status] ?? { text: r.status, cls: "bg-slate-100 text-slate-500 border-slate-200" };
-              return (
-                <div
-                  key={r.id}
-                  className={`bg-white rounded-2xl border shadow-sm overflow-hidden transition-all ${
-                    r.isUrgent ? "border-rose-200" : "border-slate-100"
-                  }`}
-                >
-                  {r.isUrgent && (
-                    <div className="bg-rose-500 text-white text-[11px] font-black text-center py-1 tracking-wide">
-                      ⚡ 긴급 매입
-                    </div>
-                  )}
-                  <div className="px-4 py-3.5">
-                    <div className="flex items-start justify-between gap-2 mb-2.5">
-                      <div>
-                        <p className="text-[15px] font-black text-slate-800">
-                          {r.name ?? r.phone}
-                        </p>
-                        <p className="text-[12px] text-slate-400 mt-0.5">{r.phone}</p>
-                      </div>
-                      <span className={`text-[11px] font-bold px-2.5 py-1 rounded-full border flex-shrink-0 ${sl.cls}`}>
-                        {sl.text}
-                      </span>
-                    </div>
-
-                    <div className="grid grid-cols-2 gap-x-3 gap-y-1.5 mb-2.5">
-                      <div>
-                        <p className="text-[10px] text-slate-400 font-semibold">일시</p>
-                        <p className="text-[13px] text-slate-700 font-medium">{formatDate(r.date, r.time)}</p>
-                      </div>
-                      <div>
-                        <p className="text-[10px] text-slate-400 font-semibold">거래장소</p>
-                        <p className="text-[13px] text-slate-700 font-medium">{r.location || "-"}</p>
-                      </div>
-                    </div>
-
-                    {/* 상품권 정보 */}
-                    {(() => {
-                      const items: SavedItem[] = Array.isArray(r.items) && r.items.length > 0
-                        ? r.items
-                        : r.giftcardType
-                          ? [{ type: r.giftcardType, amount: Number(r.amount ?? 0), rate: 0, payment: r.totalPayment, isGift: false }]
-                          : [];
-                      const totalFace = items.reduce((s, it) => s + Number(it.amount), 0);
-                      return items.length > 0 ? (
-                        <div className="mb-2.5 rounded-xl bg-indigo-50 border border-indigo-100 overflow-hidden">
-                          {/* 헤더 */}
-                          <div className="grid grid-cols-3 gap-0 border-b border-indigo-100">
-                            <div className="px-2.5 py-1.5 text-[10px] font-black text-indigo-400 uppercase">권종</div>
-                            <div className="px-2.5 py-1.5 text-[10px] font-black text-indigo-400 uppercase text-right">액면금액</div>
-                            <div className="px-2.5 py-1.5 text-[10px] font-black text-indigo-400 uppercase text-right">입금금액</div>
-                          </div>
-                          {/* 아이템 행 */}
-                          {items.map((it, i) => (
-                            <div key={i} className={`grid grid-cols-3 gap-0 ${i < items.length - 1 ? "border-b border-indigo-100" : ""}`}>
-                              <div className="px-2.5 py-2 flex items-center gap-1 min-w-0">
-                                <span className="text-[12px] font-semibold text-slate-700 truncate">{it.type}</span>
-                                {it.isGift && <span className="text-[9px] font-black bg-violet-100 text-violet-500 px-1 py-0.5 rounded-full flex-shrink-0">증정</span>}
-                              </div>
-                              <div className="px-2.5 py-2 text-right">
-                                <span className="text-[12px] font-semibold text-slate-500">{Number(it.amount).toLocaleString("ko-KR")}원</span>
-                              </div>
-                              <div className="px-2.5 py-2 text-right">
-                                <span className="text-[13px] font-black text-indigo-600">{Number(it.payment).toLocaleString("ko-KR")}원</span>
-                              </div>
-                            </div>
-                          ))}
-                          {/* 합계 행 (복수 권종) */}
-                          {items.length > 1 && (
-                            <div className="grid grid-cols-3 gap-0 border-t-2 border-indigo-200 bg-indigo-100/50">
-                              <div className="px-2.5 py-2 text-[11px] font-black text-slate-600">합계</div>
-                              <div className="px-2.5 py-2 text-right text-[12px] font-bold text-slate-500">{totalFace.toLocaleString("ko-KR")}원</div>
-                              <div className="px-2.5 py-2 text-right text-[14px] font-black text-indigo-700">{r.totalPayment.toLocaleString("ko-KR")}원</div>
-                            </div>
-                          )}
-                        </div>
-                      ) : null;
-                    })()}
-
-                    {/* 입금 계좌 정보 */}
-                    {(r.bankName || r.accountNumber) && (
-                      <div className="mb-2.5 rounded-xl bg-emerald-50 border border-emerald-100 px-3 py-2.5 space-y-1">
-                        <p className="text-[10px] font-black text-emerald-500 uppercase tracking-wide">입금 계좌</p>
-                        <div className="flex items-center justify-between gap-2">
-                          <div className="space-y-0.5">
-                            <p className="text-[13px] font-bold text-slate-700">
-                              {r.bankName} <span className="text-slate-400 font-medium">{r.accountNumber}</span>
-                            </p>
-                            <p className="text-[11px] text-slate-500">예금주: {r.accountHolder}</p>
-                          </div>
-                          <button
-                            type="button"
-                            onClick={() => navigator.clipboard?.writeText(r.accountNumber)}
-                            className="flex-shrink-0 text-[11px] font-bold text-emerald-600 bg-emerald-100 hover:bg-emerald-200 px-2.5 py-1 rounded-lg transition-colors active:scale-95"
-                          >
-                            복사
-                          </button>
-                        </div>
-                      </div>
-                    )}
-
-                    {r.status !== "completed" && r.status !== "cancelled" && r.status !== "no_show" ? (
-                      <div className="grid grid-cols-2 gap-3">
-                        <a
-                          href={`/staff/chat?id=${r.id}`}
-                          className="py-2.5 rounded-xl bg-indigo-50 border border-indigo-100 text-indigo-600 text-[13px] font-bold text-center hover:bg-indigo-100 transition-colors"
-                        >
-                          💬 채팅하기
-                        </a>
-                        <button
-                          onClick={() => handlePaymentRequest(r)}
-                          disabled={sendingPayment === r.id}
-                          className="py-2.5 rounded-xl text-[13px] font-bold transition-all active:scale-95 disabled:opacity-60 flex items-center justify-center gap-1"
-                          style={{ background: "linear-gradient(135deg,#6366f1,#4f46e5)", color: "#fff" }}
-                        >
-                          <span>💰</span>
-                          {sendingPayment === r.id ? "발송중..." : "입금 요청"}
-                        </button>
-                        <button
-                          onClick={() => { setDefectModalId(r.id); setDefectDetail(""); }}
-                          disabled={sendingDefect}
-                          className="py-2.5 rounded-xl text-[13px] font-bold transition-all active:scale-95 disabled:opacity-60 flex items-center justify-center gap-1"
-                          style={{ background: "linear-gradient(135deg,#f59e0b,#d97706)", color: "#fff" }}
-                        >
-                          <span>⚠️</span>
-                          일부 하자
-                        </button>
-                        <button
-                          onClick={() => markComplete(r.id)}
-                          disabled={completing === r.id}
-                          className="py-2.5 rounded-xl bg-emerald-500 text-white text-[13px] font-bold hover:bg-emerald-600 transition-colors disabled:opacity-60"
-                        >
-                          {completing === r.id ? "처리중..." : "✓ 완료 처리"}
-                        </button>
-                      </div>
-                    ) : (
-                      <div className="flex gap-2.5">
-                        <a
-                          href={`/staff/chat?id=${r.id}`}
-                          className="flex-1 py-2.5 rounded-xl bg-indigo-50 border border-indigo-100 text-indigo-600 text-[13px] font-bold text-center hover:bg-indigo-100 transition-colors"
-                        >
-                          💬 채팅하기
-                        </a>
-                        <div className="flex-1 py-2.5 rounded-xl bg-slate-50 border border-slate-100 text-slate-400 text-[13px] font-bold text-center">
-                          {r.status === "completed" ? "✅ 완료" : r.status === "no_show" ? "🚫 노쇼" : "취소됨"}
-                        </div>
-                      </div>
-                    )}
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-        ))}
+        {/* ── 완료된 배정 ── */}
+        {!loading && !error && tab === "completed" && (
+          <>
+            <div className="bg-white rounded-2xl border border-slate-100 shadow-sm px-4 py-3 flex items-center gap-2">
+              <span className="text-[13px] font-bold text-slate-600 flex-shrink-0">기간</span>
+              <input
+                type="date"
+                value={fromDate}
+                onChange={(e) => setFromDate(e.target.value)}
+                className="flex-1 text-[13px] font-bold text-slate-700 bg-transparent outline-none"
+              />
+              <span className="text-[12px] text-slate-400">~</span>
+              <input
+                type="date"
+                value={toDate}
+                onChange={(e) => setToDate(e.target.value)}
+                className="flex-1 text-[13px] font-bold text-slate-700 bg-transparent outline-none"
+              />
+              <span className="text-[12px] text-slate-400 flex-shrink-0">{completedList.length}건</span>
+            </div>
+            <ReservationTable list={completedList} mode="completed" />
+          </>
+        )}
       </div>
 
       {/* 일부하자 모달 */}
@@ -393,7 +292,7 @@ export default function StaffDashboard() {
             <div className="flex items-center justify-between">
               <div>
                 <h3 className="text-[16px] font-bold text-slate-800">⚠️ 일부 하자 안내</h3>
-                <p className="text-[12px] text-slate-400 mt-0.5">하자 내용을 입력하면 고객에게 자동 발송됩니다</p>
+                <p className="text-[12px] text-slate-400 mt-0.5">하자 내용을 입력하면 채팅으로 발송됩니다</p>
               </div>
               <button
                 onClick={() => { setDefectModalId(null); setDefectDetail(""); }}
@@ -407,27 +306,140 @@ export default function StaffDashboard() {
               onChange={(e) => setDefectDetail(e.target.value)}
               placeholder="예: 신세계 50,000원권 2매에 찢김 발견. 나머지 정상 처리 가능합니다."
               rows={4}
-              className="w-full px-4 py-3 rounded-2xl border border-slate-200 bg-slate-50 text-[14px] text-slate-800 outline-none focus:border-amber-400 focus:ring-2 focus:ring-amber-50 resize-none placeholder:text-slate-300"
+              className="w-full px-4 py-3 rounded-2xl border border-slate-200 bg-slate-50 text-[14px] outline-none focus:border-amber-400 resize-none placeholder:text-slate-300"
             />
             <div className="flex gap-2">
               <button
                 onClick={() => { setDefectModalId(null); setDefectDetail(""); }}
                 className="flex-1 py-3 rounded-2xl border-2 border-slate-200 text-slate-600 text-[14px] font-bold hover:bg-slate-50 transition-colors"
-              >
-                취소
-              </button>
+              >취소</button>
               <button
                 onClick={handleDefectSubmit}
                 disabled={!defectDetail.trim() || sendingDefect}
                 className="flex-1 py-3 rounded-2xl text-white text-[14px] font-bold transition-all active:scale-95 disabled:opacity-50"
                 style={{ background: "linear-gradient(135deg,#f59e0b,#d97706)" }}
-              >
-                {sendingDefect ? "발송 중…" : "📨 발송하기"}
-              </button>
+              >{sendingDefect ? "발송 중…" : "📨 발송하기"}</button>
             </div>
           </div>
         </div>
       )}
+    </div>
+  );
+}
+
+interface TableProps {
+  list: Reservation[];
+  mode: "today_upcoming" | "completed";
+  completing?: number | null;
+  sendingPayment?: number | null;
+  onComplete?: (id: number) => void;
+  onPayment?: (r: Reservation) => void;
+  onDefect?: (id: number) => void;
+}
+
+function ReservationTable({ list, mode, completing, sendingPayment, onComplete, onPayment, onDefect }: TableProps) {
+  if (list.length === 0) {
+    return (
+      <div className="py-14 text-center">
+        <div className="text-4xl mb-3">📭</div>
+        <p className="text-[14px] font-semibold text-slate-400">해당 기간 배정 내역이 없습니다</p>
+      </div>
+    );
+  }
+
+  return (
+    <div className="bg-white rounded-2xl border border-slate-100 shadow-sm overflow-hidden">
+      {/* 테이블 헤더 */}
+      {mode === "today_upcoming" ? (
+        <div className="grid grid-cols-[2rem_1fr_3.5rem_1fr_5.5rem] gap-2 px-3 py-2 bg-slate-50 border-b border-slate-100">
+          <span className="text-[10px] font-black text-slate-400 text-center">순</span>
+          <span className="text-[10px] font-black text-slate-400">성함</span>
+          <span className="text-[10px] font-black text-slate-400 text-center">시간</span>
+          <span className="text-[10px] font-black text-slate-400">장소</span>
+          <span className="text-[10px] font-black text-slate-400">연락처</span>
+        </div>
+      ) : (
+        <div className="grid grid-cols-[1fr_3.5rem_1fr_5rem] gap-2 px-3 py-2 bg-slate-50 border-b border-slate-100">
+          <span className="text-[10px] font-black text-slate-400">성명</span>
+          <span className="text-[10px] font-black text-slate-400 text-center">시간</span>
+          <span className="text-[10px] font-black text-slate-400">장소</span>
+          <span className="text-[10px] font-black text-slate-400 text-right">액면금액</span>
+        </div>
+      )}
+
+      {/* 행 */}
+      {list.map((r, idx) => (
+        <div key={r.id} className={`border-b border-slate-50 last:border-0 ${r.isUrgent ? "bg-rose-50/40" : ""}`}>
+          {mode === "today_upcoming" ? (
+            <>
+              <a
+                href={`/staff/chat?id=${r.id}`}
+                className="grid grid-cols-[2rem_1fr_3.5rem_1fr_5.5rem] gap-2 px-3 py-3 items-center hover:bg-slate-50 transition-colors"
+              >
+                <span className="text-[12px] font-black text-indigo-400 text-center">{idx + 1}</span>
+                <div className="min-w-0">
+                  <p className="text-[13px] font-bold text-slate-800 truncate">
+                    {r.name || "-"}
+                    {r.isUrgent && <span className="ml-1 text-[9px] font-black bg-rose-100 text-rose-500 px-1 py-0.5 rounded-full">긴급</span>}
+                  </p>
+                </div>
+                <span className="text-[12px] font-bold text-indigo-600 text-center tabular-nums">{r.time || "-"}</span>
+                <span className="text-[12px] text-slate-600 truncate">{r.location || "-"}</span>
+                <span className="text-[11px] text-slate-500 tabular-nums">{formatPhone(r.phone)}</span>
+              </a>
+              {/* 액션 버튼 (진행중인 예약만) */}
+              {r.status !== "completed" && r.status !== "cancelled" && r.status !== "no_show" && (
+                <div className="grid grid-cols-4 gap-1.5 px-3 pb-2.5">
+                  <a
+                    href={`/staff/chat?id=${r.id}`}
+                    className="py-2 rounded-xl bg-indigo-50 border border-indigo-100 text-indigo-600 text-[11px] font-bold text-center hover:bg-indigo-100 transition-colors"
+                  >
+                    💬 채팅
+                  </a>
+                  <button
+                    onClick={() => onPayment?.(r)}
+                    disabled={sendingPayment === r.id}
+                    className="py-2 rounded-xl text-[11px] font-bold transition-all active:scale-95 disabled:opacity-60"
+                    style={{ background: "linear-gradient(135deg,#6366f1,#4f46e5)", color: "#fff" }}
+                  >
+                    {sendingPayment === r.id ? "…" : "💰 입금"}
+                  </button>
+                  <button
+                    onClick={() => onDefect?.(r.id)}
+                    className="py-2 rounded-xl text-[11px] font-bold transition-all active:scale-95"
+                    style={{ background: "linear-gradient(135deg,#f59e0b,#d97706)", color: "#fff" }}
+                  >
+                    ⚠️ 하자
+                  </button>
+                  <button
+                    onClick={() => onComplete?.(r.id)}
+                    disabled={completing === r.id}
+                    className="py-2 rounded-xl bg-emerald-500 text-white text-[11px] font-bold hover:bg-emerald-600 transition-colors disabled:opacity-60"
+                  >
+                    {completing === r.id ? "…" : "✓ 완료"}
+                  </button>
+                </div>
+              )}
+            </>
+          ) : (
+            /* 완료된 배정 행 */
+            <a
+              href={`/staff/chat?id=${r.id}`}
+              className="grid grid-cols-[1fr_3.5rem_1fr_5rem] gap-2 px-3 py-3 items-center hover:bg-slate-50 transition-colors"
+            >
+              <div className="min-w-0">
+                <p className="text-[13px] font-bold text-slate-800 truncate">{r.name || "-"}</p>
+                {r.date && <p className="text-[10px] text-slate-400">{formatDateLabel(r.date)}</p>}
+              </div>
+              <span className="text-[12px] font-bold text-slate-600 text-center tabular-nums">{r.time || "-"}</span>
+              <span className="text-[12px] text-slate-600 truncate">{r.location || "-"}</span>
+              <span className="text-[12px] font-black text-indigo-600 text-right tabular-nums">
+                {faceValue(r).toLocaleString("ko-KR")}원
+              </span>
+            </a>
+          )}
+        </div>
+      ))}
     </div>
   );
 }
