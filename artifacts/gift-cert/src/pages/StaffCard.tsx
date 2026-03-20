@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from "react";
+import { io, Socket } from "socket.io-client";
 import { useImageUpload } from "@/hooks/useImageUpload";
 
 interface SavedItem {
@@ -34,6 +35,7 @@ interface Message {
   senderName: string;
   message: string;
   time: string;
+  read: boolean;
 }
 
 const STATUS_LABEL: Record<string, { text: string; cls: string }> = {
@@ -80,20 +82,16 @@ export default function StaffCard() {
   const [chatMessages, setChatMessages] = useState<Message[]>([]);
   const [msg, setMsg] = useState("");
   const chatBoxRef = useRef<HTMLDivElement>(null);
+  const socketRef = useRef<Socket | null>(null);
 
-  /* 이미지 업로드 */
-  const { inputRef: imgInputRef, openPicker, onChange: onImgChange, isUploading: imgUploading } = useImageUpload(async ({ serveUrl }) => {
-    await fetch("/api/admin/chat/send", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        reservationId: Number(id),
-        sender: "staff",
-        senderName: staffName,
-        message: `[IMG:${serveUrl}]`,
-      }),
+  /* 이미지 업로드 — Socket.IO로 전송 */
+  const { inputRef: imgInputRef, openPicker, onChange: onImgChange, isUploading: imgUploading } = useImageUpload(({ serveUrl }) => {
+    socketRef.current?.emit("sendMessage", {
+      reservationId: Number(id),
+      sender: "staff",
+      senderName: staffName,
+      message: `[IMG:${serveUrl}]`,
     });
-    loadChat();
   });
 
   useEffect(() => {
@@ -114,50 +112,69 @@ export default function StaffCard() {
       })
       .finally(() => setLoading(false));
 
-    /* 채팅 초기 로드 + SSE 구독 */
-    loadChat();
-    const es = new EventSource(`/api/admin/chat/stream/${id}`);
-    es.onmessage = (e) => {
-      const m = JSON.parse(e.data);
+    /* 채팅 초기 로드 */
+    fetch(`/api/admin/chat/${id}`)
+      .then((r) => r.json())
+      .then((data) => { setChatMessages(data); scrollToBottom(); })
+      .catch(() => {});
+
+    /* Socket.IO 연결 */
+    const socket = io({ transports: ["websocket", "polling"] });
+    socketRef.current = socket;
+
+    socket.on("connect", () => {
+      socket.emit("joinRoom", Number(id));
+      socket.emit("markRead", { reservationId: Number(id), readerRole: "staff" });
+    });
+
+    socket.on("newMessage", (newMsg: Message) => {
       setChatMessages((prev) => {
-        if (prev.some((p) => p.id === m.id)) return prev;
-        const next = [...prev, m];
-        setTimeout(() => scrollToBottom(), 50);
+        if (prev.some((m) => m.id === newMsg.id)) return prev;
+        const next = [...prev, newMsg];
+        scrollToBottom();
+        if (newMsg.sender !== "staff") {
+          socket.emit("markRead", { reservationId: Number(id), readerRole: "staff" });
+        }
         return next;
       });
-    };
-    return () => es.close();
+    });
+
+    socket.on("messagesRead", ({ readerRole }: { readerRole: string }) => {
+      if (readerRole !== "staff") {
+        setChatMessages((prev) =>
+          prev.map((m) => m.sender === "staff" ? { ...m, read: true } : m)
+        );
+      }
+    });
+
+    return () => { socket.disconnect(); };
   }, []);
 
   useEffect(() => { scrollToBottom(); }, [chatMessages]);
 
   function scrollToBottom() {
-    if (chatBoxRef.current) {
-      chatBoxRef.current.scrollTop = chatBoxRef.current.scrollHeight;
-    }
+    setTimeout(() => {
+      if (chatBoxRef.current) chatBoxRef.current.scrollTop = chatBoxRef.current.scrollHeight;
+    }, 50);
   }
 
-  function loadChat() {
-    fetch(`/api/admin/chat/${id}`)
-      .then((res) => res.json())
-      .then(setChatMessages)
-      .catch(() => {});
-  }
-
-  async function sendChatMessage(message: string) {
-    await fetch("/api/admin/chat/send", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ reservationId: Number(id), sender: "staff", senderName: staffName, message }),
+  function sendChatViaSocket(message: string) {
+    socketRef.current?.emit("sendMessage", {
+      reservationId: Number(id),
+      sender: "staff",
+      senderName: staffName,
+      message,
     });
   }
 
-  async function sendMsg() {
+  async function sendChatMessage(message: string) {
+    sendChatViaSocket(message);
+  }
+
+  function sendMsg() {
     if (!msg.trim()) return;
-    const text = msg;
+    sendChatViaSocket(msg);
     setMsg("");
-    await sendChatMessage(text);
-    loadChat();
   }
 
   function handleKey(e: React.KeyboardEvent) {
@@ -214,7 +231,6 @@ export default function StaffCard() {
         `━━━━━━━━━━━━━━━━━━\n` +
         `판매자 계좌로 위 금액을 입금해 주세요.`;
       await sendChatMessage(message);
-      loadChat();
       setPaymentSent(true);
       setTimeout(() => setPaymentSent(false), 3000);
     } finally {
@@ -227,7 +243,6 @@ export default function StaffCard() {
     setSendingDefect(true);
     try {
       await sendChatMessage(`⚠️ 일부 하자 안내\n${defectDetail.trim()}\n\n처리 방법에 대해 아래 채팅으로 협의 부탁드립니다.`);
-      loadChat();
       setDefectModal(false);
       setDefectDetail("");
     } finally {
@@ -401,62 +416,61 @@ export default function StaffCard() {
       {!loading && r && (
         <>
           {/* 채팅 헤더 */}
-          <div className="flex-shrink-0 bg-indigo-500 px-4 py-2 flex items-center gap-2">
-            <span className="text-white text-[13px]">💬</span>
-            <p className="text-white text-[13px] font-bold flex-1">채팅</p>
-            <p className="text-indigo-200 text-[11px]">담당자: {staffName}</p>
+          <div className="flex-shrink-0 bg-white border-b border-slate-100 px-4 py-2.5 flex items-center gap-2">
+            <span className="text-slate-400 text-[15px]">💬</span>
+            <p className="text-[14px] font-bold text-slate-700 flex-1">채팅 · 예약 #{id}</p>
+            <p className="text-[11px] text-slate-400">{staffName}</p>
           </div>
 
           <div
             ref={chatBoxRef}
-            className="flex-1 overflow-y-auto bg-slate-50 px-4 py-3 space-y-3"
+            className="flex-1 overflow-y-auto bg-slate-50 px-4 py-4 space-y-3"
           >
             {chatMessages.length === 0 && (
-              <div className="h-full flex flex-col items-center justify-center gap-2 text-center py-12">
-                <div className="w-10 h-10 rounded-2xl bg-indigo-100 flex items-center justify-center text-xl">💬</div>
-                <p className="text-[13px] text-slate-400 font-medium">아직 메시지가 없습니다</p>
-                <p className="text-[11px] text-slate-300">첫 메시지를 보내보세요</p>
-              </div>
+              <p className="text-center text-slate-300 text-[13px] mt-16">메시지가 없습니다</p>
             )}
             {chatMessages.map((m) => {
               const isMine = m.sender === "staff";
               const isImg = m.message.startsWith("[IMG:");
               const imgUrl = isImg ? m.message.slice(5, -1) : "";
               return (
-                <div key={m.id} className={`flex items-end gap-2 ${isMine ? "justify-end" : "justify-start"}`}>
-                  {!isMine && (
-                    <div className="w-7 h-7 rounded-full bg-indigo-100 flex items-center justify-center text-[12px] font-bold text-indigo-500 flex-shrink-0 mb-1">
-                      {(m.senderName ?? "?")[0]}
-                    </div>
-                  )}
-                  <div className={`flex flex-col ${isMine ? "items-end" : "items-start"} max-w-[75%]`}>
+                <div key={m.id} className={`flex flex-col ${isMine ? "items-end" : "items-start"}`}>
+                  <div className={`max-w-[75%] rounded-2xl text-[14px] shadow-sm overflow-hidden ${
+                    isImg ? "p-0 bg-transparent shadow-none" :
+                    isMine
+                      ? "px-3.5 py-2.5 bg-indigo-500 text-white rounded-br-sm"
+                      : m.sender === "admin"
+                        ? "px-3.5 py-2.5 bg-violet-100 text-violet-800 rounded-bl-sm"
+                        : "px-3.5 py-2.5 bg-white border border-slate-100 text-slate-800 rounded-bl-sm"
+                  }`}>
                     {!isMine && !isImg && (
-                      <p className="text-[11px] text-slate-400 font-semibold ml-1 mb-1">{m.senderName}</p>
+                      <p className="text-[10px] font-bold mb-0.5 opacity-60">{m.senderName}</p>
                     )}
                     {isImg ? (
                       <img
                         src={imgUrl}
                         alt="이미지"
-                        className="max-w-[200px] max-h-[240px] rounded-2xl object-cover cursor-pointer shadow-sm"
+                        className="max-w-[220px] max-h-[280px] rounded-2xl object-cover cursor-pointer"
                         onClick={() => window.open(imgUrl, "_blank")}
                       />
                     ) : (
-                      <div className={`px-3.5 py-2.5 rounded-2xl text-[14px] leading-relaxed ${
-                        isMine
-                          ? "bg-indigo-500 text-white rounded-br-sm"
-                          : "bg-white border border-slate-100 shadow-sm text-slate-800 rounded-bl-sm"
-                      }`}>
-                        <p className="whitespace-pre-wrap">{m.message}</p>
-                      </div>
+                      <p className="whitespace-pre-wrap">{m.message}</p>
                     )}
-                    <p className="text-[10px] mt-1 mx-1 text-slate-400">
+                    {!isImg && (
+                      <p className={`text-[10px] mt-0.5 ${isMine ? "text-indigo-200" : "text-slate-400"}`}>
+                        {new Date(m.time).toLocaleTimeString("ko-KR", { hour: "2-digit", minute: "2-digit" })}
+                      </p>
+                    )}
+                  </div>
+                  {isImg && (
+                    <p className={`text-[10px] mt-0.5 text-slate-400 ${isMine ? "mr-1" : "ml-1"}`}>
                       {new Date(m.time).toLocaleTimeString("ko-KR", { hour: "2-digit", minute: "2-digit" })}
                     </p>
-                  </div>
-                  {isMine && (
-                    <div className="w-7 h-7 rounded-full bg-indigo-500 flex items-center justify-center text-[12px] font-bold text-white flex-shrink-0 mb-1">
-                      {staffName[0]}
-                    </div>
+                  )}
+                  {isMine && !isImg && (
+                    <span className="text-[10px] text-slate-400 mt-0.5 mr-1">
+                      {m.read ? "읽음" : ""}
+                    </span>
                   )}
                 </div>
               );
@@ -464,32 +478,28 @@ export default function StaffCard() {
           </div>
 
           {/* ── 채팅 입력 ── */}
-          <div className="flex-shrink-0 bg-white border-t border-slate-100 px-4 py-2.5">
-            <div className="max-w-2xl mx-auto flex items-center gap-2">
+          <div className="flex-shrink-0 bg-white border-t border-slate-100 px-4 py-3">
+            <div className="max-w-2xl mx-auto flex gap-2">
               <button
                 onClick={openPicker}
                 disabled={imgUploading}
-                className="w-9 h-9 flex items-center justify-center rounded-xl bg-slate-100 text-[17px] hover:bg-slate-200 transition-colors active:scale-95 disabled:opacity-50 flex-shrink-0"
+                className="w-11 h-11 rounded-2xl bg-slate-100 flex items-center justify-center text-[18px] hover:bg-slate-200 transition-colors active:scale-95 disabled:opacity-50 flex-shrink-0"
                 title="사진 첨부"
               >
-                {imgUploading ? <span className="text-[10px] text-slate-500 font-bold">…</span> : "📷"}
+                {imgUploading ? <span className="text-[11px] text-slate-500 font-bold">...</span> : "📷"}
               </button>
               <input
                 value={msg}
                 onChange={(e) => setMsg(e.target.value)}
                 onKeyDown={handleKey}
-                placeholder="메시지를 입력하세요…"
-                className="flex-1 px-4 py-2.5 rounded-xl border border-slate-200 bg-slate-50 text-[14px] outline-none focus:border-indigo-400 focus:bg-white transition-colors"
+                placeholder="메시지 입력"
+                className="flex-1 px-4 py-3 rounded-2xl border border-slate-200 bg-white text-[14px] outline-none focus:border-indigo-400 focus:ring-2 focus:ring-indigo-50"
               />
               <button
                 onClick={sendMsg}
-                disabled={!msg.trim()}
-                className="w-9 h-9 flex items-center justify-center rounded-xl bg-indigo-500 text-white hover:bg-indigo-600 transition-colors active:scale-95 disabled:opacity-40 flex-shrink-0"
+                className="px-5 py-3 rounded-2xl bg-indigo-500 text-white text-[14px] font-bold hover:bg-indigo-600 transition-colors active:scale-95 flex-shrink-0"
               >
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                  <line x1="22" y1="2" x2="11" y2="13"/>
-                  <polygon points="22 2 15 22 11 13 2 9 22 2"/>
-                </svg>
+                전송
               </button>
             </div>
           </div>
