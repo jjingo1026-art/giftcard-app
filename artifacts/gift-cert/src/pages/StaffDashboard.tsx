@@ -143,40 +143,46 @@ function MiniCalendar({
           const isToday = dateStr === todayStr;
           const isSun = (firstDay + day - 1) % 7 === 0;
           const isSat = (firstDay + day - 1) % 7 === 6;
+          const hasCount = count > 0;
 
           return (
             <button
               key={day}
               onClick={() => onSelect(dateStr)}
-              className={`relative flex flex-col items-center justify-center rounded-xl py-1.5 transition-all active:scale-95 ${
+              className={`relative flex flex-col items-center justify-center rounded-xl transition-all active:scale-95 ${
                 isSelected
-                  ? "bg-indigo-500 shadow-sm shadow-indigo-200"
-                  : isToday
-                    ? "bg-indigo-50 border border-indigo-200"
-                    : "hover:bg-slate-50"
+                  ? "bg-indigo-500 shadow-md shadow-indigo-200"
+                  : hasCount
+                    ? "bg-indigo-50 hover:bg-indigo-100 border border-indigo-100"
+                    : isToday
+                      ? "border border-indigo-200 hover:bg-indigo-50"
+                      : "hover:bg-slate-50"
               }`}
+              style={{ minHeight: "56px", paddingTop: "6px", paddingBottom: "6px" }}
             >
+              {/* 날짜 숫자 */}
               <span className={`text-[13px] font-bold leading-none ${
-                isSelected
-                  ? "text-white"
-                  : isSun
-                    ? "text-rose-400"
-                    : isSat
-                      ? "text-indigo-500"
-                      : "text-slate-700"
+                isSelected ? "text-white"
+                : isSun ? "text-rose-400"
+                : isSat ? "text-indigo-500"
+                : "text-slate-700"
               }`}>
                 {day}
               </span>
-              {count > 0 ? (
-                <span className={`mt-0.5 text-[10px] font-black px-1.5 py-0.5 rounded-full leading-none ${
+
+              {/* 건수 배지 */}
+              {hasCount ? (
+                <span className={`mt-1 text-[11px] font-black rounded-lg leading-none ${
                   isSelected
-                    ? "bg-white/30 text-white"
-                    : "bg-indigo-100 text-indigo-600"
+                    ? "bg-white text-indigo-600 px-1.5 py-0.5"
+                    : "bg-indigo-500 text-white px-1.5 py-0.5"
                 }`}>
-                  {count}
+                  {count}건
                 </span>
+              ) : isToday ? (
+                <span className={`mt-1.5 w-1.5 h-1.5 rounded-full ${isSelected ? "bg-white/60" : "bg-indigo-300"}`} />
               ) : (
-                <span className="mt-0.5 h-[16px]" />
+                <span className="mt-1 h-[20px]" />
               )}
             </button>
           );
