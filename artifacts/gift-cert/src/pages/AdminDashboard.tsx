@@ -68,6 +68,9 @@ export default function AdminDashboard() {
   const [cancelledQuery, setCancelledQuery] = useState("");
   const [newUrgentAlert, setNewUrgentAlert] = useState<Reservation | null>(null);
   const urgentAlertTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const [pendingStaff, setPendingStaff] = useState<{ id: number; name: string; phone: string }[]>([]);
+  const [approvingStaff, setApprovingStaff] = useState<number | null>(null);
+  const [rejectingStaff, setRejectingStaff] = useState<number | null>(null);
 
   const token = getAdminToken();
   if (!token) { navigate("/admin/login"); return null; }
@@ -100,6 +103,11 @@ export default function AdminDashboard() {
     fetch("/api/admin/reservations/calendar", { headers })
       .then((r) => r.json())
       .then(setCalendarData)
+      .catch(() => {});
+
+    fetch("/api/admin/staff/pending", { headers })
+      .then((r) => r.json())
+      .then(setPendingStaff)
       .catch(() => {});
   }, []);
 
@@ -141,6 +149,32 @@ export default function AdminDashboard() {
       ));
     } finally {
       setAssigning(null);
+    }
+  }
+
+  async function approveStaff(id: number) {
+    setApprovingStaff(id);
+    try {
+      await fetch(`/api/admin/staff/${id}/approve`, {
+        method: "POST",
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      setPendingStaff((prev) => prev.filter((s) => s.id !== id));
+    } finally {
+      setApprovingStaff(null);
+    }
+  }
+
+  async function rejectStaff(id: number) {
+    setRejectingStaff(id);
+    try {
+      await fetch(`/api/admin/staff/${id}/reject`, {
+        method: "POST",
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      setPendingStaff((prev) => prev.filter((s) => s.id !== id));
+    } finally {
+      setRejectingStaff(null);
     }
   }
 
@@ -322,6 +356,51 @@ export default function AdminDashboard() {
             </div>
           ))}
         </div>
+
+        {/* 매입담당자 가입 승인 대기 */}
+        {pendingStaff.length > 0 && (
+          <div className="bg-amber-50 border border-amber-200 rounded-2xl overflow-hidden">
+            <div className="flex items-center justify-between px-4 py-3 border-b border-amber-100">
+              <div className="flex items-center gap-2">
+                <span className="relative flex h-2.5 w-2.5">
+                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-amber-400 opacity-75" />
+                  <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-amber-500" />
+                </span>
+                <p className="text-[13px] font-black text-amber-700">매입담당자 가입 승인 대기</p>
+                <span className="text-[11px] font-bold text-amber-600 bg-amber-100 border border-amber-200 px-2 py-0.5 rounded-full">{pendingStaff.length}명</span>
+              </div>
+            </div>
+            <div className="divide-y divide-amber-100">
+              {pendingStaff.map((s) => (
+                <div key={s.id} className="flex items-center justify-between px-4 py-3 gap-3">
+                  <div className="flex items-center gap-3 min-w-0">
+                    <div className="w-8 h-8 rounded-full bg-amber-100 flex items-center justify-center text-[14px] flex-shrink-0">👨‍🔧</div>
+                    <div className="min-w-0">
+                      <p className="text-[14px] font-bold text-slate-800 truncate">{s.name}</p>
+                      <p className="text-[11px] text-slate-400 mt-0.5">{s.phone}</p>
+                    </div>
+                  </div>
+                  <div className="flex gap-2 flex-shrink-0">
+                    <button
+                      onClick={() => rejectStaff(s.id)}
+                      disabled={rejectingStaff === s.id || approvingStaff === s.id}
+                      className="px-3.5 py-2 rounded-xl bg-white border border-rose-200 text-rose-500 text-[12px] font-bold hover:bg-rose-50 transition-all active:scale-95 disabled:opacity-50"
+                    >
+                      {rejectingStaff === s.id ? "처리중" : "거절"}
+                    </button>
+                    <button
+                      onClick={() => approveStaff(s.id)}
+                      disabled={approvingStaff === s.id || rejectingStaff === s.id}
+                      className="px-3.5 py-2 rounded-xl bg-emerald-500 text-white text-[12px] font-bold hover:bg-emerald-600 shadow-sm shadow-emerald-200 transition-all active:scale-95 disabled:opacity-50"
+                    >
+                      {approvingStaff === s.id ? "처리중" : "✓ 승인"}
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
 
         {/* 매입담당자 현황 */}
         {staffSummary.length > 0 && (
