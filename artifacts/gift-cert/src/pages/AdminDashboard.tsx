@@ -186,6 +186,27 @@ export default function AdminDashboard() {
       setEntries((prev) => prev.map((r) => r.id === updated.id ? { ...r, ...updated } : r));
     });
 
+    socket.on("staffAssigned", ({ reservation }: { staffId: number; reservation: Reservation }) => {
+      // 예약 목록 상태 갱신 (pending → assigned)
+      setAllEntries((prev) => prev.map((r) => r.id === reservation.id ? { ...r, ...reservation } : r));
+      setEntries((prev) => prev.map((r) => r.id === reservation.id ? { ...r, ...reservation } : r));
+
+      // 캘린더: 해당 날짜의 unassigned -1, assigned +1
+      if (reservation.date) {
+        setCalendarData((prev) =>
+          prev.map((c) =>
+            c.date === reservation.date
+              ? {
+                  ...c,
+                  unassigned: Math.max(0, c.unassigned - 1),
+                  assigned: c.assigned + 1,
+                }
+              : c
+          )
+        );
+      }
+    });
+
     socket.on("chatAlert", (msg: { reservationId: number; senderName: string; message: string; time: string; sender: string }) => {
       // 실시간 인박스 갱신
       setChatInbox((prev) => {
