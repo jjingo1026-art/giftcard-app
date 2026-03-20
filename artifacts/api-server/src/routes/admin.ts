@@ -2,6 +2,7 @@ import { Router, type IRouter } from "express";
 import { db } from "@workspace/db";
 import { reservationsTable, chatsTable, staffTable, penaltiesTable, usersTable, adminSettingsTable } from "@workspace/db/schema";
 import { eq, desc, asc, and, sql, gte, lte, inArray, isNull } from "drizzle-orm";
+import { runPrivacyCleanup } from "../cleanup";
 import crypto from "crypto";
 import { emitToRoom } from "../socket";
 
@@ -121,6 +122,16 @@ router.patch("/credentials", requireAuth, async (req, res) => {
   }
   tokens.clear();
   res.json({ success: true });
+});
+
+router.post("/privacy-cleanup", requireAuth, async (_req, res) => {
+  try {
+    const result = await runPrivacyCleanup();
+    res.json({ success: true, cleaned: result.cleaned });
+  } catch (e) {
+    console.error("[개인정보 삭제 API 오류]", e);
+    res.status(500).json({ error: "삭제 처리 중 오류가 발생했습니다." });
+  }
 });
 
 router.get("/staff", requireAuth, async (_req, res) => {

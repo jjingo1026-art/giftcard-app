@@ -1,6 +1,7 @@
 import { createServer } from "http";
 import app from "./app";
 import { initSocket } from "./socket";
+import { schedulePrivacyCleanup } from "./cleanup";
 
 const rawPort = process.env["PORT"];
 
@@ -19,4 +20,5 @@ initSocket(httpServer);
 
 httpServer.listen(port, () => {
   console.log("서버 실행됨");
+  schedulePrivacyCleanup();
 });
