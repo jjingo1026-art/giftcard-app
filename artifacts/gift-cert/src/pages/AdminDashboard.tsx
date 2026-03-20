@@ -3,6 +3,7 @@ import { useLocation } from "wouter";
 import FullCalendar from "@fullcalendar/react";
 import dayGridPlugin from "@fullcalendar/daygrid";
 import interactionPlugin from "@fullcalendar/interaction";
+import { io } from "socket.io-client";
 import { getAdminToken, clearAdminToken } from "./AdminLogin";
 import { formatDateKo } from "@/lib/store";
 
@@ -65,6 +66,8 @@ export default function AdminDashboard() {
   const [completedQuery, setCompletedQuery] = useState("");
   const [showCancelledSearch, setShowCancelledSearch] = useState(false);
   const [cancelledQuery, setCancelledQuery] = useState("");
+  const [newUrgentAlert, setNewUrgentAlert] = useState<Reservation | null>(null);
+  const urgentAlertTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const token = getAdminToken();
   if (!token) { navigate("/admin/login"); return null; }
@@ -98,6 +101,27 @@ export default function AdminDashboard() {
       .then((r) => r.json())
       .then(setCalendarData)
       .catch(() => {});
+  }, []);
+
+  useEffect(() => {
+    const socket = io({ transports: ["websocket", "polling"] });
+
+    socket.on("newUrgent", (reservation: Reservation) => {
+      setAllEntries((prev) => {
+        if (prev.some((r) => r.id === reservation.id)) return prev;
+        return [reservation, ...prev];
+      });
+      setEntries((prev) => {
+        if (prev.some((r) => r.id === reservation.id)) return prev;
+        return [reservation, ...prev];
+      });
+
+      if (urgentAlertTimerRef.current) clearTimeout(urgentAlertTimerRef.current);
+      setNewUrgentAlert(reservation);
+      urgentAlertTimerRef.current = setTimeout(() => setNewUrgentAlert(null), 8000);
+    });
+
+    return () => { socket.disconnect(); };
   }, []);
 
   async function assignStaff(reservationId: number) {
@@ -189,6 +213,32 @@ export default function AdminDashboard() {
 
   return (
     <div className="min-h-screen bg-slate-50">
+
+      {/* 🚨 실시간 긴급판매 알림 플로팅 배너 */}
+      <div
+        className={`fixed top-4 left-1/2 -translate-x-1/2 z-[9999] w-[calc(100%-2rem)] max-w-sm transition-all duration-500
+          ${newUrgentAlert ? "opacity-100 translate-y-0 pointer-events-auto" : "opacity-0 -translate-y-4 pointer-events-none"}`}
+      >
+        {newUrgentAlert && (
+          <div
+            onClick={() => { window.location.href = `/admin/detail.html?id=${newUrgentAlert.id}`; }}
+            className="bg-red-600 text-white rounded-2xl shadow-2xl px-4 py-3.5 flex items-center gap-3 cursor-pointer active:scale-[0.98] transition-transform"
+          >
+            <span className="text-2xl animate-bounce flex-shrink-0">🚨</span>
+            <div className="flex-1 min-w-0">
+              <p className="text-[13px] font-black leading-tight">긴급판매 신규 접수!</p>
+              <p className="text-[12px] font-semibold opacity-90 mt-0.5 truncate">
+                👤 {newUrgentAlert.name ?? newUrgentAlert.phone} · 📍 {newUrgentAlert.location} · {formatKRW(newUrgentAlert.totalPayment)}
+              </p>
+            </div>
+            <button
+              onClick={(e) => { e.stopPropagation(); setNewUrgentAlert(null); }}
+              className="text-white/70 hover:text-white text-lg flex-shrink-0 leading-none"
+            >✕</button>
+          </div>
+        )}
+      </div>
+
       <header className="bg-white border-b border-slate-100 sticky top-0 z-40 shadow-sm">
         <div className="max-w-2xl mx-auto px-4 py-3.5 flex items-center justify-between">
           <div>

@@ -2,6 +2,7 @@ import { Router, type IRouter } from "express";
 import { db } from "@workspace/db";
 import { reservationsTable, usersTable } from "@workspace/db/schema";
 import { eq, and, inArray } from "drizzle-orm";
+import { broadcast } from "../socket";
 
 const normalizePhone = (phone: string) => phone.replace(/[^0-9]/g, "");
 
@@ -214,6 +215,10 @@ router.post("/", async (req, res) => {
       status: "pending",
     })
     .returning();
+
+  if (isUrgent) {
+    broadcast("newUrgent", inserted);
+  }
 
   res.status(201).json(inserted);
 });

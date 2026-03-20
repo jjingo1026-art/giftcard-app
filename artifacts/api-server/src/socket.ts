@@ -74,3 +74,7 @@ export function initSocket(httpServer: HttpServer) {
 export function emitToRoom(reservationId: number, event: string, data: object) {
   _io?.to("room_" + reservationId).emit(event, data);
 }
+
+export function broadcast(event: string, data: object) {
+  _io?.emit(event, data);
+}
