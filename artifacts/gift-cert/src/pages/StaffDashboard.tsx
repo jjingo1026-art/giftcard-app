@@ -251,7 +251,7 @@ export default function StaffDashboard() {
                     </div>
 
                     {r.status !== "completed" && r.status !== "cancelled" && r.status !== "no_show" ? (
-                      <div className="grid grid-cols-2 gap-2.5">
+                      <div className="grid grid-cols-2 gap-3">
                         <a
                           href={`/staff/chat?id=${r.id}`}
                           className="py-2.5 rounded-xl bg-indigo-50 border border-indigo-100 text-indigo-600 text-[13px] font-bold text-center hover:bg-indigo-100 transition-colors"
