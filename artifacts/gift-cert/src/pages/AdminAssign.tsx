@@ -297,40 +297,53 @@ export default function AdminAssign() {
           </div>
         ) : error ? (
           <div className="text-center py-16 text-[13px] text-rose-500">{error}</div>
-        ) : dayRows.length === 0 ? (
-          <div className="bg-white rounded-2xl border border-slate-100 shadow-sm py-14 text-center">
-            <p className="text-3xl mb-3">📋</p>
-            <p className="text-[14px] font-semibold text-slate-400">해당 날짜에 배정 대기 예약이 없습니다</p>
-          </div>
         ) : (
           <>
-            {/* 미배정 섹션 */}
-            {unassigned.length > 0 && (
-              <div className="space-y-2">
-                <div className="flex items-center gap-2">
-                  <div className="w-2 h-2 rounded-full bg-amber-400" />
-                  <h2 className="text-[14px] font-black text-slate-700">미배정</h2>
-                  <span className="text-[12px] font-bold text-amber-500 bg-amber-50 border border-amber-100 px-2 py-0.5 rounded-full">{unassigned.length}건</span>
+            {/* 미배정 섹션 — 항상 표시 */}
+            <div className="space-y-2">
+              <div className="flex items-center gap-2">
+                <div className="w-2 h-2 rounded-full bg-amber-400" />
+                <h2 className="text-[14px] font-black text-slate-700">미배정</h2>
+                <span className={`text-[12px] font-bold px-2 py-0.5 rounded-full border
+                  ${unassigned.length > 0
+                    ? "text-amber-500 bg-amber-50 border-amber-100"
+                    : "text-slate-300 bg-slate-50 border-slate-100"}`}>
+                  {unassigned.length}건
+                </span>
+              </div>
+              {unassigned.length === 0 ? (
+                <div className="bg-white rounded-2xl border border-slate-100 py-6 text-center">
+                  <p className="text-[13px] font-semibold text-slate-300">미배정 예약이 없습니다</p>
                 </div>
-                {unassigned.map((r) => (
+              ) : (
+                unassigned.map((r) => (
                   <ReservationCard key={r.id} r={r} showAssign={true} />
-                ))}
-              </div>
-            )}
+                ))
+              )}
+            </div>
 
-            {/* 배정완료 섹션 */}
-            {assigned.length > 0 && (
-              <div className="space-y-2">
-                <div className="flex items-center gap-2">
-                  <div className="w-2 h-2 rounded-full bg-blue-400" />
-                  <h2 className="text-[14px] font-black text-slate-700">배정 완료</h2>
-                  <span className="text-[12px] font-bold text-blue-500 bg-blue-50 border border-blue-100 px-2 py-0.5 rounded-full">{assigned.length}건</span>
-                </div>
-                {assigned.map((r) => (
-                  <ReservationCard key={r.id} r={r} showAssign={false} />
-                ))}
+            {/* 배정완료 섹션 — 항상 표시 */}
+            <div className="space-y-2">
+              <div className="flex items-center gap-2">
+                <div className="w-2 h-2 rounded-full bg-blue-400" />
+                <h2 className="text-[14px] font-black text-slate-700">배정 완료</h2>
+                <span className={`text-[12px] font-bold px-2 py-0.5 rounded-full border
+                  ${assigned.length > 0
+                    ? "text-blue-500 bg-blue-50 border-blue-100"
+                    : "text-slate-300 bg-slate-50 border-slate-100"}`}>
+                  {assigned.length}건
+                </span>
               </div>
-            )}
+              {assigned.length === 0 ? (
+                <div className="bg-white rounded-2xl border border-slate-100 py-6 text-center">
+                  <p className="text-[13px] font-semibold text-slate-300">배정 완료된 예약이 없습니다</p>
+                </div>
+              ) : (
+                assigned.map((r) => (
+                  <ReservationCard key={r.id} r={r} showAssign={false} />
+                ))
+              )}
+            </div>
           </>
         )}
       </div>
