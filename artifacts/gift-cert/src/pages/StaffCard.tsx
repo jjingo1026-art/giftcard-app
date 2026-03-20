@@ -175,7 +175,7 @@ export default function StaffCard() {
         </div>
       </header>
 
-      <div className="max-w-2xl mx-auto px-4 py-4 pb-8">
+      <div className={`max-w-2xl mx-auto px-4 py-4 ${isActive ? "pb-28" : "pb-8"}`}>
         {loading && (
           <div className="py-20 text-center">
             <div className="w-8 h-8 border-2 border-indigo-200 border-t-indigo-500 rounded-full animate-spin mx-auto" />
@@ -285,59 +285,24 @@ export default function StaffCard() {
               </div>
             )}
 
-            {/* 액션 버튼 */}
-            {isActive ? (
-              <div className="space-y-2 pt-1">
-                {/* 채팅하기 — 강조 */}
-                <a
-                  href={`/staff/chat?id=${r.id}`}
-                  className="flex items-center justify-center gap-2 w-full py-4 rounded-2xl text-[15px] font-black text-white shadow-md active:scale-95 transition-all"
-                  style={{ background: "linear-gradient(135deg,#6366f1,#4f46e5)" }}
+            {/* 채팅 + 완료처리 버튼 */}
+            <div className="space-y-2 pt-1">
+              <a
+                href={`/staff/chat?id=${r.id}`}
+                className="flex items-center justify-center gap-2 w-full py-4 rounded-2xl text-[15px] font-black text-white shadow-md active:scale-95 transition-all"
+                style={{ background: "linear-gradient(135deg,#6366f1,#4f46e5)" }}
+              >
+                💬 채팅하기
+              </a>
+              {isActive ? (
+                <button
+                  onClick={markComplete}
+                  disabled={completing}
+                  className="w-full py-3.5 rounded-2xl bg-emerald-500 text-white text-[14px] font-bold hover:bg-emerald-600 transition-colors disabled:opacity-60 active:scale-95"
                 >
-                  💬 채팅하기
-                </a>
-                <div className="grid grid-cols-2 gap-2">
-                  <button
-                    onClick={handlePaymentRequest}
-                    disabled={sendingPayment}
-                    className="py-3.5 rounded-2xl text-[13px] font-bold transition-all active:scale-95 disabled:opacity-60"
-                    style={{ background: "linear-gradient(135deg,#0ea5e9,#0284c7)", color: "#fff" }}
-                  >
-                    {sendingPayment ? "발송 중..." : "💰 입금요청"}
-                  </button>
-                  <button
-                    onClick={() => { setDefectModal(true); setDefectDetail(""); }}
-                    className="py-3.5 rounded-2xl text-[13px] font-bold transition-all active:scale-95"
-                    style={{ background: "linear-gradient(135deg,#f59e0b,#d97706)", color: "#fff" }}
-                  >
-                    ⚠️ 일부하자
-                  </button>
-                  <button
-                    onClick={markNoShow}
-                    disabled={noShowing}
-                    className="py-3.5 rounded-2xl text-[13px] font-bold transition-all active:scale-95 disabled:opacity-60"
-                    style={{ background: "linear-gradient(135deg,#f43f5e,#e11d48)", color: "#fff" }}
-                  >
-                    {noShowing ? "처리 중..." : "🚫 노쇼"}
-                  </button>
-                  <button
-                    onClick={markComplete}
-                    disabled={completing}
-                    className="py-3.5 rounded-2xl bg-emerald-500 text-white text-[13px] font-bold hover:bg-emerald-600 transition-colors disabled:opacity-60"
-                  >
-                    {completing ? "처리 중..." : "✅ 완료처리"}
-                  </button>
-                </div>
-              </div>
-            ) : (
-              <div className="space-y-2 pt-1">
-                <a
-                  href={`/staff/chat?id=${r.id}`}
-                  className="flex items-center justify-center gap-2 w-full py-4 rounded-2xl text-[15px] font-black text-white shadow-md"
-                  style={{ background: "linear-gradient(135deg,#6366f1,#4f46e5)" }}
-                >
-                  💬 채팅하기
-                </a>
+                  {completing ? "처리 중..." : "✅ 완료처리"}
+                </button>
+              ) : (
                 <div className={`py-3 rounded-2xl text-[13px] font-bold text-center ${
                   r.status === "completed"
                     ? "bg-emerald-50 text-emerald-600 border border-emerald-100"
@@ -347,11 +312,47 @@ export default function StaffCard() {
                 }`}>
                   {r.status === "completed" ? "✅ 매입 완료" : r.status === "no_show" ? "🚫 노쇼 처리됨" : "취소됨"}
                 </div>
-              </div>
-            )}
+              )}
+            </div>
           </div>
         )}
       </div>
+
+      {/* 하단 고정 바 — 입금요청 / 일부하자 / 노쇼 */}
+      {!loading && r && isActive && (
+        <div className="fixed bottom-0 left-0 right-0 z-40 bg-white border-t border-slate-200 shadow-[0_-4px_20px_rgba(0,0,0,0.08)]">
+          <div className="max-w-2xl mx-auto px-4 py-3">
+            <div className="grid grid-cols-3 gap-2">
+              <button
+                onClick={handlePaymentRequest}
+                disabled={sendingPayment}
+                className="py-3.5 rounded-2xl text-[13px] font-bold transition-all active:scale-95 disabled:opacity-60 flex flex-col items-center gap-0.5"
+                style={{ background: "linear-gradient(135deg,#0ea5e9,#0284c7)", color: "#fff" }}
+              >
+                <span className="text-[16px]">💰</span>
+                <span>{sendingPayment ? "발송중" : "입금요청"}</span>
+              </button>
+              <button
+                onClick={() => { setDefectModal(true); setDefectDetail(""); }}
+                className="py-3.5 rounded-2xl text-[13px] font-bold transition-all active:scale-95 flex flex-col items-center gap-0.5"
+                style={{ background: "linear-gradient(135deg,#f59e0b,#d97706)", color: "#fff" }}
+              >
+                <span className="text-[16px]">⚠️</span>
+                <span>일부하자</span>
+              </button>
+              <button
+                onClick={markNoShow}
+                disabled={noShowing}
+                className="py-3.5 rounded-2xl text-[13px] font-bold transition-all active:scale-95 disabled:opacity-60 flex flex-col items-center gap-0.5"
+                style={{ background: "linear-gradient(135deg,#f43f5e,#e11d48)", color: "#fff" }}
+              >
+                <span className="text-[16px]">🚫</span>
+                <span>{noShowing ? "처리중" : "노쇼"}</span>
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* 일부하자 모달 */}
       {defectModal && (
