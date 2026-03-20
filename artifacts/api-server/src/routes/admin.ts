@@ -918,7 +918,60 @@ router.post("/chat/send", async (req, res) => {
   }).returning();
   const msgOut = { ...inserted, time: inserted.time.toISOString() };
   emitToRoom(reservationId, "newMessage", msgOut);
+  // 관리자가 아닌 발신자의 메시지는 전체 브로드캐스트 (대시보드 알림용)
+  if (sender !== "admin" && sender !== "system") {
+    const [resv] = await db.select({ name: reservationsTable.name, phone: reservationsTable.phone, location: reservationsTable.location })
+      .from(reservationsTable).where(eq(reservationsTable.id, reservationId));
+    broadcast("chatAlert", { ...msgOut, reservationInfo: resv ?? null });
+  }
   res.json({ success: true, id: inserted.id });
+});
+
+// ── 채팅 인박스 (미읽은 메시지가 있는 예약 목록) ────────────────────────────
+router.get("/chat-inbox", requireAuth, async (req, res) => {
+  // 관리자/시스템 외 발신자의 미읽은 메시지 조회
+  const unread = await db
+    .select()
+    .from(chatsTable)
+    .where(and(eq(chatsTable.read, false), sql`${chatsTable.sender} NOT IN ('admin','system')`))
+    .orderBy(desc(chatsTable.time));
+
+  if (unread.length === 0) { res.json([]); return; }
+
+  const ids = [...new Set(unread.map((c) => c.reservationId))];
+  const reservations = await db
+    .select({ id: reservationsTable.id, name: reservationsTable.name, phone: reservationsTable.phone, location: reservationsTable.location, status: reservationsTable.status })
+    .from(reservationsTable)
+    .where(inArray(reservationsTable.id, ids));
+
+  const resvMap = new Map(reservations.map((r) => [r.id, r]));
+  const grouped = new Map<number, typeof unread>();
+  for (const chat of unread) {
+    if (!grouped.has(chat.reservationId)) grouped.set(chat.reservationId, []);
+    grouped.get(chat.reservationId)!.push(chat);
+  }
+
+  const result = ids
+    .filter((id) => resvMap.has(id))
+    .map((id) => {
+      const chats = grouped.get(id)!;
+      const last = chats[0];
+      const r = resvMap.get(id)!;
+      return {
+        reservationId: id,
+        name: r.name,
+        phone: r.phone,
+        location: r.location,
+        status: r.status,
+        unreadCount: chats.length,
+        lastMessage: last.message,
+        lastSender: last.senderName,
+        lastSenderRole: last.sender,
+        lastTime: last.time.toISOString(),
+      };
+    });
+
+  res.json(result);
 });
 
 router.get("/messages/:reservationId", async (req, res) => {

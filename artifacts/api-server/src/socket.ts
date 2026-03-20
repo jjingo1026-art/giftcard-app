@@ -41,6 +41,11 @@ export function initSocket(httpServer: HttpServer) {
 
       const msg = { ...inserted, time: inserted.time.toISOString() };
       io.to("room_" + reservationId).emit("newMessage", msg);
+
+      // 관리자가 아닌 발신자의 메시지는 전체 브로드캐스트 (대시보드 채팅 알림용)
+      if (sender !== "admin" && sender !== "system") {
+        io.emit("chatAlert", msg);
+      }
     });
 
     // 읽음 처리: 내가 아닌 발신자의 메시지를 read=true 로 업데이트

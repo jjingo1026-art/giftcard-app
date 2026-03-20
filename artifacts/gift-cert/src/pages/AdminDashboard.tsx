@@ -37,6 +37,19 @@ const statusText: Record<string, string> = {
   cancelled: "🔴 취소",
 };
 
+interface ChatInboxItem {
+  reservationId: number;
+  name?: string;
+  phone: string;
+  location: string;
+  status: string;
+  unreadCount: number;
+  lastMessage: string;
+  lastSender: string;
+  lastSenderRole: string;
+  lastTime: string;
+}
+
 interface StaffSummary { id: number; name: string; assigned: number; completed: number; }
 
 interface DashboardStats {
@@ -71,6 +84,10 @@ export default function AdminDashboard() {
   const [pendingStaff, setPendingStaff] = useState<{ id: number; name: string; phone: string }[]>([]);
   const [approvingStaff, setApprovingStaff] = useState<number | null>(null);
   const [rejectingStaff, setRejectingStaff] = useState<number | null>(null);
+  const [chatInbox, setChatInbox] = useState<ChatInboxItem[]>([]);
+  const [chatInboxOpen, setChatInboxOpen] = useState(true);
+  const [newChatAlert, setNewChatAlert] = useState<{ reservationId: number; lastSender: string; lastMessage: string } | null>(null);
+  const chatAlertTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const token = getAdminToken();
   if (!token) { navigate("/admin/login"); return null; }
@@ -109,6 +126,11 @@ export default function AdminDashboard() {
       .then((r) => r.json())
       .then(setPendingStaff)
       .catch(() => {});
+
+    fetch("/api/admin/chat-inbox", { headers })
+      .then((r) => r.json())
+      .then((data) => { if (Array.isArray(data)) setChatInbox(data); })
+      .catch(() => {});
   }, []);
 
   useEffect(() => {
@@ -132,6 +154,41 @@ export default function AdminDashboard() {
     socket.on("reservationUpdated", (updated: Reservation) => {
       setAllEntries((prev) => prev.map((r) => r.id === updated.id ? { ...r, ...updated } : r));
       setEntries((prev) => prev.map((r) => r.id === updated.id ? { ...r, ...updated } : r));
+    });
+
+    socket.on("chatAlert", (msg: { reservationId: number; senderName: string; message: string; time: string; sender: string }) => {
+      // 실시간 인박스 갱신
+      setChatInbox((prev) => {
+        const existing = prev.find((c) => c.reservationId === msg.reservationId);
+        if (existing) {
+          return prev.map((c) =>
+            c.reservationId === msg.reservationId
+              ? { ...c, unreadCount: c.unreadCount + 1, lastMessage: msg.message, lastSender: msg.senderName, lastSenderRole: msg.sender, lastTime: msg.time }
+              : c
+          ).sort((a, b) => new Date(b.lastTime).getTime() - new Date(a.lastTime).getTime());
+        } else {
+          // 새 예약의 채팅 — 기본 정보는 모르므로 reservationId만 표시
+          const newItem: ChatInboxItem = {
+            reservationId: msg.reservationId,
+            name: undefined,
+            phone: "-",
+            location: "-",
+            status: "-",
+            unreadCount: 1,
+            lastMessage: msg.message,
+            lastSender: msg.senderName,
+            lastSenderRole: msg.sender,
+            lastTime: msg.time,
+          };
+          return [newItem, ...prev];
+        }
+      });
+      setChatInboxOpen(true);
+
+      // 플로팅 알림
+      if (chatAlertTimerRef.current) clearTimeout(chatAlertTimerRef.current);
+      setNewChatAlert({ reservationId: msg.reservationId, lastSender: msg.senderName, lastMessage: msg.message });
+      chatAlertTimerRef.current = setTimeout(() => setNewChatAlert(null), 6000);
     });
 
     return () => { socket.disconnect(); };
@@ -253,6 +310,29 @@ export default function AdminDashboard() {
   return (
     <div className="min-h-screen bg-slate-50">
 
+      {/* 💬 실시간 채팅 알림 플로팅 배너 */}
+      <div
+        className={`fixed top-4 left-1/2 -translate-x-1/2 z-[9998] w-[calc(100%-2rem)] max-w-sm transition-all duration-500
+          ${newChatAlert && !newUrgentAlert ? "opacity-100 translate-y-0 pointer-events-auto" : "opacity-0 -translate-y-4 pointer-events-none"}`}
+      >
+        {newChatAlert && (
+          <div
+            onClick={() => { window.location.href = `/admin/chat?id=${newChatAlert.reservationId}`; }}
+            className="bg-indigo-600 text-white rounded-2xl shadow-2xl px-4 py-3.5 flex items-center gap-3 cursor-pointer active:scale-[0.98] transition-transform"
+          >
+            <span className="text-2xl flex-shrink-0">💬</span>
+            <div className="flex-1 min-w-0">
+              <p className="text-[13px] font-black leading-tight">{newChatAlert.lastSender}님의 메시지</p>
+              <p className="text-[12px] font-semibold opacity-90 mt-0.5 truncate">{newChatAlert.lastMessage}</p>
+            </div>
+            <button
+              onClick={(e) => { e.stopPropagation(); setNewChatAlert(null); }}
+              className="text-white/70 hover:text-white text-lg flex-shrink-0 leading-none"
+            >✕</button>
+          </div>
+        )}
+      </div>
+
       {/* 🚨 실시간 긴급판매 알림 플로팅 배너 */}
       <div
         className={`fixed top-4 left-1/2 -translate-x-1/2 z-[9999] w-[calc(100%-2rem)] max-w-sm transition-all duration-500
@@ -285,6 +365,18 @@ export default function AdminDashboard() {
             {allEntries.length > 0 && <p className="text-[11px] text-slate-400 mt-0.5">총 {allEntries.length}건</p>}
           </div>
           <div className="flex items-center gap-2">
+            {/* 채팅 인박스 뱃지 버튼 */}
+            <button
+              onClick={() => setChatInboxOpen((p) => !p)}
+              className="relative text-[12px] text-indigo-500 hover:text-indigo-700 font-semibold transition-colors px-3 py-1.5 rounded-xl hover:bg-indigo-50"
+            >
+              💬
+              {chatInbox.length > 0 && (
+                <span className="absolute -top-1 -right-1 min-w-[18px] h-[18px] rounded-full bg-rose-500 text-white text-[10px] font-black flex items-center justify-center px-1 leading-none">
+                  {chatInbox.reduce((s, c) => s + c.unreadCount, 0)}
+                </span>
+              )}
+            </button>
             <button
               onClick={() => { window.location.href = "/admin/revenue.html"; }}
               className="text-[12px] text-emerald-500 hover:text-emerald-700 font-semibold transition-colors px-3 py-1.5 rounded-xl hover:bg-emerald-50"
@@ -361,6 +453,69 @@ export default function AdminDashboard() {
             </div>
           ))}
         </div>
+
+        {/* 💬 채팅 인박스 */}
+        {chatInboxOpen && chatInbox.length > 0 && (
+          <div className="bg-indigo-50 border border-indigo-200 rounded-2xl overflow-hidden">
+            <div className="flex items-center justify-between px-4 py-3 border-b border-indigo-100">
+              <div className="flex items-center gap-2">
+                <span className="relative flex h-2.5 w-2.5">
+                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-indigo-400 opacity-75" />
+                  <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-indigo-500" />
+                </span>
+                <p className="text-[13px] font-black text-indigo-700">채팅 미확인</p>
+                <span className="text-[11px] font-bold text-indigo-600 bg-indigo-100 border border-indigo-200 px-2 py-0.5 rounded-full">
+                  {chatInbox.reduce((s, c) => s + c.unreadCount, 0)}건
+                </span>
+              </div>
+              <button
+                onClick={() => setChatInboxOpen(false)}
+                className="text-[11px] text-indigo-400 hover:text-indigo-600 font-medium transition-colors"
+              >닫기 ✕</button>
+            </div>
+            <div className="divide-y divide-indigo-100">
+              {chatInbox.map((item) => (
+                <div
+                  key={item.reservationId}
+                  onClick={() => { window.location.href = `/admin/chat?id=${item.reservationId}`; }}
+                  className="flex items-center gap-3 px-4 py-3 cursor-pointer hover:bg-indigo-100/50 active:bg-indigo-100 transition-colors"
+                >
+                  {/* 발신자 아이콘 */}
+                  <div className="w-9 h-9 rounded-full bg-indigo-100 border border-indigo-200 flex items-center justify-center text-[15px] flex-shrink-0">
+                    {item.lastSenderRole === "staff" ? "👨‍🔧" : item.lastSenderRole === "customer" ? "👤" : "💬"}
+                  </div>
+                  {/* 메시지 내용 */}
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center justify-between gap-1 mb-0.5">
+                      <p className="text-[13px] font-bold text-slate-800 truncate">
+                        {item.name ?? item.phone}
+                        <span className="text-[11px] font-medium text-slate-400 ml-1.5">{item.location}</span>
+                      </p>
+                      <span className="text-[10px] text-indigo-400 font-medium flex-shrink-0">
+                        {(() => {
+                          const diff = Date.now() - new Date(item.lastTime).getTime();
+                          if (diff < 60000) return "방금";
+                          if (diff < 3600000) return `${Math.floor(diff / 60000)}분 전`;
+                          if (diff < 86400000) return `${Math.floor(diff / 3600000)}시간 전`;
+                          return new Date(item.lastTime).toLocaleDateString("ko-KR", { month: "numeric", day: "numeric" });
+                        })()}
+                      </span>
+                    </div>
+                    <p className="text-[12px] text-slate-500 truncate">
+                      <span className="text-indigo-500 font-semibold">{item.lastSender}</span>
+                      <span className="mx-1">·</span>
+                      {item.lastMessage}
+                    </p>
+                  </div>
+                  {/* 미읽은 수 뱃지 */}
+                  <span className="min-w-[22px] h-[22px] rounded-full bg-indigo-500 text-white text-[11px] font-black flex items-center justify-center px-1.5 flex-shrink-0">
+                    {item.unreadCount}
+                  </span>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
 
         {/* 매입담당자 가입 승인 대기 */}
         {pendingStaff.length > 0 && (
