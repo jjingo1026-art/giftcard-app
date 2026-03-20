@@ -79,7 +79,6 @@ export default function StaffDashboard() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [tab, setTab] = useState<Tab>("today");
-  const [selectedId, setSelectedId] = useState<number | null>(null);
 
   const [upcomingDate, setUpcomingDate] = useState(TODAY);
   const [fromDate, setFromDate] = useState(sevenDaysAgo());
@@ -113,7 +112,6 @@ export default function StaffDashboard() {
         headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
       });
       setEntries((prev) => prev.map((r) => r.id === id ? { ...r, status: "completed" } : r));
-      setSelectedId(null);
     } finally {
       setCompleting(null);
     }
@@ -172,8 +170,6 @@ export default function StaffDashboard() {
     .sort((a, b) => ((a.date ?? "") + (a.time ?? "")).localeCompare((b.date ?? "") + (b.time ?? "")));
 
   const todayCount = todayList.length;
-  const selected = selectedId !== null ? entries.find((e) => e.id === selectedId) : null;
-  const selectedIsActive = selected ? (selected.status !== "completed" && selected.status !== "cancelled" && selected.status !== "no_show") : false;
 
   const TABS: { key: Tab; label: string; emoji: string }[] = [
     { key: "today",     label: "오늘배정",   emoji: "📍" },
@@ -186,8 +182,10 @@ export default function StaffDashboard() {
     return list.map((r, i) => (
       <ReservationCard
         key={r.id} r={r} idx={i}
-        isSelected={selectedId === r.id}
-        onSelect={() => setSelectedId(selectedId === r.id ? null : r.id)}
+        completing={completing} sendingPayment={sendingPayment}
+        onComplete={markComplete}
+        onPayment={handlePaymentRequest}
+        onDefect={(id) => { setDefectModalId(id); setDefectDetail(""); }}
       />
     ));
   }
@@ -228,7 +226,7 @@ export default function StaffDashboard() {
           {TABS.map(({ key, label, emoji }) => (
             <button
               key={key}
-              onClick={() => { setTab(key); setSelectedId(null); }}
+              onClick={() => { setTab(key); }}
               className={`flex-1 py-2 rounded-2xl text-[12px] font-bold transition-all flex items-center justify-center gap-1 ${
                 tab === key
                   ? "bg-indigo-500 text-white shadow-sm shadow-indigo-200"
@@ -241,12 +239,7 @@ export default function StaffDashboard() {
         </div>
       </header>
 
-      {/* 배경 클릭 시 선택 해제 */}
-      {selectedId !== null && (
-        <div className="fixed inset-0 z-20" onClick={() => setSelectedId(null)} />
-      )}
-
-      <div className={`max-w-2xl mx-auto px-4 py-4 space-y-4 relative z-30 ${selected ? "pb-40" : "pb-6"}`}>
+      <div className="max-w-2xl mx-auto px-4 py-4 space-y-4">
         {loading && (
           <div className="py-16 text-center">
             <div className="w-8 h-8 border-2 border-indigo-200 border-t-indigo-500 rounded-full animate-spin mx-auto" />
@@ -321,66 +314,6 @@ export default function StaffDashboard() {
         )}
       </div>
 
-      {/* 하단 고정 액션 바 */}
-      {selected && (
-        <div className="fixed bottom-0 left-0 right-0 z-40 bg-white border-t border-slate-200 shadow-[0_-4px_24px_rgba(0,0,0,0.10)]">
-          {/* 선택된 예약 이름 표시 */}
-          <div className="max-w-2xl mx-auto px-4 pt-2.5 pb-0 flex items-center justify-between">
-            <p className="text-[12px] font-black text-indigo-500 truncate">
-              {selected.name || selected.phone} 예약
-            </p>
-            <button onClick={() => setSelectedId(null)}
-              className="text-[11px] text-slate-400 hover:text-slate-600 font-bold">
-              닫기 ✕
-            </button>
-          </div>
-          <div className="max-w-2xl mx-auto px-4 pt-2 pb-4">
-            {selectedIsActive ? (
-              <div className="grid grid-cols-2 gap-2">
-                <a
-                  href={`/staff/chat?id=${selected.id}`}
-                  className="py-3.5 rounded-2xl bg-slate-100 text-slate-700 text-[14px] font-bold text-center hover:bg-slate-200 transition-colors"
-                >
-                  💬 채팅하기
-                </a>
-                <button
-                  onClick={() => handlePaymentRequest(selected)}
-                  disabled={sendingPayment === selected.id}
-                  className="py-3.5 rounded-2xl text-[14px] font-bold transition-all active:scale-95 disabled:opacity-60"
-                  style={{ background: "linear-gradient(135deg,#6366f1,#4f46e5)", color: "#fff" }}
-                >
-                  {sendingPayment === selected.id ? "발송 중..." : "💰 입금요청"}
-                </button>
-                <button
-                  onClick={() => { setDefectModalId(selected.id); setDefectDetail(""); }}
-                  className="py-3.5 rounded-2xl text-[14px] font-bold transition-all active:scale-95"
-                  style={{ background: "linear-gradient(135deg,#f59e0b,#d97706)", color: "#fff" }}
-                >
-                  ⚠️ 일부하자
-                </button>
-                <button
-                  onClick={() => markComplete(selected.id)}
-                  disabled={completing === selected.id}
-                  className="py-3.5 rounded-2xl bg-emerald-500 text-white text-[14px] font-bold hover:bg-emerald-600 transition-colors disabled:opacity-60"
-                >
-                  {completing === selected.id ? "처리 중..." : "✓ 완료처리"}
-                </button>
-              </div>
-            ) : (
-              <div className="flex gap-2">
-                <a href={`/staff/chat?id=${selected.id}`}
-                  className="flex-1 py-3.5 rounded-2xl bg-slate-100 text-slate-700 text-[14px] font-bold text-center hover:bg-slate-200 transition-colors">
-                  💬 채팅하기
-                </a>
-                <div className="flex-1 py-3.5 rounded-2xl bg-slate-50 border border-slate-100 text-slate-400 text-[14px] font-bold text-center">
-                  {selected.status === "completed" ? "✅ 완료됨" : selected.status === "no_show" ? "🚫 노쇼" : "취소됨"}
-                </div>
-              </div>
-            )}
-          </div>
-        </div>
-      )}
-
       {/* 일부하자 모달 */}
       {defectModalId !== null && (
         <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/40 px-4 pb-6">
@@ -430,11 +363,14 @@ function EmptyState() {
 interface CardProps {
   r: Reservation;
   idx: number;
-  isSelected: boolean;
-  onSelect: () => void;
+  completing: number | null;
+  sendingPayment: number | null;
+  onComplete: (id: number) => void;
+  onPayment: (r: Reservation) => void;
+  onDefect: (id: number) => void;
 }
 
-function ReservationCard({ r, isSelected, onSelect }: CardProps) {
+function ReservationCard({ r, completing, sendingPayment, onComplete, onPayment, onDefect }: CardProps) {
   const sl = STATUS_LABEL[r.status] ?? { text: r.status, cls: "bg-slate-100 text-slate-500 border-slate-200" };
   const items: { type: string; amount: number; payment: number; isGift: boolean }[] =
     Array.isArray(r.items) && r.items.length > 0
@@ -443,16 +379,12 @@ function ReservationCard({ r, isSelected, onSelect }: CardProps) {
         ? [{ type: r.giftcardType, amount: Number(r.amount ?? 0), payment: r.totalPayment, isGift: false }]
         : [];
   const totalFace = items.reduce((s, it) => s + Number(it.amount), 0);
+  const isActive = r.status !== "completed" && r.status !== "cancelled" && r.status !== "no_show";
 
   return (
     <div
-      onClick={onSelect}
-      className={`bg-white rounded-2xl border shadow-sm overflow-hidden cursor-pointer transition-all ${
-        isSelected
-          ? "border-indigo-400 ring-2 ring-indigo-200 shadow-indigo-100"
-          : r.isUrgent
-            ? "border-rose-200"
-            : "border-slate-100 hover:border-indigo-200"
+      className={`bg-white rounded-2xl border shadow-sm overflow-hidden ${
+        r.isUrgent ? "border-rose-200" : "border-slate-100"
       }`}
     >
       {r.isUrgent && (
@@ -517,8 +449,7 @@ function ReservationCard({ r, isSelected, onSelect }: CardProps) {
 
         {/* 입금 계좌 */}
         {(r.bankName || r.accountNumber) && (
-          <div className="rounded-xl bg-emerald-50 border border-emerald-100 px-3 py-2.5 flex items-center justify-between gap-2"
-            onClick={(e) => e.stopPropagation()}>
+          <div className="rounded-xl bg-emerald-50 border border-emerald-100 px-3 py-2.5 flex items-center justify-between gap-2">
             <div>
               <p className="text-[10px] font-black text-emerald-500 mb-0.5">입금 계좌</p>
               <p className="text-[13px] font-bold text-slate-800">
@@ -534,12 +465,50 @@ function ReservationCard({ r, isSelected, onSelect }: CardProps) {
           </div>
         )}
 
-        {/* 탭 시 선택 안내 */}
-        {!isSelected && (
-          <p className="text-center text-[11px] text-slate-300 font-medium pt-0.5">탭하여 선택</p>
-        )}
-        {isSelected && (
-          <p className="text-center text-[11px] text-indigo-400 font-bold pt-0.5">✓ 선택됨 — 하단 버튼으로 처리하세요</p>
+        {/* 액션 버튼 */}
+        {isActive ? (
+          <div className="grid grid-cols-2 gap-2 pt-1">
+            <a
+              href={`/staff/chat?id=${r.id}`}
+              className="py-3 rounded-2xl bg-slate-100 text-slate-700 text-[13px] font-bold text-center hover:bg-slate-200 transition-colors"
+            >
+              💬 채팅하기
+            </a>
+            <button
+              onClick={() => onPayment(r)}
+              disabled={sendingPayment === r.id}
+              className="py-3 rounded-2xl text-[13px] font-bold transition-all active:scale-95 disabled:opacity-60"
+              style={{ background: "linear-gradient(135deg,#6366f1,#4f46e5)", color: "#fff" }}
+            >
+              {sendingPayment === r.id ? "발송 중..." : "💰 입금요청"}
+            </button>
+            <button
+              onClick={() => onDefect(r.id)}
+              className="py-3 rounded-2xl text-[13px] font-bold transition-all active:scale-95"
+              style={{ background: "linear-gradient(135deg,#f59e0b,#d97706)", color: "#fff" }}
+            >
+              ⚠️ 일부하자
+            </button>
+            <button
+              onClick={() => onComplete(r.id)}
+              disabled={completing === r.id}
+              className="py-3 rounded-2xl bg-emerald-500 text-white text-[13px] font-bold hover:bg-emerald-600 transition-colors disabled:opacity-60"
+            >
+              {completing === r.id ? "처리 중..." : "✓ 완료처리"}
+            </button>
+          </div>
+        ) : (
+          <div className="flex gap-2 pt-1">
+            <a
+              href={`/staff/chat?id=${r.id}`}
+              className="flex-1 py-3 rounded-2xl bg-slate-100 text-slate-700 text-[13px] font-bold text-center hover:bg-slate-200 transition-colors"
+            >
+              💬 채팅하기
+            </a>
+            <div className="flex-1 py-3 rounded-2xl bg-slate-50 border border-slate-100 text-slate-400 text-[13px] font-bold text-center">
+              {r.status === "completed" ? "✅ 완료됨" : r.status === "no_show" ? "🚫 노쇼" : "취소됨"}
+            </div>
+          </div>
         )}
       </div>
     </div>
