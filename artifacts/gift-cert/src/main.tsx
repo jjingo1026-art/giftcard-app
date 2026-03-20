@@ -16,6 +16,7 @@ import Privacy from "./pages/Privacy";
 import ReservationCheck from "./pages/ReservationCheck";
 import AdminStaffView from "./pages/AdminStaffView";
 import AdminChat from "./pages/AdminChat";
+import AdminTodayRevenue from "./pages/AdminTodayRevenue";
 import "./index.css";
 
 const base = import.meta.env.BASE_URL.replace(/\/$/, "");
@@ -35,6 +36,8 @@ createRoot(document.getElementById("root")!).render(
       <Route path="/admin/staff/view.html" component={AdminStaffView} />
       <Route path="/admin/chat" component={AdminChat} />
       <Route path="/admin/chat.html" component={AdminChat} />
+      <Route path="/admin/today-revenue" component={AdminTodayRevenue} />
+      <Route path="/admin/today-revenue.html" component={AdminTodayRevenue} />
       <Route path="/staff/dashboard" component={StaffDashboard} />
       <Route path="/staff/dashboard.html" component={StaffDashboard} />
       <Route path="/staff/detail" component={StaffDetail} />
