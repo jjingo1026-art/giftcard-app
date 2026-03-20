@@ -247,6 +247,12 @@ export default function AdminDashboard() {
           </div>
           <div className="flex items-center gap-2">
             <button
+              onClick={() => { window.location.href = "/admin/revenue.html"; }}
+              className="text-[12px] text-emerald-500 hover:text-emerald-700 font-semibold transition-colors px-3 py-1.5 rounded-xl hover:bg-emerald-50"
+            >
+              💰 매출
+            </button>
+            <button
               onClick={() => { location.href = "/admin/staff/view.html"; }}
               className="text-[12px] text-indigo-500 hover:text-indigo-700 font-semibold transition-colors px-3 py-1.5 rounded-xl hover:bg-indigo-50"
             >
