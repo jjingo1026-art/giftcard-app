@@ -349,6 +349,64 @@ router.get("/staff/my-reservations", requireStaffAuth, async (req, res) => {
   }
 });
 
+// GET /staff/chat-list — 이 매입담당자의 예약별 채팅 목록 (최신 메시지 + 읽지 않은 수)
+router.get("/staff/chat-list", requireStaffAuth, async (req, res) => {
+  const staffId = (req as any).staffId as number;
+  try {
+    // 담당자의 예약 목록
+    const myReservations = await db
+      .select({ id: reservationsTable.id, name: reservationsTable.name, phone: reservationsTable.phone, status: reservationsTable.status, date: reservationsTable.date, time: reservationsTable.time })
+      .from(reservationsTable)
+      .where(eq(reservationsTable.assignedStaffId, staffId))
+      .orderBy(desc(reservationsTable.createdAt));
+
+    if (myReservations.length === 0) { res.json([]); return; }
+
+    const ids = myReservations.map((r) => r.id);
+
+    // 해당 예약들의 전체 채팅
+    const allChats = await db
+      .select()
+      .from(chatsTable)
+      .where(sql`${chatsTable.reservationId} = ANY(ARRAY[${sql.raw(ids.join(","))}]::int[])`)
+      .orderBy(asc(chatsTable.time));
+
+    // 예약별 그룹핑 (마지막 메시지 + 미읽은 수)
+    const grouped = new Map<number, { last: typeof allChats[0]; unread: number }>();
+    for (const chat of allChats) {
+      const isUnread = !chat.read && chat.sender !== "staff" && chat.sender !== "system";
+      const existing = grouped.get(chat.reservationId);
+      if (!existing) {
+        grouped.set(chat.reservationId, { last: chat, unread: isUnread ? 1 : 0 });
+      } else {
+        grouped.set(chat.reservationId, { last: chat, unread: existing.unread + (isUnread ? 1 : 0) });
+      }
+    }
+
+    const result = myReservations.map((r) => {
+      const g = grouped.get(r.id);
+      return {
+        reservationId: r.id,
+        name: r.name || r.phone,
+        phone: r.phone,
+        status: r.status,
+        date: r.date,
+        time: r.time,
+        lastMessage: g?.last.message ?? null,
+        lastSender: g?.last.senderName ?? null,
+        lastTime: g?.last.time ?? null,
+        unreadCount: g?.unread ?? 0,
+        hasChat: !!g,
+      };
+    }).filter((r) => r.hasChat);
+
+    res.json(result);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "채팅 목록 조회 실패" });
+  }
+});
+
 router.get("/dashboard", requireAuth, requireAdmin, async (req, res) => {
   const today = new Date();
   const todayStr = today.toISOString().slice(0, 10);

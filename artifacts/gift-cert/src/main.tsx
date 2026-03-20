@@ -25,6 +25,7 @@ import AdminAllReservations from "./pages/AdminAllReservations";
 import AdminAssign from "./pages/AdminAssign";
 import AdminSettings from "./pages/AdminSettings";
 import AdminChatList from "./pages/AdminChatList";
+import StaffChatList from "./pages/StaffChatList";
 import "./index.css";
 
 const base = import.meta.env.BASE_URL.replace(/\/$/, "");
@@ -82,6 +83,8 @@ createRoot(document.getElementById("root")!).render(
       <Route path="/staff/login.html" component={StaffLogin} />
       <Route path="/staff/register" component={StaffRegister} />
       <Route path="/staff/register.html" component={StaffRegister} />
+      <Route path="/staff/chats" component={StaffChatList} />
+      <Route path="/staff/chats.html" component={StaffChatList} />
       <Route component={App} />
     </Switch>
   </Router>

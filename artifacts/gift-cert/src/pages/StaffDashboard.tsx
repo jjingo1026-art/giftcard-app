@@ -66,6 +66,7 @@ export default function StaffDashboard() {
   const [upcomingDate, setUpcomingDate] = useState(TODAY);
   const [fromDate, setFromDate] = useState(sevenDaysAgo());
   const [toDate, setToDate] = useState(TODAY);
+  const [unreadCount, setUnreadCount] = useState(0);
 
   useEffect(() => {
     if (!token) { window.location.href = "/staff/login"; return; }
@@ -79,6 +80,18 @@ export default function StaffDashboard() {
       .then((data) => setEntries(Array.isArray(data) ? data : []))
       .catch(() => setError("데이터를 불러올 수 없습니다."))
       .finally(() => setLoading(false));
+
+    // 미읽은 채팅 수 가져오기
+    fetch("/api/admin/staff/chat-list", {
+      headers: { Authorization: `Bearer ${token}` },
+    })
+      .then((r) => r.json())
+      .then((data) => {
+        if (Array.isArray(data)) {
+          setUnreadCount(data.reduce((s: number, r: { unreadCount: number }) => s + r.unreadCount, 0));
+        }
+      })
+      .catch(() => {});
   }, []);
 
   const todayList = entries
@@ -179,13 +192,28 @@ export default function StaffDashboard() {
     <div className="min-h-screen bg-slate-50">
       {/* 헤더 */}
       <header className="bg-white border-b border-slate-100 sticky top-0 z-40 shadow-sm">
-        <div className="max-w-2xl mx-auto px-4 py-3.5 flex items-center justify-between">
-          <div>
+        <div className="max-w-2xl mx-auto px-4 py-3.5 flex items-center justify-between gap-2">
+          <div className="flex-1 min-w-0">
             <p className="text-[16px] font-black text-slate-800">오늘배정 전체리스트</p>
             {!loading && (
               <p className="text-[11px] text-slate-400 mt-0.5">👨‍🔧 {staffName} · 전체 {entries.length}건</p>
             )}
           </div>
+          {/* 채팅 아이콘 */}
+          <button
+            onClick={() => { window.location.href = "/staff/chats"; }}
+            className="relative w-10 h-10 flex items-center justify-center rounded-xl hover:bg-slate-100 transition-colors text-slate-500 flex-shrink-0"
+            title="채팅 전체보기"
+          >
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
+            </svg>
+            {unreadCount > 0 && (
+              <span className="absolute -top-0.5 -right-0.5 bg-rose-500 text-white text-[10px] font-bold min-w-[16px] h-[16px] rounded-full flex items-center justify-center px-1">
+                {unreadCount > 99 ? "99+" : unreadCount}
+              </span>
+            )}
+          </button>
           <button
             onClick={() => {
               localStorage.removeItem("gc_staff_token");
@@ -193,7 +221,7 @@ export default function StaffDashboard() {
               localStorage.removeItem("gc_staff_name");
               window.location.href = "/staff/login";
             }}
-            className="text-[12px] text-slate-400 hover:text-rose-500 font-bold px-3 py-1.5 rounded-xl hover:bg-rose-50 transition-colors"
+            className="text-[12px] text-slate-400 hover:text-rose-500 font-bold px-3 py-1.5 rounded-xl hover:bg-rose-50 transition-colors flex-shrink-0"
           >
             로그아웃
           </button>
