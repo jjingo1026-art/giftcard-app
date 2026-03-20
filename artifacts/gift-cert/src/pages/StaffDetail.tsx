@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from "react";
+import { io, Socket } from "socket.io-client";
 import { useImageUpload } from "@/hooks/useImageUpload";
 
 interface Message {
@@ -7,122 +8,133 @@ interface Message {
   senderName: string;
   message: string;
   time: string;
-}
-
-function getReservationId() {
-  return new URLSearchParams(window.location.search).get("id");
+  read: boolean;
 }
 
 export default function StaffDetail() {
   const token = localStorage.getItem("gc_staff_token");
   const staffName = localStorage.getItem("gc_staff_name") ?? "매입담당자";
-  const reservationId = getReservationId();
+  const reservationId = new URLSearchParams(window.location.search).get("id");
 
   const [chatMessages, setChatMessages] = useState<Message[]>([]);
   const [msg, setMsg] = useState("");
   const chatBoxRef = useRef<HTMLDivElement>(null);
+  const socketRef = useRef<Socket | null>(null);
 
-  const { inputRef: imgInputRef, openPicker, onChange: onImgChange, isUploading: imgUploading } = useImageUpload(async ({ serveUrl }) => {
-    await fetch("/api/admin/chat/send", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
+  const { inputRef: imgInputRef, openPicker, onChange: onImgChange, isUploading: imgUploading } =
+    useImageUpload(({ serveUrl }) => {
+      socketRef.current?.emit("sendMessage", {
         reservationId: Number(reservationId),
         sender: "staff",
         senderName: staffName,
         message: `[IMG:${serveUrl}]`,
-      }),
+      });
     });
-    loadChat();
-  });
 
   useEffect(() => {
     if (!token) { window.location.href = "/staff/login"; return; }
     if (!reservationId) return;
-    loadChat();
-    const es = new EventSource(`/api/admin/chat/stream/${reservationId}`);
-    es.onmessage = (e) => {
-      const m = JSON.parse(e.data);
-      setChatMessages((prev) => {
-        if (prev.some((p) => p.id === m.id)) return prev;
-        const next = [...prev, m];
-        setTimeout(() => scrollToBottom(), 50);
-        return next;
-      });
-    };
-    return () => es.close();
-  }, []);
 
-  useEffect(() => {
-    scrollToBottom();
-  }, [chatMessages]);
-
-  function scrollToBottom() {
-    if (chatBoxRef.current) {
-      chatBoxRef.current.scrollTop = chatBoxRef.current.scrollHeight;
-    }
-  }
-
-  function loadChat() {
     fetch(`/api/admin/chat/${reservationId}`)
       .then((r) => r.json())
-      .then(setChatMessages)
+      .then((data: Message[]) => {
+        setChatMessages(data);
+        scrollToBottom();
+      })
       .catch(() => {});
+
+    const socket = io({ transports: ["websocket", "polling"] });
+    socketRef.current = socket;
+
+    socket.on("connect", () => {
+      socket.emit("joinRoom", Number(reservationId));
+      socket.emit("markRead", { reservationId: Number(reservationId), readerRole: "staff" });
+    });
+
+    socket.on("newMessage", (newMsg: Message) => {
+      setChatMessages((prev) => {
+        if (prev.some((m) => m.id === newMsg.id)) return prev;
+        return [...prev, newMsg];
+      });
+      if (newMsg.sender !== "staff") {
+        socket.emit("markRead", { reservationId: Number(reservationId), readerRole: "staff" });
+      }
+      scrollToBottom();
+    });
+
+    socket.on("messagesRead", ({ readerRole }: { readerRole: string }) => {
+      if (readerRole !== "staff") {
+        setChatMessages((prev) => prev.map((m) => m.sender === "staff" ? { ...m, read: true } : m));
+      }
+    });
+
+    return () => { socket.disconnect(); };
+  }, []);
+
+  function scrollToBottom() {
+    setTimeout(() => {
+      if (chatBoxRef.current) chatBoxRef.current.scrollTop = chatBoxRef.current.scrollHeight;
+    }, 50);
   }
 
-  async function send() {
+  function sendMsg() {
     if (!msg.trim()) return;
-    const text = msg;
-    setMsg("");
-    await fetch("/api/admin/chat/send", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        reservationId: Number(reservationId),
-        sender: "staff",
-        senderName: staffName,
-        message: text,
-      }),
+    socketRef.current?.emit("sendMessage", {
+      reservationId: Number(reservationId),
+      sender: "staff",
+      senderName: staffName,
+      message: msg,
     });
-    loadChat();
+    setMsg("");
   }
 
   function handleKey(e: React.KeyboardEvent) {
-    if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); send(); }
+    if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); sendMsg(); }
+  }
+
+  function goBack() {
+    const ref = document.referrer;
+    if (ref.includes("/staff/chats")) {
+      window.location.href = "/staff/chats";
+    } else {
+      window.location.href = "/staff/dashboard";
+    }
   }
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-100 to-slate-200 flex items-center justify-center p-4">
-      {/* 숨김 파일 input */}
       <input ref={imgInputRef} type="file" accept="image/*" className="hidden" onChange={onImgChange} />
 
-      {/* 채팅 창 */}
       <div
         className="w-full max-w-lg flex flex-col rounded-3xl overflow-hidden shadow-2xl"
         style={{ height: "calc(100vh - 48px)", maxHeight: 760 }}
       >
-        {/* 창 헤더 */}
+        {/* 창 타이틀 바 */}
         <div
           className="flex-shrink-0 flex items-center gap-3 px-5 py-4"
           style={{ background: "linear-gradient(135deg,#6366f1,#4f46e5)" }}
         >
+          <div className="flex gap-1.5 flex-shrink-0">
+            <button
+              onClick={goBack}
+              className="w-3 h-3 rounded-full bg-rose-400 hover:bg-rose-500 transition-colors"
+              title="뒤로가기"
+            />
+            <div className="w-3 h-3 rounded-full bg-amber-400" />
+            <div className="w-3 h-3 rounded-full bg-emerald-400" />
+          </div>
+          <div className="flex-1 min-w-0">
+            <p className="text-white font-bold text-[15px] truncate">💬 채팅 · 예약 #{reservationId}</p>
+            <p className="text-indigo-200 text-[11px]">담당자: {staffName}</p>
+          </div>
           <button
-            onClick={() => { window.location.href = "/staff/dashboard"; }}
-            className="w-8 h-8 flex items-center justify-center rounded-xl bg-white/20 hover:bg-white/30 transition-colors text-white flex-shrink-0"
+            onClick={goBack}
+            className="w-8 h-8 flex items-center justify-center rounded-xl bg-white/20 hover:bg-white/30 transition-colors flex-shrink-0"
           >
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
               <path d="M19 12H5M12 19l-7-7 7-7"/>
             </svg>
           </button>
-          <div className="flex-1 min-w-0">
-            <p className="text-white font-bold text-[15px] truncate">예약 #{reservationId} 채팅</p>
-            <p className="text-indigo-200 text-[11px]">담당자: {staffName}</p>
-          </div>
-          <div className="flex gap-1.5 flex-shrink-0">
-            <div className="w-3 h-3 rounded-full bg-white/30" />
-            <div className="w-3 h-3 rounded-full bg-white/30" />
-            <div className="w-3 h-3 rounded-full bg-white/30" />
-          </div>
         </div>
 
         {/* 메시지 영역 */}
@@ -142,42 +154,41 @@ export default function StaffDetail() {
             const isImg = m.message.startsWith("[IMG:");
             const imgUrl = isImg ? m.message.slice(5, -1) : "";
             return (
-              <div key={m.id} className={`flex items-end gap-2 ${isMine ? "justify-end" : "justify-start"}`}>
-                {/* 상대방 아바타 */}
-                {!isMine && (
-                  <div className="w-7 h-7 rounded-full bg-indigo-100 flex items-center justify-center text-[12px] font-bold text-indigo-500 flex-shrink-0 mb-1">
-                    {(m.senderName ?? "?")[0]}
-                  </div>
-                )}
-                <div className={`flex flex-col ${isMine ? "items-end" : "items-start"} max-w-[72%]`}>
+              <div key={m.id} className={`flex flex-col ${isMine ? "items-end" : "items-start"}`}>
+                <div className={`max-w-[75%] rounded-2xl text-[14px] shadow-sm overflow-hidden ${
+                  isImg ? "p-0 bg-transparent shadow-none" :
+                  isMine
+                    ? "px-3.5 py-2.5 bg-indigo-500 text-white rounded-br-sm"
+                    : m.sender === "admin"
+                      ? "px-3.5 py-2.5 bg-violet-100 text-violet-800 rounded-bl-sm"
+                      : "px-3.5 py-2.5 bg-white border border-slate-100 text-slate-800 rounded-bl-sm"
+                }`}>
                   {!isMine && !isImg && (
-                    <p className="text-[11px] text-slate-400 font-semibold ml-1 mb-1">{m.senderName}</p>
+                    <p className="text-[10px] font-bold mb-0.5 opacity-60">{m.senderName}</p>
                   )}
                   {isImg ? (
                     <img
                       src={imgUrl}
                       alt="이미지"
-                      className="max-w-[200px] max-h-[260px] rounded-2xl object-cover cursor-pointer shadow-sm"
+                      className="max-w-[220px] max-h-[280px] rounded-2xl object-cover cursor-pointer"
                       onClick={() => window.open(imgUrl, "_blank")}
                     />
                   ) : (
-                    <div className={`px-3.5 py-2.5 rounded-2xl text-[14px] leading-relaxed ${
-                      isMine
-                        ? "bg-indigo-500 text-white rounded-br-sm"
-                        : "bg-white border border-slate-100 shadow-sm text-slate-800 rounded-bl-sm"
-                    }`}>
-                      <p className="whitespace-pre-wrap">{m.message}</p>
-                    </div>
+                    <p className="whitespace-pre-wrap">{m.message}</p>
                   )}
-                  <p className="text-[10px] mt-1 mx-1 text-slate-400">
+                  {!isImg && (
+                    <p className={`text-[10px] mt-0.5 ${isMine ? "text-indigo-200" : "text-slate-400"}`}>
+                      {new Date(m.time).toLocaleTimeString("ko-KR", { hour: "2-digit", minute: "2-digit" })}
+                    </p>
+                  )}
+                </div>
+                {isImg && (
+                  <p className={`text-[10px] mt-0.5 text-slate-400 ${isMine ? "mr-1" : "ml-1"}`}>
                     {new Date(m.time).toLocaleTimeString("ko-KR", { hour: "2-digit", minute: "2-digit" })}
                   </p>
-                </div>
-                {/* 내 아바타 */}
-                {isMine && (
-                  <div className="w-7 h-7 rounded-full bg-indigo-500 flex items-center justify-center text-[12px] font-bold text-white flex-shrink-0 mb-1">
-                    {staffName[0]}
-                  </div>
+                )}
+                {isMine && !isImg && (
+                  <span className="text-[10px] text-slate-400 mt-0.5 mr-1">{m.read ? "읽음" : ""}</span>
                 )}
               </div>
             );
@@ -186,32 +197,26 @@ export default function StaffDetail() {
 
         {/* 입력 영역 */}
         <div className="flex-shrink-0 bg-white border-t border-slate-100 px-4 py-3">
-          <div className="flex items-center gap-2">
-            {/* 사진 첨부 버튼 */}
+          <div className="flex gap-2">
             <button
               onClick={openPicker}
               disabled={imgUploading}
-              className="w-10 h-10 flex items-center justify-center rounded-2xl bg-slate-100 text-[18px] hover:bg-slate-200 transition-colors active:scale-95 disabled:opacity-50 flex-shrink-0"
-              title="사진 첨부"
+              className="w-11 h-11 rounded-2xl bg-slate-100 flex items-center justify-center text-[18px] hover:bg-slate-200 transition-colors active:scale-95 disabled:opacity-50 flex-shrink-0"
             >
-              {imgUploading ? <span className="text-[11px] text-slate-500 font-bold">…</span> : "📷"}
+              {imgUploading ? <span className="text-[11px] text-slate-500 font-bold">...</span> : "📷"}
             </button>
             <input
               value={msg}
               onChange={(e) => setMsg(e.target.value)}
               onKeyDown={handleKey}
-              placeholder="메시지를 입력하세요…"
-              className="flex-1 px-4 py-2.5 rounded-2xl border border-slate-200 bg-slate-50 text-[14px] outline-none focus:border-indigo-400 focus:bg-white transition-colors"
+              placeholder="메시지 입력"
+              className="flex-1 px-4 py-3 rounded-2xl border border-slate-200 bg-white text-[14px] outline-none focus:border-indigo-400 focus:ring-2 focus:ring-indigo-50"
             />
             <button
-              onClick={send}
-              disabled={!msg.trim()}
-              className="w-10 h-10 flex items-center justify-center rounded-2xl bg-indigo-500 text-white hover:bg-indigo-600 transition-colors active:scale-95 disabled:opacity-40 disabled:cursor-not-allowed flex-shrink-0"
+              onClick={sendMsg}
+              className="px-5 py-3 rounded-2xl bg-indigo-500 text-white text-[14px] font-bold hover:bg-indigo-600 transition-colors active:scale-95 flex-shrink-0"
             >
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                <line x1="22" y1="2" x2="11" y2="13"/>
-                <polygon points="22 2 15 22 11 13 2 9 22 2"/>
-              </svg>
+              전송
             </button>
           </div>
         </div>

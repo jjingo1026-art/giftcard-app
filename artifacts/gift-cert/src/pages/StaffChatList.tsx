@@ -141,7 +141,7 @@ export default function StaffChatList() {
             return (
               <button
                 key={room.reservationId}
-                onClick={() => { window.location.href = `/staff/card?id=${room.reservationId}`; }}
+                onClick={() => { window.location.href = `/staff/chat?id=${room.reservationId}`; }}
                 className={`w-full text-left bg-white rounded-2xl border shadow-sm px-4 py-3.5 flex items-center gap-3 hover:border-indigo-300 hover:shadow-md transition-all active:scale-[0.99] ${
                   hasUnread ? "border-indigo-200 bg-indigo-50/30" : "border-slate-100"
                 }`}
