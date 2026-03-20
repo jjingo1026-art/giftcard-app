@@ -179,15 +179,17 @@ router.post("/staff/login", async (req, res) => {
 });
 
 router.post("/staff/register", async (req, res) => {
-  const { name, phone, password } = req.body as { name?: string; phone?: string; password?: string };
+  const { name, phone, password, preferredLocation } = req.body as { name?: string; phone?: string; password?: string; preferredLocation?: string };
   if (!name || !phone || !password) {
     res.status(400).json({ success: false, error: "name, phone, password는 필수입니다." }); return;
   }
-  const [existing] = await db.select().from(staffTable).where(eq(staffTable.phone, phone));
+  const allStaff = await db.select().from(staffTable);
+  const normalizePhone = (p: string) => p.replace(/\D/g, "");
+  const existing = allStaff.find((s) => normalizePhone(s.phone ?? "") === normalizePhone(phone));
   if (existing) {
-    res.json({ success: false, message: "이미 등록됨" }); return;
+    res.json({ success: false, message: "이미 등록된 전화번호입니다." }); return;
   }
-  await db.insert(staffTable).values({ name, phone, password, status: "pending" });
+  await db.insert(staffTable).values({ name, phone, password, status: "pending", preferredLocation: preferredLocation ?? null });
   res.json({ success: true, message: "신청 완료 (승인 대기)" });
 });
 

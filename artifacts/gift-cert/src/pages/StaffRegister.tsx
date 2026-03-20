@@ -12,6 +12,7 @@ export default function StaffRegister() {
   const [phone, setPhone] = useState("");
   const [pw, setPw] = useState("");
   const [pwConfirm, setPwConfirm] = useState("");
+  const [preferredLocation, setPreferredLocation] = useState("");
   const [showPw, setShowPw] = useState(false);
   const [msg, setMsg] = useState("");
   const [error, setError] = useState("");
@@ -30,12 +31,12 @@ export default function StaffRegister() {
       const res = await fetch("/api/admin/staff/register", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ name: name.trim(), phone, password: pw }),
+        body: JSON.stringify({ name: name.trim(), phone, password: pw, preferredLocation: preferredLocation.trim() || undefined }),
       });
       const data = await res.json();
       if (data.success) {
         setMsg(data.message);
-        setName(""); setPhone(""); setPw(""); setPwConfirm("");
+        setName(""); setPhone(""); setPw(""); setPwConfirm(""); setPreferredLocation("");
       } else {
         setError(data.message ?? data.error ?? "오류가 발생했습니다.");
       }
@@ -101,6 +102,18 @@ export default function StaffRegister() {
                 inputMode="numeric"
               />
             </div>
+            <div className="space-y-1.5">
+              <label className="block text-[12px] font-bold text-slate-500 uppercase tracking-wide">거래희망장소</label>
+              <input
+                placeholder="예) 강남구청역 3번 출구 앞"
+                value={preferredLocation}
+                onChange={(e) => setPreferredLocation(e.target.value)}
+                className={inputCls}
+                autoComplete="off"
+              />
+              <p className="text-[11px] text-slate-400 pl-1">선호하는 거래 장소를 입력해주세요 (선택)</p>
+            </div>
+
             <div className="space-y-1.5">
               <label className="block text-[12px] font-bold text-slate-500 uppercase tracking-wide">비밀번호</label>
               <div className="relative">
