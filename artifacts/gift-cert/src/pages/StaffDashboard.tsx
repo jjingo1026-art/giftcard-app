@@ -309,6 +309,28 @@ export default function StaffDashboard() {
                       ) : null;
                     })()}
 
+                    {/* 입금 계좌 정보 */}
+                    {(r.bankName || r.accountNumber) && (
+                      <div className="mb-2.5 rounded-xl bg-emerald-50 border border-emerald-100 px-3 py-2.5 space-y-1">
+                        <p className="text-[10px] font-black text-emerald-500 uppercase tracking-wide">입금 계좌</p>
+                        <div className="flex items-center justify-between gap-2">
+                          <div className="space-y-0.5">
+                            <p className="text-[13px] font-bold text-slate-700">
+                              {r.bankName} <span className="text-slate-400 font-medium">{r.accountNumber}</span>
+                            </p>
+                            <p className="text-[11px] text-slate-500">예금주: {r.accountHolder}</p>
+                          </div>
+                          <button
+                            type="button"
+                            onClick={() => navigator.clipboard?.writeText(r.accountNumber)}
+                            className="flex-shrink-0 text-[11px] font-bold text-emerald-600 bg-emerald-100 hover:bg-emerald-200 px-2.5 py-1 rounded-lg transition-colors active:scale-95"
+                          >
+                            복사
+                          </button>
+                        </div>
+                      </div>
+                    )}
+
                     {r.status !== "completed" && r.status !== "cancelled" && r.status !== "no_show" ? (
                       <div className="grid grid-cols-2 gap-3">
                         <a
