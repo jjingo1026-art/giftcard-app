@@ -103,15 +103,15 @@ export default function StaffRegister() {
               />
             </div>
             <div className="space-y-1.5">
-              <label className="block text-[12px] font-bold text-slate-500 uppercase tracking-wide">거래희망장소</label>
+              <label className="block text-[12px] font-bold text-slate-500 uppercase tracking-wide">거래희망지역</label>
               <input
-                placeholder="예) 강남구청역 3번 출구 앞"
+                placeholder="예) 강남구, 서초구"
                 value={preferredLocation}
                 onChange={(e) => setPreferredLocation(e.target.value)}
                 className={inputCls}
                 autoComplete="off"
               />
-              <p className="text-[11px] text-slate-400 pl-1">선호하는 거래 장소를 입력해주세요 (선택)</p>
+              <p className="text-[11px] text-slate-400 pl-1">선호하는 거래 지역을 입력해주세요 (선택)</p>
             </div>
 
             <div className="space-y-1.5">
