@@ -82,10 +82,10 @@
   }
   body {
     @apply antialiased bg-background text-foreground;
-    font-family: "Noto Sans KR", sans-serif !important;
+    font-family: "Noto Sans KR", -apple-system, BlinkMacSystemFont, "Apple SD Gothic Neo", "Malgun Gothic", sans-serif !important;
     line-height: 1.5;
   }
   input, button, textarea, select {
-    font-family: "Noto Sans KR", sans-serif !important;
+    font-family: "Noto Sans KR", -apple-system, BlinkMacSystemFont, "Apple SD Gothic Neo", "Malgun Gothic", sans-serif !important;
   }
 }
