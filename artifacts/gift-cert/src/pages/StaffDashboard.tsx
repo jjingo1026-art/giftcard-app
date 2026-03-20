@@ -51,6 +51,10 @@ export default function StaffDashboard() {
   const [error, setError] = useState("");
   const [tab, setTab] = useState<"upcoming" | "all">("upcoming");
   const [completing, setCompleting] = useState<number | null>(null);
+  const [sendingPayment, setSendingPayment] = useState<number | null>(null);
+  const [defectModalId, setDefectModalId] = useState<number | null>(null);
+  const [defectDetail, setDefectDetail] = useState("");
+  const [sendingDefect, setSendingDefect] = useState(false);
 
   useEffect(() => {
     if (!token) { window.location.href = "/staff/login"; return; }
@@ -76,6 +80,36 @@ export default function StaffDashboard() {
       setEntries((prev) => prev.map((r) => r.id === id ? { ...r, status: "completed" } : r));
     } finally {
       setCompleting(null);
+    }
+  }
+
+  async function sendChatMessage(reservationId: number, message: string) {
+    await fetch("/api/admin/chat/send", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ reservationId, sender: "staff", senderName: staffName, message }),
+    });
+  }
+
+  async function handlePaymentRequest(id: number) {
+    if (!confirm("고객에게 입금 요청 메시지를 발송하시겠습니까?")) return;
+    setSendingPayment(id);
+    try {
+      await sendChatMessage(id, "💰 입금을 요청드립니다.\n상품권 확인이 완료되었으니, 안내드린 계좌로 입금해 주세요.\n입금 후 채팅으로 알려주시면 감사하겠습니다.");
+    } finally {
+      setSendingPayment(null);
+    }
+  }
+
+  async function handleDefectSubmit() {
+    if (!defectModalId || !defectDetail.trim()) return;
+    setSendingDefect(true);
+    try {
+      await sendChatMessage(defectModalId, `⚠️ 일부 하자 안내\n${defectDetail.trim()}\n\n처리 방법에 대해 아래 채팅으로 협의 부탁드립니다.`);
+      setDefectModalId(null);
+      setDefectDetail("");
+    } finally {
+      setSendingDefect(false);
     }
   }
 
@@ -216,21 +250,51 @@ export default function StaffDashboard() {
                       </div>
                     </div>
 
-                    <div className="flex gap-2">
-                      <a
-                        href={`/staff/chat?id=${r.id}`}
-                        className="flex-1 py-2.5 rounded-xl bg-indigo-50 border border-indigo-100 text-indigo-600 text-[13px] font-bold text-center hover:bg-indigo-100 transition-colors"
-                      >
-                        💬 채팅하기
-                      </a>
-                      {r.status !== "completed" && r.status !== "cancelled" && (
-                        <button
-                          onClick={() => markComplete(r.id)}
-                          disabled={completing === r.id}
-                          className="flex-1 py-2.5 rounded-xl bg-emerald-500 text-white text-[13px] font-bold hover:bg-emerald-600 transition-colors disabled:opacity-60"
+                    <div className="space-y-1.5">
+                      {/* 1행: 채팅 + 완료 */}
+                      <div className="flex gap-1.5">
+                        <a
+                          href={`/staff/chat?id=${r.id}`}
+                          className="flex-1 py-2.5 rounded-xl bg-indigo-50 border border-indigo-100 text-indigo-600 text-[13px] font-bold text-center hover:bg-indigo-100 transition-colors"
                         >
-                          {completing === r.id ? "처리중..." : "✓ 완료 처리"}
-                        </button>
+                          💬 채팅하기
+                        </a>
+                        {r.status !== "completed" && r.status !== "cancelled" && r.status !== "no_show" ? (
+                          <button
+                            onClick={() => markComplete(r.id)}
+                            disabled={completing === r.id}
+                            className="flex-1 py-2.5 rounded-xl bg-emerald-500 text-white text-[13px] font-bold hover:bg-emerald-600 transition-colors disabled:opacity-60"
+                          >
+                            {completing === r.id ? "처리중..." : "✓ 완료 처리"}
+                          </button>
+                        ) : (
+                          <div className="flex-1 py-2.5 rounded-xl bg-slate-50 border border-slate-100 text-slate-400 text-[13px] font-bold text-center">
+                            {r.status === "completed" ? "✅ 완료" : r.status === "no_show" ? "🚫 노쇼" : "취소됨"}
+                          </div>
+                        )}
+                      </div>
+                      {/* 2행: 입금요청 + 일부하자 (진행중인 예약만) */}
+                      {r.status !== "completed" && r.status !== "cancelled" && r.status !== "no_show" && (
+                        <div className="flex gap-1.5">
+                          <button
+                            onClick={() => handlePaymentRequest(r.id)}
+                            disabled={sendingPayment === r.id}
+                            className="flex-1 py-2.5 rounded-xl text-[13px] font-bold transition-all active:scale-95 disabled:opacity-60 flex items-center justify-center gap-1"
+                            style={{ background: "linear-gradient(135deg,#6366f1,#4f46e5)", color: "#fff" }}
+                          >
+                            <span>💰</span>
+                            {sendingPayment === r.id ? "발송중..." : "입금 요청"}
+                          </button>
+                          <button
+                            onClick={() => { setDefectModalId(r.id); setDefectDetail(""); }}
+                            disabled={sendingDefect}
+                            className="flex-1 py-2.5 rounded-xl text-[13px] font-bold transition-all active:scale-95 disabled:opacity-60 flex items-center justify-center gap-1"
+                            style={{ background: "linear-gradient(135deg,#f59e0b,#d97706)", color: "#fff" }}
+                          >
+                            <span>⚠️</span>
+                            일부 하자
+                          </button>
+                        </div>
                       )}
                     </div>
                   </div>
@@ -240,6 +304,49 @@ export default function StaffDashboard() {
           </div>
         ))}
       </div>
+
+      {/* 일부하자 모달 */}
+      {defectModalId !== null && (
+        <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/40 px-4 pb-6">
+          <div className="w-full max-w-md bg-white rounded-3xl shadow-2xl p-5 space-y-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <h3 className="text-[16px] font-bold text-slate-800">⚠️ 일부 하자 안내</h3>
+                <p className="text-[12px] text-slate-400 mt-0.5">하자 내용을 입력하면 고객에게 자동 발송됩니다</p>
+              </div>
+              <button
+                onClick={() => { setDefectModalId(null); setDefectDetail(""); }}
+                className="w-8 h-8 flex items-center justify-center rounded-xl bg-slate-100 text-slate-400 hover:bg-slate-200 transition-colors"
+              >
+                <svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M2 2l8 8M10 2l-8 8" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round"/></svg>
+              </button>
+            </div>
+            <textarea
+              value={defectDetail}
+              onChange={(e) => setDefectDetail(e.target.value)}
+              placeholder="예: 신세계 50,000원권 2매에 찢김 발견. 나머지 정상 처리 가능합니다."
+              rows={4}
+              className="w-full px-4 py-3 rounded-2xl border border-slate-200 bg-slate-50 text-[14px] text-slate-800 outline-none focus:border-amber-400 focus:ring-2 focus:ring-amber-50 resize-none placeholder:text-slate-300"
+            />
+            <div className="flex gap-2">
+              <button
+                onClick={() => { setDefectModalId(null); setDefectDetail(""); }}
+                className="flex-1 py-3 rounded-2xl border-2 border-slate-200 text-slate-600 text-[14px] font-bold hover:bg-slate-50 transition-colors"
+              >
+                취소
+              </button>
+              <button
+                onClick={handleDefectSubmit}
+                disabled={!defectDetail.trim() || sendingDefect}
+                className="flex-1 py-3 rounded-2xl text-white text-[14px] font-bold transition-all active:scale-95 disabled:opacity-50"
+                style={{ background: "linear-gradient(135deg,#f59e0b,#d97706)" }}
+              >
+                {sendingDefect ? "발송 중…" : "📨 발송하기"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
