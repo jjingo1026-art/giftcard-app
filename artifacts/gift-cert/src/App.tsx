@@ -221,12 +221,15 @@ function VoucherItems({
               </div>
               {/* Row 2: 금액 입력 */}
               <input
-                type="number"
+                type="text"
+                inputMode="numeric"
+                pattern="[0-9]*"
                 value={item.amount}
-                onChange={(e) => onChange(idx, "amount", e.target.value)}
+                onChange={(e) => {
+                  const v = e.target.value.replace(/[^0-9]/g, "");
+                  onChange(idx, "amount", v);
+                }}
                 placeholder="금액 입력 (원)"
-                min="0"
-                step="10000"
                 className={`w-full px-3 py-2.5 rounded-xl border text-[14px] text-slate-800 outline-none transition-all duration-150 placeholder:text-slate-300
                   ${errors[idx] ? "border-rose-300 bg-rose-50" : "border-slate-200 bg-white"}`}
               />
