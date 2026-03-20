@@ -9,6 +9,7 @@ import StaffLogin from "./pages/StaffLogin";
 import StaffApprove from "./pages/StaffApprove";
 import StaffDashboard from "./pages/StaffDashboard";
 import StaffDetail from "./pages/StaffDetail";
+import StaffCard from "./pages/StaffCard";
 import CustomerChat from "./pages/CustomerChat";
 import Notice from "./pages/Notice";
 import Terms from "./pages/Terms";
@@ -56,6 +57,8 @@ createRoot(document.getElementById("root")!).render(
       <Route path="/admin/settings.html" component={AdminSettings} />
       <Route path="/staff/dashboard" component={StaffDashboard} />
       <Route path="/staff/dashboard.html" component={StaffDashboard} />
+      <Route path="/staff/card" component={StaffCard} />
+      <Route path="/staff/card.html" component={StaffCard} />
       <Route path="/staff/detail" component={StaffDetail} />
       <Route path="/staff/detail.html" component={StaffDetail} />
       <Route path="/staff/chat" component={StaffDetail} />
