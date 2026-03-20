@@ -51,9 +51,17 @@ export default function ReservationCheck() {
   const [editDate, setEditDate] = useState("");
   const [editTime, setEditTime] = useState("");
   const [editLocation, setEditLocation] = useState("");
+  const [editGiftcardType, setEditGiftcardType] = useState("");
+  const [editAmount, setEditAmount] = useState("");
   const [saving, setSaving] = useState(false);
   const [editError, setEditError] = useState("");
   const [editSuccess, setEditSuccess] = useState(false);
+
+  const GIFT_TYPES = [
+    "신세계백화점상품권", "롯데백화점상품권", "현대백화점상품권", "국민관광상품권",
+    "갤러리아백화점상품권", "삼성상품권", "이랜드상품권", "AK(애경)상품권",
+    "농협상품권", "지류문화상품권", "온누리상품권", "주유권",
+  ];
 
   async function check() {
     const p = phone.trim().replace(/[^0-9]/g, "");
@@ -107,6 +115,8 @@ export default function ReservationCheck() {
     setEditDate(reservation.date ?? "");
     setEditTime(reservation.time ?? "");
     setEditLocation(reservation.location ?? "");
+    setEditGiftcardType(reservation.giftcardType ?? "");
+    setEditAmount(reservation.amount ? String(reservation.amount) : "");
     setEditError("");
     setEditMode(true);
   }
@@ -114,6 +124,9 @@ export default function ReservationCheck() {
   async function submitEdit(e: React.FormEvent) {
     e.preventDefault();
     if (!reservation) return;
+    if (editAmount && (isNaN(Number(editAmount)) || Number(editAmount) <= 0)) {
+      setEditError("올바른 금액을 입력해주세요."); return;
+    }
     setSaving(true); setEditError("");
     try {
       const res = await fetch("/api/admin/customer/update", {
@@ -125,6 +138,8 @@ export default function ReservationCheck() {
           date: editDate || undefined,
           time: editTime || undefined,
           location: editLocation || undefined,
+          giftcardType: editGiftcardType || undefined,
+          amount: editAmount ? Number(editAmount) : undefined,
         }),
       });
       const data = await res.json();
@@ -134,6 +149,8 @@ export default function ReservationCheck() {
           date: editDate || reservation.date,
           time: editTime || reservation.time,
           location: editLocation || reservation.location,
+          giftcardType: editGiftcardType || reservation.giftcardType,
+          amount: editAmount ? Number(editAmount) : reservation.amount,
         });
         setEditMode(false);
         setEditSuccess(true);
@@ -172,6 +189,40 @@ export default function ReservationCheck() {
           <button type="button" onClick={() => setEditMode(false)} className="text-[12px] text-slate-400 hover:text-slate-600">닫기</button>
         </div>
         <div className="px-5 py-4 space-y-3">
+          {/* 권종 선택 */}
+          <div className="space-y-1.5">
+            <label className="block text-[12px] font-bold text-slate-500">상품권 권종</label>
+            <select
+              value={editGiftcardType}
+              onChange={(e) => setEditGiftcardType(e.target.value)}
+              className={inputCls + " appearance-none"}
+            >
+              <option value="">권종 선택</option>
+              {GIFT_TYPES.map((t) => (
+                <option key={t} value={t}>{t}</option>
+              ))}
+            </select>
+          </div>
+
+          {/* 금액 */}
+          <div className="space-y-1.5">
+            <label className="block text-[12px] font-bold text-slate-500">금액 (원)</label>
+            <input
+              type="number"
+              value={editAmount}
+              onChange={(e) => setEditAmount(e.target.value)}
+              placeholder="예) 500000"
+              min={1}
+              className={inputCls}
+              inputMode="numeric"
+            />
+            {editAmount && !isNaN(Number(editAmount)) && Number(editAmount) > 0 && (
+              <p className="text-[11px] text-indigo-500 pl-1">
+                입력 금액: {Number(editAmount).toLocaleString("ko-KR")}원
+              </p>
+            )}
+          </div>
+
           {reservation?.kind !== "urgent" && (
             <>
               <div className="space-y-1.5">

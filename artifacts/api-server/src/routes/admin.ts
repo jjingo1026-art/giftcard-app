@@ -991,9 +991,10 @@ router.post("/customer/cancel", async (req, res) => {
 
 // ── 고객용: 예약 수정 ─────────────────────────────────────────────────────────
 router.post("/customer/update", async (req, res) => {
-  const { phone, reservationId, date, time, location } = req.body as {
+  const { phone, reservationId, date, time, location, giftcardType, amount } = req.body as {
     phone?: string; reservationId?: number;
     date?: string; time?: string; location?: string;
+    giftcardType?: string; amount?: number;
   };
   if (!phone || !reservationId) {
     res.status(400).json({ success: false, error: "phone, reservationId 필수입니다." }); return;
@@ -1017,6 +1018,13 @@ router.post("/customer/update", async (req, res) => {
   if (date !== undefined) updates.date = date || null;
   if (time !== undefined) updates.time = time || null;
   if (location !== undefined) updates.location = location || null;
+  if (giftcardType !== undefined) updates.giftcardType = giftcardType || null;
+  if (amount !== undefined && !isNaN(Number(amount))) {
+    const amt = Number(amount);
+    updates.amount = amt;
+    // totalPayment 재계산 (기존 rate 유지, 없으면 그대로)
+    if (row.rate) updates.totalPayment = Math.floor(amt * (row.rate / 100));
+  }
   if (Object.keys(updates).length === 0) {
     res.json({ success: false, error: "변경할 내용이 없습니다." }); return;
   }
