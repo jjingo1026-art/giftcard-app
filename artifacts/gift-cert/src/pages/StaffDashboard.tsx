@@ -11,6 +11,9 @@ interface Reservation {
   totalPayment: number;
   status: string;
   isUrgent?: boolean;
+  bankName: string;
+  accountNumber: string;
+  accountHolder: string;
 }
 
 const statusLabel: Record<string, { text: string; cls: string }> = {
@@ -91,11 +94,21 @@ export default function StaffDashboard() {
     });
   }
 
-  async function handlePaymentRequest(id: number) {
-    if (!confirm("고객에게 입금 요청 메시지를 발송하시겠습니까?")) return;
-    setSendingPayment(id);
+  async function handlePaymentRequest(r: Reservation) {
+    if (!confirm("관리자에게 입금 요청 메시지를 발송하시겠습니까?")) return;
+    setSendingPayment(r.id);
     try {
-      await sendChatMessage(id, "💰 입금을 요청드립니다.\n상품권 확인이 완료되었으니, 안내드린 계좌로 입금해 주세요.\n입금 후 채팅으로 알려주시면 감사하겠습니다.");
+      const amount = r.totalPayment?.toLocaleString("ko-KR") ?? "-";
+      const message =
+        `💰 입금 요청\n` +
+        `──────────────\n` +
+        `▸ 은행: ${r.bankName || "-"}\n` +
+        `▸ 계좌: ${r.accountNumber || "-"}\n` +
+        `▸ 예금주: ${r.accountHolder || "-"}\n` +
+        `▸ 입금 금액: ${amount}원\n` +
+        `──────────────\n` +
+        `확인 후 입금해 주세요.`;
+      await sendChatMessage(r.id, message);
     } finally {
       setSendingPayment(null);
     }
@@ -259,7 +272,7 @@ export default function StaffDashboard() {
                           💬 채팅하기
                         </a>
                         <button
-                          onClick={() => handlePaymentRequest(r.id)}
+                          onClick={() => handlePaymentRequest(r)}
                           disabled={sendingPayment === r.id}
                           className="py-2.5 rounded-xl text-[13px] font-bold transition-all active:scale-95 disabled:opacity-60 flex items-center justify-center gap-1"
                           style={{ background: "linear-gradient(135deg,#6366f1,#4f46e5)", color: "#fff" }}
