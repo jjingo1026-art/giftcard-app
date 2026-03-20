@@ -13,8 +13,8 @@ function getReservationId() {
 }
 
 export default function StaffDetail() {
-  const token = sessionStorage.getItem("gc_staff_token");
-  const staffName = sessionStorage.getItem("gc_staff_name") ?? "매입담당자";
+  const token = localStorage.getItem("gc_staff_token");
+  const staffName = localStorage.getItem("gc_staff_name") ?? "매입담당자";
   const reservationId = getReservationId();
 
   const [chatMessages, setChatMessages] = useState<Message[]>([]);
@@ -24,7 +24,7 @@ export default function StaffDetail() {
   const chatBoxRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    if (!token) { location.href = "/staff/login.html"; return; }
+    if (!token) { window.location.href = "/staff/login"; return; }
     if (!reservationId) return;
     loadChat();
     const es = new EventSource(`/api/admin/chat/stream/${reservationId}`);
@@ -97,8 +97,8 @@ export default function StaffDetail() {
     <div className="min-h-screen bg-slate-50">
       <header className="bg-white border-b border-slate-100 sticky top-0 z-40 shadow-sm">
         <div className="max-w-2xl mx-auto px-4 py-3.5 flex items-center gap-3">
-          <button onClick={() => { window.location.href = "/staff/dashboard.html"; }} className="text-slate-400 hover:text-slate-600">
-            ←
+          <button onClick={() => { window.location.href = "/staff/dashboard"; }} className="w-8 h-8 flex items-center justify-center rounded-xl hover:bg-slate-100 transition-colors text-slate-500">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
           </button>
           <h1 className="text-[16px] font-bold text-slate-800">예약 #{reservationId} 채팅</h1>
         </div>
