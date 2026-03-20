@@ -4,7 +4,7 @@ import { reservationsTable, chatsTable, staffTable, penaltiesTable, usersTable, 
 import { eq, desc, asc, and, sql, gte, lte, inArray, isNull } from "drizzle-orm";
 import { runPrivacyCleanup } from "../cleanup";
 import crypto from "crypto";
-import { emitToRoom } from "../socket";
+import { emitToRoom, broadcast } from "../socket";
 
 const router: IRouter = Router();
 
@@ -1056,6 +1056,11 @@ router.post("/customer/update", async (req, res) => {
     res.json({ success: false, error: "변경할 내용이 없습니다." }); return;
   }
   await db.update(reservationsTable).set(updates).where(eq(reservationsTable.id, reservationId));
+  // 실시간: 관리자 대시보드에 변경 알림
+  const [updated] = await db.select().from(reservationsTable).where(eq(reservationsTable.id, reservationId));
+  if (updated) {
+    broadcast("reservationUpdated", updated);
+  }
   res.json({ success: true });
 });
 

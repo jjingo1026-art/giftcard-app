@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useLocation } from "wouter";
 import { formatPhone, formatDateKo } from "@/lib/store";
 
 interface EditItem { type: string; amount: string; isGift: boolean; }
@@ -36,6 +37,7 @@ function fmt(n?: number | null) {
 }
 
 export default function ReservationCheck() {
+  const [, navigate] = useLocation();
   const [phone, setPhone] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
@@ -133,25 +135,7 @@ export default function ReservationCheck() {
 
   function openEdit() {
     if (!reservation) return;
-    setEditDate(reservation.date ?? "");
-    setEditTime(reservation.time ?? "");
-    setEditLocation(reservation.location ?? "");
-    if (reservation.items && reservation.items.length > 0) {
-      setEditItems(reservation.items.map(it => ({
-        type: it.type,
-        amount: String(it.amount),
-        isGift: it.isGift,
-      })));
-    } else {
-      setEditItems([{
-        type: reservation.giftcardType ?? "",
-        amount: reservation.amount ? String(reservation.amount) : "",
-        isGift: false,
-      }]);
-    }
-    setOpenTypeIdx(null);
-    setEditError("");
-    setEditMode(true);
+    navigate(`/edit?phone=${encodeURIComponent(phone)}&id=${reservation.id}`);
   }
 
   function updateItem(idx: number, field: keyof EditItem, val: string | boolean) {

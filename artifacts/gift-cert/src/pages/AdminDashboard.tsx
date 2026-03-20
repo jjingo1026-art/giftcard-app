@@ -129,6 +129,11 @@ export default function AdminDashboard() {
       urgentAlertTimerRef.current = setTimeout(() => setNewUrgentAlert(null), 8000);
     });
 
+    socket.on("reservationUpdated", (updated: Reservation) => {
+      setAllEntries((prev) => prev.map((r) => r.id === updated.id ? { ...r, ...updated } : r));
+      setEntries((prev) => prev.map((r) => r.id === updated.id ? { ...r, ...updated } : r));
+    });
+
     return () => { socket.disconnect(); };
   }, []);
 

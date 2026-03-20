@@ -14,6 +14,7 @@ import Notice from "./pages/Notice";
 import Terms from "./pages/Terms";
 import Privacy from "./pages/Privacy";
 import ReservationCheck from "./pages/ReservationCheck";
+import ReservationEdit from "./pages/ReservationEdit";
 import AdminStaffView from "./pages/AdminStaffView";
 import AdminChat from "./pages/AdminChat";
 import AdminTodayRevenue from "./pages/AdminTodayRevenue";
@@ -69,6 +70,8 @@ createRoot(document.getElementById("root")!).render(
       <Route path="/chat.html" component={CustomerChat} />
       <Route path="/check" component={ReservationCheck} />
       <Route path="/check.html" component={ReservationCheck} />
+      <Route path="/edit" component={ReservationEdit} />
+      <Route path="/edit.html" component={ReservationEdit} />
       <Route path="/staff/login" component={StaffLogin} />
       <Route path="/staff/login.html" component={StaffLogin} />
       <Route path="/staff/register" component={StaffRegister} />
