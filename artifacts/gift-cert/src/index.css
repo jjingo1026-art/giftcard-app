@@ -61,7 +61,7 @@
   --destructive: 0 72% 51%;
   --destructive-foreground: 0 0% 100%;
 
-  --app-font-sans: -apple-system, BlinkMacSystemFont, "Apple SD Gothic Neo", "Noto Sans KR", "Malgun Gothic", Arial, sans-serif;
+  --app-font-sans: "Noto Sans KR", sans-serif;
   --radius: 0.75rem;
 }
 
@@ -79,6 +79,6 @@
   }
   body {
     @apply font-sans antialiased bg-background text-foreground;
-    font-family: -apple-system, BlinkMacSystemFont, "Apple SD Gothic Neo", "Noto Sans KR", "Malgun Gothic", Arial, sans-serif;
+    font-family: "Noto Sans KR", sans-serif;
   }
 }
