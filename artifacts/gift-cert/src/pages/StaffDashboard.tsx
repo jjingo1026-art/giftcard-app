@@ -205,7 +205,7 @@ export default function StaffDashboard() {
           </div>
         </header>
 
-        <div className="max-w-2xl mx-auto px-4 py-4 space-y-3 pb-8">
+        <div className="max-w-2xl mx-auto px-4 py-4 space-y-3 pb-36">
           {/* 기본 정보 */}
           <div className="bg-white rounded-2xl border border-slate-100 shadow-sm overflow-hidden">
             <div className="px-4 py-3 border-b border-slate-50">
@@ -283,51 +283,56 @@ export default function StaffDashboard() {
             </div>
           )}
 
-          {/* 액션 버튼 */}
-          {isActive ? (
-            <div className="grid grid-cols-2 gap-3 pt-1">
-              <a
-                href={`/staff/chat?id=${r.id}`}
-                className="py-3.5 rounded-2xl bg-indigo-50 border border-indigo-100 text-indigo-600 text-[14px] font-bold text-center hover:bg-indigo-100 transition-colors"
-              >
-                💬 채팅하기
-              </a>
-              <button
-                onClick={() => handlePaymentRequest(r)}
-                disabled={sendingPayment === r.id}
-                className="py-3.5 rounded-2xl text-[14px] font-bold transition-all active:scale-95 disabled:opacity-60"
-                style={{ background: "linear-gradient(135deg,#6366f1,#4f46e5)", color: "#fff" }}
-              >
-                {sendingPayment === r.id ? "발송 중..." : "💰 입금요청"}
-              </button>
-              <button
-                onClick={() => { setDefectModalId(r.id); setDefectDetail(""); }}
-                className="py-3.5 rounded-2xl text-[14px] font-bold transition-all active:scale-95"
-                style={{ background: "linear-gradient(135deg,#f59e0b,#d97706)", color: "#fff" }}
-              >
-                ⚠️ 일부하자
-              </button>
-              <button
-                onClick={() => markComplete(r.id)}
-                disabled={completing === r.id}
-                className="py-3.5 rounded-2xl bg-emerald-500 text-white text-[14px] font-bold hover:bg-emerald-600 transition-colors disabled:opacity-60"
-              >
-                {completing === r.id ? "처리 중..." : "✓ 완료처리"}
-              </button>
-            </div>
-          ) : (
-            <div className="flex gap-3">
-              <a
-                href={`/staff/chat?id=${r.id}`}
-                className="flex-1 py-3.5 rounded-2xl bg-indigo-50 border border-indigo-100 text-indigo-600 text-[14px] font-bold text-center hover:bg-indigo-100 transition-colors"
-              >
-                💬 채팅하기
-              </a>
-              <div className="flex-1 py-3.5 rounded-2xl bg-slate-50 border border-slate-100 text-slate-400 text-[14px] font-bold text-center">
-                {r.status === "completed" ? "✅ 완료됨" : r.status === "no_show" ? "🚫 노쇼" : "취소됨"}
+        </div>
+
+        {/* 하단 고정 버튼 */}
+        <div className="fixed bottom-0 left-0 right-0 z-30 bg-white border-t border-slate-100 shadow-[0_-4px_24px_rgba(0,0,0,0.06)]">
+          <div className="max-w-2xl mx-auto px-4 pt-3 pb-4">
+            {isActive ? (
+              <div className="grid grid-cols-2 gap-2.5">
+                <a
+                  href={`/staff/chat?id=${r.id}`}
+                  className="py-3.5 rounded-2xl bg-indigo-50 border border-indigo-100 text-indigo-600 text-[14px] font-bold text-center hover:bg-indigo-100 transition-colors"
+                >
+                  💬 채팅하기
+                </a>
+                <button
+                  onClick={() => handlePaymentRequest(r)}
+                  disabled={sendingPayment === r.id}
+                  className="py-3.5 rounded-2xl text-[14px] font-bold transition-all active:scale-95 disabled:opacity-60"
+                  style={{ background: "linear-gradient(135deg,#6366f1,#4f46e5)", color: "#fff" }}
+                >
+                  {sendingPayment === r.id ? "발송 중..." : "💰 입금요청"}
+                </button>
+                <button
+                  onClick={() => { setDefectModalId(r.id); setDefectDetail(""); }}
+                  className="py-3.5 rounded-2xl text-[14px] font-bold transition-all active:scale-95"
+                  style={{ background: "linear-gradient(135deg,#f59e0b,#d97706)", color: "#fff" }}
+                >
+                  ⚠️ 일부하자
+                </button>
+                <button
+                  onClick={() => markComplete(r.id)}
+                  disabled={completing === r.id}
+                  className="py-3.5 rounded-2xl bg-emerald-500 text-white text-[14px] font-bold hover:bg-emerald-600 transition-colors disabled:opacity-60"
+                >
+                  {completing === r.id ? "처리 중..." : "✓ 완료처리"}
+                </button>
               </div>
-            </div>
-          )}
+            ) : (
+              <div className="flex gap-2.5">
+                <a
+                  href={`/staff/chat?id=${r.id}`}
+                  className="flex-1 py-3.5 rounded-2xl bg-indigo-50 border border-indigo-100 text-indigo-600 text-[14px] font-bold text-center hover:bg-indigo-100 transition-colors"
+                >
+                  💬 채팅하기
+                </a>
+                <div className="flex-1 py-3.5 rounded-2xl bg-slate-50 border border-slate-100 text-slate-400 text-[14px] font-bold text-center">
+                  {r.status === "completed" ? "✅ 완료됨" : r.status === "no_show" ? "🚫 노쇼" : "취소됨"}
+                </div>
+              </div>
+            )}
+          </div>
         </div>
 
         {/* 일부하자 모달 */}
