@@ -85,6 +85,7 @@ export default function StaffDashboard() {
   const [toDate, setToDate] = useState(TODAY);
 
   const [completing, setCompleting] = useState<number | null>(null);
+  const [noShowingId, setNoShowingId] = useState<number | null>(null);
   const [sendingPayment, setSendingPayment] = useState<number | null>(null);
   const [defectModalId, setDefectModalId] = useState<number | null>(null);
   const [defectDetail, setDefectDetail] = useState("");
@@ -114,6 +115,21 @@ export default function StaffDashboard() {
       setEntries((prev) => prev.map((r) => r.id === id ? { ...r, status: "completed" } : r));
     } finally {
       setCompleting(null);
+    }
+  }
+
+  async function handleNoShow(id: number) {
+    if (!confirm("노쇼 처리하시겠습니까?")) return;
+    setNoShowingId(id);
+    try {
+      await fetch(`/api/admin/reservations/${id}/status`, {
+        method: "POST",
+        headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
+        body: JSON.stringify({ status: "no_show" }),
+      });
+      setEntries((prev) => prev.map((r) => r.id === id ? { ...r, status: "no_show" } : r));
+    } finally {
+      setNoShowingId(null);
     }
   }
 
@@ -182,10 +198,11 @@ export default function StaffDashboard() {
     return list.map((r, i) => (
       <ReservationCard
         key={r.id} r={r} idx={i}
-        completing={completing} sendingPayment={sendingPayment}
+        completing={completing} sendingPayment={sendingPayment} noShowingId={noShowingId}
         onComplete={markComplete}
         onPayment={handlePaymentRequest}
         onDefect={(id) => { setDefectModalId(id); setDefectDetail(""); }}
+        onNoShow={handleNoShow}
       />
     ));
   }
@@ -365,12 +382,14 @@ interface CardProps {
   idx: number;
   completing: number | null;
   sendingPayment: number | null;
+  noShowingId: number | null;
   onComplete: (id: number) => void;
   onPayment: (r: Reservation) => void;
   onDefect: (id: number) => void;
+  onNoShow: (id: number) => void;
 }
 
-function ReservationCard({ r, completing, sendingPayment, onComplete, onPayment, onDefect }: CardProps) {
+function ReservationCard({ r, completing, sendingPayment, noShowingId, onComplete, onPayment, onDefect, onNoShow }: CardProps) {
   const sl = STATUS_LABEL[r.status] ?? { text: r.status, cls: "bg-slate-100 text-slate-500 border-slate-200" };
   const items: { type: string; amount: number; payment: number; isGift: boolean }[] =
     Array.isArray(r.items) && r.items.length > 0
@@ -467,34 +486,49 @@ function ReservationCard({ r, completing, sendingPayment, onComplete, onPayment,
 
         {/* 액션 버튼 */}
         {isActive ? (
-          <div className="grid grid-cols-2 gap-2 pt-1">
-            <a
-              href={`/staff/chat?id=${r.id}`}
-              className="py-3 rounded-2xl bg-slate-100 text-slate-700 text-[13px] font-bold text-center hover:bg-slate-200 transition-colors"
-            >
-              💬 채팅하기
-            </a>
-            <button
-              onClick={() => onPayment(r)}
-              disabled={sendingPayment === r.id}
-              className="py-3 rounded-2xl text-[13px] font-bold transition-all active:scale-95 disabled:opacity-60"
-              style={{ background: "linear-gradient(135deg,#6366f1,#4f46e5)", color: "#fff" }}
-            >
-              {sendingPayment === r.id ? "발송 중..." : "💰 입금요청"}
-            </button>
-            <button
-              onClick={() => onDefect(r.id)}
-              className="py-3 rounded-2xl text-[13px] font-bold transition-all active:scale-95"
-              style={{ background: "linear-gradient(135deg,#f59e0b,#d97706)", color: "#fff" }}
-            >
-              ⚠️ 일부하자
-            </button>
+          <div className="flex flex-col gap-2 pt-1">
+            {/* 1행: 채팅하기 | 입금요청 */}
+            <div className="grid grid-cols-2 gap-2">
+              <a
+                href={`/staff/chat?id=${r.id}`}
+                className="py-3 rounded-2xl bg-slate-100 text-slate-700 text-[13px] font-bold text-center hover:bg-slate-200 transition-colors"
+              >
+                💬 채팅하기
+              </a>
+              <button
+                onClick={() => onPayment(r)}
+                disabled={sendingPayment === r.id}
+                className="py-3 rounded-2xl text-[13px] font-bold transition-all active:scale-95 disabled:opacity-60"
+                style={{ background: "linear-gradient(135deg,#6366f1,#4f46e5)", color: "#fff" }}
+              >
+                {sendingPayment === r.id ? "발송 중..." : "💰 입금요청"}
+              </button>
+            </div>
+            {/* 2행: 일부하자 | 노쇼 */}
+            <div className="grid grid-cols-2 gap-2">
+              <button
+                onClick={() => onDefect(r.id)}
+                className="py-3 rounded-2xl text-[13px] font-bold transition-all active:scale-95"
+                style={{ background: "linear-gradient(135deg,#f59e0b,#d97706)", color: "#fff" }}
+              >
+                ⚠️ 일부하자
+              </button>
+              <button
+                onClick={() => onNoShow(r.id)}
+                disabled={noShowingId === r.id}
+                className="py-3 rounded-2xl text-[13px] font-bold transition-all active:scale-95 disabled:opacity-60"
+                style={{ background: "linear-gradient(135deg,#f43f5e,#e11d48)", color: "#fff" }}
+              >
+                {noShowingId === r.id ? "처리 중..." : "🚫 노쇼"}
+              </button>
+            </div>
+            {/* 3행: 완료처리 (전체 폭) */}
             <button
               onClick={() => onComplete(r.id)}
               disabled={completing === r.id}
-              className="py-3 rounded-2xl bg-emerald-500 text-white text-[13px] font-bold hover:bg-emerald-600 transition-colors disabled:opacity-60"
+              className="w-full py-3 rounded-2xl bg-emerald-500 text-white text-[13px] font-bold hover:bg-emerald-600 transition-colors disabled:opacity-60"
             >
-              {completing === r.id ? "처리 중..." : "✓ 완료처리"}
+              {completing === r.id ? "처리 중..." : "✅ 완료처리"}
             </button>
           </div>
         ) : (
