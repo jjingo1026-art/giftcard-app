@@ -60,6 +60,7 @@ export default function StaffCard() {
   const [completing, setCompleting] = useState(false);
   const [noShowing, setNoShowing] = useState(false);
   const [sendingPayment, setSendingPayment] = useState(false);
+  const [paymentSent, setPaymentSent] = useState(false);
   const [defectModal, setDefectModal] = useState(false);
   const [defectDetail, setDefectDetail] = useState("");
   const [sendingDefect, setSendingDefect] = useState(false);
@@ -119,13 +120,27 @@ export default function StaffCard() {
   }
 
   async function handlePaymentRequest() {
-    if (!r || !confirm("입금 요청 메시지를 발송하시겠습니까?")) return;
+    if (!r) return;
     setSendingPayment(true);
     try {
-      const amount = r.totalPayment?.toLocaleString("ko-KR") ?? "-";
-      await sendChatMessage(
-        `💰 입금 요청\n──────────────\n▸ 은행: ${r.bankName || "-"}\n▸ 계좌: ${r.accountNumber || "-"}\n▸ 예금주: ${r.accountHolder || "-"}\n▸ 입금 금액: ${amount}원\n──────────────\n확인 후 입금해 주세요.`
-      );
+      const name = r.name || r.phone;
+      const amount = (r.totalPayment ?? 0).toLocaleString("ko-KR");
+      const bank = r.bankName || "-";
+      const account = r.accountNumber || "-";
+      const holder = r.accountHolder || "-";
+      const message =
+        `💰 입금 요청 — ${name}\n` +
+        `━━━━━━━━━━━━━━━━━━\n` +
+        `🏦 은행: ${bank}\n` +
+        `📋 계좌번호: ${account}\n` +
+        `👤 예금주: ${holder}\n` +
+        `━━━━━━━━━━━━━━━━━━\n` +
+        `💵 입금 금액: ${amount}원\n` +
+        `━━━━━━━━━━━━━━━━━━\n` +
+        `판매자 계좌로 위 금액을 입금해 주세요.`;
+      await sendChatMessage(message);
+      setPaymentSent(true);
+      setTimeout(() => setPaymentSent(false), 3000);
     } finally {
       setSendingPayment(false);
     }
@@ -317,6 +332,13 @@ export default function StaffCard() {
           </div>
         )}
       </div>
+
+      {/* 입금요청 발송 완료 토스트 */}
+      {paymentSent && (
+        <div className="fixed top-20 left-1/2 -translate-x-1/2 z-50 bg-slate-800 text-white text-[13px] font-bold px-5 py-3 rounded-2xl shadow-xl flex items-center gap-2 animate-fade-in">
+          ✅ 입금 요청이 채팅으로 발송되었습니다
+        </div>
+      )}
 
       {/* 하단 고정 바 — 입금요청 / 일부하자 / 노쇼 */}
       {!loading && r && isActive && (
