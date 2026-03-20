@@ -163,13 +163,14 @@ router.post("/staff/:id/reject", requireAuth, async (req, res) => {
 
 router.post("/staff/login", async (req, res) => {
   const { phone, password } = req.body as { phone?: string; password?: string };
-  const [user] = await db.select().from(staffTable)
-    .where(eq(staffTable.phone, phone ?? ""));
+  const normalizePhone = (p: string) => p.replace(/\D/g, "");
+  const allStaff = await db.select().from(staffTable);
+  const user = allStaff.find((s) => normalizePhone(s.phone ?? "") === normalizePhone(phone ?? ""));
   if (!user || user.password !== password) {
-    res.json({ success: false, message: "정보 틀림" }); return;
+    res.json({ success: false, message: "전화번호 또는 비밀번호가 올바르지 않습니다." }); return;
   }
   if (user.status !== "approved") {
-    res.json({ success: false, message: "승인 대기중" }); return;
+    res.json({ success: false, message: "관리자 승인 대기 중입니다. 승인 후 로그인하세요." }); return;
   }
   const token = crypto.randomUUID();
   const expiresAt = Date.now() + 1000 * 60 * 60 * 8;
