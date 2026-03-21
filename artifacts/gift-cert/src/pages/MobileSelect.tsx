@@ -141,7 +141,7 @@ function BooknlifeManualInput({
               placeholder={`상품권번호 ${idx + 1}`}
               className="flex-1 px-4 py-3 rounded-xl border-2 border-violet-200 bg-white text-[14px] font-mono tracking-wider outline-none focus:border-violet-400 focus:ring-2 focus:ring-violet-100 transition-all placeholder:text-slate-300"
             />
-            {idx === numbers.length - 1 && (
+            {idx === 0 && (
               <button
                 type="button"
                 onClick={onAdd}
