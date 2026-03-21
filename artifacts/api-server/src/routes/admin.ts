@@ -845,6 +845,55 @@ router.get("/reservations/revenue/daily", requireAuth, requireAdmin, async (req,
   res.json(rows);
 });
 
+// 모바일 전용 매출 통계 (createdAt 기준, KST)
+router.get("/mobile-stats", requireAuth, async (req, res) => {
+  const { startDate, endDate } = req.query as { startDate?: string; endDate?: string };
+
+  // YYYY-MM-DD 문자열을 KST 기준 UTC 범위로 변환
+  const toUtcRange = (start: string, end: string) => {
+    const startTs = new Date(`${start}T00:00:00+09:00`).toISOString();
+    const endTs   = new Date(`${end}T23:59:59.999+09:00`).toISOString();
+    return { startTs, endTs };
+  };
+
+  const buildWhere = (start: string, end: string) => {
+    const { startTs, endTs } = toUtcRange(start, end);
+    return and(
+      eq(reservationsTable.kind, "mobile"),
+      eq(reservationsTable.status, "completed"),
+      gte(reservationsTable.createdAt, startTs),
+      lte(reservationsTable.createdAt, endTs),
+    );
+  };
+
+  const nowKST = new Date(new Date().toLocaleString("en-US", { timeZone: "Asia/Seoul" }));
+  const todayStr = nowKST.toISOString().slice(0, 10);
+  const weekStart = new Date(nowKST);
+  weekStart.setDate(nowKST.getDate() - nowKST.getDay());
+  const weekStartStr = weekStart.toISOString().slice(0, 10);
+
+  const selectCols = {
+    count: sql<number>`COUNT(*)`,
+    payment: sql<number>`COALESCE(SUM(${reservationsTable.totalPayment}), 0)`,
+    amount: sql<number>`COALESCE(SUM(${reservationsTable.amount}), 0)`,
+  };
+
+  const [todayRow] = await db.select(selectCols).from(reservationsTable).where(buildWhere(todayStr, todayStr));
+  const [weekRow]  = await db.select(selectCols).from(reservationsTable).where(buildWhere(weekStartStr, todayStr));
+
+  let rangeRow = null;
+  if (startDate && endDate) {
+    const [r] = await db.select(selectCols).from(reservationsTable).where(buildWhere(startDate, endDate));
+    rangeRow = r;
+  }
+
+  res.json({
+    today: { ...todayRow, date: todayStr },
+    week:  { ...weekRow,  startDate: weekStartStr, endDate: todayStr },
+    range: rangeRow ? { ...rangeRow, startDate, endDate } : null,
+  });
+});
+
 router.get("/reservations/revenue/today", requireAuth, requireAdmin, async (_req, res) => {
   const today = new Date().toISOString().slice(0, 10);
 

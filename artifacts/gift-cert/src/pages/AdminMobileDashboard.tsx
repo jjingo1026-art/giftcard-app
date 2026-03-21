@@ -31,6 +31,13 @@ interface ChatInboxItem {
   lastTime: string;
 }
 
+interface StatRow { count: number; payment: number; amount: number; }
+interface MobileStats {
+  today: StatRow & { date: string };
+  week: StatRow & { startDate: string; endDate: string };
+  range: (StatRow & { startDate?: string; endDate?: string }) | null;
+}
+
 const STATUS_INFO: Record<string, { label: string; color: string; dot: string }> = {
   pending:   { label: "처리 대기",  color: "bg-amber-100 text-amber-700 border-amber-200",   dot: "bg-amber-400" },
   completed: { label: "처리 완료",  color: "bg-emerald-100 text-emerald-700 border-emerald-200", dot: "bg-emerald-500" },
@@ -80,12 +87,34 @@ export default function AdminMobileDashboard() {
   const [newAlert, setNewAlert] = useState<MobileReservation | null>(null);
   const [chatInbox, setChatInbox] = useState<ChatInboxItem[]>([]);
   const [newChatAlert, setNewChatAlert] = useState<{ reservationId: number; lastSender: string; lastMessage: string } | null>(null);
+  const [stats, setStats] = useState<MobileStats | null>(null);
+  const [statsLoading, setStatsLoading] = useState(false);
+  const todayKST = new Date(new Date().toLocaleString("en-US", { timeZone: "Asia/Seoul" })).toISOString().slice(0, 10);
+  const [rangeStart, setRangeStart] = useState(todayKST);
+  const [rangeEnd, setRangeEnd] = useState(todayKST);
+  const [rangeSearched, setRangeSearched] = useState(false);
 
   const token = getAdminToken();
   if (!token) { navigate("/admin/login"); return null; }
 
+  async function loadStats(withRange?: boolean) {
+    setStatsLoading(true);
+    try {
+      const url = withRange
+        ? `/api/admin/mobile-stats?startDate=${rangeStart}&endDate=${rangeEnd}`
+        : "/api/admin/mobile-stats";
+      const res = await adminFetch(url);
+      const data = await res.json();
+      setStats(data);
+      if (withRange) setRangeSearched(true);
+    } catch { } finally {
+      setStatsLoading(false);
+    }
+  }
+
   useEffect(() => {
     loadEntries();
+    loadStats();
     adminFetch("/api/admin/chat-inbox")
       .then((r) => r.json())
       .then((data) => { if (Array.isArray(data)) setChatInbox(data); })
@@ -163,18 +192,12 @@ export default function AdminMobileDashboard() {
     return true;
   });
 
-  const stats = {
+  const counts = {
     total:     entries.length,
     pending:   entries.filter((e) => e.status === "pending").length,
     completed: entries.filter((e) => e.status === "completed").length,
     cancelled: entries.filter((e) => e.status === "cancelled").length,
   };
-
-  const todayStr = new Date().toISOString().slice(0, 10);
-  const todayCount = entries.filter((e) => e.createdAt.startsWith(todayStr)).length;
-  const todayPayment = entries
-    .filter((e) => e.createdAt.startsWith(todayStr) && e.status === "completed")
-    .reduce((s, e) => s + e.totalPayment, 0);
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-violet-50 to-white">
@@ -267,22 +290,80 @@ export default function AdminMobileDashboard() {
 
       <div className="max-w-2xl mx-auto px-4 py-4 space-y-3">
 
-        {/* 오늘 요약 */}
-        <div className="grid grid-cols-2 gap-2">
-          <div className="bg-violet-50 border border-violet-100 rounded-2xl px-4 py-3.5 shadow-sm">
-            <p className="text-[11px] text-violet-500 font-medium flex items-center gap-1">📱 오늘 신청</p>
-            <p className="text-[24px] font-black text-violet-700 mt-0.5">{todayCount}<span className="text-[14px] font-bold ml-1">건</span></p>
+        {/* 매출 통계 */}
+        <div className="bg-white border border-violet-100 rounded-2xl shadow-sm overflow-hidden">
+          <div className="px-4 pt-3.5 pb-2 flex items-center justify-between border-b border-violet-50">
+            <p className="text-[13px] font-bold text-violet-700 flex items-center gap-1.5">📊 모바일 매출 통계</p>
+            <button onClick={() => loadStats()} disabled={statsLoading}
+              className="text-[11px] text-violet-400 hover:text-violet-600 font-semibold px-2 py-1 rounded-lg hover:bg-violet-50 transition-all">
+              {statsLoading ? "..." : "🔄"}
+            </button>
           </div>
-          <div className="bg-emerald-50 border border-emerald-100 rounded-2xl px-4 py-3.5 shadow-sm">
-            <p className="text-[11px] text-emerald-500 font-medium flex items-center gap-1">💰 오늘 입금액</p>
-            <p className="text-[18px] font-black text-emerald-700 mt-0.5 tabular-nums">{formatKRW(todayPayment)}</p>
+
+          {/* 오늘 / 이번주 */}
+          <div className="grid grid-cols-2 divide-x divide-violet-50">
+            <div className="px-4 py-3.5">
+              <p className="text-[10px] text-slate-400 font-semibold uppercase tracking-wide mb-1">오늘 매출</p>
+              <p className="text-[22px] font-black text-emerald-600 tabular-nums leading-tight">
+                {stats ? formatKRW(Number(stats.today.payment)) : "—"}
+              </p>
+              <p className="text-[11px] text-slate-400 mt-0.5">완료 {stats ? `${stats.today.count}건` : "—"}</p>
+            </div>
+            <div className="px-4 py-3.5">
+              <p className="text-[10px] text-slate-400 font-semibold uppercase tracking-wide mb-1">이번주 매출</p>
+              <p className="text-[22px] font-black text-violet-600 tabular-nums leading-tight">
+                {stats ? formatKRW(Number(stats.week.payment)) : "—"}
+              </p>
+              <p className="text-[11px] text-slate-400 mt-0.5">완료 {stats ? `${stats.week.count}건` : "—"}</p>
+            </div>
+          </div>
+
+          {/* 기간 선택 */}
+          <div className="px-4 pb-3.5 pt-2 border-t border-violet-50">
+            <p className="text-[10px] text-slate-400 font-semibold uppercase tracking-wide mb-2">기간별 매출</p>
+            <div className="flex items-center gap-2">
+              <input
+                type="date"
+                value={rangeStart}
+                onChange={(e) => { setRangeStart(e.target.value); setRangeSearched(false); }}
+                className="flex-1 text-[13px] border border-slate-200 rounded-xl px-2.5 py-2 outline-none focus:border-violet-400 focus:ring-2 focus:ring-violet-50 bg-slate-50 transition-all"
+              />
+              <span className="text-[12px] text-slate-400 flex-shrink-0">~</span>
+              <input
+                type="date"
+                value={rangeEnd}
+                onChange={(e) => { setRangeEnd(e.target.value); setRangeSearched(false); }}
+                className="flex-1 text-[13px] border border-slate-200 rounded-xl px-2.5 py-2 outline-none focus:border-violet-400 focus:ring-2 focus:ring-violet-50 bg-slate-50 transition-all"
+              />
+              <button
+                onClick={() => loadStats(true)}
+                disabled={statsLoading}
+                className="flex-shrink-0 bg-violet-600 hover:bg-violet-700 disabled:opacity-50 text-white text-[12px] font-bold px-3.5 py-2 rounded-xl transition-all active:scale-[0.97]"
+              >
+                {statsLoading ? "..." : "조회"}
+              </button>
+            </div>
+            {rangeSearched && stats?.range && (
+              <div className="mt-2.5 bg-violet-50 border border-violet-100 rounded-xl px-3.5 py-2.5 flex items-center justify-between">
+                <div>
+                  <p className="text-[11px] text-violet-500 font-medium">{stats.range.startDate} ~ {stats.range.endDate}</p>
+                  <p className="text-[20px] font-black text-violet-700 tabular-nums mt-0.5">
+                    {formatKRW(Number(stats.range.payment))}
+                  </p>
+                </div>
+                <div className="text-right">
+                  <p className="text-[11px] text-slate-400">완료</p>
+                  <p className="text-[18px] font-black text-slate-600">{stats.range.count}<span className="text-[12px] font-bold ml-0.5">건</span></p>
+                </div>
+              </div>
+            )}
           </div>
         </div>
 
-        {/* 통계 탭 */}
+        {/* 상태 필터 탭 */}
         <div className="grid grid-cols-4 gap-1.5">
           {(["all", "pending", "completed", "cancelled"] as StatusFilter[]).map((s) => {
-            const count = s === "all" ? stats.total : stats[s];
+            const count = s === "all" ? counts.total : counts[s];
             const labels: Record<StatusFilter, string> = { all: "전체", pending: "대기", completed: "완료", cancelled: "취소" };
             const colors: Record<StatusFilter, string> = {
               all: statusFilter === "all" ? "bg-violet-600 text-white shadow-sm" : "bg-white text-slate-600 border border-slate-200",
