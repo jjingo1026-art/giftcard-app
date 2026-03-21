@@ -221,6 +221,29 @@ function MobileVoucherItems({
         </div>
       )}
 
+      {/* 앱 선물하기 안내 */}
+      {items.some((it) => it.type === "롯데모바일" && it.checkedSubs.includes("앱 선물하기")) && (
+        <div className="rounded-2xl border-2 border-orange-200 bg-orange-50 p-4 space-y-2.5">
+          <div className="flex items-center gap-2">
+            <span className="text-[16px]">📱</span>
+            <p className="text-[13px] font-bold text-orange-700">앱 선물하기 안내</p>
+          </div>
+          <div className="flex items-center gap-3 px-3 py-3 bg-white rounded-xl border border-orange-100">
+            <div className="w-9 h-9 rounded-xl bg-orange-100 flex items-center justify-center flex-shrink-0 text-[18px]">📲</div>
+            <div>
+              <p className="text-[13px] font-black text-orange-700 tracking-wide">010-7486-8001</p>
+              <p className="text-[12px] text-orange-600 mt-0.5">위 번호로 선물하기를 보내주세요</p>
+            </div>
+          </div>
+          <div className="flex items-start gap-2 px-3 py-2.5 bg-pink-50 rounded-xl border border-pink-100">
+            <span className="text-[14px] flex-shrink-0 mt-0.5">💬</span>
+            <p className="text-[12px] text-pink-700 leading-relaxed font-medium">
+              하단 판매신청을 하시면 <span className="font-black">관리자와 채팅</span>이 가능합니다.
+            </p>
+          </div>
+        </div>
+      )}
+
       {/* 합산 */}
       {hasAny && (
         <div className="rounded-2xl border border-pink-100 bg-pink-50 overflow-hidden">
