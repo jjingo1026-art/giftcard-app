@@ -548,8 +548,29 @@ export default function StaffCard() {
               })}
             </div>
 
+            {/* 자주 쓰는 문구 */}
+            <div className="flex-shrink-0 bg-white border-t border-slate-100 px-3 pt-2.5 pb-0">
+              <div className="flex gap-1.5 overflow-x-auto pb-2 scrollbar-hide" style={{ scrollbarWidth: "none" }}>
+                {[
+                  "안녕하세요",
+                  "가는중 입니다 약속장소에서 뵙겠습니다",
+                  "잠시후 약속시간에 뵙겠습니다",
+                  "확인부탁드립니다",
+                  "도착했습니다",
+                ].map((phrase) => (
+                  <button
+                    key={phrase}
+                    onClick={() => sendChatMessage(phrase)}
+                    className="flex-shrink-0 px-3 py-1.5 rounded-full bg-indigo-50 text-indigo-600 text-[12px] font-semibold border border-indigo-100 hover:bg-indigo-100 active:scale-95 transition-all whitespace-nowrap"
+                  >
+                    {phrase}
+                  </button>
+                ))}
+              </div>
+            </div>
+
             {/* 입력 영역 */}
-            <div className="flex-shrink-0 bg-white border-t border-slate-100 px-4 py-3">
+            <div className="flex-shrink-0 bg-white px-4 py-3">
               <div className="flex gap-2">
                 <button
                   onClick={openPicker}
