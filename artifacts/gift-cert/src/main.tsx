@@ -37,6 +37,7 @@ import MobilePrivacy from "./pages/MobilePrivacy";
 import MobileSelect from "./pages/MobileSelect";
 import MobileCheck from "./pages/MobileCheck";
 import MobileBusinessInfo from "./pages/MobileBusinessInfo";
+import AdminMobileDashboard from "./pages/AdminMobileDashboard";
 import "./index.css";
 
 const base = import.meta.env.BASE_URL.replace(/\/$/, "");
@@ -76,6 +77,8 @@ createRoot(document.getElementById("root")!).render(
       <Route path="/admin/staff-overview.html" component={AdminStaffOverview} />
       <Route path="/admin/noshow" component={AdminNoShow} />
       <Route path="/admin/noshow.html" component={AdminNoShow} />
+      <Route path="/admin/mobile" component={AdminMobileDashboard} />
+      <Route path="/admin/mobile.html" component={AdminMobileDashboard} />
       <Route path="/staff/dashboard" component={StaffDashboard} />
       <Route path="/staff/dashboard.html" component={StaffDashboard} />
       <Route path="/staff/card" component={StaffCard} />

@@ -410,6 +410,14 @@ export default function AdminDashboard() {
           </div>
           <div className="flex items-center gap-2">
             <SoundBell role="admin" />
+            {/* 모바일 대시보드 이동 버튼 */}
+            <button
+              onClick={() => { window.location.href = "/admin/mobile"; }}
+              className="text-[12px] font-bold text-violet-600 hover:text-violet-800 px-3 py-1.5 rounded-xl bg-violet-50 hover:bg-violet-100 transition-all flex items-center gap-1 border border-violet-200"
+              title="모바일상품권 관리"
+            >
+              <span>📱</span> 모바일
+            </button>
             {/* 채팅 목록 버튼 */}
             <button
               onClick={() => { window.location.href = "/admin/chats"; }}

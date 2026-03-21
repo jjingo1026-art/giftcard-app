@@ -725,10 +725,11 @@ router.get("/unassigned", requireAuth, requireAdmin, async (_req, res) => {
 const isValidDate = (d: string) => /^\d{4}-\d{2}-\d{2}$/.test(d);
 
 router.get("/reservations", requireAuth, requireAdmin, async (req, res) => {
-  const { date, status, staffId, page = "1", limit = "20" } = req.query as {
+  const { date, status, staffId, kind, page = "1", limit = "50" } = req.query as {
     date?: string;
     status?: string;
     staffId?: string;
+    kind?: string;
     page?: string;
     limit?: string;
   };
@@ -740,26 +741,19 @@ router.get("/reservations", requireAuth, requireAdmin, async (req, res) => {
     res.status(400).json({ error: "Invalid date format" }); return;
   }
 
-  let query = db
+  const conditions: any[] = [];
+  if (date) conditions.push(eq(reservationsTable.date, date));
+  if (status) conditions.push(eq(reservationsTable.status, status));
+  if (staffId) conditions.push(eq(reservationsTable.assignedStaffId, parseInt(staffId)));
+  if (kind) conditions.push(eq(reservationsTable.kind, kind));
+
+  const rows = await db
     .select()
     .from(reservationsTable)
+    .where(conditions.length > 0 ? and(...conditions) : undefined)
     .orderBy(desc(reservationsTable.createdAt))
     .limit(limitNum)
     .offset((pageNum - 1) * limitNum);
-
-  if (date) {
-    query = query.where(eq(reservationsTable.date, date));
-  }
-
-  if (status) {
-    query = query.where(eq(reservationsTable.status, status));
-  }
-
-  if (staffId) {
-    query = query.where(eq(reservationsTable.assignedStaffId, parseInt(staffId)));
-  }
-
-  const rows = await query;
 
   res.json(rows);
 });
