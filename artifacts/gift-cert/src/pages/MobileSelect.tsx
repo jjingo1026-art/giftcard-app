@@ -344,18 +344,7 @@ function ShinsegaeManualInput({
               placeholder={`상품권번호 ${idx + 1}`}
               className="flex-1 px-4 py-3 rounded-xl border border-slate-200 bg-white text-[14px] font-mono tracking-wider outline-none focus:border-rose-200 focus:ring-2 focus:ring-rose-50 transition-all placeholder:text-slate-300"
             />
-            {numbers.length > 1 && (
-              <button
-                type="button"
-                onClick={() => onRemove(idx)}
-                className="w-9 h-9 flex-shrink-0 rounded-xl bg-rose-100 text-rose-400 flex items-center justify-center hover:bg-rose-200 active:scale-95 transition-all font-bold"
-              >
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
-                  <path d="M5 12h14" />
-                </svg>
-              </button>
-            )}
-            {idx === numbers.length - 1 && (
+            {idx === 0 ? (
               <button
                 type="button"
                 onClick={onAdd}
@@ -363,6 +352,16 @@ function ShinsegaeManualInput({
               >
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
                   <path d="M12 5v14M5 12h14" />
+                </svg>
+              </button>
+            ) : (
+              <button
+                type="button"
+                onClick={() => onRemove(idx)}
+                className="w-9 h-9 flex-shrink-0 rounded-xl bg-rose-100 text-rose-400 flex items-center justify-center hover:bg-rose-200 active:scale-95 transition-all font-bold"
+              >
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
+                  <path d="M5 12h14" />
                 </svg>
               </button>
             )}
