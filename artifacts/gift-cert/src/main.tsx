@@ -32,6 +32,9 @@ import StaffChatList from "./pages/StaffChatList";
 import BusinessInfo from "./pages/BusinessInfo";
 import GiftCertTypeSelect from "./pages/GiftCertTypeSelect";
 import MobileGiftCert from "./pages/MobileGiftCert";
+import MobileTerms from "./pages/MobileTerms";
+import MobilePrivacy from "./pages/MobilePrivacy";
+import MobileSelect from "./pages/MobileSelect";
 import "./index.css";
 
 const base = import.meta.env.BASE_URL.replace(/\/$/, "");
@@ -101,6 +104,9 @@ createRoot(document.getElementById("root")!).render(
       <Route path="/staff/chats.html" component={StaffChatList} />
       <Route path="/mobile" component={MobileGiftCert} />
       <Route path="/mobile.html" component={MobileGiftCert} />
+      <Route path="/mobile/terms" component={MobileTerms} />
+      <Route path="/mobile/privacy" component={MobilePrivacy} />
+      <Route path="/mobile/select" component={MobileSelect} />
       <Route path="/rates" component={App} />
       <Route path="/rates.html" component={App} />
       <Route path="/" component={GiftCertTypeSelect} />
