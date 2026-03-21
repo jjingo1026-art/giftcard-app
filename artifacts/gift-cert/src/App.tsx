@@ -584,7 +584,7 @@ function HomePage({ onGoUrgent, initialType = DEFAULT_TYPE, onTypeChange }: { on
                 type="text"
                 value={locationDetail}
                 onChange={(e) => setLocationDetail(e.target.value)}
-                placeholder="상세 위치 (건물 층, 출구번호, 주차장 등)"
+                placeholder="상세위치 (예 롯데백화점 정문, OO아파트 101동)"
                 className={`${inputCls(false)} mt-2`}
               />
               <p className="text-[12px] text-slate-400 mt-1.5 flex items-start gap-1"><span className="mt-0.5 flex-shrink-0">ℹ️</span>주정차가 가능한 장소로 입력해 주세요</p>
@@ -1028,7 +1028,7 @@ function UrgentPage({ onBack, initialType = DEFAULT_TYPE }: { onBack: () => void
                 type="text"
                 value={locationDetail}
                 onChange={(e) => setLocationDetail(e.target.value)}
-                placeholder="상세 위치 (건물 층, 출구번호, 주차장 등)"
+                placeholder="상세위치 (예 롯데백화점 정문, OO아파트 101동)"
                 className={`${inputCls(false, "rose")} mt-2`}
               />
               <p className="text-[12px] text-slate-400 mt-1.5 flex items-start gap-1"><span className="mt-0.5 flex-shrink-0">ℹ️</span>주정차 가능한 곳으로 입력 바랍니다</p>
