@@ -1448,7 +1448,7 @@ export default function MobileSelect() {
             </svg>
           </button>
           <div>
-            <h1 className="text-[16px] font-bold text-slate-800">모바일상품권 매입 신청</h1>
+            <h1 className="text-[16px] font-bold text-slate-800">모바일상품권 판매 신청</h1>
             <p className="text-[11px] text-slate-400 mt-0.5">Mobile Gift Certificate</p>
           </div>
         </div>
@@ -1587,7 +1587,7 @@ export default function MobileSelect() {
           className="w-full py-4 rounded-2xl text-white text-[15px] font-bold transition-all active:scale-[0.98] shadow-sm disabled:opacity-60"
           style={{ background: "linear-gradient(135deg, #ec4899 0%, #f43f5e 100%)" }}
         >
-          {submitting ? "신청 중..." : "📱 매입 신청하기"}
+          {submitting ? "신청 중..." : "📱 판매 신청하기"}
         </button>
       </form>
     </div>
