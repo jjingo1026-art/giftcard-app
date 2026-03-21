@@ -129,10 +129,15 @@ declare global {
 }
 
 function openDaumPostcode(onSelect: (addr: string) => void, initialQuery?: string) {
-  const run = () => new window.daum!.Postcode({
-    q: initialQuery ?? "",
-    oncomplete(d) { onSelect(d.address + (d.buildingName ? ` (${d.buildingName})` : "")); },
-  }).open();
+  const opts: Record<string, unknown> = {
+    oncomplete(d: { address: string; buildingName: string }) {
+      onSelect(d.address + (d.buildingName ? ` (${d.buildingName})` : ""));
+    },
+  };
+  if (initialQuery) opts.q = initialQuery;
+
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const run = () => new (window.daum!.Postcode as any)(opts).open();
   if (window.daum?.Postcode) { run(); return; }
   const s = document.createElement("script");
   s.src = "//t1.daumcdn.net/mapjsapi/bundle/postcode/prod/postcode.v2.js";
