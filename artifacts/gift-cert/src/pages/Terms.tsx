@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 
 const SECTIONS = [
   {
@@ -119,6 +119,8 @@ const SECTIONS = [
   },
 ];
 
+const SECTION_KEYS: Record<string, string> = { terms: "terms_service", privacy: "terms_privacy", guide: "terms_guide" };
+
 export default function Terms() {
   const params = new URLSearchParams(location.search);
   const isUrgent = params.get("urgent") === "1";
@@ -126,6 +128,21 @@ export default function Terms() {
   const fromPrivacy = params.get("from") === "privacy";
 
   const [activeTab, setActiveTab] = useState(0);
+  const [customTexts, setCustomTexts] = useState<Record<string, string>>({});
+
+  useEffect(() => {
+    const base = import.meta.env.BASE_URL.replace(/\/$/, "");
+    fetch(`${base}/api/site-settings`)
+      .then((r) => r.json())
+      .then((data: Record<string, string>) => {
+        const ct: Record<string, string> = {};
+        for (const [id, key] of Object.entries(SECTION_KEYS)) {
+          if (data[key]) ct[id] = data[key];
+        }
+        setCustomTexts(ct);
+      })
+      .catch(() => {});
+  }, []);
 
   function goPrivacy() {
     const q = isUrgent ? "urgent=1" : `type=${encodeURIComponent(type)}`;
@@ -177,26 +194,32 @@ export default function Terms() {
             <h2 className="text-[15px] font-bold text-slate-800">{section.title}</h2>
           </div>
           <div className="px-5 py-5 space-y-5">
-            {section.content.map((item, i) => (
-              <div key={i} className="space-y-2">
-                <p className="text-[13px] font-bold text-indigo-600">{item.heading}</p>
-                {item.body && (
-                  <p className="text-[13.5px] text-slate-600 leading-relaxed whitespace-pre-line">
-                    {item.body}
-                  </p>
-                )}
-                {item.bullets && (
-                  <ul className="space-y-1.5 bg-slate-50 rounded-2xl px-4 py-3">
-                    {item.bullets.map((b, j) => (
-                      <li key={j} className="flex items-start gap-2 text-[13.5px] text-slate-600">
-                        <span className="text-indigo-400 font-bold flex-shrink-0 mt-0.5">·</span>
-                        <span>{b}</span>
-                      </li>
-                    ))}
-                  </ul>
-                )}
-              </div>
-            ))}
+            {customTexts[section.id] ? (
+              customTexts[section.id].split("\n").filter(Boolean).map((line, i) => (
+                <p key={i} className="text-[13.5px] text-slate-600 leading-relaxed">{line}</p>
+              ))
+            ) : (
+              section.content.map((item, i) => (
+                <div key={i} className="space-y-2">
+                  <p className="text-[13px] font-bold text-indigo-600">{item.heading}</p>
+                  {item.body && (
+                    <p className="text-[13.5px] text-slate-600 leading-relaxed whitespace-pre-line">
+                      {item.body}
+                    </p>
+                  )}
+                  {item.bullets && (
+                    <ul className="space-y-1.5 bg-slate-50 rounded-2xl px-4 py-3">
+                      {item.bullets.map((b, j) => (
+                        <li key={j} className="flex items-start gap-2 text-[13.5px] text-slate-600">
+                          <span className="text-indigo-400 font-bold flex-shrink-0 mt-0.5">·</span>
+                          <span>{b}</span>
+                        </li>
+                      ))}
+                    </ul>
+                  )}
+                </div>
+              ))
+            )}
           </div>
         </div>
 

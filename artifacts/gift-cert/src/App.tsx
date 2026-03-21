@@ -1,9 +1,9 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { getNextId, saveEntry, formatDateKo } from "@/lib/store";
 import { LANGUAGES, getSavedLang, saveLang } from "@/lib/languages";
 import { getLabel } from "@/lib/uiTranslations";
 
-const RATES: Record<string, number> = {
+let RATES: Record<string, number> = {
   "신세계 (Shinsegae)": 0.95,
   "롯데 (Lotte)": 0.95,
   "현대 (Hyundai)": 0.95,
@@ -318,7 +318,8 @@ function VoucherItems({
 }
 
 // ─── HOME PAGE ────────────────────────────────────────────────────────────────
-function HomePage({ onGoUrgent, initialType = DEFAULT_TYPE, onTypeChange }: { onGoUrgent: () => void; initialType?: string; onTypeChange?: (t: string) => void }) {
+function HomePage({ onGoUrgent, initialType = DEFAULT_TYPE, onTypeChange, rateGroups: propRateGroups, noticeBanner }: { onGoUrgent: () => void; initialType?: string; onTypeChange?: (t: string) => void; rateGroups?: typeof RATE_GROUPS; noticeBanner?: string }) {
+  const rateGroups = propRateGroups ?? RATE_GROUPS;
   const [name, setName] = useState("");
   const [phone, setPhone] = useState("");
   const [date, setDate] = useState("");
@@ -458,6 +459,14 @@ function HomePage({ onGoUrgent, initialType = DEFAULT_TYPE, onTypeChange }: { on
         )}
       </header>
 
+      {noticeBanner && (
+        <div className="max-w-md mx-auto px-4 pt-3">
+          <div className="flex items-start gap-2.5 px-4 py-3 bg-amber-50 border border-amber-200 rounded-2xl">
+            <span className="text-[16px] flex-shrink-0 mt-0.5">📢</span>
+            <p className="text-[13px] text-amber-800 font-medium leading-relaxed whitespace-pre-line">{noticeBanner}</p>
+          </div>
+        </div>
+      )}
       <div className="max-w-md mx-auto px-4 pt-5 pb-16 space-y-4">
         {/* 동의 전: 시세 + 예약 확인 + 안내 */}
         {!agreedPrivacy && (
@@ -468,7 +477,7 @@ function HomePage({ onGoUrgent, initialType = DEFAULT_TYPE, onTypeChange }: { on
                 <div className="w-8 h-8 bg-indigo-50 rounded-xl flex items-center justify-center">💳</div>
               </div>
               <div className="px-4 pb-4 grid grid-cols-3 gap-2">
-                {RATE_GROUPS.map((g) => (
+                {rateGroups.map((g) => (
                   <div
                     key={g.label}
                     onClick={() => { window.location.href = `/terms.html?type=${encodeURIComponent(g.label)}`; }}
@@ -1193,12 +1202,38 @@ export default function App() {
 
   const [page, setPage] = useState<"home" | "urgent">(isUrgent ? "urgent" : "home");
   const [selectedType, setSelectedType] = useState<string>(resolvedType);
+  const [rateGroups, setRateGroups] = useState([...RATE_GROUPS]);
+  const [noticeBanner, setNoticeBanner] = useState("");
+
+  useEffect(() => {
+    const base = import.meta.env.BASE_URL.replace(/\/$/, "");
+    fetch(`${base}/api/site-settings`)
+      .then((r) => r.json())
+      .then((data: Record<string, string>) => {
+        if (data.rates) {
+          try {
+            const apiRates: Record<string, number> = JSON.parse(data.rates);
+            for (const [label, pct] of Object.entries(apiRates)) {
+              const type = RATE_LABEL_TO_TYPE[label];
+              if (type) RATES[type] = Number(pct) / 100;
+            }
+            setRateGroups(RATE_GROUPS.map((g) => ({ ...g, rate: apiRates[g.label] ?? g.rate })));
+          } catch {}
+        }
+        if (data.notice_active === "true" && data.notice_text) {
+          setNoticeBanner(data.notice_text);
+        }
+      })
+      .catch(() => {});
+  }, []);
 
   return page === "home"
     ? <HomePage
         onGoUrgent={() => setPage("urgent")}
         initialType={selectedType}
         onTypeChange={setSelectedType}
+        rateGroups={rateGroups}
+        noticeBanner={noticeBanner}
       />
     : <UrgentPage onBack={() => setPage("home")} initialType={selectedType} />;
 }

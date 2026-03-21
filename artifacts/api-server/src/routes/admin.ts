@@ -1,6 +1,6 @@
 import { Router, type IRouter } from "express";
 import { db } from "@workspace/db";
-import { reservationsTable, chatsTable, staffTable, penaltiesTable, usersTable, adminSettingsTable, adminAccountsTable } from "@workspace/db/schema";
+import { reservationsTable, chatsTable, staffTable, penaltiesTable, usersTable, adminSettingsTable, adminAccountsTable, siteSettingsTable } from "@workspace/db/schema";
 import { eq, desc, asc, and, sql, gte, lte, inArray, isNull } from "drizzle-orm";
 import bcrypt from "bcrypt";
 import { runPrivacyCleanup } from "../cleanup";
@@ -1407,6 +1407,24 @@ router.patch("/users/:id/unblock", requireAuth, async (req, res) => {
       set: { isBlocked: false, blockedUntil: null, updatedAt: new Date() },
     });
 
+  res.json({ success: true });
+});
+
+// GET /admin/site-settings — 사이트 설정 조회 (관리자용)
+router.get("/site-settings", requireAuth, async (_req, res) => {
+  const rows = await db.select().from(siteSettingsTable);
+  const result: Record<string, string> = {};
+  for (const row of rows) result[row.key] = row.value;
+  res.json(result);
+});
+
+// PATCH /admin/site-settings — 사이트 설정 저장 (관리자용)
+router.patch("/site-settings", requireAuth, async (req, res) => {
+  const { key, value } = req.body as { key: string; value: string };
+  if (!key) { res.status(400).json({ error: "key 필드가 필요합니다." }); return; }
+  await db.insert(siteSettingsTable)
+    .values({ key, value: value ?? "" })
+    .onConflictDoUpdate({ target: siteSettingsTable.key, set: { value: value ?? "" } });
   res.json({ success: true });
 });
 

@@ -5,3 +5,4 @@ export * from "./penalties";
 export * from "./users";
 export * from "./adminSettings";
 export * from "./adminAccounts";
+export * from "./siteSettings";

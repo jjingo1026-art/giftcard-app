@@ -431,6 +431,13 @@ export default function AdminDashboard() {
               👨‍🔧 담당자별
             </button>
             <button
+              onClick={() => { window.location.href = "/admin/site-settings.html"; }}
+              className="text-[12px] text-slate-400 hover:text-slate-700 font-semibold transition-colors px-2 py-1.5 rounded-xl hover:bg-slate-100"
+              title="사이트 설정"
+            >
+              🖊️
+            </button>
+            <button
               onClick={() => { window.location.href = "/admin/settings.html"; }}
               className="text-[12px] text-slate-400 hover:text-slate-700 font-semibold transition-colors px-2 py-1.5 rounded-xl hover:bg-slate-100"
               title="계정 설정"

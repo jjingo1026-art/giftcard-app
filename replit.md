@@ -95,6 +95,23 @@ Generated React Query hooks and fetch client from the OpenAPI spec (e.g. `useHea
 
 Utility scripts package. Each script is a `.ts` file in `src/` with a corresponding npm script in `package.json`. Run scripts via `pnpm --filter @workspace/scripts run <script>`. Scripts can import any workspace package (e.g., `@workspace/db`) by adding it as a dependency in `scripts/package.json`.
 
+## 사이트 설정 (관리자 편집)
+
+관리자가 공지사항·상품권시세·사업자정보·이용약관을 편집할 수 있는 시스템.
+
+- **DB 테이블**: `site_settings` (key TEXT PRIMARY KEY, value TEXT) — key-value 방식
+- **공개 API**: `GET /api/site-settings` — 인증 없이 모든 설정 반환 (JSON 객체)
+- **관리자 API**: `GET /api/admin/site-settings`, `PATCH /api/admin/site-settings` (body: `{key, value}`)
+- **관리자 페이지**: `/admin/site-settings` → `AdminSiteSettings.tsx` (4개 탭: 시세·사업자정보·공지사항·이용약관)
+- **저장 키**:
+  - `rates` — JSON: `{"신세계백화점상품권": 95, ...}` (정수 퍼센트)
+  - `business_info` — JSON: `{name, ceo, regNumber, mailOrder, address, phone, kakao, hours}`
+  - `notice_text` — 공지 텍스트 (메인 페이지 amber 배너로 표시)
+  - `notice_active` — `"true"/"false"` (공지 표시 여부)
+  - `terms_service`, `terms_privacy`, `terms_guide` — 각 약관 섹션 대체 텍스트
+- **프론트엔드 연동**: App.tsx (시세·공지배너), Notice.tsx (시세), BusinessInfo.tsx (사업자정보), Terms.tsx (약관) 모두 API 로드 후 fallback to hardcoded defaults
+- **대시보드 링크**: AdminDashboard 헤더 상단 🖊️ 버튼으로 접근
+
 ## 채팅 다국어 번역 기능
 
 - `artifacts/api-server/src/lib/translate.ts` — Google Cloud Translation API v2 유틸리티 (`translateAll`, `translateText`, `hasTranslationCredentials`)

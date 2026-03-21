@@ -24,6 +24,7 @@ import AdminRevenue from "./pages/AdminRevenue";
 import AdminAllReservations from "./pages/AdminAllReservations";
 import AdminAssign from "./pages/AdminAssign";
 import AdminSettings from "./pages/AdminSettings";
+import AdminSiteSettings from "./pages/AdminSiteSettings";
 import AdminChatList from "./pages/AdminChatList";
 import AdminStaffOverview from "./pages/AdminStaffOverview";
 import StaffChatList from "./pages/StaffChatList";
@@ -59,6 +60,8 @@ createRoot(document.getElementById("root")!).render(
       <Route path="/admin/assign.html" component={AdminAssign} />
       <Route path="/admin/settings" component={AdminSettings} />
       <Route path="/admin/settings.html" component={AdminSettings} />
+      <Route path="/admin/site-settings" component={AdminSiteSettings} />
+      <Route path="/admin/site-settings.html" component={AdminSiteSettings} />
       <Route path="/admin/chats" component={AdminChatList} />
       <Route path="/admin/chats.html" component={AdminChatList} />
       <Route path="/admin/staff-overview" component={AdminStaffOverview} />
