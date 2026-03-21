@@ -13,22 +13,201 @@ const MOBILE_TYPES = [
 
 const BANKS = ["카카오뱅크", "토스뱅크", "국민은행", "신한은행", "우리은행", "하나은행", "기업은행", "농협은행", "새마을금고", "우체국", "케이뱅크", "기타"];
 
+interface MobileItem {
+  type: string;
+  amount: string;
+}
+
 function formatKRW(n: number) {
   return n === 0 ? "0원" : n.toLocaleString("ko-KR") + "원";
 }
 
-function parseAmount(v: string) {
-  const num = parseInt(v.replace(/[^0-9]/g, ""), 10);
-  return isNaN(num) ? 0 : num;
+function parseAmt(v: string) {
+  const n = parseInt(v.replace(/,/g, ""), 10);
+  return isNaN(n) ? 0 : n;
+}
+
+function computeItem(item: MobileItem) {
+  const typeInfo = MOBILE_TYPES.find((t) => t.label === item.type);
+  const amountNum = parseAmt(item.amount);
+  const rate = typeInfo ? typeInfo.rate / 100 : 0;
+  const payment = Math.round(amountNum * rate);
+  return { amountNum, rate, payment, typeInfo };
+}
+
+function MobileVoucherItems({
+  items,
+  errors,
+  onChange,
+  onAdd,
+  onRemove,
+}: {
+  items: MobileItem[];
+  errors: string[];
+  onChange: (idx: number, field: "type" | "amount", val: string) => void;
+  onAdd: () => void;
+  onRemove: (idx: number) => void;
+}) {
+  const totalFace = items.reduce((s, it) => s + parseAmt(it.amount), 0);
+  const hasAny = items.some((it) => parseAmt(it.amount) > 0);
+  const travelDeduct = hasAny && totalFace < 300000 ? 3000 : 0;
+  const totalPayment = Math.max(
+    0,
+    items.reduce((s, it) => s + computeItem(it).payment, 0) - travelDeduct
+  );
+
+  return (
+    <div className="space-y-2">
+      <label className="block text-[13px] font-semibold text-slate-500 tracking-wide uppercase">
+        상품권 종류 &amp; 금액 <span className="text-rose-400 normal-case tracking-normal">*</span>
+      </label>
+
+      <div className="space-y-2">
+        {items.map((item, idx) => {
+          const { amountNum, rate, payment, typeInfo } = computeItem(item);
+          return (
+            <div key={idx} className="rounded-2xl border border-slate-200 bg-slate-50 p-3 space-y-2">
+              {/* Row 1: type select + remove */}
+              <div className="flex gap-2 items-center">
+                <div className="flex-1 relative">
+                  <select
+                    value={item.type}
+                    onChange={(e) => onChange(idx, "type", e.target.value)}
+                    className="w-full h-full px-3 py-2.5 rounded-xl border border-slate-200 bg-white text-[14px] text-slate-700 outline-none appearance-none pr-7 focus:border-pink-400 focus:ring-2 focus:ring-pink-50 transition-all"
+                    style={{
+                      backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 20 20'%3E%3Cpath fill='%23ec4899' d='M5 8l5 5 5-5z'/%3E%3C/svg%3E")`,
+                      backgroundRepeat: "no-repeat",
+                      backgroundPosition: "right 10px center",
+                    }}
+                  >
+                    {MOBILE_TYPES.map((t) => (
+                      <option key={t.label} value={t.label}>
+                        {t.icon} {t.label} ({t.rate}%)
+                      </option>
+                    ))}
+                  </select>
+                </div>
+                {items.length > 1 && (
+                  <button
+                    type="button"
+                    onClick={() => onRemove(idx)}
+                    className="w-8 h-8 flex items-center justify-center rounded-xl bg-rose-100 text-rose-400 hover:bg-rose-200 active:scale-90 transition-all flex-shrink-0"
+                  >
+                    <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
+                      <path d="M2 2l8 8M10 2l-8 8" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" />
+                    </svg>
+                  </button>
+                )}
+              </div>
+
+              {/* Row 2: sub/subs badge */}
+              {typeInfo && (
+                <div className="flex flex-wrap gap-1 px-1">
+                  {"subs" in typeInfo && (typeInfo as any).subs
+                    ? (typeInfo as any).subs.map((s: string, i: number) => (
+                        <span key={i} className="text-[11px] font-semibold px-2 py-0.5 rounded-full"
+                          style={{ color: typeInfo.color, backgroundColor: typeInfo.color + "18" }}>
+                          {s}
+                        </span>
+                      ))
+                    : "sub" in typeInfo && (typeInfo as any).sub
+                    ? (
+                        <span className="text-[11px] font-semibold px-2 py-0.5 rounded-full"
+                          style={{ color: typeInfo.color, backgroundColor: typeInfo.color + "18" }}>
+                          {(typeInfo as any).sub}
+                        </span>
+                      )
+                    : null}
+                </div>
+              )}
+
+              {/* Row 3: amount input */}
+              <div className="relative">
+                <input
+                  type="text"
+                  inputMode="numeric"
+                  pattern="[0-9]*"
+                  value={item.amount}
+                  onChange={(e) => {
+                    const raw = e.target.value.replace(/[^0-9]/g, "");
+                    onChange(idx, "amount", raw ? parseInt(raw, 10).toLocaleString("ko-KR") : "");
+                  }}
+                  placeholder="금액 입력 (원)"
+                  className={`w-full px-4 py-3 rounded-xl border text-[15px] font-semibold outline-none transition-all placeholder:text-slate-300 pr-8
+                    ${errors[idx] ? "border-rose-300 bg-rose-50 focus:ring-2 focus:ring-rose-100" : "border-slate-200 bg-white focus:border-pink-400 focus:ring-2 focus:ring-pink-50"}`}
+                />
+                <span className="absolute right-4 top-1/2 -translate-y-1/2 text-[13px] text-slate-400">원</span>
+              </div>
+              {errors[idx] && <p className="text-[11px] text-rose-500 px-1">⚠ {errors[idx]}</p>}
+
+              {/* Row 4: payment preview */}
+              {amountNum > 0 && typeInfo && (
+                <div className="flex items-center justify-between px-3 py-2 rounded-xl text-[12px] font-semibold bg-pink-50 text-pink-500">
+                  <span>요율 {Math.round(rate * 100)}%</span>
+                  <span className="font-black text-[15px] text-pink-700">{formatKRW(payment)}</span>
+                </div>
+              )}
+            </div>
+          );
+        })}
+      </div>
+
+      {/* 권종 추가 */}
+      <button
+        type="button"
+        onClick={onAdd}
+        className="w-full py-2.5 rounded-2xl border-2 border-dashed border-pink-200 text-pink-400 hover:bg-pink-50 text-[13px] font-bold transition-all active:scale-95 flex items-center justify-center gap-1.5"
+      >
+        <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+          <path d="M7 2v10M2 7h10" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
+        </svg>
+        권종 추가
+      </button>
+
+      {/* 합산 */}
+      {hasAny && (
+        <div className="rounded-2xl border border-pink-100 bg-pink-50 overflow-hidden">
+          <div className="flex items-center justify-between px-4 py-3">
+            <div className="space-y-0.5">
+              <p className="text-[11px] text-pink-500">총 상품권금액</p>
+              <p className="text-[13px] font-semibold text-pink-500">{formatKRW(totalFace)}</p>
+            </div>
+            <div className="text-right space-y-0.5">
+              <p className="text-[11px] text-pink-500">{items.length > 1 ? "합산 입금받을 금액" : "입금받을 금액"}</p>
+              <p className="text-[20px] font-black tabular-nums text-pink-700">{formatKRW(totalPayment)}</p>
+            </div>
+          </div>
+          {travelDeduct > 0 && (
+            <div className="flex items-center justify-between px-4 py-2 bg-amber-50 border-t border-amber-100">
+              <p className="text-[11px] text-amber-600 font-semibold">이동경비 차감</p>
+              <p className="text-[12px] font-bold text-amber-700">- {formatKRW(travelDeduct)}</p>
+            </div>
+          )}
+        </div>
+      )}
+
+      {hasAny && totalFace < 300000 && (
+        <div className="flex items-start gap-2.5 px-4 py-3 rounded-2xl bg-amber-50 border border-amber-200">
+          <span className="text-[15px] flex-shrink-0 mt-0.5">⚠️</span>
+          <div>
+            <p className="text-[12px] font-bold text-amber-700 leading-snug">30만원 미만 신청 안내</p>
+            <p className="text-[12px] text-amber-600 mt-0.5 leading-relaxed">
+              상품권금액 30만원 미만의 판매 신청은 이동경비로 인하여 <span className="font-bold">3,000원이 차감</span>됩니다.
+            </p>
+          </div>
+        </div>
+      )}
+    </div>
+  );
 }
 
 export default function MobileSelect() {
   const params = new URLSearchParams(location.search);
   const agreed = params.get("agreed") === "1";
+  const initialType = params.get("type") ?? MOBILE_TYPES[0].label;
 
-  const initialType = params.get("type") ?? "";
-  const [selectedType, setSelectedType] = useState(initialType);
-  const [amountStr, setAmountStr] = useState("");
+  const [items, setItems] = useState<MobileItem[]>([{ type: initialType, amount: "" }]);
+  const [itemErrors, setItemErrors] = useState<string[]>([""]);
   const [name, setName] = useState("");
   const [phone, setPhone] = useState("");
   const [bankName, setBankName] = useState("");
@@ -44,16 +223,19 @@ export default function MobileSelect() {
     return null;
   }
 
-  const typeInfo = MOBILE_TYPES.find((t) => t.label === selectedType);
-  const amount = parseAmount(amountStr);
-  const travelDeduct = amount > 0 && amount < 300000 ? 3000 : 0;
-  const payment = typeInfo && amount > 0
-    ? Math.max(0, Math.round(amount * typeInfo.rate / 100) - travelDeduct)
-    : 0;
+  function handleItemChange(idx: number, field: "type" | "amount", val: string) {
+    setItems((prev) => prev.map((it, i) => i === idx ? { ...it, [field]: val } : it));
+    setItemErrors((prev) => prev.map((e, i) => i === idx ? "" : e));
+  }
 
-  function handleAmountChange(v: string) {
-    const raw = v.replace(/[^0-9]/g, "");
-    setAmountStr(raw ? parseInt(raw, 10).toLocaleString("ko-KR") : "");
+  function handleAddItem() {
+    setItems((prev) => [...prev, { type: MOBILE_TYPES[0].label, amount: "" }]);
+    setItemErrors((prev) => [...prev, ""]);
+  }
+
+  function handleRemoveItem(idx: number) {
+    setItems((prev) => prev.filter((_, i) => i !== idx));
+    setItemErrors((prev) => prev.filter((_, i) => i !== idx));
   }
 
   function handlePhone(v: string) {
@@ -66,8 +248,12 @@ export default function MobileSelect() {
 
   function validate() {
     const errs: Record<string, string> = {};
-    if (!selectedType) errs.type = "상품권 종류를 선택해 주세요.";
-    if (!amount) errs.amount = "상품권 금액을 입력해 주세요.";
+    const iErrs = items.map((it) => {
+      if (!parseAmt(it.amount)) return "금액을 입력해 주세요.";
+      return "";
+    });
+    setItemErrors(iErrs);
+    if (iErrs.some((e) => e)) errs.items = "ok";
     if (!/^[가-힣a-zA-Z\s]+$/.test(name.trim())) errs.name = "올바른 이름을 입력해 주세요.";
     if (!/^010-\d{4}-\d{4}$/.test(phone)) errs.phone = "010-XXXX-XXXX 형식으로 입력해 주세요.";
     if (!bankName) errs.bankName = "은행을 선택해 주세요.";
@@ -82,9 +268,18 @@ export default function MobileSelect() {
     if (!validate()) return;
     setSubmitting(true);
     setErrorMsg("");
+
+    const totalFace = items.reduce((s, it) => s + parseAmt(it.amount), 0);
+    const hasAny = items.some((it) => parseAmt(it.amount) > 0);
+    const travelDeduct = hasAny && totalFace < 300000 ? 3000 : 0;
+    const apiItems = items.map((it) => {
+      const { amountNum, rate, payment } = computeItem(it);
+      return { type: it.type, amount: amountNum, rate: Math.round(rate * 100), payment, isGift: false };
+    });
+    const totalPayment = Math.max(0, apiItems.reduce((s, it) => s + it.payment, 0) - travelDeduct);
+
     try {
       const base = import.meta.env.BASE_URL.replace(/\/$/, "");
-      const items = [{ type: selectedType, amount, rate: typeInfo!.rate, payment, isGift: false }];
       const res = await fetch(`${base}/api/reservations`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -94,8 +289,8 @@ export default function MobileSelect() {
           name: name.trim(),
           phone,
           location: "모바일상품권",
-          items,
-          totalPayment: payment,
+          items: apiItems,
+          totalPayment,
           bankName,
           accountNumber: accountNumber.trim(),
           accountHolder: accountHolder.trim(),
@@ -108,7 +303,7 @@ export default function MobileSelect() {
         return;
       }
       const data = await res.json();
-      setDone({ id: data.id, totalPayment: payment });
+      setDone({ id: data.id, totalPayment });
     } catch {
       setErrorMsg("네트워크 오류가 발생했습니다.");
       setSubmitting(false);
@@ -162,86 +357,16 @@ export default function MobileSelect() {
       </header>
 
       <form onSubmit={handleSubmit} className="max-w-md mx-auto px-4 py-5 pb-16 space-y-5">
-        {/* 상품권 종류 선택 */}
-        <div className="bg-white rounded-3xl border border-slate-100 shadow-sm overflow-hidden">
-          <div className="px-5 pt-5 pb-3 border-b border-slate-50">
-            <p className="text-[13px] font-bold text-slate-700">📱 상품권 종류 선택</p>
-          </div>
-          <div className="px-4 py-4 grid grid-cols-2 gap-3">
-            {MOBILE_TYPES.map((t) => {
-              const selected = selectedType === t.label;
-              return (
-                <button
-                  type="button"
-                  key={t.label}
-                  onClick={() => setSelectedType(t.label)}
-                  className={`flex flex-col items-center justify-center rounded-2xl py-5 px-3 transition-all active:scale-[0.97] border-2`}
-                  style={{
-                    backgroundColor: selected ? t.color + "18" : "#f8fafc",
-                    borderColor: selected ? t.color : "transparent",
-                  }}
-                >
-                  <span className="text-[28px]">{t.icon}</span>
-                  <span className="text-[13px] font-bold text-slate-700 text-center leading-snug mt-2">{t.label}</span>
-                  <span className="text-[24px] font-black tabular-nums mt-1.5" style={{ color: t.color }}>{t.rate}%</span>
-                  {"subs" in t && (t as any).subs ? (
-                    <div className="flex flex-col items-center gap-1 mt-1.5">
-                      {(t as any).subs.map((s: string, i: number) => (
-                        <span key={i} className="text-[11px] font-medium leading-snug px-2 py-0.5 rounded-full text-center"
-                          style={{ color: t.color, backgroundColor: t.color + "18" }}>
-                          {s}
-                        </span>
-                      ))}
-                    </div>
-                  ) : "sub" in t && (t as any).sub ? (
-                    <span className="text-[11px] font-medium leading-snug mt-1.5 px-2 py-0.5 rounded-full text-center"
-                      style={{ color: t.color, backgroundColor: t.color + "18" }}>
-                      {(t as any).sub}
-                    </span>
-                  ) : null}
-                </button>
-              );
-            })}
-          </div>
-          {errors.type && <p className="px-5 pb-3 text-[12px] text-rose-500">{errors.type}</p>}
-        </div>
 
-        {/* 상품권 금액 */}
-        <div className="bg-white rounded-3xl border border-slate-100 shadow-sm px-5 py-5 space-y-3">
-          <p className="text-[13px] font-bold text-slate-700">💰 상품권금액</p>
-          <div className="relative">
-            <input
-              type="text"
-              inputMode="numeric"
-              value={amountStr}
-              onChange={(e) => handleAmountChange(e.target.value)}
-              placeholder="예: 100,000"
-              className={`w-full border rounded-2xl px-4 py-3.5 text-[15px] font-semibold focus:outline-none focus:ring-2 focus:ring-pink-300 ${errors.amount ? "border-rose-300" : "border-slate-200"}`}
-            />
-            <span className="absolute right-4 top-1/2 -translate-y-1/2 text-[13px] text-slate-400">원</span>
-          </div>
-          {errors.amount && <p className="text-[12px] text-rose-500">{errors.amount}</p>}
-
-          {typeInfo && amount > 0 && (
-            <div className={`rounded-2xl overflow-hidden border ${travelDeduct > 0 ? "border-amber-200" : "border-pink-100"}`}>
-              <div className="flex items-center justify-between px-4 py-3 bg-pink-50">
-                <div>
-                  <p className="text-[11px] text-pink-500">상품권금액</p>
-                  <p className="text-[13px] font-semibold text-pink-700">{formatKRW(amount)}</p>
-                </div>
-                <div className="text-right">
-                  <p className="text-[11px] text-pink-500">예상 입금액</p>
-                  <p className="text-[20px] font-black text-pink-700">{formatKRW(payment)}</p>
-                </div>
-              </div>
-              {travelDeduct > 0 && (
-                <div className="flex items-center justify-between px-4 py-2 bg-amber-50 border-t border-amber-100">
-                  <p className="text-[11px] text-amber-600 font-semibold">이동경비 차감</p>
-                  <p className="text-[12px] font-bold text-amber-700">- {formatKRW(travelDeduct)}</p>
-                </div>
-              )}
-            </div>
-          )}
+        {/* 상품권 종류 & 금액 */}
+        <div className="bg-white rounded-3xl border border-slate-100 shadow-sm px-5 py-5">
+          <MobileVoucherItems
+            items={items}
+            errors={itemErrors}
+            onChange={handleItemChange}
+            onAdd={handleAddItem}
+            onRemove={handleRemoveItem}
+          />
         </div>
 
         {/* 신청자 정보 */}
