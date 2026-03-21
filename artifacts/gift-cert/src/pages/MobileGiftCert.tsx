@@ -76,6 +76,22 @@ export default function MobileGiftCert() {
         >
           📋 판매신청 확인
         </button>
+
+        <a
+          href="/mobile/business"
+          className="flex items-center justify-between px-5 py-4 bg-white rounded-3xl shadow-sm border border-slate-100 active:scale-[0.98] transition-all"
+        >
+          <div className="flex items-center gap-3">
+            <div className="w-9 h-9 rounded-2xl bg-pink-50 flex items-center justify-center text-[18px]">🏢</div>
+            <div>
+              <p className="text-[14px] font-bold text-slate-800">사업자정보 / 고객센터</p>
+              <p className="text-[11px] text-slate-400 mt-0.5">사업자 정보 및 고객 문의</p>
+            </div>
+          </div>
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#94a3b8" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M9 18l6-6-6-6"/>
+          </svg>
+        </a>
       </div>
     </div>
   );
