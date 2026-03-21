@@ -1427,7 +1427,7 @@ export default function MobileSelect() {
 
   if (done) {
     return (
-      <div className="min-h-screen bg-slate-50 flex flex-col items-center justify-center px-4 py-16 space-y-6">
+      <div className="min-h-screen bg-slate-50 flex flex-col items-center justify-center px-4 py-16 space-y-5">
         <div className="w-20 h-20 rounded-3xl flex items-center justify-center text-[40px] shadow-lg"
           style={{ background: "linear-gradient(135deg,#ec4899,#f43f5e)" }}>
           ✅
@@ -1441,10 +1441,23 @@ export default function MobileSelect() {
           <p className="text-[32px] font-black text-pink-600">{formatKRW(done.totalPayment)}</p>
           <p className="text-[11px] text-slate-400">접수번호: #{done.id}</p>
         </div>
+
+        {/* 채팅 버튼 */}
+        <div className="w-full max-w-sm space-y-2.5">
+          <button
+            onClick={() => { location.href = `/chat?id=${done.id}`; }}
+            className="w-full py-4 rounded-2xl text-white text-[15px] font-bold transition-all active:scale-[0.98] flex items-center justify-center gap-2.5 shadow-md"
+            style={{ background: "linear-gradient(135deg,#7c3aed,#6d28d9)" }}
+          >
+            <span className="text-[20px]">💬</span>
+            담당자와 채팅하기
+          </button>
+          <p className="text-center text-[11px] text-slate-400">담당자와 실시간으로 메시지를 주고받을 수 있습니다</p>
+        </div>
+
         <button
           onClick={() => { location.href = "/"; }}
-          className="px-8 py-3.5 rounded-2xl text-white text-[14px] font-bold transition-all active:scale-[0.98]"
-          style={{ background: "linear-gradient(135deg,#ec4899,#f43f5e)" }}
+          className="px-8 py-3 rounded-2xl text-slate-500 text-[13px] font-semibold transition-all active:scale-[0.98] border border-slate-200 bg-white hover:bg-slate-50"
         >
           처음으로 돌아가기
         </button>

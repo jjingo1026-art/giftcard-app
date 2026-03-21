@@ -23,6 +23,14 @@ interface MobileReservation {
   imagePaths?: string[];
 }
 
+interface ChatInboxItem {
+  reservationId: number;
+  unreadCount: number;
+  lastMessage: string;
+  lastSender: string;
+  lastTime: string;
+}
+
 const STATUS_INFO: Record<string, { label: string; color: string; dot: string }> = {
   pending:   { label: "처리 대기",  color: "bg-amber-100 text-amber-700 border-amber-200",   dot: "bg-amber-400" },
   completed: { label: "처리 완료",  color: "bg-emerald-100 text-emerald-700 border-emerald-200", dot: "bg-emerald-500" },
@@ -70,12 +78,18 @@ export default function AdminMobileDashboard() {
   const [updatingId, setUpdatingId] = useState<number | null>(null);
   const [expandedId, setExpandedId] = useState<number | null>(null);
   const [newAlert, setNewAlert] = useState<MobileReservation | null>(null);
+  const [chatInbox, setChatInbox] = useState<ChatInboxItem[]>([]);
+  const [newChatAlert, setNewChatAlert] = useState<{ reservationId: number; lastSender: string; lastMessage: string } | null>(null);
 
   const token = getAdminToken();
   if (!token) { navigate("/admin/login"); return null; }
 
   useEffect(() => {
     loadEntries();
+    adminFetch("/api/admin/chat-inbox")
+      .then((r) => r.json())
+      .then((data) => { if (Array.isArray(data)) setChatInbox(data); })
+      .catch(() => {});
   }, []);
 
   useEffect(() => {
@@ -90,6 +104,22 @@ export default function AdminMobileDashboard() {
     socket.on("reservationUpdated", (r: MobileReservation) => {
       if (r.kind !== "mobile") return;
       setEntries((prev) => prev.map((e) => e.id === r.id ? { ...e, ...r } : e));
+    });
+    socket.on("newMessage", (msg: { reservationId: number; senderName: string; message: string; senderRole: string }) => {
+      if (msg.senderRole === "admin") return;
+      if (getSoundEnabled("admin")) playNotificationSound("admin");
+      setChatInbox((prev) => {
+        const exists = prev.find((c) => c.reservationId === msg.reservationId);
+        if (exists) {
+          return prev.map((c) => c.reservationId === msg.reservationId
+            ? { ...c, unreadCount: c.unreadCount + 1, lastMessage: msg.message, lastSender: msg.senderName, lastTime: new Date().toISOString() }
+            : c
+          );
+        }
+        return [{ reservationId: msg.reservationId, unreadCount: 1, lastMessage: msg.message, lastSender: msg.senderName, lastTime: new Date().toISOString() }, ...prev];
+      });
+      setNewChatAlert({ reservationId: msg.reservationId, lastSender: msg.senderName, lastMessage: msg.message });
+      setTimeout(() => setNewChatAlert(null), 6000);
     });
     return () => { socket.disconnect(); };
   }, []);
@@ -106,6 +136,12 @@ export default function AdminMobileDashboard() {
       setLoading(false);
     }
   }
+
+  function getUnread(reservationId: number) {
+    return chatInbox.find((c) => c.reservationId === reservationId)?.unreadCount ?? 0;
+  }
+
+  const totalUnread = chatInbox.reduce((s, c) => s + c.unreadCount, 0);
 
   async function updateStatus(id: number, status: "completed" | "cancelled") {
     setUpdatingId(id);
@@ -146,7 +182,7 @@ export default function AdminMobileDashboard() {
       {/* 신규 접수 알림 */}
       <div
         className={`fixed top-4 left-1/2 -translate-x-1/2 z-[9999] w-[calc(100%-2rem)] max-w-sm transition-all duration-500
-          ${newAlert ? "opacity-100 translate-y-0 pointer-events-auto" : "opacity-0 -translate-y-4 pointer-events-none"}`}
+          ${newAlert && !newChatAlert ? "opacity-100 translate-y-0 pointer-events-auto" : "opacity-0 -translate-y-4 pointer-events-none"}`}
       >
         {newAlert && (
           <div className="bg-violet-600 text-white rounded-2xl shadow-2xl px-4 py-3.5 flex items-center gap-3 cursor-pointer active:scale-[0.98] transition-transform"
@@ -164,6 +200,27 @@ export default function AdminMobileDashboard() {
         )}
       </div>
 
+      {/* 신규 채팅 알림 배너 */}
+      <div
+        className={`fixed top-4 left-1/2 -translate-x-1/2 z-[9998] w-[calc(100%-2rem)] max-w-sm transition-all duration-500
+          ${newChatAlert ? "opacity-100 translate-y-0 pointer-events-auto" : "opacity-0 -translate-y-4 pointer-events-none"}`}
+      >
+        {newChatAlert && (
+          <div
+            onClick={() => { window.location.href = `/admin/chat?id=${newChatAlert.reservationId}`; }}
+            className="bg-indigo-600 text-white rounded-2xl shadow-2xl px-4 py-3.5 flex items-center gap-3 cursor-pointer active:scale-[0.98] transition-transform"
+          >
+            <span className="text-2xl flex-shrink-0">💬</span>
+            <div className="flex-1 min-w-0">
+              <p className="text-[13px] font-black leading-tight">{newChatAlert.lastSender}님의 메시지</p>
+              <p className="text-[12px] font-semibold opacity-90 mt-0.5 truncate">{newChatAlert.lastMessage}</p>
+            </div>
+            <button onClick={(e) => { e.stopPropagation(); setNewChatAlert(null); }}
+              className="text-white/70 hover:text-white text-lg flex-shrink-0 leading-none">✕</button>
+          </div>
+        )}
+      </div>
+
       {/* 헤더 */}
       <header className="bg-white border-b border-violet-100 sticky top-0 z-40 shadow-sm">
         <div className="max-w-2xl mx-auto px-4 py-3.5 flex items-center justify-between">
@@ -176,6 +233,19 @@ export default function AdminMobileDashboard() {
           </div>
           <div className="flex items-center gap-1.5">
             <SoundBell role="admin" />
+            {/* 채팅 전체 목록 버튼 */}
+            <button
+              onClick={() => { window.location.href = "/admin/chats"; }}
+              className="relative text-[12px] text-indigo-500 hover:text-indigo-700 font-semibold transition-colors px-3 py-1.5 rounded-xl hover:bg-indigo-50"
+              title="채팅 전체 목록"
+            >
+              💬
+              {totalUnread > 0 && (
+                <span className="absolute -top-1 -right-1 min-w-[18px] h-[18px] rounded-full bg-rose-500 text-white text-[10px] font-black flex items-center justify-center px-1 leading-none">
+                  {totalUnread}
+                </span>
+              )}
+            </button>
             <button
               onClick={() => navigate("/admin/dashboard")}
               className="text-[12px] font-bold text-slate-600 hover:text-slate-800 px-3 py-1.5 rounded-xl bg-slate-100 hover:bg-slate-200 transition-all flex items-center gap-1"
@@ -293,6 +363,11 @@ export default function AdminMobileDashboard() {
                           </span>
                           <span className="text-[11px] text-slate-400">{formatDateTime(entry.createdAt)}</span>
                           <span className="text-[11px] text-slate-500 font-semibold">#{entry.id}</span>
+                          {getUnread(entry.id) > 0 && (
+                            <span className="inline-flex items-center gap-1 text-[10px] font-black px-2 py-0.5 rounded-full bg-indigo-600 text-white animate-pulse">
+                              💬 {getUnread(entry.id)}
+                            </span>
+                          )}
                         </div>
                         <p className="text-[15px] font-black text-slate-800 mt-1.5 tracking-wide">{entry.phone}</p>
                         <div className="flex items-center gap-1.5 mt-1 flex-wrap">
@@ -378,6 +453,21 @@ export default function AdminMobileDashboard() {
                           </div>
                         </div>
                       )}
+
+                      {/* 채팅 버튼 */}
+                      <button
+                        onClick={() => { window.location.href = `/admin/chat?id=${entry.id}`; }}
+                        className="w-full py-3 rounded-xl flex items-center justify-center gap-2 font-bold text-[13px] transition-all active:scale-[0.98] relative
+                          bg-indigo-50 text-indigo-700 hover:bg-indigo-100 border border-indigo-200"
+                      >
+                        <span className="text-[16px]">💬</span>
+                        판매자와 채팅하기
+                        {getUnread(entry.id) > 0 && (
+                          <span className="absolute top-2 right-3 min-w-[20px] h-[20px] rounded-full bg-rose-500 text-white text-[10px] font-black flex items-center justify-center px-1 leading-none">
+                            {getUnread(entry.id)}
+                          </span>
+                        )}
+                      </button>
 
                       {/* 액션 버튼 */}
                       {isPending && (
