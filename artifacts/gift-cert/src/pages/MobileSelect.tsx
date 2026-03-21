@@ -459,14 +459,7 @@ function MobileVoucherItems({
                     })}
                   </div>
                 );
-              })() : typeInfo && "sub" in typeInfo && (typeInfo as any).sub ? (
-                <div className="flex flex-wrap gap-1 px-1">
-                  <span className="text-[11px] font-semibold px-2 py-0.5 rounded-full"
-                    style={{ color: typeInfo.color, backgroundColor: typeInfo.color + "18" }}>
-                    {(typeInfo as any).sub}
-                  </span>
-                </div>
-              ) : null}
+              })() : null}
 
               {/* Row 3: amount input */}
               <div className="relative">
