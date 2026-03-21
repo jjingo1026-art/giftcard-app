@@ -1,12 +1,14 @@
 import { useState } from "react";
 
 const MOBILE_TYPES = [
-  { label: "카카오페이 선물", icon: "💛", color: "#FFBE00", rate: 90 },
-  { label: "네이버페이 포인트", icon: "💚", color: "#03C75A", rate: 89 },
-  { label: "문화상품권", icon: "📚", color: "#6366f1", rate: 88 },
-  { label: "해피머니 상품권", icon: "🎮", color: "#f43f5e", rate: 88 },
-  { label: "신세계 모바일상품권", icon: "🛒", color: "#0ea5e9", rate: 90 },
-  { label: "틴캐시", icon: "🎯", color: "#8b5cf6", rate: 87 },
+  { label: "신세계모바일", sub: "이마트교환권", icon: "🛒", color: "#e11d48", rate: 95 },
+  { label: "롯데모바일", sub: "23으로 시작·앱 선물하기", icon: "🧡", color: "#f97316", rate: 95 },
+  { label: "현대모바일", sub: "H포인트 상품권 제외", icon: "🏬", color: "#0ea5e9", rate: 95 },
+  { label: "네이버페이 포인트", icon: "💚", color: "#03C75A", rate: 95 },
+  { label: "컬쳐랜드", icon: "📚", color: "#6366f1", rate: 90 },
+  { label: "북앤라이프", icon: "📖", color: "#8b5cf6", rate: 90 },
+  { label: "문화상품권(18핀)", icon: "🎫", color: "#ec4899", rate: 90 },
+  { label: "구글기프트카드", sub: "카카오톡 구매", icon: "🎮", color: "#4ade80", rate: 90 },
 ];
 
 const BANKS = ["카카오뱅크", "토스뱅크", "국민은행", "신한은행", "우리은행", "하나은행", "기업은행", "농협은행", "새마을금고", "우체국", "케이뱅크", "기타"];
@@ -165,7 +167,7 @@ export default function MobileSelect() {
           <div className="px-5 pt-5 pb-3 border-b border-slate-50">
             <p className="text-[13px] font-bold text-slate-700">📱 상품권 종류 선택</p>
           </div>
-          <div className="px-4 py-4 grid grid-cols-3 gap-2">
+          <div className="px-4 py-4 grid grid-cols-4 gap-2">
             {MOBILE_TYPES.map((t) => {
               const selected = selectedType === t.label;
               return (
@@ -183,7 +185,8 @@ export default function MobileSelect() {
                 >
                   <span className="text-[18px]">{t.icon}</span>
                   <span className="text-[9.5px] font-semibold text-slate-600 text-center leading-snug mt-0.5">{t.label}</span>
-                  <span className="text-[14px] font-black tabular-nums mt-0.5" style={{ color: t.color }}>{t.rate}%</span>
+                  <span className="text-[13px] font-black tabular-nums mt-0.5" style={{ color: t.color }}>{t.rate}%</span>
+                  {"sub" in t && t.sub && <span className="text-[7.5px] text-slate-400 leading-tight mt-0.5 text-center">{(t as any).sub}</span>}
                 </button>
               );
             })}

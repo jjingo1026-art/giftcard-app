@@ -1,10 +1,12 @@
 const MOBILE_RATES = [
-  { label: "카카오페이 선물", icon: "💛", color: "#FFBE00", rate: 90 },
-  { label: "네이버페이 포인트", icon: "💚", color: "#03C75A", rate: 89 },
-  { label: "문화상품권", sub: "컬쳐랜드", icon: "📚", color: "#6366f1", rate: 88 },
-  { label: "해피머니 상품권", icon: "🎮", color: "#f43f5e", rate: 88 },
-  { label: "신세계 모바일상품권", icon: "🛒", color: "#0ea5e9", rate: 90 },
-  { label: "틴캐시", icon: "🎯", color: "#8b5cf6", rate: 87 },
+  { label: "신세계모바일", sub: "이마트교환권", icon: "🛒", color: "#e11d48", rate: 95 },
+  { label: "롯데모바일", sub: "23으로 시작·앱 선물하기", icon: "🧡", color: "#f97316", rate: 95 },
+  { label: "현대모바일", sub: "H포인트 상품권 제외", icon: "🏬", color: "#0ea5e9", rate: 95 },
+  { label: "네이버페이 포인트", icon: "💚", color: "#03C75A", rate: 95 },
+  { label: "컬쳐랜드", icon: "📚", color: "#6366f1", rate: 90 },
+  { label: "북앤라이프", icon: "📖", color: "#8b5cf6", rate: 90 },
+  { label: "문화상품권(18핀)", icon: "🎫", color: "#ec4899", rate: 90 },
+  { label: "구글기프트카드", sub: "카카오톡 구매", icon: "🎮", color: "#4ade80", rate: 90 },
 ];
 
 export default function MobileGiftCert() {
@@ -36,7 +38,7 @@ export default function MobileGiftCert() {
             </div>
             <div className="w-8 h-8 bg-pink-50 rounded-xl flex items-center justify-center">📱</div>
           </div>
-          <div className="px-4 pb-4 grid grid-cols-3 gap-2">
+          <div className="px-4 pb-4 grid grid-cols-4 gap-2">
             {MOBILE_RATES.map((g) => (
               <div
                 key={g.label}
