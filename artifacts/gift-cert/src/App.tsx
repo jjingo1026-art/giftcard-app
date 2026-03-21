@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { getNextId, saveEntry, formatDateKo } from "@/lib/store";
 import { LANGUAGES, getSavedLang, saveLang } from "@/lib/languages";
+import { getLabel } from "@/lib/uiTranslations";
 
 const RATES: Record<string, number> = {
   "신세계 (Shinsegae)": 0.95,
@@ -512,13 +513,13 @@ function HomePage({ onGoUrgent, initialType = DEFAULT_TYPE, onTypeChange }: { on
         {agreedPrivacy && (
           <div className="bg-white rounded-3xl shadow-sm border border-rose-100 overflow-hidden">
             <div className="px-5 pt-5 pb-3 flex items-center justify-between">
-              <div><h2 className="text-[15px] font-bold text-slate-800">긴급 판매 신청</h2><p className="text-[12px] text-slate-400 mt-0.5">Urgent Sale Request</p></div>
+              <div><h2 className="text-[15px] font-bold text-slate-800">{getLabel("urgent_sell_request", userLang)}</h2><p className="text-[12px] text-slate-400 mt-0.5">Urgent Sale Request</p></div>
               <div className="w-8 h-8 bg-rose-50 rounded-xl flex items-center justify-center">🚨</div>
             </div>
             <div className="px-5 pb-5">
               <p className="text-[13px] text-slate-500 mb-3">지금 바로 판매가 필요하신가요? 긴급 판매 신청 페이지로 이동합니다.</p>
               <button type="button" onClick={onGoUrgent} className="w-full py-4 rounded-2xl text-white text-[15px] font-bold transition-all duration-150 active:scale-95 flex items-center justify-center gap-2" style={{ background: "linear-gradient(135deg, #f43f5e 0%, #e11d48 100%)" }}>
-                <span>🚨</span> 긴급 판매 신청
+                <span>🚨</span> {getLabel("urgent_sell_request", userLang)}
               </button>
             </div>
           </div>
@@ -534,7 +535,7 @@ function HomePage({ onGoUrgent, initialType = DEFAULT_TYPE, onTypeChange }: { on
             <div className="flex items-center gap-3">
               <div className="w-9 h-9 rounded-2xl bg-white/20 flex items-center justify-center text-[18px]">📋</div>
               <div className="text-left">
-                <p className="text-[14px] font-bold text-white">예약 신청</p>
+                <p className="text-[14px] font-bold text-white">{getLabel("reservation_request", userLang)}</p>
                 <p className="text-[11px] text-indigo-200 mt-0.5">상품권 매입 예약하기</p>
               </div>
             </div>
@@ -545,7 +546,7 @@ function HomePage({ onGoUrgent, initialType = DEFAULT_TYPE, onTypeChange }: { on
         ) : (
         <div className="bg-white rounded-3xl shadow-sm border border-slate-100 overflow-hidden">
           <div className="px-5 pt-5 pb-3 flex items-center justify-between">
-            <div><h2 className="text-[15px] font-bold text-slate-800">예약 신청</h2><p className="text-[12px] text-slate-400 mt-0.5">Reservation Form</p></div>
+            <div><h2 className="text-[15px] font-bold text-slate-800">{getLabel("reservation_request", userLang)}</h2><p className="text-[12px] text-slate-400 mt-0.5">Reservation Form</p></div>
             <button type="button" onClick={() => setShowForm(false)} className="w-8 h-8 flex items-center justify-center rounded-xl bg-slate-100 text-slate-400 hover:bg-slate-200 transition-colors">
               <svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M2 2l8 8M10 2l-8 8" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round"/></svg>
             </button>
@@ -708,7 +709,7 @@ function HomePage({ onGoUrgent, initialType = DEFAULT_TYPE, onTypeChange }: { on
             </div>
 
             <button type="submit" className="w-full py-4 rounded-2xl text-white text-[15px] font-bold transition-all duration-150 active:scale-95" style={{ background: "linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%)" }}>
-              예약 신청하기
+              {getLabel("reservation_submit", userLang)}
             </button>
           </form>
         </div>
@@ -951,6 +952,7 @@ function UrgentPage({ onBack, initialType = DEFAULT_TYPE }: { onBack: () => void
   const [toast, setToast] = useState(false);
   const [errorMsg, setErrorMsg] = useState("");
   const [counter, setCounter] = useState(0);
+  const urgentLang = getSavedLang();
 
   function addItem() { setItems((p) => [...p, { type: DEFAULT_TYPE, amount: "", isGift: false }]); setItemErrors((p) => [...p, ""]); }
   function removeItem(idx: number) { setItems((p) => p.filter((_, i) => i !== idx)); setItemErrors((p) => p.filter((_, i) => i !== idx)); }
@@ -1025,7 +1027,7 @@ function UrgentPage({ onBack, initialType = DEFAULT_TYPE }: { onBack: () => void
             <svg width="18" height="18" viewBox="0 0 18 18" fill="none"><path d="M11 4l-5 5 5 5" stroke="#475569" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" /></svg>
           </button>
           <div>
-            <h1 className="text-[17px] font-bold text-slate-800">긴급 판매 신청</h1>
+            <h1 className="text-[17px] font-bold text-slate-800">{getLabel("urgent_sell_request", urgentLang)}</h1>
             <p className="text-[11px] text-rose-400 mt-0.5 font-semibold tracking-wide">URGENT SALE REQUEST · 적용 요율 -1%</p>
           </div>
           {submissions.length > 0 && <span className="ml-auto bg-rose-100 text-rose-500 text-[12px] font-bold px-3 py-1.5 rounded-full">{submissions.length}건</span>}
@@ -1040,7 +1042,7 @@ function UrgentPage({ onBack, initialType = DEFAULT_TYPE }: { onBack: () => void
 
         <div className="bg-white rounded-3xl shadow-sm border border-rose-100 overflow-hidden">
           <div className="px-5 pt-5 pb-3 flex items-center justify-between">
-            <div><h2 className="text-[15px] font-bold text-slate-800">판매 신청</h2><p className="text-[12px] text-slate-400 mt-0.5">Sale Request Form</p></div>
+            <div><h2 className="text-[15px] font-bold text-slate-800">{getLabel("sell_request", urgentLang)}</h2><p className="text-[12px] text-slate-400 mt-0.5">Sale Request Form</p></div>
             <div className="w-8 h-8 bg-rose-50 rounded-xl flex items-center justify-center">📋</div>
           </div>
           <form onSubmit={handleSubmit} className="px-5 pb-5 space-y-4">
@@ -1156,7 +1158,7 @@ function UrgentPage({ onBack, initialType = DEFAULT_TYPE }: { onBack: () => void
             </div>
 
             <button type="submit" className="w-full py-4 rounded-2xl text-white text-[15px] font-bold transition-all duration-150 active:scale-95 flex items-center justify-center gap-2" style={{ background: "linear-gradient(135deg, #f43f5e 0%, #e11d48 100%)" }}>
-              <span>🚨</span> 긴급 판매 신청하기
+              <span>🚨</span> {getLabel("urgent_sell_submit", urgentLang)}
             </button>
           </form>
         </div>
