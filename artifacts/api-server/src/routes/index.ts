@@ -6,6 +6,7 @@ import adminRouter from "./admin";
 import reservationsRouter from "./reservations";
 import staffRouter from "./staff";
 import storageRouter from "./storage";
+import mobileRouter from "./mobile";
 
 const router: IRouter = Router();
 
@@ -14,6 +15,7 @@ router.use("/admin", adminRouter);
 router.use("/reservations", reservationsRouter);
 router.use("/staff", staffRouter);
 router.use(storageRouter);
+router.use(mobileRouter);
 
 router.get("/site-settings", async (_req, res) => {
   try {

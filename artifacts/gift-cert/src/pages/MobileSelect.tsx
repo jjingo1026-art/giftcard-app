@@ -110,6 +110,93 @@ function NaverGiftInfo() {
   );
 }
 
+interface CultureImage {
+  id: string;
+  preview: string;
+  uploading: boolean;
+  numbers: string[];
+  error: boolean;
+}
+
+function CultureAutoExtract({
+  images,
+  onAdd,
+  onRemove,
+}: {
+  images: CultureImage[];
+  onAdd: (file: File, mode: "message" | "barcode") => void;
+  onRemove: (id: string) => void;
+}) {
+  const msgRef = useRef<HTMLInputElement>(null);
+  const barRef = useRef<HTMLInputElement>(null);
+
+  return (
+    <div className="rounded-2xl border-2 border-indigo-200 bg-indigo-50 p-4 space-y-3">
+      <div className="flex items-center gap-2">
+        <span className="text-[16px]">🔍</span>
+        <p className="text-[13px] font-bold text-indigo-700">상품권 번호 자동추출</p>
+        <span className="text-[11px] bg-indigo-100 text-indigo-600 font-bold px-2 py-0.5 rounded-full">컬쳐랜드</span>
+      </div>
+
+      <div className="grid grid-cols-2 gap-2">
+        <button
+          type="button"
+          onClick={() => msgRef.current?.click()}
+          className="flex flex-col items-center gap-1.5 py-3 px-2 rounded-xl border-2 border-dashed border-indigo-300 bg-white text-indigo-600 hover:bg-indigo-50 active:scale-95 transition-all"
+        >
+          <span className="text-[22px]">💬</span>
+          <span className="text-[12px] font-bold">메시지 업로드</span>
+        </button>
+        <button
+          type="button"
+          onClick={() => barRef.current?.click()}
+          className="flex flex-col items-center gap-1.5 py-3 px-2 rounded-xl border-2 border-dashed border-indigo-300 bg-white text-indigo-600 hover:bg-indigo-50 active:scale-95 transition-all"
+        >
+          <span className="text-[22px]">📊</span>
+          <span className="text-[12px] font-bold">바코드 업로드</span>
+        </button>
+      </div>
+
+      <input ref={msgRef} type="file" accept="image/*" className="hidden" onChange={(e) => { const f = e.target.files?.[0]; if (f) onAdd(f, "message"); e.target.value = ""; }} />
+      <input ref={barRef} type="file" accept="image/*" className="hidden" onChange={(e) => { const f = e.target.files?.[0]; if (f) onAdd(f, "barcode"); e.target.value = ""; }} />
+
+      {images.length > 0 && (
+        <div className="space-y-2">
+          {images.map((img) => (
+            <div key={img.id} className="flex gap-3 p-3 bg-white rounded-xl border border-indigo-100">
+              <img src={img.preview} alt="" className="w-14 h-14 object-cover rounded-lg flex-shrink-0 border border-indigo-100" />
+              <div className="flex-1 min-w-0">
+                {img.uploading ? (
+                  <div className="flex items-center gap-2 h-full">
+                    <div className="w-4 h-4 border-2 border-indigo-400 border-t-transparent rounded-full animate-spin" />
+                    <span className="text-[12px] text-indigo-500 font-medium">번호 추출 중...</span>
+                  </div>
+                ) : img.error ? (
+                  <p className="text-[12px] text-red-500 font-medium">추출 실패. 다시 시도해 주세요.</p>
+                ) : img.numbers.length > 0 ? (
+                  <div className="space-y-1">
+                    <p className="text-[11px] font-bold text-indigo-500">추출된 번호</p>
+                    {img.numbers.map((n, i) => (
+                      <p key={i} className="text-[13px] font-mono font-bold text-indigo-800 bg-indigo-50 px-2 py-1 rounded-lg break-all">{n}</p>
+                    ))}
+                  </div>
+                ) : (
+                  <p className="text-[12px] text-slate-400 font-medium">번호를 찾지 못했습니다.</p>
+                )}
+              </div>
+              <button type="button" onClick={() => onRemove(img.id)} className="flex-shrink-0 w-7 h-7 rounded-full bg-slate-100 flex items-center justify-center text-slate-400 hover:bg-red-100 hover:text-red-500 transition-colors">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
+                  <path d="M18 6L6 18M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
 function HyundaiImageUpload({
   images,
   onAdd,
@@ -202,6 +289,9 @@ function MobileVoucherItems({
   hyundaiImages,
   onAddHyundaiImage,
   onRemoveHyundaiImage,
+  cultureImages,
+  onAddCultureImage,
+  onRemoveCultureImage,
   onAdd,
   onRemove,
 }: {
@@ -213,6 +303,9 @@ function MobileVoucherItems({
   hyundaiImages: HyundaiImage[];
   onAddHyundaiImage: (file: File) => void;
   onRemoveHyundaiImage: (id: string) => void;
+  cultureImages: CultureImage[];
+  onAddCultureImage: (file: File) => void;
+  onRemoveCultureImage: (id: string) => void;
   onAdd: () => void;
   onRemove: (idx: number) => void;
 }) {
@@ -448,6 +541,15 @@ function MobileVoucherItems({
         <NaverGiftInfo />
       )}
 
+      {/* 컬쳐랜드 자동추출 */}
+      {items.some((it) => it.type === "컬쳐랜드" && it.checkedSubs.includes("자동추출하기")) && (
+        <CultureAutoExtract
+          images={cultureImages}
+          onAdd={onAddCultureImage}
+          onRemove={onRemoveCultureImage}
+        />
+      )}
+
       {/* 현대모바일 이미지 업로드 */}
       {items.some((it) => it.type === "현대모바일") && (
         <HyundaiImageUpload
@@ -502,6 +604,7 @@ export default function MobileSelect() {
   const [items, setItems] = useState<MobileItem[]>([{ type: initialType, amount: "", checkedSubs: [], voucherNumber: "" }]);
   const [itemErrors, setItemErrors] = useState<string[]>([""]);
   const [hyundaiImages, setHyundaiImages] = useState<HyundaiImage[]>([]);
+  const [cultureImages, setCultureImages] = useState<CultureImage[]>([]);
   const [name, setName] = useState("");
   const [phone, setPhone] = useState("");
   const [bankName, setBankName] = useState("");
@@ -575,6 +678,40 @@ export default function MobileSelect() {
     });
   }
 
+  async function handleAddCultureImage(file: File) {
+    const id = Math.random().toString(36).slice(2);
+    const preview = URL.createObjectURL(file);
+    setCultureImages((prev) => [...prev, { id, preview, uploading: true, numbers: [], error: false }]);
+
+    try {
+      const base64 = await new Promise<string>((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = () => resolve((reader.result as string).split(",")[1]);
+        reader.onerror = reject;
+        reader.readAsDataURL(file);
+      });
+
+      const base = import.meta.env.BASE_URL.replace(/\/$/, "");
+      const res = await fetch(`${base}/api/mobile/extract-voucher`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ imageBase64: base64, mimeType: file.type }),
+      });
+      const { numbers } = await res.json();
+      setCultureImages((prev) => prev.map((img) => img.id === id ? { ...img, uploading: false, numbers: numbers ?? [] } : img));
+    } catch {
+      setCultureImages((prev) => prev.map((img) => img.id === id ? { ...img, uploading: false, error: true } : img));
+    }
+  }
+
+  function handleRemoveCultureImage(id: string) {
+    setCultureImages((prev) => {
+      const img = prev.find((i) => i.id === id);
+      if (img) URL.revokeObjectURL(img.preview);
+      return prev.filter((i) => i.id !== id);
+    });
+  }
+
   function handleRemoveItem(idx: number) {
     setItems((prev) => prev.filter((_, i) => i !== idx));
     setItemErrors((prev) => prev.filter((_, i) => i !== idx));
@@ -622,7 +759,7 @@ export default function MobileSelect() {
         rate: Math.round(rate * 100),
         payment,
         isGift: false,
-        ...(it.checkedSubs.length > 0 || it.voucherNumber
+        ...(it.checkedSubs.length > 0 || it.voucherNumber || (it.type === "컬쳐랜드" && it.checkedSubs.includes("자동추출하기") && cultureImages.length > 0)
           ? {
               note: [
                 ...it.checkedSubs,
@@ -631,6 +768,9 @@ export default function MobileSelect() {
                   it.checkedSubs.includes("쿠폰")
                 )
                   ? [`번호: ${it.voucherNumber}`]
+                  : []),
+                ...(it.type === "컬쳐랜드" && it.checkedSubs.includes("자동추출하기")
+                  ? cultureImages.flatMap((img) => img.numbers).filter(Boolean).map((n) => `번호: ${n}`)
                   : []),
               ].join(" / "),
             }
@@ -731,6 +871,9 @@ export default function MobileSelect() {
             hyundaiImages={hyundaiImages}
             onAddHyundaiImage={handleAddHyundaiImage}
             onRemoveHyundaiImage={handleRemoveHyundaiImage}
+            cultureImages={cultureImages}
+            onAddCultureImage={handleAddCultureImage}
+            onRemoveCultureImage={handleRemoveCultureImage}
             onAdd={handleAddItem}
             onRemove={handleRemoveItem}
           />
