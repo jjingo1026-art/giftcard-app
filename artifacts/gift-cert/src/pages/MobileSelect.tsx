@@ -13,9 +13,12 @@ const MOBILE_TYPES = [
 
 const BANKS = ["카카오뱅크", "토스뱅크", "국민은행", "신한은행", "우리은행", "하나은행", "기업은행", "농협은행", "새마을금고", "우체국", "케이뱅크", "기타"];
 
+const LOTTE_SUBS = ["23으로 시작하는 교환권", "앱 선물하기"];
+
 interface MobileItem {
   type: string;
   amount: string;
+  checkedSubs: string[];
 }
 
 function formatKRW(n: number) {
@@ -39,12 +42,14 @@ function MobileVoucherItems({
   items,
   errors,
   onChange,
+  onToggleSub,
   onAdd,
   onRemove,
 }: {
   items: MobileItem[];
   errors: string[];
   onChange: (idx: number, field: "type" | "amount", val: string) => void;
+  onToggleSub: (idx: number, sub: string) => void;
   onAdd: () => void;
   onRemove: (idx: number) => void;
 }) {
@@ -100,26 +105,42 @@ function MobileVoucherItems({
                 )}
               </div>
 
-              {/* Row 2: sub/subs badge */}
-              {typeInfo && (
-                <div className="flex flex-wrap gap-1 px-1">
-                  {"subs" in typeInfo && (typeInfo as any).subs
-                    ? (typeInfo as any).subs.map((s: string, i: number) => (
-                        <span key={i} className="text-[11px] font-semibold px-2 py-0.5 rounded-full"
-                          style={{ color: typeInfo.color, backgroundColor: typeInfo.color + "18" }}>
-                          {s}
-                        </span>
-                      ))
-                    : "sub" in typeInfo && (typeInfo as any).sub
-                    ? (
-                        <span className="text-[11px] font-semibold px-2 py-0.5 rounded-full"
-                          style={{ color: typeInfo.color, backgroundColor: typeInfo.color + "18" }}>
-                          {(typeInfo as any).sub}
-                        </span>
-                      )
-                    : null}
+              {/* Row 2: sub badge or lotte checkboxes */}
+              {typeInfo && item.type === "롯데모바일" ? (
+                <div className="flex flex-col gap-1.5 px-1 pt-1">
+                  <p className="text-[11px] font-bold text-orange-500 mb-0.5">해당하는 항목을 선택해 주세요</p>
+                  {LOTTE_SUBS.map((sub) => {
+                    const checked = item.checkedSubs.includes(sub);
+                    return (
+                      <label
+                        key={sub}
+                        className={`flex items-center gap-2.5 px-3 py-2.5 rounded-xl border-2 cursor-pointer transition-all active:scale-[0.98] select-none
+                          ${checked
+                            ? "border-orange-400 bg-orange-50"
+                            : "border-slate-200 bg-white"}`}
+                        onClick={() => onToggleSub(idx, sub)}
+                      >
+                        <div className={`w-5 h-5 rounded-md border-2 flex items-center justify-center flex-shrink-0 transition-all
+                          ${checked ? "bg-orange-400 border-orange-400" : "bg-white border-slate-300"}`}>
+                          {checked && (
+                            <svg width="11" height="9" viewBox="0 0 11 9" fill="none">
+                              <path d="M1 4l3 3 6-6" stroke="white" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
+                            </svg>
+                          )}
+                        </div>
+                        <span className={`text-[13px] font-semibold ${checked ? "text-orange-700" : "text-slate-500"}`}>{sub}</span>
+                      </label>
+                    );
+                  })}
                 </div>
-              )}
+              ) : typeInfo && "sub" in typeInfo && (typeInfo as any).sub ? (
+                <div className="flex flex-wrap gap-1 px-1">
+                  <span className="text-[11px] font-semibold px-2 py-0.5 rounded-full"
+                    style={{ color: typeInfo.color, backgroundColor: typeInfo.color + "18" }}>
+                    {(typeInfo as any).sub}
+                  </span>
+                </div>
+              ) : null}
 
               {/* Row 3: amount input */}
               <div className="relative">
@@ -206,7 +227,7 @@ export default function MobileSelect() {
   const agreed = params.get("agreed") === "1";
   const initialType = params.get("type") ?? MOBILE_TYPES[0].label;
 
-  const [items, setItems] = useState<MobileItem[]>([{ type: initialType, amount: "" }]);
+  const [items, setItems] = useState<MobileItem[]>([{ type: initialType, amount: "", checkedSubs: [] }]);
   const [itemErrors, setItemErrors] = useState<string[]>([""]);
   const [name, setName] = useState("");
   const [phone, setPhone] = useState("");
@@ -224,12 +245,28 @@ export default function MobileSelect() {
   }
 
   function handleItemChange(idx: number, field: "type" | "amount", val: string) {
-    setItems((prev) => prev.map((it, i) => i === idx ? { ...it, [field]: val } : it));
+    setItems((prev) => prev.map((it, i) => {
+      if (i !== idx) return it;
+      return { ...it, [field]: val, ...(field === "type" ? { checkedSubs: [] } : {}) };
+    }));
     setItemErrors((prev) => prev.map((e, i) => i === idx ? "" : e));
   }
 
+  function handleToggleSub(idx: number, sub: string) {
+    setItems((prev) => prev.map((it, i) => {
+      if (i !== idx) return it;
+      const already = it.checkedSubs.includes(sub);
+      return {
+        ...it,
+        checkedSubs: already
+          ? it.checkedSubs.filter((s) => s !== sub)
+          : [...it.checkedSubs, sub],
+      };
+    }));
+  }
+
   function handleAddItem() {
-    setItems((prev) => [...prev, { type: MOBILE_TYPES[0].label, amount: "" }]);
+    setItems((prev) => [...prev, { type: MOBILE_TYPES[0].label, amount: "", checkedSubs: [] }]);
     setItemErrors((prev) => [...prev, ""]);
   }
 
@@ -274,7 +311,16 @@ export default function MobileSelect() {
     const travelDeduct = hasAny && totalFace < 300000 ? 3000 : 0;
     const apiItems = items.map((it) => {
       const { amountNum, rate, payment } = computeItem(it);
-      return { type: it.type, amount: amountNum, rate: Math.round(rate * 100), payment, isGift: false };
+      return {
+        type: it.type,
+        amount: amountNum,
+        rate: Math.round(rate * 100),
+        payment,
+        isGift: false,
+        ...(it.type === "롯데모바일" && it.checkedSubs.length > 0
+          ? { note: it.checkedSubs.join(", ") }
+          : {}),
+      };
     });
     const totalPayment = Math.max(0, apiItems.reduce((s, it) => s + it.payment, 0) - travelDeduct);
 
@@ -364,6 +410,7 @@ export default function MobileSelect() {
             items={items}
             errors={itemErrors}
             onChange={handleItemChange}
+            onToggleSub={handleToggleSub}
             onAdd={handleAddItem}
             onRemove={handleRemoveItem}
           />
