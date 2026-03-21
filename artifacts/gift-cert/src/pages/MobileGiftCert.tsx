@@ -38,18 +38,23 @@ export default function MobileGiftCert() {
             </div>
             <div className="w-8 h-8 bg-pink-50 rounded-xl flex items-center justify-center">📱</div>
           </div>
-          <div className="px-4 pb-4 grid grid-cols-4 gap-2">
+          <div className="px-4 pb-4 grid grid-cols-2 gap-3">
             {MOBILE_RATES.map((g) => (
               <div
                 key={g.label}
                 onClick={() => { window.location.href = `/mobile/terms?type=${encodeURIComponent(g.label)}`; }}
-                className="flex flex-col items-center justify-center px-2 rounded-2xl cursor-pointer active:scale-[0.97] transition-all text-center"
-                style={{ backgroundColor: g.color + "12", height: "86px" }}
+                className="flex flex-col items-center justify-center px-3 py-5 rounded-2xl cursor-pointer active:scale-[0.97] transition-all text-center"
+                style={{ backgroundColor: g.color + "12" }}
               >
-                <span className="text-[18px] leading-none mb-0.5">{g.icon}</span>
-                <span className="text-[10px] font-semibold text-slate-600 leading-snug text-center">{g.label}</span>
-                <span className="text-[19px] font-black tabular-nums leading-none mt-1" style={{ color: g.color }}>{g.rate}%</span>
-                {g.sub && <span className="text-[8px] text-slate-400 leading-tight mt-0.5">{g.sub}</span>}
+                <span className="text-[28px] leading-none">{g.icon}</span>
+                <span className="text-[13px] font-bold text-slate-700 leading-snug text-center mt-2">{g.label}</span>
+                <span className="text-[26px] font-black tabular-nums leading-none mt-1.5" style={{ color: g.color }}>{g.rate}%</span>
+                {g.sub && (
+                  <span className="text-[11px] font-medium leading-snug mt-1.5 px-2 py-0.5 rounded-full"
+                    style={{ color: g.color, backgroundColor: g.color + "18" }}>
+                    {g.sub}
+                  </span>
+                )}
               </div>
             ))}
           </div>

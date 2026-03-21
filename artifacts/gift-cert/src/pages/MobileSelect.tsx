@@ -167,7 +167,7 @@ export default function MobileSelect() {
           <div className="px-5 pt-5 pb-3 border-b border-slate-50">
             <p className="text-[13px] font-bold text-slate-700">📱 상품권 종류 선택</p>
           </div>
-          <div className="px-4 py-4 grid grid-cols-4 gap-2">
+          <div className="px-4 py-4 grid grid-cols-2 gap-3">
             {MOBILE_TYPES.map((t) => {
               const selected = selectedType === t.label;
               return (
@@ -175,18 +175,21 @@ export default function MobileSelect() {
                   type="button"
                   key={t.label}
                   onClick={() => setSelectedType(t.label)}
-                  className={`flex flex-col items-center justify-center rounded-2xl py-3 px-1 transition-all active:scale-[0.97] border-2 ${
-                    selected ? "border-current shadow-sm" : "border-transparent"
-                  }`}
+                  className={`flex flex-col items-center justify-center rounded-2xl py-5 px-3 transition-all active:scale-[0.97] border-2`}
                   style={{
                     backgroundColor: selected ? t.color + "18" : "#f8fafc",
                     borderColor: selected ? t.color : "transparent",
                   }}
                 >
-                  <span className="text-[18px]">{t.icon}</span>
-                  <span className="text-[9.5px] font-semibold text-slate-600 text-center leading-snug mt-0.5">{t.label}</span>
-                  <span className="text-[13px] font-black tabular-nums mt-0.5" style={{ color: t.color }}>{t.rate}%</span>
-                  {"sub" in t && t.sub && <span className="text-[7.5px] text-slate-400 leading-tight mt-0.5 text-center">{(t as any).sub}</span>}
+                  <span className="text-[28px]">{t.icon}</span>
+                  <span className="text-[13px] font-bold text-slate-700 text-center leading-snug mt-2">{t.label}</span>
+                  <span className="text-[24px] font-black tabular-nums mt-1.5" style={{ color: t.color }}>{t.rate}%</span>
+                  {"sub" in t && (t as any).sub && (
+                    <span className="text-[11px] font-medium leading-snug mt-1.5 px-2 py-0.5 rounded-full text-center"
+                      style={{ color: t.color, backgroundColor: t.color + "18" }}>
+                      {(t as any).sub}
+                    </span>
+                  )}
                 </button>
               );
             })}
