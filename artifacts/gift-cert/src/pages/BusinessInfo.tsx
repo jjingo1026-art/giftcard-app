@@ -17,11 +17,7 @@ export default function BusinessInfo() {
   const [biz, setBiz] = useState(DEFAULT_BUSINESS);
 
   function goBack() {
-    if (window.history.length > 1) {
-      window.history.back();
-    } else {
-      navigate("/");
-    }
+    navigate("/");
   }
 
   useEffect(() => {
