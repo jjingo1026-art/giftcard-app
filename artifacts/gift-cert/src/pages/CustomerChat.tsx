@@ -1,12 +1,15 @@
 import { useState, useEffect, useRef } from "react";
 import { io, Socket } from "socket.io-client";
 import { useImageUpload } from "@/hooks/useImageUpload";
+import { LANGUAGES, getTranslated, getSavedLang, saveLang } from "@/lib/languages";
 
 interface Message {
   id: number;
   sender: string;
   senderName: string;
   message: string;
+  language?: string;
+  translatedText?: Record<string, string> | null;
   time: string;
   read: boolean;
 }
@@ -19,6 +22,8 @@ export default function CustomerChat() {
   const reservationId = getReservationId();
   const [chatMessages, setChatMessages] = useState<Message[]>([]);
   const [msg, setMsg] = useState("");
+  const [userLang, setUserLang] = useState(() => getSavedLang());
+  const [showLangPicker, setShowLangPicker] = useState(false);
   const chatBoxRef = useRef<HTMLDivElement>(null);
   const socketRef = useRef<Socket | null>(null);
 
@@ -27,6 +32,7 @@ export default function CustomerChat() {
     socketRef.current.emit("sendMessage", {
       reservationId: Number(reservationId),
       sender: "customer",
+      language: userLang,
       message: `[IMG:${serveUrl}]`,
     });
   });
@@ -81,6 +87,7 @@ export default function CustomerChat() {
     socketRef.current.emit("sendMessage", {
       reservationId: Number(reservationId),
       sender: "customer",
+      language: userLang,
       message: msg,
     });
     setMsg("");
@@ -90,16 +97,51 @@ export default function CustomerChat() {
     if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); send(); }
   }
 
+  function changeLang(code: string) {
+    setUserLang(code);
+    saveLang(code);
+    setShowLangPicker(false);
+  }
+
+  const currentLang = LANGUAGES.find((l) => l.code === userLang);
+
   return (
     <div className="min-h-screen bg-slate-50">
-      {/* 숨김 파일 input */}
       <input ref={imgInputRef} type="file" accept="image/*" className="hidden" onChange={onImgChange} />
 
       <header className="bg-white border-b border-slate-100 sticky top-0 z-40 shadow-sm">
-        <div className="max-w-2xl mx-auto px-4 py-3.5 flex items-center gap-3">
+        <div className="max-w-2xl mx-auto px-4 py-3 flex items-center gap-3">
           <button onClick={() => { window.location.href = "/check.html"; }} className="text-slate-400 hover:text-slate-600">←</button>
-          <h1 className="text-[16px] font-bold text-slate-800">상담 채팅 · 예약 #{reservationId}</h1>
+          <h1 className="text-[15px] font-bold text-slate-800 flex-1">상담 채팅 · #{reservationId}</h1>
+          <button
+            onClick={() => setShowLangPicker((v) => !v)}
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-slate-100 text-[13px] font-semibold text-slate-600 hover:bg-slate-200 transition-colors"
+          >
+            <span className="text-[15px]">{currentLang?.flag}</span>
+            <span>{currentLang?.label}</span>
+            <svg width="10" height="10" viewBox="0 0 12 12" fill="none"><path d="M2 4l4 4 4-4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/></svg>
+          </button>
         </div>
+
+        {/* 언어 선택 패널 */}
+        {showLangPicker && (
+          <div className="border-t border-slate-100 bg-white px-4 py-2">
+            <div className="flex gap-1.5 overflow-x-auto pb-1 scrollbar-none">
+              {LANGUAGES.map((l) => (
+                <button
+                  key={l.code}
+                  onClick={() => changeLang(l.code)}
+                  className={`flex-shrink-0 flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[12px] font-semibold border transition-all whitespace-nowrap
+                    ${userLang === l.code
+                      ? "bg-indigo-500 text-white border-indigo-500"
+                      : "bg-white text-slate-500 border-slate-200 hover:border-indigo-300"}`}
+                >
+                  <span>{l.flag}</span> {l.label}
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
       </header>
 
       <div className="max-w-2xl mx-auto px-4 py-4 space-y-3">
@@ -115,6 +157,8 @@ export default function CustomerChat() {
             const isMine = m.sender === "customer";
             const isImg = m.message.startsWith("[IMG:");
             const imgUrl = isImg ? m.message.slice(5, -1) : "";
+            const displayText = isImg ? "" : getTranslated(m, userLang);
+            const isTranslated = !isImg && userLang !== "ko" && displayText !== m.message;
             return (
               <div key={m.id} className={`flex flex-col ${isMine ? "items-end" : "items-start"}`}>
                 <div className={`max-w-[75%] rounded-2xl text-[14px] overflow-hidden ${
@@ -132,7 +176,14 @@ export default function CustomerChat() {
                       onClick={() => window.open(imgUrl, "_blank")}
                     />
                   ) : (
-                    <p className="whitespace-pre-wrap">{m.message}</p>
+                    <>
+                      <p className="whitespace-pre-wrap">{displayText}</p>
+                      {isTranslated && (
+                        <p className={`text-[10px] mt-1 opacity-60 border-t pt-1 ${isMine ? "border-indigo-400" : "border-slate-300"}`}>
+                          원문: {m.message}
+                        </p>
+                      )}
+                    </>
                   )}
                   {!isImg && (
                     <p className={`text-[10px] mt-0.5 ${isMine ? "text-indigo-200" : "text-slate-400"}`}>
@@ -141,14 +192,10 @@ export default function CustomerChat() {
                   )}
                 </div>
                 {isImg && (
-                  <p className="text-[10px] mt-0.5 text-slate-400">
-                    {new Date(m.time).toLocaleTimeString()}
-                  </p>
+                  <p className="text-[10px] mt-0.5 text-slate-400">{new Date(m.time).toLocaleTimeString()}</p>
                 )}
                 {isMine && !isImg && (
-                  <span className="text-[10px] text-slate-400 mt-0.5 mr-1">
-                    {m.read ? "읽음" : ""}
-                  </span>
+                  <span className="text-[10px] text-slate-400 mt-0.5 mr-1">{m.read ? "읽음" : ""}</span>
                 )}
               </div>
             );
@@ -156,7 +203,6 @@ export default function CustomerChat() {
         </div>
 
         <div className="flex gap-2">
-          {/* 사진 첨부 버튼 */}
           <button
             onClick={openPicker}
             disabled={imgUploading}

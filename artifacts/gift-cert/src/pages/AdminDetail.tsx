@@ -9,6 +9,8 @@ interface ChatMessage {
   sender: string;
   senderName: string;
   message: string;
+  language?: string;
+  translatedText?: Record<string, string> | null;
   time: string;
 }
 

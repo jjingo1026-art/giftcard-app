@@ -3,6 +3,7 @@ import type { HttpServer } from "http";
 import { db } from "@workspace/db";
 import { chatsTable } from "@workspace/db/schema";
 import { eq, and, ne } from "drizzle-orm";
+import { translateAll } from "./lib/translate";
 
 let _io: Server | null = null;
 
@@ -27,15 +28,20 @@ export function initSocket(httpServer: HttpServer) {
       socket.join("room_" + reservationId);
     });
 
-    socket.on("sendMessage", async (data: { reservationId: number; sender: string; senderName?: string; message: string }) => {
-      const { reservationId, sender, senderName, message } = data;
+    socket.on("sendMessage", async (data: { reservationId: number; sender: string; senderName?: string; message: string; language?: string }) => {
+      const { reservationId, sender, senderName, message, language = "ko" } = data;
       if (!reservationId || !sender || !message?.trim()) return;
+
+      const trimmed = message.trim();
+      const translatedText = await translateAll(trimmed, language);
 
       const [inserted] = await db.insert(chatsTable).values({
         reservationId,
         sender,
         senderName: senderName ?? NAME_MAP[sender] ?? sender,
-        message: message.trim(),
+        message: trimmed,
+        language,
+        translatedText,
         read: false,
       }).returning();
 

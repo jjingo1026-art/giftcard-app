@@ -94,3 +94,12 @@ Generated React Query hooks and fetch client from the OpenAPI spec (e.g. `useHea
 ### `scripts` (`@workspace/scripts`)
 
 Utility scripts package. Each script is a `.ts` file in `src/` with a corresponding npm script in `package.json`. Run scripts via `pnpm --filter @workspace/scripts run <script>`. Scripts can import any workspace package (e.g., `@workspace/db`) by adding it as a dependency in `scripts/package.json`.
+
+## 채팅 다국어 번역 기능
+
+- `artifacts/api-server/src/lib/translate.ts` — Google Cloud Translation API v2 유틸리티 (`translateAll`, `translateText`, `hasTranslationCredentials`)
+- 지원 언어: 한국어(ko), 영어(en), 중국어 간체(zh-CN)/번체(zh-TW), 베트남어(vi), 일본어(ja), 태국어(th), 러시아어(ru), 몽골어(mn), 인도네시아어(id)
+- 채팅 메시지 저장 시 `sendMessage` Socket.IO 이벤트에서 자동으로 모든 언어로 번역 후 `chatsTable.translatedText` JSONB에 저장
+- 프론트엔드 (`src/lib/languages.ts`) — 언어 목록, `getTranslated()`, `getSavedLang()`, `saveLang()` 공용 유틸리티
+- CustomerChat, StaffDetail, AdminChat 모두 언어 선택 UI (헤더 내 드롭다운) + 번역 표시 + 원문 표시 구현 완료
+- **Google Cloud 자격증명 필요**: `GOOGLE_PROJECT_ID`, `GOOGLE_CLIENT_EMAIL`, `GOOGLE_PRIVATE_KEY` 환경변수 미설정 시 번역 없이 원문 표시 (graceful fallback)

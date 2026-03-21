@@ -1,12 +1,15 @@
 import { useState, useEffect, useRef } from "react";
 import { io, Socket } from "socket.io-client";
 import { useImageUpload } from "@/hooks/useImageUpload";
+import { LANGUAGES, getTranslated, getSavedLang, saveLang } from "@/lib/languages";
 
 interface Message {
   id: number;
   sender: string;
   senderName: string;
   message: string;
+  language?: string;
+  translatedText?: Record<string, string> | null;
   time: string;
   read: boolean;
 }
@@ -18,6 +21,8 @@ export default function StaffDetail() {
 
   const [chatMessages, setChatMessages] = useState<Message[]>([]);
   const [msg, setMsg] = useState("");
+  const [userLang, setUserLang] = useState(() => getSavedLang());
+  const [showLangPicker, setShowLangPicker] = useState(false);
   const chatBoxRef = useRef<HTMLDivElement>(null);
   const socketRef = useRef<Socket | null>(null);
 
@@ -83,6 +88,7 @@ export default function StaffDetail() {
       reservationId: Number(reservationId),
       sender: "staff",
       senderName: staffName,
+      language: userLang,
       message: msg,
     });
     setMsg("");
@@ -90,6 +96,12 @@ export default function StaffDetail() {
 
   function handleKey(e: React.KeyboardEvent) {
     if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); sendMsg(); }
+  }
+
+  function changeLang(code: string) {
+    setUserLang(code);
+    saveLang(code);
+    setShowLangPicker(false);
   }
 
   function goBack() {
@@ -111,30 +123,59 @@ export default function StaffDetail() {
       >
         {/* 창 타이틀 바 */}
         <div
-          className="flex-shrink-0 flex items-center gap-3 px-5 py-4"
+          className="flex-shrink-0"
           style={{ background: "linear-gradient(135deg,#6366f1,#4f46e5)" }}
         >
-          <div className="flex gap-1.5 flex-shrink-0">
+          <div className="flex items-center gap-3 px-5 py-4">
+            <div className="flex gap-1.5 flex-shrink-0">
+              <button
+                onClick={goBack}
+                className="w-3 h-3 rounded-full bg-rose-400 hover:bg-rose-500 transition-colors"
+                title="뒤로가기"
+              />
+              <div className="w-3 h-3 rounded-full bg-amber-400" />
+              <div className="w-3 h-3 rounded-full bg-emerald-400" />
+            </div>
+            <div className="flex-1 min-w-0">
+              <p className="text-white font-bold text-[15px] truncate">💬 채팅 · 예약 #{reservationId}</p>
+              <p className="text-indigo-200 text-[11px]">담당자: {staffName}</p>
+            </div>
+            <button
+              onClick={() => setShowLangPicker((v) => !v)}
+              className="flex-shrink-0 flex items-center gap-1 px-2.5 py-1.5 rounded-xl bg-white/20 hover:bg-white/30 transition-colors text-white text-[12px] font-semibold"
+              title="언어 선택"
+            >
+              <span>{LANGUAGES.find((l) => l.code === userLang)?.flag}</span>
+              <span className="hidden sm:inline">{LANGUAGES.find((l) => l.code === userLang)?.label}</span>
+            </button>
             <button
               onClick={goBack}
-              className="w-3 h-3 rounded-full bg-rose-400 hover:bg-rose-500 transition-colors"
-              title="뒤로가기"
-            />
-            <div className="w-3 h-3 rounded-full bg-amber-400" />
-            <div className="w-3 h-3 rounded-full bg-emerald-400" />
+              className="w-8 h-8 flex items-center justify-center rounded-xl bg-white/20 hover:bg-white/30 transition-colors flex-shrink-0"
+            >
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M19 12H5M12 19l-7-7 7-7"/>
+              </svg>
+            </button>
           </div>
-          <div className="flex-1 min-w-0">
-            <p className="text-white font-bold text-[15px] truncate">💬 채팅 · 예약 #{reservationId}</p>
-            <p className="text-indigo-200 text-[11px]">담당자: {staffName}</p>
-          </div>
-          <button
-            onClick={goBack}
-            className="w-8 h-8 flex items-center justify-center rounded-xl bg-white/20 hover:bg-white/30 transition-colors flex-shrink-0"
-          >
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M19 12H5M12 19l-7-7 7-7"/>
-            </svg>
-          </button>
+          {/* 언어 선택 패널 */}
+          {showLangPicker && (
+            <div className="px-4 pb-3 border-t border-indigo-400/30">
+              <div className="flex gap-1.5 overflow-x-auto pb-1 pt-2 scrollbar-none">
+                {LANGUAGES.map((l) => (
+                  <button
+                    key={l.code}
+                    onClick={() => changeLang(l.code)}
+                    className={`flex-shrink-0 flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-semibold border transition-all whitespace-nowrap
+                      ${userLang === l.code
+                        ? "bg-white text-indigo-600 border-white"
+                        : "bg-white/10 text-indigo-100 border-white/20 hover:bg-white/20"}`}
+                  >
+                    <span>{l.flag}</span> {l.label}
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
         </div>
 
         {/* 메시지 영역 */}
@@ -153,6 +194,8 @@ export default function StaffDetail() {
             const isMine = m.sender === "staff";
             const isImg = m.message.startsWith("[IMG:");
             const imgUrl = isImg ? m.message.slice(5, -1) : "";
+            const displayText = isImg ? "" : getTranslated(m, userLang);
+            const isTranslated = !isImg && userLang !== "ko" && displayText !== m.message;
             return (
               <div key={m.id} className={`flex flex-col ${isMine ? "items-end" : "items-start"}`}>
                 <div className={`max-w-[75%] rounded-2xl text-[14px] shadow-sm overflow-hidden ${
@@ -174,7 +217,14 @@ export default function StaffDetail() {
                       onClick={() => window.open(imgUrl, "_blank")}
                     />
                   ) : (
-                    <p className="whitespace-pre-wrap">{m.message}</p>
+                    <>
+                      <p className="whitespace-pre-wrap">{displayText}</p>
+                      {isTranslated && (
+                        <p className={`text-[10px] mt-1 opacity-60 border-t pt-1 ${isMine ? "border-indigo-400" : "border-slate-200"}`}>
+                          원문: {m.message}
+                        </p>
+                      )}
+                    </>
                   )}
                   {!isImg && (
                     <p className={`text-[10px] mt-0.5 ${isMine ? "text-indigo-200" : "text-slate-400"}`}>

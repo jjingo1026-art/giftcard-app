@@ -1,0 +1,178 @@
+[목표]
+Node.js + Express + PostgreSQL(Drizzle ORM) 기반 앱에
+다국어 번역 + 채팅 실시간 번역 기능 추가
+
+지원 언어:
+en, zh-CN, zh-TW, vi, ja, th, ru, mn, id
+
+---
+
+[1. 패키지 설치]
+
+npm install @google-cloud/translate
+
+---
+
+[2. 환경변수 추가 (.env)]
+
+GOOGLE_PROJECT_ID=your_project_id
+GOOGLE_CLIENT_EMAIL=your_client_email
+GOOGLE_PRIVATE_KEY="your_private_key"
+
+---
+
+[3. 번역 유틸 생성]
+
+/utils/translate.js
+
+import {Translate} from '@google-cloud/translate').v2;
+
+const translate = new Translate({
+  projectId: process.env.GOOGLE_PROJECT_ID,
+  credentials: {
+    client_email: process.env.GOOGLE_CLIENT_EMAIL,
+    private_key: process.env.GOOGLE_PRIVATE_KEY.replace(/\\n/g, '\n'),
+  },
+});
+
+export async function translateText(text, target) {
+  if (!text) return text;
+
+  const [translation] = await translate.translate(text, target);
+  return translation;
+}
+
+---
+
+[4. 언어 코드 정의]
+
+/config/languages.js
+
+export const SUPPORTED_LANGUAGES = [
+  "en", "zh-CN", "zh-TW", "vi", "ja", "th", "ru", "mn", "id"
+];
+
+---
+
+[5. DB 수정 (Drizzle)]
+
+채팅 테이블에 번역 컬럼 추가:
+
+messages table:
+- id
+- sender_id
+- original_text
+- translated_text (json)
+- language (기본 언어)
+
+예:
+
+translated_text JSON 구조:
+{
+  "en": "...",
+  "ko": "...",
+  "vi": "..."
+}
+
+---
+
+[6. 채팅 저장 시 자동 번역]
+
+/services/messageService.js
+
+import { translateText } from "../utils/translate.js";
+import { SUPPORTED_LANGUAGES } from "../config/languages.js";
+
+export async function createMessage({ text, senderId, language }) {
+  const translations = {};
+
+  await Promise.all(
+    SUPPORTED_LANGUAGES.map(async (lang) => {
+      if (lang === language) {
+        translations[lang] = text;
+      } else {
+        translations[lang] = await translateText(text, lang);
+      }
+    })
+  );
+
+  const message = await db.insert(messages).values({
+    sender_id: senderId,
+    original_text: text,
+    translated_text: translations,
+    language,
+  });
+
+  return message;
+}
+
+---
+
+[7. 채팅 조회 시 사용자 언어로 반환]
+
+/services/messageService.js
+
+export function formatMessage(message, userLang) {
+  return {
+    id: message.id,
+    text: message.translated_text[userLang] || message.original_text,
+    original: message.original_text,
+  };
+}
+
+---
+
+[8. API 수정]
+
+/routes/messages.js
+
+router.post("/", async (req, res) => {
+  const { text, language } = req.body;
+
+  const message = await createMessage({
+    text,
+    senderId: req.user.id,
+    language,
+  });
+
+  res.json(message);
+});
+
+router.get("/", async (req, res) => {
+  const userLang = req.query.lang || "en";
+
+  const list = await db.select().from(messages);
+
+  const result = list.map(msg => formatMessage(msg, userLang));
+
+  res.json(result);
+});
+
+---
+
+[9. 실시간 (socket.io 사용 시)]
+
+메시지 수신 시:
+
+socket.on("message", async (data) => {
+  const saved = await createMessage(data);
+
+  io.emit("message", saved);
+});
+
+클라이언트에서:
+
+const userLang = "vi"; // 사용자 언어
+
+socket.on("message", (msg) => {
+  const text = msg.translated_text[userLang] || msg.original_text;
+  render(text);
+});
+
+---
+
+[완료 조건]
+
+- 메시지 저장 시 모든 언어로 자동 번역
+- 사용자 언어 기준으로 채팅 표시
+- 실시간 채팅에서도 번역 적용
