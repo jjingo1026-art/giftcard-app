@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { getNextId, saveEntry, formatDateKo } from "@/lib/store";
+import { LANGUAGES, getSavedLang, saveLang } from "@/lib/languages";
 
 const RATES: Record<string, number> = {
   "신세계 (Shinsegae)": 0.95,
@@ -337,6 +338,8 @@ function HomePage({ onGoUrgent, initialType = DEFAULT_TYPE, onTypeChange }: { on
   const [counter, setCounter] = useState(0);
   const [agreedPrivacy] = useState(() => new URLSearchParams(window.location.search).get("agreed") === "1");
   const [showForm, setShowForm] = useState(() => new URLSearchParams(window.location.search).get("agreed") === "1");
+  const [userLang, setUserLang] = useState(() => getSavedLang());
+  const [langPickerOpen, setLangPickerOpen] = useState(false);
 
   function addItem() { setItems((p) => [...p, { type: DEFAULT_TYPE, amount: "", isGift: false }]); setItemErrors((p) => [...p, ""]); }
   function removeItem(idx: number) { setItems((p) => p.filter((_, i) => i !== idx)); setItemErrors((p) => p.filter((_, i) => i !== idx)); }
@@ -414,14 +417,43 @@ function HomePage({ onGoUrgent, initialType = DEFAULT_TYPE, onTypeChange }: { on
           {agreedPrivacy && (
             <button onClick={() => { window.location.href = "/"; }} className="text-slate-400 hover:text-slate-600 text-lg flex-shrink-0">←</button>
           )}
-          <div className="flex-1 flex items-center justify-between">
-            <div>
+          <div className="flex-1 flex items-center gap-2 min-w-0">
+            <div className="flex-1 min-w-0">
               <h1 className="text-[17px] font-bold text-slate-800">우리동네상품권 예약</h1>
               <p className="text-[11px] text-slate-400 mt-0.5 font-medium tracking-wide">GIFT CERTIFICATE RESERVATION</p>
             </div>
-            {submissions.length > 0 && <span className="bg-indigo-100 text-indigo-600 text-[12px] font-bold px-3 py-1.5 rounded-full">{submissions.length}건 접수</span>}
+            {/* 언어 선택 버튼 */}
+            <button
+              onClick={() => setLangPickerOpen((v) => !v)}
+              className="flex-shrink-0 flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl bg-slate-100 hover:bg-slate-200 active:scale-95 transition-all text-[12px] font-semibold text-slate-600"
+              title="언어 선택"
+            >
+              <span className="text-[14px] leading-none">{LANGUAGES.find((l) => l.code === userLang)?.flag ?? "🌐"}</span>
+              <span className="hidden sm:inline">{LANGUAGES.find((l) => l.code === userLang)?.label}</span>
+              <svg width="9" height="9" viewBox="0 0 12 12" fill="none" className="opacity-50"><path d="M2 4l4 4 4-4" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round"/></svg>
+            </button>
+            {submissions.length > 0 && <span className="flex-shrink-0 bg-indigo-100 text-indigo-600 text-[12px] font-bold px-3 py-1.5 rounded-full">{submissions.length}건 접수</span>}
           </div>
         </div>
+        {/* 언어 선택 드롭다운 */}
+        {langPickerOpen && (
+          <div className="border-t border-slate-100 bg-white/95 backdrop-blur-md px-4 py-2.5">
+            <div className="max-w-md mx-auto flex gap-1.5 overflow-x-auto pb-0.5 scrollbar-none">
+              {LANGUAGES.map((l) => (
+                <button
+                  key={l.code}
+                  onClick={() => { setUserLang(l.code); saveLang(l.code); setLangPickerOpen(false); }}
+                  className={`flex-shrink-0 flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[12px] font-semibold border transition-all whitespace-nowrap active:scale-95
+                    ${userLang === l.code
+                      ? "bg-indigo-500 text-white border-indigo-500 shadow-sm"
+                      : "bg-white text-slate-500 border-slate-200 hover:border-indigo-300 hover:text-indigo-500"}`}
+                >
+                  <span>{l.flag}</span> {l.label}
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
       </header>
 
       <div className="max-w-md mx-auto px-4 pt-5 pb-16 space-y-4">
