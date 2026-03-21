@@ -30,6 +30,8 @@ import AdminStaffOverview from "./pages/AdminStaffOverview";
 import AdminNoShow from "./pages/AdminNoShow";
 import StaffChatList from "./pages/StaffChatList";
 import BusinessInfo from "./pages/BusinessInfo";
+import GiftCertTypeSelect from "./pages/GiftCertTypeSelect";
+import MobileGiftCert from "./pages/MobileGiftCert";
 import "./index.css";
 
 const base = import.meta.env.BASE_URL.replace(/\/$/, "");
@@ -97,7 +99,12 @@ createRoot(document.getElementById("root")!).render(
       <Route path="/staff/register.html" component={StaffRegister} />
       <Route path="/staff/chats" component={StaffChatList} />
       <Route path="/staff/chats.html" component={StaffChatList} />
-      <Route component={App} />
+      <Route path="/mobile" component={MobileGiftCert} />
+      <Route path="/mobile.html" component={MobileGiftCert} />
+      <Route path="/rates" component={App} />
+      <Route path="/rates.html" component={App} />
+      <Route path="/" component={GiftCertTypeSelect} />
+      <Route component={GiftCertTypeSelect} />
     </Switch>
   </Router>
 );
