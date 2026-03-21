@@ -120,6 +120,50 @@ const inputCls = (err?: boolean, accent = "indigo") =>
     : accent === "rose" ? "border-slate-200 bg-slate-50 focus:border-rose-400 focus:bg-white focus:ring-2 focus:ring-rose-50"
     : "border-slate-200 bg-slate-50 focus:border-indigo-400 focus:bg-white focus:ring-2 focus:ring-indigo-50"}`;
 
+declare global {
+  interface Window {
+    daum?: { Postcode: new (opts: { oncomplete: (d: { address: string; buildingName: string }) => void }) => { open: () => void } };
+  }
+}
+
+function openDaumPostcode(onSelect: (addr: string) => void) {
+  const run = () => new window.daum!.Postcode({
+    oncomplete(d) { onSelect(d.address + (d.buildingName ? ` (${d.buildingName})` : "")); },
+  }).open();
+  if (window.daum?.Postcode) { run(); return; }
+  const s = document.createElement("script");
+  s.src = "//t1.daumcdn.net/mapjsapi/bundle/postcode/prod/postcode.v2.js";
+  s.onload = run;
+  document.head.appendChild(s);
+}
+
+function LocationSearchInput({ value, onChange, error, accent = "indigo" }: { value: string; onChange: (v: string) => void; error?: boolean; accent?: string }) {
+  return (
+    <div className="relative flex gap-2">
+      <input
+        type="text"
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        placeholder="주소·역·건물명 검색 또는 직접 입력"
+        className={`${inputCls(error, accent)} flex-1`}
+      />
+      <button
+        type="button"
+        onClick={() => openDaumPostcode(onChange)}
+        className={`flex-shrink-0 px-3.5 py-3 rounded-2xl text-[13px] font-bold border-2 transition-all active:scale-95 flex items-center gap-1.5
+          ${accent === "rose"
+            ? "border-rose-200 bg-rose-50 text-rose-400 hover:bg-rose-100 hover:border-rose-300"
+            : "border-indigo-200 bg-indigo-50 text-indigo-400 hover:bg-indigo-100 hover:border-indigo-300"}`}
+      >
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+          <circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/>
+        </svg>
+        검색
+      </button>
+    </div>
+  );
+}
+
 function GiftCheckbox({ checked, onChange }: { checked: boolean; onChange: (v: boolean) => void }) {
   return (
     <label className="flex items-center gap-2 cursor-pointer select-none" onClick={() => onChange(!checked)}>
@@ -278,12 +322,13 @@ function HomePage({ onGoUrgent, initialType = DEFAULT_TYPE, onTypeChange }: { on
   const [date, setDate] = useState("");
   const [time, setTime] = useState("14:20");
   const [takenSlots, setTakenSlots] = useState<string[]>([]);
-  const [location, setLocation] = useState("");
+  const [locationMain, setLocationMain] = useState("");
+  const [locationDetail, setLocationDetail] = useState("");
   const [bankName, setBankName] = useState(KOREAN_BANKS[0]);
   const [accountNumber, setAccountNumber] = useState("");
   const [accountHolder, setAccountHolder] = useState("");
   const [items, setItems] = useState<VoucherItem[]>([{ type: initialType, amount: "", isGift: false }]);
-  const [fieldErrors, setFieldErrors] = useState<{ name?: string; phone?: string; date?: string; time?: string; location?: string; accountNumber?: string; accountHolder?: string; agreeMatch?: string }>({});
+  const [fieldErrors, setFieldErrors] = useState<{ name?: string; phone?: string; date?: string; time?: string; locationMain?: string; accountNumber?: string; accountHolder?: string; agreeMatch?: string }>({});
   const [itemErrors, setItemErrors] = useState<string[]>([""]);
   const [agreeMatch, setAgreeMatch] = useState(false);
   const [submissions, setSubmissions] = useState<ReservationEntry[]>([]);
@@ -309,7 +354,7 @@ function HomePage({ onGoUrgent, initialType = DEFAULT_TYPE, onTypeChange }: { on
     if (!date) fe.date = "날짜 선택";
     else if (date < new Date().toISOString().split("T")[0]) fe.date = "지난 날짜는 선택할 수 없습니다";
     if (!time || !isValidTime(time)) fe.time = "시간을 선택해주세요";
-    if (!location.trim()) fe.location = "거래 장소를 입력해주세요";
+    if (!locationMain.trim()) fe.locationMain = "거래 장소를 입력해주세요";
     if (!accountNumber.trim()) fe.accountNumber = "계좌번호를 입력해주세요";
     if (!accountHolder.trim()) fe.accountHolder = "예금주를 입력해주세요";
     if (!agreeMatch) fe.agreeMatch = "신청자와 예금주 동일 여부를 확인해주세요";
@@ -322,6 +367,7 @@ function HomePage({ onGoUrgent, initialType = DEFAULT_TYPE, onTypeChange }: { on
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     if (!validate()) return;
+    const location = [locationMain, locationDetail].filter(Boolean).join(" ");
     const savedItems: SavedItem[] = items.map((item) => {
       const { amountNum, rate, payment } = computeItem(item, 0);
       return { type: item.type, amount: amountNum, rate, payment, isGift: item.isGift };
@@ -350,7 +396,7 @@ function HomePage({ onGoUrgent, initialType = DEFAULT_TYPE, onTypeChange }: { on
     setCounter(id);
     setSubmissions((p) => [{ id, name, phone, date, time, location, items: savedItems, totalPayment, bankName, accountNumber, accountHolder, isUrgent: false }, ...p]);
     saveEntry({ kind: "reservation", id, createdAt: new Date().toISOString(), name, phone, date, time, location, items: savedItems, totalPayment, bankName, accountNumber, accountHolder });
-    setName(""); setPhone(""); setDate(""); setTime(""); setLocation(""); setAccountNumber(""); setAccountHolder("");
+    setName(""); setPhone(""); setDate(""); setTime(""); setLocationMain(""); setLocationDetail(""); setAccountNumber(""); setAccountHolder("");
     setItems([{ type: DEFAULT_TYPE, amount: "", isGift: false }]); setItemErrors([""]);
     setToast(true); setTimeout(() => setToast(false), 3000);
   }
@@ -528,8 +574,19 @@ function HomePage({ onGoUrgent, initialType = DEFAULT_TYPE, onTypeChange }: { on
                 </select>
               </Field>
             </div>
-            <Field label="거래 장소" required error={fieldErrors.location}>
-              <input type="text" value={location} onChange={(e) => { setLocation(e.target.value); setFieldErrors((p) => ({ ...p, location: "" })); }} placeholder="예: 강남구 역삼동" className={inputCls(!!fieldErrors.location)} />
+            <Field label="거래 장소" required error={fieldErrors.locationMain}>
+              <LocationSearchInput
+                value={locationMain}
+                onChange={(v) => { setLocationMain(v); setFieldErrors((p) => ({ ...p, locationMain: "" })); }}
+                error={!!fieldErrors.locationMain}
+              />
+              <input
+                type="text"
+                value={locationDetail}
+                onChange={(e) => setLocationDetail(e.target.value)}
+                placeholder="상세 위치 (건물 층, 출구번호, 주차장 등)"
+                className={`${inputCls(false)} mt-2`}
+              />
               <p className="text-[12px] text-slate-400 mt-1.5 flex items-start gap-1"><span className="mt-0.5 flex-shrink-0">ℹ️</span>주정차가 가능한 장소로 입력해 주세요</p>
             </Field>
             <VoucherItems items={items} errors={itemErrors} onChange={updateItem} onToggleGift={toggleGift} onAdd={addItem} onRemove={removeItem} baseDeduct={0} />
@@ -848,12 +905,13 @@ function SubmissionCard({ entry }: { entry: ReservationEntry | UrgentEntry }) {
 function UrgentPage({ onBack, initialType = DEFAULT_TYPE }: { onBack: () => void; initialType?: string }) {
   const [name, setName] = useState("");
   const [phone, setPhone] = useState("");
-  const [location, setLocation] = useState("");
+  const [locationMain, setLocationMain] = useState("");
+  const [locationDetail, setLocationDetail] = useState("");
   const [bankName, setBankName] = useState(KOREAN_BANKS[0]);
   const [accountNumber, setAccountNumber] = useState("");
   const [accountHolder, setAccountHolder] = useState("");
   const [items, setItems] = useState<VoucherItem[]>([{ type: initialType, amount: "", isGift: false }]);
-  const [fieldErrors, setFieldErrors] = useState<{ name?: string; phone?: string; location?: string; accountNumber?: string; accountHolder?: string; agreeMatch?: string }>({});
+  const [fieldErrors, setFieldErrors] = useState<{ name?: string; phone?: string; locationMain?: string; accountNumber?: string; accountHolder?: string; agreeMatch?: string }>({});
   const [itemErrors, setItemErrors] = useState<string[]>([""]);
   const [agreeMatch, setAgreeMatch] = useState(false);
   const [submissions, setSubmissions] = useState<UrgentEntry[]>([]);
@@ -873,7 +931,7 @@ function UrgentPage({ onBack, initialType = DEFAULT_TYPE }: { onBack: () => void
     const fe: typeof fieldErrors = {};
     if (!name.trim()) fe.name = "성명을 입력해주세요";
     if (!phone.trim()) fe.phone = "판매자 전화번호를 입력해주세요";
-    if (!location.trim()) fe.location = "거래 장소를 입력해주세요";
+    if (!locationMain.trim()) fe.locationMain = "거래 장소를 입력해주세요";
     if (!accountNumber.trim()) fe.accountNumber = "계좌번호를 입력해주세요";
     if (!accountHolder.trim()) fe.accountHolder = "예금주를 입력해주세요";
     if (!agreeMatch) fe.agreeMatch = "신청자와 예금주 동일 여부를 확인해주세요";
@@ -886,6 +944,7 @@ function UrgentPage({ onBack, initialType = DEFAULT_TYPE }: { onBack: () => void
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     if (!validate()) return;
+    const location = [locationMain, locationDetail].filter(Boolean).join(" ");
     const savedItems: SavedItem[] = items.map((item) => {
       const { amountNum, rate, payment } = computeItem(item, 0.01);
       return { type: item.type, amount: amountNum, rate, payment, isGift: item.isGift };
@@ -914,7 +973,7 @@ function UrgentPage({ onBack, initialType = DEFAULT_TYPE }: { onBack: () => void
     setCounter(id);
     setSubmissions((p) => [{ id, name, phone, location, items: savedItems, totalPayment, bankName, accountNumber, accountHolder, isUrgent: true }, ...p]);
     saveEntry({ kind: "urgent", id, createdAt: new Date().toISOString(), name, phone, location, items: savedItems, totalPayment, bankName, accountNumber, accountHolder });
-    setName(""); setPhone(""); setLocation(""); setAccountNumber(""); setAccountHolder("");
+    setName(""); setPhone(""); setLocationMain(""); setLocationDetail(""); setAccountNumber(""); setAccountHolder("");
     setItems([{ type: DEFAULT_TYPE, amount: "", isGift: false }]); setItemErrors([""]); setAgreeMatch(false);
     setToast(true); setTimeout(() => setToast(false), 3000);
   }
@@ -958,8 +1017,20 @@ function UrgentPage({ onBack, initialType = DEFAULT_TYPE }: { onBack: () => void
             <Field label="판매자 전화번호" required error={fieldErrors.phone}>
               <input type="tel" value={phone} onChange={(e) => { setPhone(e.target.value); setFieldErrors((p) => ({ ...p, phone: "" })); }} placeholder="010-0000-0000" className={inputCls(!!fieldErrors.phone, "rose")} />
             </Field>
-            <Field label="거래 장소" required error={fieldErrors.location}>
-              <input type="text" value={location} onChange={(e) => { setLocation(e.target.value); setFieldErrors((p) => ({ ...p, location: "" })); }} placeholder="예: 강남구 역삼동" className={inputCls(!!fieldErrors.location, "rose")} />
+            <Field label="거래 장소" required error={fieldErrors.locationMain}>
+              <LocationSearchInput
+                value={locationMain}
+                onChange={(v) => { setLocationMain(v); setFieldErrors((p) => ({ ...p, locationMain: "" })); }}
+                error={!!fieldErrors.locationMain}
+                accent="rose"
+              />
+              <input
+                type="text"
+                value={locationDetail}
+                onChange={(e) => setLocationDetail(e.target.value)}
+                placeholder="상세 위치 (건물 층, 출구번호, 주차장 등)"
+                className={`${inputCls(false, "rose")} mt-2`}
+              />
               <p className="text-[12px] text-slate-400 mt-1.5 flex items-start gap-1"><span className="mt-0.5 flex-shrink-0">ℹ️</span>주정차 가능한 곳으로 입력 바랍니다</p>
             </Field>
             <VoucherItems items={items} errors={itemErrors} onChange={updateItem} onToggleGift={toggleGift} onAdd={addItem} onRemove={removeItem} baseDeduct={0.01} />
