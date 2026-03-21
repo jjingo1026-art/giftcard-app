@@ -53,14 +53,14 @@ export default function BusinessInfo() {
           </div>
           <div className="px-5 py-4 space-y-3">
             <a
-              href="tel:01071909534"
+              href="tel:01074868001"
               className="flex items-center justify-between w-full px-4 py-3.5 rounded-xl bg-indigo-500 text-white active:scale-[0.98] transition-all"
             >
               <div className="flex items-center gap-2.5">
                 <span className="text-[18px]">📱</span>
                 <div>
-                  <p className="text-[13px] font-bold">전화 바로가기</p>
-                  <p className="text-[11px] opacity-80 mt-0.5">010-7190-9534</p>
+                  <p className="text-[13px] font-bold">전화걸기</p>
+                  <p className="text-[11px] opacity-80 mt-0.5">010-7486-8001</p>
                 </div>
               </div>
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
