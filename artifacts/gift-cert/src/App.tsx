@@ -311,7 +311,7 @@ function VoucherItems({
       {hasAnyAmount && (
         <div className={`flex items-center justify-between px-4 py-3 rounded-2xl border ${cl.bg} ${cl.border}`}>
           <div className="space-y-0.5">
-            <p className={`text-[11px] ${cl.text}`}>총 상품권가격</p>
+            <p className={`text-[11px] ${cl.text}`}>총 상품권금액</p>
             <p className={`text-[13px] font-semibold ${cl.text}`}>{formatKRW(totalFace)}</p>
           </div>
           <div className="text-right space-y-0.5">
@@ -327,7 +327,7 @@ function VoucherItems({
           <div>
             <p className="text-[12px] font-bold text-amber-700 leading-snug">30만원 미만 신청 안내</p>
             <p className="text-[12px] text-amber-600 mt-0.5 leading-relaxed">
-              상품권가격 30만원 미만의 판매 신청은 이동경비로 인하여 <span className="font-bold">3,000원이 차감</span>됩니다.
+              상품권금액 30만원 미만의 판매 신청은 이동경비로 인하여 <span className="font-bold">3,000원이 차감</span>됩니다.
             </p>
           </div>
         </div>
@@ -949,7 +949,7 @@ function SubmissionCard({ entry }: { entry: ReservationEntry | UrgentEntry }) {
       {/* ── 합계 ── */}
       <div className={`mx-4 mb-3 flex items-center justify-between px-4 py-3 rounded-2xl border ${ac.bg} ${ac.border}`}>
         <div>
-          <p className="text-[11px] text-slate-400">총 상품권가격</p>
+          <p className="text-[11px] text-slate-400">총 상품권금액</p>
           <p className="text-[13px] font-semibold text-slate-600">{formatKRW(entry.items.reduce((s, it) => s + it.amount, 0))}</p>
         </div>
         <div className="text-right">
