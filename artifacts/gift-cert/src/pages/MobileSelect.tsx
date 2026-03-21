@@ -139,17 +139,6 @@ function CultureManualInput({
               placeholder={`상품권번호 ${idx + 1}`}
               className="flex-1 px-4 py-3 rounded-xl border-2 border-indigo-200 bg-white text-[14px] font-mono tracking-wider outline-none focus:border-indigo-400 focus:ring-2 focus:ring-indigo-100 transition-all placeholder:text-slate-300"
             />
-            {numbers.length > 1 && (
-              <button
-                type="button"
-                onClick={() => onRemove(idx)}
-                className="w-9 h-9 flex-shrink-0 rounded-xl bg-red-100 text-red-500 flex items-center justify-center hover:bg-red-200 active:scale-95 transition-all"
-              >
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
-                  <path d="M5 12h14" />
-                </svg>
-              </button>
-            )}
             {idx === numbers.length - 1 && (
               <button
                 type="button"
