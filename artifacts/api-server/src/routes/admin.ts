@@ -907,12 +907,15 @@ router.get("/reservations/:id", requireAuth, async (req, res) => {
 });
 
 router.post("/reservations/:id/status", async (req, res) => {
-  // 관리자 또는 매입담당자 토큰 허용
-  const auth = req.headers.authorization ?? "";
-  const token = auth.startsWith("Bearer ") ? auth.slice(7) : "";
-  const isAdmin = tokens.has(token) && Date.now() <= (tokens.get(token) ?? 0);
-  const staffEntry = staffTokens.get(token);
-  const isStaff = !!staffEntry && Date.now() <= staffEntry.exp;
+  // 관리자 또는 매입담당자 토큰 허용 (JWT 검증)
+  const token = extractBearer(req);
+  let isAdmin = false;
+  let isStaff = false;
+  try {
+    const payload = verifyAccessToken(token);
+    if (payload.role === "admin") isAdmin = true;
+    else if (payload.role === "staff" && payload.staffId) isStaff = true;
+  } catch { /* 인증 실패 */ }
   if (!isAdmin && !isStaff) {
     res.status(401).json({ error: "인증이 필요합니다." }); return;
   }
@@ -1066,22 +1069,17 @@ router.patch("/reservations/:id/assign", requireAuth, requireAdmin, async (req, 
 // ── 채팅: 예약 1개 = 채팅방 1개 ──────────────────────────────────────────────
 
 async function resolveAuth(req: any): Promise<{ ok: boolean; senderType: "admin" | "staff"; senderName: string }> {
-  const auth = req.headers.authorization ?? "";
-  const token = auth.startsWith("Bearer ") ? auth.slice(7) : "";
-
-  // 관리자 토큰 확인
-  const adminExp = tokens.get(token);
-  if (adminExp && Date.now() <= adminExp) {
-    return { ok: true, senderType: "admin", senderName: "관리자" };
-  }
-
-  // 직원 토큰 확인
-  const staffEntry = staffTokens.get(token);
-  if (staffEntry && Date.now() <= staffEntry.exp) {
-    const [member] = await db.select().from(staffTable).where(eq(staffTable.id, staffEntry.staffId));
-    return { ok: true, senderType: "staff", senderName: member?.name ?? "직원" };
-  }
-
+  const token = extractBearer(req);
+  try {
+    const payload = verifyAccessToken(token);
+    if (payload.role === "admin") {
+      return { ok: true, senderType: "admin", senderName: "관리자" };
+    }
+    if (payload.role === "staff" && payload.staffId) {
+      const [member] = await db.select().from(staffTable).where(eq(staffTable.id, payload.staffId));
+      return { ok: true, senderType: "staff", senderName: member?.name ?? "직원" };
+    }
+  } catch { /* 인증 실패 */ }
   return { ok: false, senderType: "staff", senderName: "" };
 }
 
