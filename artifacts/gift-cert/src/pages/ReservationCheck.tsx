@@ -1,6 +1,8 @@
 import { useState } from "react";
 import { useLocation } from "wouter";
 import { formatPhone, formatDateKo } from "@/lib/store";
+import { LANGUAGES, getSavedLang, saveLang } from "@/lib/languages";
+import { getLabel } from "@/lib/uiTranslations";
 
 interface EditItem { type: string; amount: string; isGift: boolean; }
 
@@ -44,6 +46,8 @@ export default function ReservationCheck() {
   const [reservation, setReservation] = useState<ReservationInfo | null>(null);
   const [staffInfo, setStaffInfo] = useState<StaffInfo | null>(null);
   const [searched, setSearched] = useState(false);
+  const [lang, setLang] = useState(() => getSavedLang());
+  const [langPickerOpen, setLangPickerOpen] = useState(false);
 
   // 취소
   const [cancelling, setCancelling] = useState(false);
@@ -420,7 +424,7 @@ export default function ReservationCheck() {
         onClick={openEdit}
         className="w-full py-3 rounded-xl border border-indigo-200 text-indigo-500 text-[14px] font-semibold hover:bg-indigo-50 transition-colors active:scale-95"
       >
-        ✏️ 예약 수정
+        {getLabel("edit_reservation", lang)}
       </button>
     );
   }
@@ -441,17 +445,44 @@ export default function ReservationCheck() {
       )}
 
       <header className="bg-white border-b border-slate-100 shadow-sm sticky top-0 z-40">
-        <div className="max-w-lg mx-auto px-4 py-3.5 flex items-center gap-3">
-          <button onClick={() => { window.location.href = "/"; }} className="w-8 h-8 flex items-center justify-center rounded-xl hover:bg-slate-100 transition-colors">
+        <div className="max-w-lg mx-auto px-4 py-3 flex items-center gap-3">
+          <button onClick={() => { window.location.href = "/"; }} className="w-8 h-8 flex items-center justify-center rounded-xl hover:bg-slate-100 transition-colors flex-shrink-0">
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
               <path d="M19 12H5M12 19l-7-7 7-7"/>
             </svg>
           </button>
-          <div>
-            <h1 className="text-[16px] font-bold text-slate-800">예약 확인</h1>
+          <div className="flex-1 min-w-0">
+            <h1 className="text-[16px] font-bold text-slate-800">{getLabel("reservation_check", lang)}</h1>
             <p className="text-[11px] text-slate-400 mt-0.5">전화번호로 예약 현황 조회</p>
           </div>
+          <button
+            onClick={() => setLangPickerOpen((v) => !v)}
+            className="flex-shrink-0 flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl bg-slate-100 hover:bg-slate-200 active:scale-95 transition-all text-[12px] font-semibold text-slate-600"
+          >
+            <span className="text-[14px] leading-none">{LANGUAGES.find((l) => l.code === lang)?.flag ?? "🌐"}</span>
+            <span className="hidden sm:inline">{LANGUAGES.find((l) => l.code === lang)?.label}</span>
+            <svg width="9" height="9" viewBox="0 0 12 12" fill="none" className="opacity-50"><path d="M2 4l4 4 4-4" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round"/></svg>
+          </button>
         </div>
+        {langPickerOpen && (
+          <div className="border-t border-slate-100 bg-white px-4 py-2.5">
+            <div className="max-w-lg mx-auto flex flex-col gap-1">
+              {LANGUAGES.map((l) => (
+                <button
+                  key={l.code}
+                  onClick={() => { setLang(l.code); saveLang(l.code); setLangPickerOpen(false); }}
+                  className={`w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-[13px] font-semibold border transition-all active:scale-[0.98]
+                    ${lang === l.code
+                      ? "bg-indigo-500 text-white border-indigo-500 shadow-sm"
+                      : "bg-white text-slate-600 border-slate-200 hover:border-indigo-300 hover:text-indigo-500"}`}
+                >
+                  <span className="text-[16px] leading-none">{l.flag}</span>
+                  <span>{l.label}</span>
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
       </header>
 
       <div className="max-w-lg mx-auto px-4 py-6 space-y-4">
@@ -473,7 +504,7 @@ export default function ReservationCheck() {
               className="px-5 py-3 rounded-xl text-white text-[14px] font-bold transition-all active:scale-95 disabled:opacity-40 whitespace-nowrap"
               style={{ background: "linear-gradient(135deg,#6366f1,#8b5cf6)" }}
             >
-              {loading ? "조회 중…" : "조회"}
+              {loading ? "조회 중…" : getLabel("search", lang)}
             </button>
           </div>
           {error && <p className="text-[12px] text-rose-500">{error}</p>}
@@ -492,7 +523,7 @@ export default function ReservationCheck() {
         {reservation && reservation.status === "cancelled" && (
           <div className="bg-rose-50 border border-rose-100 rounded-2xl px-5 py-8 text-center space-y-2">
             <div className="w-14 h-14 rounded-full bg-rose-100 flex items-center justify-center text-[28px] mx-auto">❌</div>
-            <p className="text-[16px] font-bold text-rose-700">예약 취소됨</p>
+            <p className="text-[16px] font-bold text-rose-700">{getLabel("status_cancelled", lang)}</p>
             <p className="text-[13px] text-rose-500">해당 예약은 취소되었습니다.</p>
             {reservation.giftcardType && (
               <p className="text-[13px] text-slate-500 pt-2">{reservation.giftcardType} · {fmt(reservation.amount)}</p>
@@ -507,7 +538,7 @@ export default function ReservationCheck() {
         {reservation && reservation.status === "completed" && (
           <div className="bg-slate-50 border border-slate-200 rounded-2xl px-5 py-8 text-center space-y-2">
             <div className="w-14 h-14 rounded-full bg-slate-100 flex items-center justify-center text-[28px] mx-auto">✅</div>
-            <p className="text-[16px] font-bold text-slate-700">처리 완료</p>
+            <p className="text-[16px] font-bold text-slate-700">{getLabel("status_completed", lang)}</p>
             <p className="text-[13px] text-slate-500">거래가 완료된 예약입니다.</p>
           </div>
         )}
@@ -516,7 +547,7 @@ export default function ReservationCheck() {
         {reservation && reservation.status === "no_show" && (
           <div className="bg-red-50 border border-red-200 rounded-2xl px-5 py-8 text-center space-y-2">
             <div className="w-14 h-14 rounded-full bg-red-100 flex items-center justify-center text-[28px] mx-auto">🚫</div>
-            <p className="text-[16px] font-bold text-red-700">노쇼 처리됨</p>
+            <p className="text-[16px] font-bold text-red-700">{getLabel("status_no_show", lang)}</p>
             <p className="text-[13px] text-red-500">해당 예약은 노쇼 처리되었습니다.</p>
           </div>
         )}
@@ -527,7 +558,7 @@ export default function ReservationCheck() {
             <div className="bg-white rounded-3xl border border-slate-100 shadow-sm overflow-hidden">
               <div className="px-5 pt-5 pb-4 border-b border-slate-50 flex items-center gap-2">
                 <span className="text-[20px]">📌</span>
-                <p className="text-[17px] font-bold text-slate-800">예약확인</p>
+                <p className="text-[17px] font-bold text-slate-800">{getLabel("reservation_card_title", lang)}</p>
               </div>
               <div className="px-5 py-2 space-y-0">
                 {(reservation.items && reservation.items.length > 0)
@@ -614,7 +645,7 @@ export default function ReservationCheck() {
                       disabled={cancelling}
                       className="w-full py-3 rounded-xl border border-rose-200 text-rose-500 text-[14px] font-semibold hover:bg-rose-50 transition-colors active:scale-95 disabled:opacity-40"
                     >
-                      {cancelling ? "취소 처리 중…" : "예약 취소"}
+                      {cancelling ? "취소 처리 중…" : getLabel("cancel_reservation", lang)}
                     </button>
                   </>
               }
@@ -631,7 +662,7 @@ export default function ReservationCheck() {
             <div className="bg-emerald-50 border border-emerald-100 rounded-2xl px-5 py-4 flex items-center gap-3">
               <div className="w-10 h-10 rounded-full bg-emerald-100 flex items-center justify-center text-[20px] flex-shrink-0">✅</div>
               <div>
-                <p className="text-[15px] font-bold text-emerald-800">예약 확정</p>
+                <p className="text-[15px] font-bold text-emerald-800">{getLabel("reservation_confirmed", lang)}</p>
                 <p className="text-[12px] text-emerald-600 mt-0.5">매입담당자가 배정되었습니다.</p>
               </div>
             </div>
@@ -690,7 +721,7 @@ export default function ReservationCheck() {
                   className="flex items-center justify-center gap-2 w-full py-3.5 rounded-xl text-white text-[14px] font-bold transition-all active:scale-95"
                   style={{ background: "linear-gradient(135deg,#6366f1,#8b5cf6)" }}
                 >
-                  💬 상담하기
+                  {getLabel("consult", lang)}
                 </a>
               </div>
             )}
@@ -706,7 +737,7 @@ export default function ReservationCheck() {
                       disabled={cancelling}
                       className="w-full py-3 rounded-xl border border-rose-200 text-rose-500 text-[14px] font-semibold hover:bg-rose-50 transition-colors active:scale-95 disabled:opacity-40"
                     >
-                      {cancelling ? "취소 처리 중…" : "예약 취소"}
+                      {cancelling ? "취소 처리 중…" : getLabel("cancel_reservation", lang)}
                     </button>
                   </>
               }
