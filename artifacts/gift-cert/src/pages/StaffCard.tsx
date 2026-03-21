@@ -281,16 +281,19 @@ export default function StaffCard() {
           {r && (
             <button
               onClick={() => setChatOpen(true)}
-              className="relative w-10 h-10 flex items-center justify-center rounded-xl hover:bg-indigo-50 transition-colors text-indigo-500 flex-shrink-0"
+              className="relative flex flex-col items-center justify-center gap-0.5 px-2 py-1.5 rounded-xl hover:bg-indigo-50 transition-colors text-indigo-500 flex-shrink-0"
             >
-              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
-              </svg>
-              {unread > 0 && (
-                <span className="absolute -top-0.5 -right-0.5 bg-rose-500 text-white text-[10px] font-black min-w-[16px] h-[16px] rounded-full flex items-center justify-center px-1">
-                  {unread > 9 ? "9+" : unread}
-                </span>
-              )}
+              <div className="relative">
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
+                </svg>
+                {unread > 0 && (
+                  <span className="absolute -top-1 -right-1 bg-rose-500 text-white text-[9px] font-black min-w-[15px] h-[15px] rounded-full flex items-center justify-center px-0.5">
+                    {unread > 9 ? "9+" : unread}
+                  </span>
+                )}
+              </div>
+              <span className="text-[10px] font-bold text-indigo-500">채팅하기</span>
             </button>
           )}
         </div>
