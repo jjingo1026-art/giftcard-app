@@ -521,6 +521,26 @@ function HomePage({ onGoUrgent, initialType = DEFAULT_TYPE, onTypeChange, rateGr
               </div>
             </div>
 
+            {/* 신청 CTA 버튼 */}
+            <div className="space-y-2.5">
+              <button
+                type="button"
+                onClick={() => { window.location.href = "/terms?urgent=1"; }}
+                className="w-full py-4 rounded-2xl text-white text-[15px] font-bold transition-all active:scale-[0.98] flex items-center justify-center gap-2 shadow-sm"
+                style={{ background: "linear-gradient(135deg, #f43f5e 0%, #e11d48 100%)" }}
+              >
+                🚨 긴급 판매 신청
+              </button>
+              <button
+                type="button"
+                onClick={() => { window.location.href = "/terms"; }}
+                className="w-full py-4 rounded-2xl text-white text-[15px] font-bold transition-all active:scale-[0.98] flex items-center justify-center gap-2 shadow-sm"
+                style={{ background: "linear-gradient(135deg, #6366f1 0%, #4f46e5 100%)" }}
+              >
+                📋 예약 신청하기
+              </button>
+            </div>
+
             <a
               href="/check.html"
               className="flex items-center justify-between px-5 py-4 bg-white rounded-3xl shadow-sm border border-slate-100 active:scale-[0.98] transition-all"
