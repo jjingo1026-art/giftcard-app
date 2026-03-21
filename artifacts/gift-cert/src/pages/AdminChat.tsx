@@ -249,26 +249,41 @@ export default function AdminChat() {
             const displayText = isImg ? "" : getTranslated(m, userLang);
             const isTranslated = !isImg && userLang !== "ko" && displayText !== m.message;
 
-            // 시스템 메시지: "번호:" 포함 라인 파싱
+            // 시스템 메시지: "번호:" / "입금계좌:" 포함 라인 파싱
+            const CopyBtn = ({ value, label = "복사" }: { value: string; label?: string }) => (
+              <button
+                onClick={() => copyText(value)}
+                className="flex-shrink-0 flex items-center gap-1 px-2 py-0.5 rounded-lg bg-blue-100 text-blue-600 text-[10px] font-bold hover:bg-blue-200 active:scale-95 transition-all"
+              >
+                <svg width="11" height="11" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+                  <rect x="8" y="8" width="10" height="10" rx="2"/><path d="M4 12H3a1 1 0 01-1-1V3a1 1 0 011-1h8a1 1 0 011 1v1"/>
+                </svg>
+                {label}
+              </button>
+            );
+
             const renderSystemText = (text: string) => {
               const lines = text.split("\n");
               return lines.map((line, i) => {
+                // 상품권 번호
                 const numMatch = line.match(/번호:\s*(.+)/);
                 if (numMatch) {
                   const num = numMatch[1].trim();
                   return (
                     <div key={i} className="flex items-center gap-1.5 my-0.5">
                       <span className="text-[13px] leading-snug flex-1">{line}</span>
-                      <button
-                        onClick={() => copyText(num)}
-                        className="flex-shrink-0 flex items-center gap-1 px-2 py-0.5 rounded-lg bg-blue-100 text-blue-600 text-[10px] font-bold hover:bg-blue-200 active:scale-95 transition-all"
-                        title="번호 복사"
-                      >
-                        <svg width="11" height="11" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-                          <rect x="8" y="8" width="10" height="10" rx="2"/><path d="M4 12H3a1 1 0 01-1-1V3a1 1 0 011-1h8a1 1 0 011 1v1"/>
-                        </svg>
-                        복사
-                      </button>
+                      <CopyBtn value={num} />
+                    </div>
+                  );
+                }
+                // 입금계좌 — "🏦 입금계좌: 은행명 계좌번호 (예금주)"
+                const acctMatch = line.match(/입금계좌:\s*(.+?)\s+(\d[\d\-]+)\s*\((.+?)\)/);
+                if (acctMatch) {
+                  const acctNum = acctMatch[2].replace(/-/g, "");
+                  return (
+                    <div key={i} className="flex items-center gap-1.5 my-0.5">
+                      <span className="text-[13px] leading-snug flex-1">{line}</span>
+                      <CopyBtn value={acctNum} label="계좌복사" />
                     </div>
                   );
                 }
