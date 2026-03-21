@@ -20,8 +20,13 @@ function getReservationId() {
   return new URLSearchParams(window.location.search).get("id");
 }
 
+function getFromParam() {
+  return new URLSearchParams(window.location.search).get("from");
+}
+
 export default function CustomerChat() {
   const reservationId = getReservationId();
+  const fromMobile = getFromParam() === "mobile";
   const [chatMessages, setChatMessages] = useState<Message[]>([]);
   const [msg, setMsg] = useState("");
   const [userLang, setUserLang] = useState(() => getSavedLang());
@@ -114,8 +119,20 @@ export default function CustomerChat() {
 
       <header className="bg-white border-b border-slate-100 sticky top-0 z-40 shadow-sm">
         <div className="max-w-2xl mx-auto px-4 py-3 flex items-center gap-3">
-          <button onClick={() => { window.location.href = "/check.html"; }} className="text-slate-400 hover:text-slate-600">←</button>
-          <h1 className="text-[15px] font-bold text-slate-800 flex-1">상담 채팅 · #{reservationId}</h1>
+          <button
+            onClick={() => { window.location.href = fromMobile ? "/mobile/check" : "/check.html"; }}
+            className="w-8 h-8 rounded-xl bg-slate-100 flex items-center justify-center hover:bg-slate-200 transition-colors flex-shrink-0"
+          >
+            <svg width="16" height="16" viewBox="0 0 20 20" fill="none">
+              <path d="M12 4l-6 6 6 6" stroke="#64748b" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/>
+            </svg>
+          </button>
+          <div className="flex-1 min-w-0">
+            <h1 className="text-[15px] font-bold text-slate-800 truncate flex items-center gap-2">
+              {fromMobile ? "📱 모바일상품권 판매 채팅" : `상담 채팅 · #${reservationId}`}
+            </h1>
+            {fromMobile && <p className="text-[11px] text-slate-400">접수번호 #{reservationId}</p>}
+          </div>
           <SoundBell role="customer" />
           <button
             onClick={() => setShowLangPicker((v) => !v)}

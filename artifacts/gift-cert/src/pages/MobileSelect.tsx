@@ -1445,14 +1445,21 @@ export default function MobileSelect() {
         {/* 채팅 버튼 */}
         <div className="w-full max-w-sm space-y-2.5">
           <button
-            onClick={() => { location.href = `/chat?id=${done.id}`; }}
+            onClick={() => { location.href = `/chat?id=${done.id}&from=mobile`; }}
             className="w-full py-4 rounded-2xl text-white text-[15px] font-bold transition-all active:scale-[0.98] flex items-center justify-center gap-2.5 shadow-md"
             style={{ background: "linear-gradient(135deg,#7c3aed,#6d28d9)" }}
           >
             <span className="text-[20px]">💬</span>
             담당자와 채팅하기
           </button>
-          <p className="text-center text-[11px] text-slate-400">담당자와 실시간으로 메시지를 주고받을 수 있습니다</p>
+          <button
+            onClick={() => { location.href = `/mobile/check`; }}
+            className="w-full py-3 rounded-2xl text-slate-500 text-[13px] font-semibold transition-all active:scale-[0.98] border border-slate-200 bg-white hover:bg-slate-50 flex items-center justify-center gap-2"
+          >
+            <span>🔍</span>
+            신청 내역 조회하기
+          </button>
+          <p className="text-center text-[11px] text-slate-400">신청 내역 조회에서 언제든지 채팅을 이어할 수 있습니다</p>
         </div>
 
         <button

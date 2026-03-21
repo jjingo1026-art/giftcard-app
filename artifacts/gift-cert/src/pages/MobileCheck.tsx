@@ -252,6 +252,18 @@ export default function MobileCheck() {
                 </div>
               )}
 
+              {/* 채팅 버튼 */}
+              {!["cancelled", "no_show"].includes(reservation.status) && (
+                <button
+                  onClick={() => { window.location.href = `/chat?id=${reservation.id}&from=mobile`; }}
+                  className="w-full py-3.5 rounded-2xl text-white text-[14px] font-bold transition-all active:scale-[0.98] flex items-center justify-center gap-2 shadow-sm"
+                  style={{ background: "linear-gradient(135deg,#7c3aed,#6d28d9)" }}
+                >
+                  <span>💬</span>
+                  담당자와 채팅하기
+                </button>
+              )}
+
               {/* 취소 버튼 */}
               {canCancel && !cancelDone && (
                 <div className="space-y-2">
