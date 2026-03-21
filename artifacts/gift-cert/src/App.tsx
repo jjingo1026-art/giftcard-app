@@ -889,27 +889,6 @@ function SubmissionCard({ entry }: { entry: ReservationEntry | UrgentEntry }) {
         ))}
       </div>
 
-      {/* ── 담당자 배정 버튼 ── */}
-      <div className="px-4 pb-4">
-        {assignedTo ? (
-          <div className="w-full py-3 rounded-2xl text-[14px] font-bold text-center"
-            style={{ background: "#f0fdf4", color: "#16a34a", border: "1.5px solid #bbf7d0" }}>
-            ✅ {assignedTo} 배정 완료
-          </div>
-        ) : (
-          <button
-            type="button"
-            onClick={openAssign}
-            className="w-full py-3 rounded-2xl text-[14px] font-bold transition-all active:scale-[0.98]"
-            style={isUrgent
-              ? { background: "#ef4444", color: "#fff" }
-              : { background: "#6366f1", color: "#fff" }
-            }
-          >
-            담당자 배정
-          </button>
-        )}
-      </div>
 
       {/* ── 직원 선택 모달 ── */}
       {showModal && (
