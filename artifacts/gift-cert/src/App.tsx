@@ -320,6 +320,18 @@ function VoucherItems({
           </div>
         </div>
       )}
+
+      {hasAnyAmount && totalFace < 300000 && (
+        <div className="flex items-start gap-2.5 px-4 py-3 rounded-2xl bg-amber-50 border border-amber-200">
+          <span className="text-[15px] flex-shrink-0 mt-0.5">⚠️</span>
+          <div>
+            <p className="text-[12px] font-bold text-amber-700 leading-snug">30만원 미만 신청 안내</p>
+            <p className="text-[12px] text-amber-600 mt-0.5 leading-relaxed">
+              액면가 30만원 미만의 판매 신청은 경비로 인하여 <span className="font-bold">3,000원이 차감</span>됩니다.
+            </p>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
