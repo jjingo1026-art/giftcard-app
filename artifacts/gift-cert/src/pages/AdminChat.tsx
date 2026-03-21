@@ -1,9 +1,24 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { useLocation } from "wouter";
 import { io, Socket } from "socket.io-client";
 import { getAdminToken } from "./AdminLogin";
 import { useImageUpload } from "@/hooks/useImageUpload";
 import { LANGUAGES, getTranslated, getSavedLang, saveLang } from "@/lib/languages";
+
+async function downloadImage(url: string) {
+  try {
+    const resp = await fetch(url);
+    const blob = await resp.blob();
+    const a = document.createElement("a");
+    a.href = URL.createObjectURL(blob);
+    const ext = blob.type.split("/")[1] || "jpg";
+    a.download = `barcode_${Date.now()}.${ext}`;
+    a.click();
+    URL.revokeObjectURL(a.href);
+  } catch {
+    window.open(url, "_blank");
+  }
+}
 
 interface Message {
   id: number;
@@ -28,8 +43,25 @@ export default function AdminChat() {
   const [userLang, setUserLang] = useState(() => getSavedLang());
   const [showLangPicker, setShowLangPicker] = useState(false);
   const [reservationKind, setReservationKind] = useState<string | null>(null);
+  const [copyToast, setCopyToast] = useState<string | null>(null);
   const chatBoxRef = useRef<HTMLDivElement>(null);
   const socketRef = useRef<Socket | null>(null);
+
+  const copyText = useCallback((text: string) => {
+    navigator.clipboard.writeText(text).then(() => {
+      setCopyToast("복사됨!");
+      setTimeout(() => setCopyToast(null), 1800);
+    }).catch(() => {
+      const el = document.createElement("textarea");
+      el.value = text;
+      document.body.appendChild(el);
+      el.select();
+      document.execCommand("copy");
+      document.body.removeChild(el);
+      setCopyToast("복사됨!");
+      setTimeout(() => setCopyToast(null), 1800);
+    });
+  }, []);
 
   const token = getAdminToken();
   if (!token) { navigate("/admin/login"); return null; }
@@ -128,6 +160,13 @@ export default function AdminChat() {
 
   return (
     <div className="min-h-screen bg-slate-50 flex flex-col">
+      {/* 복사 toast */}
+      {copyToast && (
+        <div className="fixed bottom-24 left-1/2 -translate-x-1/2 z-50 bg-slate-800 text-white text-[13px] font-bold px-5 py-2.5 rounded-2xl shadow-lg animate-fade-in">
+          ✓ {copyToast}
+        </div>
+      )}
+
       <header className="bg-white border-b border-slate-100 sticky top-0 z-40 shadow-sm">
         <div className="max-w-2xl mx-auto px-4 py-3 flex items-center gap-2">
           <button
@@ -204,30 +243,90 @@ export default function AdminChat() {
           )}
           {messages.map((m) => {
             const isMine = m.sender === "admin";
+            const isSystem = m.sender === "system";
             const isImg = m.message.startsWith("[IMG:");
             const imgUrl = isImg ? m.message.slice(5, -1) : "";
             const displayText = isImg ? "" : getTranslated(m, userLang);
             const isTranslated = !isImg && userLang !== "ko" && displayText !== m.message;
+
+            // 시스템 메시지: "번호:" 포함 라인 파싱
+            const renderSystemText = (text: string) => {
+              const lines = text.split("\n");
+              return lines.map((line, i) => {
+                const numMatch = line.match(/번호:\s*(.+)/);
+                if (numMatch) {
+                  const num = numMatch[1].trim();
+                  return (
+                    <div key={i} className="flex items-center gap-1.5 my-0.5">
+                      <span className="text-[13px] leading-snug flex-1">{line}</span>
+                      <button
+                        onClick={() => copyText(num)}
+                        className="flex-shrink-0 flex items-center gap-1 px-2 py-0.5 rounded-lg bg-blue-100 text-blue-600 text-[10px] font-bold hover:bg-blue-200 active:scale-95 transition-all"
+                        title="번호 복사"
+                      >
+                        <svg width="11" height="11" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+                          <rect x="8" y="8" width="10" height="10" rx="2"/><path d="M4 12H3a1 1 0 01-1-1V3a1 1 0 011-1h8a1 1 0 011 1v1"/>
+                        </svg>
+                        복사
+                      </button>
+                    </div>
+                  );
+                }
+                return <p key={i} className="text-[13px] leading-snug">{line}</p>;
+              });
+            };
+
             return (
               <div key={m.id} className={`flex flex-col ${isMine ? "items-end" : "items-start"}`}>
-                <div className={`max-w-[75%] rounded-2xl text-[14px] shadow-sm overflow-hidden ${
+                <div className={`max-w-[82%] rounded-2xl text-[14px] shadow-sm overflow-hidden ${
                   isImg ? "p-0 bg-transparent shadow-none" :
                   isMine
                     ? "px-3.5 py-2.5 bg-indigo-500 text-white rounded-br-sm"
                     : m.sender === "staff"
                       ? "px-3.5 py-2.5 bg-violet-100 text-violet-800 rounded-bl-sm"
-                      : "px-3.5 py-2.5 bg-slate-100 text-slate-800 rounded-bl-sm"
+                      : isSystem
+                        ? "px-3.5 py-2.5 bg-blue-50 text-slate-800 border border-blue-100 rounded-bl-sm"
+                        : "px-3.5 py-2.5 bg-slate-100 text-slate-800 rounded-bl-sm"
                 }`}>
                   {!isMine && !isImg && (
-                    <p className="text-[10px] font-bold mb-0.5 opacity-60">{m.senderName}</p>
+                    <p className={`text-[10px] font-bold mb-0.5 ${isSystem ? "text-blue-500" : "opacity-60"}`}>{m.senderName}</p>
                   )}
                   {isImg ? (
-                    <img
-                      src={imgUrl}
-                      alt="이미지"
-                      className="max-w-[220px] max-h-[280px] rounded-2xl object-cover cursor-pointer"
-                      onClick={() => window.open(imgUrl, "_blank")}
-                    />
+                    <div className="flex flex-col items-start gap-1.5">
+                      <img
+                        src={imgUrl}
+                        alt="이미지"
+                        className="max-w-[220px] max-h-[300px] rounded-2xl object-cover cursor-pointer border border-slate-100 shadow-sm"
+                        onClick={() => window.open(imgUrl, "_blank")}
+                      />
+                      <div className="flex gap-1.5">
+                        <button
+                          onClick={() => window.open(imgUrl, "_blank")}
+                          className="flex items-center gap-1 px-2.5 py-1 rounded-xl bg-slate-100 text-slate-600 text-[11px] font-bold hover:bg-slate-200 active:scale-95 transition-all"
+                        >
+                          <svg width="12" height="12" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+                            <path d="M10 2v12m0 0l-4-4m4 4l4-4M3 17h14"/>
+                          </svg>
+                          보기
+                        </button>
+                        <button
+                          onClick={() => downloadImage(imgUrl)}
+                          className="flex items-center gap-1 px-2.5 py-1 rounded-xl bg-blue-100 text-blue-600 text-[11px] font-bold hover:bg-blue-200 active:scale-95 transition-all"
+                        >
+                          <svg width="12" height="12" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+                            <path d="M4 14v3h12v-3M10 3v9m0 0l-3-3m3 3l3-3"/>
+                          </svg>
+                          다운로드
+                        </button>
+                      </div>
+                    </div>
+                  ) : isSystem ? (
+                    <>
+                      {renderSystemText(displayText)}
+                      {isTranslated && (
+                        <p className="text-[10px] mt-1 opacity-60 border-t border-blue-100 pt-1">원문: {m.message}</p>
+                      )}
+                    </>
                   ) : (
                     <>
                       <p className="whitespace-pre-wrap">{displayText}</p>
@@ -239,7 +338,7 @@ export default function AdminChat() {
                     </>
                   )}
                   {!isImg && (
-                    <p className={`text-[10px] mt-0.5 ${isMine ? "text-indigo-200" : "text-slate-400"}`}>
+                    <p className={`text-[10px] mt-0.5 ${isMine ? "text-indigo-200" : isSystem ? "text-blue-300" : "text-slate-400"}`}>
                       {new Date(m.time).toLocaleTimeString()}
                     </p>
                   )}
