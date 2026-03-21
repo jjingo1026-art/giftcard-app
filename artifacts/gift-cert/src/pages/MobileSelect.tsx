@@ -292,13 +292,12 @@ export default function MobileSelect() {
     setItems((prev) => prev.map((it, i) => {
       if (i !== idx) return it;
       const already = it.checkedSubs.includes(sub);
-      const newSubs = already
-        ? it.checkedSubs.filter((s) => s !== sub)
-        : [...it.checkedSubs, sub];
+      const newSubs = already ? [] : [sub];
+      const clearNumber = already || sub !== "23으로 시작하는 교환권";
       return {
         ...it,
         checkedSubs: newSubs,
-        voucherNumber: sub === "23으로 시작하는 교환권" && already ? "" : it.voucherNumber,
+        voucherNumber: clearNumber ? "" : it.voucherNumber,
       };
     }));
   }
