@@ -1169,7 +1169,7 @@ router.get("/chat-list", requireAuth, async (req, res) => {
 
   const ids = [...new Set(allChats.map((c) => c.reservationId))];
   const reservations = await db
-    .select({ id: reservationsTable.id, name: reservationsTable.name, phone: reservationsTable.phone, location: reservationsTable.location, status: reservationsTable.status, date: reservationsTable.date })
+    .select({ id: reservationsTable.id, name: reservationsTable.name, phone: reservationsTable.phone, location: reservationsTable.location, status: reservationsTable.status, date: reservationsTable.date, kind: reservationsTable.kind })
     .from(reservationsTable)
     .where(inArray(reservationsTable.id, ids));
 
@@ -1203,6 +1203,7 @@ router.get("/chat-list", requireAuth, async (req, res) => {
         location: r.location,
         status: r.status,
         date: r.date,
+        kind: r.kind,
         unreadCount: unread,
         lastMessage: last.message,
         lastSender: last.senderName,

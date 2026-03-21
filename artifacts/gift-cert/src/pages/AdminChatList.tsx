@@ -9,6 +9,7 @@ interface ChatListItem {
   location: string;
   status: string;
   date?: string;
+  kind: string;
   unreadCount: number;
   lastMessage: string;
   lastSender: string;
@@ -43,6 +44,71 @@ function senderIcon(role: string) {
   return "💬";
 }
 
+function ChatCard({ item }: { item: ChatListItem }) {
+  const isMobile = item.kind === "mobile";
+  return (
+    <div
+      onClick={() => { window.location.href = `/admin/chat?id=${item.reservationId}`; }}
+      className={`bg-white rounded-2xl border shadow-sm px-4 py-3.5 flex items-center gap-3 cursor-pointer transition-all active:scale-[0.99]
+        ${item.unreadCount > 0
+          ? isMobile
+            ? "border-blue-200 hover:border-blue-300 hover:bg-blue-50/30"
+            : "border-indigo-200 hover:border-indigo-300 hover:bg-indigo-50/30"
+          : "border-slate-100 hover:border-slate-200 hover:bg-slate-50/60"}`}
+    >
+      {/* 발신자 아이콘 */}
+      <div className={`w-10 h-10 rounded-full flex items-center justify-center text-[18px] flex-shrink-0 border
+        ${item.unreadCount > 0
+          ? isMobile ? "bg-blue-100 border-blue-200" : "bg-indigo-100 border-indigo-200"
+          : "bg-slate-100 border-slate-200"}`}>
+        {senderIcon(item.lastSenderRole)}
+      </div>
+
+      {/* 내용 */}
+      <div className="flex-1 min-w-0">
+        {/* 상단: 이름 + 상태 + 시간 */}
+        <div className="flex items-center justify-between gap-1 mb-0.5">
+          <div className="flex items-center gap-1.5 min-w-0">
+            <p className="text-[14px] font-bold text-slate-800 truncate">
+              {item.name ?? item.phone}
+            </p>
+            {item.date && (
+              <span className="text-[11px] text-slate-400 font-medium flex-shrink-0">
+                {item.date.slice(5).replace("-", "/")}
+              </span>
+            )}
+            <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded-full flex-shrink-0 ${STATUS_COLOR[item.status] ?? "bg-slate-100 text-slate-400"}`}>
+              {STATUS_LABEL[item.status] ?? item.status}
+            </span>
+          </div>
+          <span className="text-[11px] text-slate-400 flex-shrink-0">{timeAgo(item.lastTime)}</span>
+        </div>
+        {/* 장소 */}
+        <p className="text-[11px] text-slate-400 mb-1">📍 {item.location}</p>
+        {/* 마지막 메시지 */}
+        <p className={`text-[12px] truncate ${item.unreadCount > 0 ? "text-slate-700 font-semibold" : "text-slate-400 font-normal"}`}>
+          <span className={`mr-1 ${item.lastSenderRole === "staff" ? "text-violet-500" : item.lastSenderRole === "admin" ? "text-indigo-500" : "text-slate-500"}`}>
+            {item.lastSender}
+          </span>
+          {item.lastMessage}
+        </p>
+      </div>
+
+      {/* 미읽은 수 뱃지 */}
+      {item.unreadCount > 0 ? (
+        <span className={`min-w-[22px] h-[22px] rounded-full text-white text-[11px] font-black flex items-center justify-center px-1.5 flex-shrink-0
+          ${isMobile ? "bg-blue-500" : "bg-indigo-500"}`}>
+          {item.unreadCount}
+        </span>
+      ) : (
+        <svg width="14" height="14" viewBox="0 0 20 20" fill="none" className="flex-shrink-0 text-slate-300">
+          <path d="M8 4l6 6-6 6" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/>
+        </svg>
+      )}
+    </div>
+  );
+}
+
 export default function AdminChatList() {
   const [, navigate] = useLocation();
   const token = getAdminToken();
@@ -51,6 +117,7 @@ export default function AdminChatList() {
   const [items, setItems] = useState<ChatListItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
+  const [activeTab, setActiveTab] = useState<"all" | "mobile" | "paper">("all");
 
   useEffect(() => {
     adminFetch("/api/admin/chat-list")
@@ -61,7 +128,7 @@ export default function AdminChatList() {
   }, []);
 
   const q = search.trim().toLowerCase();
-  const filtered = q
+  const searched = q
     ? items.filter((it) =>
         (it.name ?? "").toLowerCase().includes(q) ||
         it.phone.replace(/-/g, "").includes(q.replace(/-/g, "")) ||
@@ -70,7 +137,16 @@ export default function AdminChatList() {
       )
     : items;
 
-  const totalUnread = items.reduce((s, it) => s + it.unreadCount, 0);
+  const mobileItems = searched.filter((it) => it.kind === "mobile");
+  const paperItems  = searched.filter((it) => it.kind !== "mobile");
+  const filtered =
+    activeTab === "mobile" ? mobileItems :
+    activeTab === "paper"  ? paperItems  :
+    searched;
+
+  const totalUnread  = items.reduce((s, it) => s + it.unreadCount, 0);
+  const mobileUnread = items.filter((it) => it.kind === "mobile").reduce((s, it) => s + it.unreadCount, 0);
+  const paperUnread  = items.filter((it) => it.kind !== "mobile").reduce((s, it) => s + it.unreadCount, 0);
 
   return (
     <div className="min-h-screen bg-slate-50">
@@ -97,6 +173,43 @@ export default function AdminChatList() {
             <p className="text-[11px] text-slate-400 mt-0.5">총 {items.length}개 대화</p>
           </div>
         </div>
+
+        {/* 탭 */}
+        <div className="max-w-2xl mx-auto px-4 pb-2 flex gap-2">
+          {([
+            { key: "all",    label: "전체",     icon: "💬", unread: totalUnread,  color: "slate" },
+            { key: "mobile", label: "모바일",   icon: "📱", unread: mobileUnread, color: "blue" },
+            { key: "paper",  label: "지류",     icon: "🎫", unread: paperUnread,  color: "indigo" },
+          ] as const).map((tab) => {
+            const active = activeTab === tab.key;
+            const colorMap = {
+              slate:  active ? "bg-slate-700 text-white border-slate-700"  : "bg-white text-slate-500 border-slate-200 hover:border-slate-400",
+              blue:   active ? "bg-blue-500 text-white border-blue-500"    : "bg-white text-blue-600 border-blue-200 hover:border-blue-400",
+              indigo: active ? "bg-indigo-500 text-white border-indigo-500": "bg-white text-indigo-600 border-indigo-200 hover:border-indigo-400",
+            };
+            const badgeMap = {
+              slate:  active ? "bg-white/30 text-white"       : "bg-slate-100 text-slate-500",
+              blue:   active ? "bg-white/30 text-white"       : "bg-blue-100 text-blue-600",
+              indigo: active ? "bg-white/30 text-white"       : "bg-indigo-100 text-indigo-600",
+            };
+            return (
+              <button
+                key={tab.key}
+                onClick={() => setActiveTab(tab.key)}
+                className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-full border text-[12px] font-bold transition-all ${colorMap[tab.color]}`}
+              >
+                <span>{tab.icon}</span>
+                {tab.label}
+                {tab.unread > 0 && (
+                  <span className={`text-[10px] font-black px-1.5 py-0.5 rounded-full ${badgeMap[tab.color]}`}>
+                    {tab.unread}
+                  </span>
+                )}
+              </button>
+            );
+          })}
+        </div>
+
         {/* 검색 */}
         <div className="max-w-2xl mx-auto px-4 pb-3">
           <div className="relative">
@@ -112,7 +225,7 @@ export default function AdminChatList() {
         </div>
       </header>
 
-      <div className="max-w-2xl mx-auto px-4 py-3 space-y-1.5">
+      <div className="max-w-2xl mx-auto px-4 py-3 space-y-3">
         {loading && (
           <div className="py-16 text-center text-slate-300 text-[14px]">불러오는 중...</div>
         )}
@@ -123,62 +236,48 @@ export default function AdminChatList() {
           </div>
         )}
 
-        {filtered.map((item) => (
-          <div
-            key={item.reservationId}
-            onClick={() => { window.location.href = `/admin/chat?id=${item.reservationId}`; }}
-            className={`bg-white rounded-2xl border shadow-sm px-4 py-3.5 flex items-center gap-3 cursor-pointer transition-all active:scale-[0.99]
-              ${item.unreadCount > 0
-                ? "border-indigo-200 hover:border-indigo-300 hover:bg-indigo-50/30"
-                : "border-slate-100 hover:border-slate-200 hover:bg-slate-50/60"}`}
-          >
-            {/* 발신자 아이콘 */}
-            <div className={`w-10 h-10 rounded-full flex items-center justify-center text-[18px] flex-shrink-0 border
-              ${item.unreadCount > 0 ? "bg-indigo-100 border-indigo-200" : "bg-slate-100 border-slate-200"}`}>
-              {senderIcon(item.lastSenderRole)}
-            </div>
-
-            {/* 내용 */}
-            <div className="flex-1 min-w-0">
-              {/* 상단: 이름 + 상태 + 시간 */}
-              <div className="flex items-center justify-between gap-1 mb-0.5">
-                <div className="flex items-center gap-1.5 min-w-0">
-                  <p className="text-[14px] font-bold text-slate-800 truncate">
-                    {item.name ?? item.phone}
-                  </p>
-                  {item.date && (
-                    <span className="text-[11px] text-slate-400 font-medium flex-shrink-0">
-                      {item.date.slice(5).replace("-", "/")}
+        {/* 전체 탭: 두 섹션으로 분리 */}
+        {!loading && activeTab === "all" && filtered.length > 0 && (
+          <>
+            {mobileItems.length > 0 && (
+              <div className="space-y-1.5">
+                <div className="flex items-center gap-2 px-1 pb-1">
+                  <span className="text-[13px] font-black text-blue-600">📱 모바일 채팅</span>
+                  <span className="text-[10px] font-bold text-blue-400">{mobileItems.length}개</span>
+                  {mobileUnread > 0 && (
+                    <span className="text-[10px] font-black bg-blue-500 text-white px-1.5 py-0.5 rounded-full">
+                      미확인 {mobileUnread}
                     </span>
                   )}
-                  <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded-full flex-shrink-0 ${STATUS_COLOR[item.status] ?? "bg-slate-100 text-slate-400"}`}>
-                    {STATUS_LABEL[item.status] ?? item.status}
-                  </span>
                 </div>
-                <span className="text-[11px] text-slate-400 flex-shrink-0">{timeAgo(item.lastTime)}</span>
+                {mobileItems.map((item) => <ChatCard key={item.reservationId} item={item} />)}
               </div>
-              {/* 장소 */}
-              <p className="text-[11px] text-slate-400 mb-1">📍 {item.location}</p>
-              {/* 마지막 메시지 */}
-              <p className={`text-[12px] truncate ${item.unreadCount > 0 ? "text-slate-700 font-semibold" : "text-slate-400 font-normal"}`}>
-                <span className={`mr-1 ${item.lastSenderRole === "staff" ? "text-violet-500" : item.lastSenderRole === "admin" ? "text-indigo-500" : "text-slate-500"}`}>
-                  {item.lastSender}
-                </span>
-                {item.lastMessage}
-              </p>
-            </div>
-
-            {/* 미읽은 수 뱃지 */}
-            {item.unreadCount > 0 ? (
-              <span className="min-w-[22px] h-[22px] rounded-full bg-indigo-500 text-white text-[11px] font-black flex items-center justify-center px-1.5 flex-shrink-0">
-                {item.unreadCount}
-              </span>
-            ) : (
-              <svg width="14" height="14" viewBox="0 0 20 20" fill="none" className="flex-shrink-0 text-slate-300">
-                <path d="M8 4l6 6-6 6" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/>
-              </svg>
             )}
-          </div>
+
+            {mobileItems.length > 0 && paperItems.length > 0 && (
+              <div className="border-t border-slate-100 my-1" />
+            )}
+
+            {paperItems.length > 0 && (
+              <div className="space-y-1.5">
+                <div className="flex items-center gap-2 px-1 pb-1">
+                  <span className="text-[13px] font-black text-indigo-600">🎫 지류 채팅</span>
+                  <span className="text-[10px] font-bold text-indigo-400">{paperItems.length}개</span>
+                  {paperUnread > 0 && (
+                    <span className="text-[10px] font-black bg-indigo-500 text-white px-1.5 py-0.5 rounded-full">
+                      미확인 {paperUnread}
+                    </span>
+                  )}
+                </div>
+                {paperItems.map((item) => <ChatCard key={item.reservationId} item={item} />)}
+              </div>
+            )}
+          </>
+        )}
+
+        {/* 모바일/지류 단독 탭 */}
+        {!loading && activeTab !== "all" && filtered.map((item) => (
+          <ChatCard key={item.reservationId} item={item} />
         ))}
       </div>
     </div>

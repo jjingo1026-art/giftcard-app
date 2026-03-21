@@ -27,6 +27,7 @@ export default function AdminChat() {
   const [msg, setMsg] = useState("");
   const [userLang, setUserLang] = useState(() => getSavedLang());
   const [showLangPicker, setShowLangPicker] = useState(false);
+  const [reservationKind, setReservationKind] = useState<string | null>(null);
   const chatBoxRef = useRef<HTMLDivElement>(null);
   const socketRef = useRef<Socket | null>(null);
 
@@ -55,6 +56,14 @@ export default function AdminChat() {
     fetch(`/api/admin/chat/${reservationId}`)
       .then((r) => r.json())
       .then((data) => { setMessages(data); scrollToBottom(); })
+      .catch(() => {});
+
+    // 예약 kind 조회
+    fetch(`/api/admin/reservations/${reservationId}`, {
+      headers: { Authorization: `Bearer ${token}` },
+    })
+      .then((r) => r.json())
+      .then((data) => { if (data?.kind) setReservationKind(data.kind); })
       .catch(() => {});
 
     const socket = io({ transports: ["websocket", "polling"] });
@@ -130,7 +139,18 @@ export default function AdminChat() {
             </svg>
           </button>
           <div className="flex-1 min-w-0">
-            <h1 className="text-[15px] font-bold text-slate-800 truncate">상담 채팅 · 예약 #{reservationId}</h1>
+            <div className="flex items-center gap-2 mb-0.5">
+              <h1 className="text-[15px] font-bold text-slate-800 truncate">상담 채팅 · 예약 #{reservationId}</h1>
+              {reservationKind === "mobile" ? (
+                <span className="flex-shrink-0 flex items-center gap-1 text-[10px] font-black bg-blue-100 text-blue-600 px-2 py-0.5 rounded-full border border-blue-200">
+                  📱 모바일
+                </span>
+              ) : reservationKind !== null ? (
+                <span className="flex-shrink-0 flex items-center gap-1 text-[10px] font-black bg-indigo-100 text-indigo-600 px-2 py-0.5 rounded-full border border-indigo-200">
+                  🎫 지류
+                </span>
+              ) : null}
+            </div>
             <p className="text-[11px] text-slate-400">관리자</p>
           </div>
 
