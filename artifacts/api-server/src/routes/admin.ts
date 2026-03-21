@@ -217,7 +217,7 @@ router.post("/staff/register", async (req, res) => {
 // 관리자용: 매입담당자별 요약 (진행중/완료 건수)
 router.get("/staff-summary", requireAuth, async (_req, res) => {
   const [staffList, grouped] = await Promise.all([
-    db.select({ id: staffTable.id, name: staffTable.name })
+    db.select({ id: staffTable.id, name: staffTable.name, preferredLocation: staffTable.preferredLocation })
       .from(staffTable)
       .where(eq(staffTable.status, "approved")),
     db.select({
@@ -233,10 +233,11 @@ router.get("/staff-summary", requireAuth, async (_req, res) => {
   const summary = staffList.map((s) => {
     const rows = grouped.filter((g) => g.staffId === s.id);
     return {
-      id:        s.id,
-      name:      s.name,
-      assigned:  Number(rows.find((g) => g.status === "assigned")?.count  ?? 0),
-      completed: Number(rows.find((g) => g.status === "completed")?.count ?? 0),
+      id:                s.id,
+      name:              s.name,
+      preferredLocation: s.preferredLocation ?? null,
+      assigned:          Number(rows.find((g) => g.status === "assigned")?.count  ?? 0),
+      completed:         Number(rows.find((g) => g.status === "completed")?.count ?? 0),
     };
   });
 

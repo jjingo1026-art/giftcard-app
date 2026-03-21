@@ -50,7 +50,7 @@ interface ChatInboxItem {
   lastTime: string;
 }
 
-interface StaffSummary { id: number; name: string; assigned: number; completed: number; }
+interface StaffSummary { id: number; name: string; preferredLocation?: string | null; assigned: number; completed: number; }
 
 interface DashboardStats {
   todayRevenue: number;
@@ -625,11 +625,16 @@ export default function AdminDashboard() {
                   onClick={() => { location.href = "/admin/staff/view.html"; }}
                   className="bg-white rounded-2xl border border-slate-100 shadow-sm px-4 py-3.5 flex items-center justify-between cursor-pointer hover:border-indigo-200 hover:bg-indigo-50/30 transition-all active:scale-[0.99]"
                 >
-                  <div className="flex items-center gap-3">
-                    <div className="w-9 h-9 rounded-full bg-indigo-100 flex items-center justify-center text-[16px]">👨‍🔧</div>
-                    <p className="text-[14px] font-bold text-slate-800">{s.name}</p>
+                  <div className="flex items-center gap-3 min-w-0">
+                    <div className="w-9 h-9 rounded-full bg-indigo-100 flex items-center justify-center text-[16px] flex-shrink-0">👨‍🔧</div>
+                    <div className="min-w-0">
+                      <p className="text-[14px] font-bold text-slate-800">{s.name}</p>
+                      {s.preferredLocation && (
+                        <p className="text-[11px] text-slate-400 mt-0.5 truncate">📍 {s.preferredLocation}</p>
+                      )}
+                    </div>
                   </div>
-                  <div className="flex items-center gap-2 text-[12px] font-bold">
+                  <div className="flex items-center gap-2 text-[12px] font-bold flex-shrink-0">
                     <span className="bg-blue-50 text-blue-600 px-2.5 py-1 rounded-full">진행 {s.assigned}건</span>
                     <span className="bg-emerald-50 text-emerald-600 px-2.5 py-1 rounded-full">완료 {s.completed}건</span>
                   </div>
