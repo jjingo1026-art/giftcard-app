@@ -428,9 +428,14 @@ function HomePage({ onGoUrgent, initialType = DEFAULT_TYPE, onTypeChange, rateGr
       </div>
       <header className="bg-white/80 backdrop-blur-md border-b border-slate-100 sticky top-0 z-40">
         <div className="max-w-md mx-auto px-5 py-4 flex items-center gap-3">
-          {agreedPrivacy && (
-            <button onClick={() => { window.location.href = "/"; }} className="text-slate-400 hover:text-slate-600 text-lg flex-shrink-0">←</button>
-          )}
+          <button
+            onClick={() => { window.location.href = "/"; }}
+            className="w-8 h-8 flex items-center justify-center rounded-xl hover:bg-slate-100 transition-colors flex-shrink-0"
+          >
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="text-slate-500">
+              <path d="M19 12H5M12 19l-7-7 7-7"/>
+            </svg>
+          </button>
           <div className="flex-1 flex items-center gap-2 min-w-0">
             <div className="flex-1 min-w-0">
               <h1 className="text-[17px] font-bold text-slate-800">우리동네상품권 예약</h1>
