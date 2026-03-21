@@ -845,9 +845,15 @@ function MobileVoucherItems({
 
               {/* Row 4: payment preview */}
               {amountNum > 0 && typeInfo && (
-                <div className="flex items-center justify-between px-3 py-2 rounded-xl text-[12px] font-semibold bg-pink-50 text-pink-500">
-                  <span>요율 {Math.round(rate * 100)}%</span>
-                  <span className="font-black text-[15px] text-pink-700">{formatKRW(payment)}</span>
+                <div className="flex items-center justify-between px-4 py-3 rounded-xl bg-gradient-to-r from-pink-50 to-rose-50 border border-pink-100">
+                  <div className="flex items-center gap-1.5">
+                    <span className="text-[11px] font-bold text-pink-400 bg-pink-100 px-2 py-0.5 rounded-full">요율 {Math.round(rate * 100)}%</span>
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#f472b6" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                      <path d="M5 12h14M12 5l7 7-7 7"/>
+                    </svg>
+                    <span className="text-[11px] font-bold text-pink-500">입금금액</span>
+                  </div>
+                  <span className="font-black text-[16px] text-pink-700 tabular-nums">{formatKRW(payment)}</span>
                 </div>
               )}
             </div>
