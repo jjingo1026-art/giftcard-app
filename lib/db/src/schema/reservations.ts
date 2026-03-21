@@ -26,6 +26,7 @@ export const reservationsTable = pgTable("reservations", {
   completedAt: timestamp("completed_at"),
   cancelledAt: timestamp("cancelled_at"),
   customerPin: text("customer_pin"),
+  imagePaths: jsonb("image_paths").$type<string[]>().default([]),
 }, (table) => [
   index("idx_reservations_date_status").on(table.date, table.status),
   index("idx_phone_status").on(table.phone, table.status),

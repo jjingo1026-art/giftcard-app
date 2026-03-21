@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useRef } from "react";
 
 const MOBILE_TYPES = [
   { label: "신세계모바일", sub: "이마트교환권", icon: "🛒", color: "#e11d48", rate: 95 },
@@ -22,6 +22,14 @@ interface MobileItem {
   voucherNumber: string;
 }
 
+interface HyundaiImage {
+  id: string;
+  preview: string;
+  objectPath: string | null;
+  uploading: boolean;
+  error: boolean;
+}
+
 function formatKRW(n: number) {
   return n === 0 ? "0원" : n.toLocaleString("ko-KR") + "원";
 }
@@ -39,12 +47,98 @@ function computeItem(item: MobileItem) {
   return { amountNum, rate, payment, typeInfo };
 }
 
+function HyundaiImageUpload({
+  images,
+  onAdd,
+  onRemove,
+}: {
+  images: HyundaiImage[];
+  onAdd: (file: File) => void;
+  onRemove: (id: string) => void;
+}) {
+  const fileRef = useRef<HTMLInputElement>(null);
+
+  function handleFiles(files: FileList | null) {
+    if (!files) return;
+    Array.from(files).forEach((f) => {
+      if (f.type.startsWith("image/")) onAdd(f);
+    });
+  }
+
+  return (
+    <div className="rounded-2xl border-2 border-sky-200 bg-sky-50 p-4 space-y-3">
+      <div className="flex items-center gap-2">
+        <span className="text-[16px]">🖼️</span>
+        <p className="text-[13px] font-bold text-sky-700">상품권 이미지 첨부</p>
+        <span className="text-[11px] bg-sky-100 text-sky-500 font-bold px-2 py-0.5 rounded-full">현대모바일</span>
+      </div>
+      <p className="text-[12px] text-sky-600 leading-relaxed">
+        현대모바일 상품권의 이미지 또는 사진을 첨부해 주세요.
+      </p>
+
+      {/* 미리보기 그리드 */}
+      {images.length > 0 && (
+        <div className="grid grid-cols-3 gap-2">
+          {images.map((img) => (
+            <div key={img.id} className="relative aspect-square rounded-xl overflow-hidden border-2 border-sky-200 bg-white">
+              <img src={img.preview} alt="상품권 이미지" className="w-full h-full object-cover" />
+              {img.uploading && (
+                <div className="absolute inset-0 bg-white/70 flex items-center justify-center">
+                  <div className="w-5 h-5 border-2 border-sky-400 border-t-transparent rounded-full animate-spin" />
+                </div>
+              )}
+              {img.error && (
+                <div className="absolute inset-0 bg-rose-50/90 flex items-center justify-center">
+                  <span className="text-[18px]">⚠️</span>
+                </div>
+              )}
+              {!img.uploading && (
+                <button
+                  type="button"
+                  onClick={() => onRemove(img.id)}
+                  className="absolute top-1 right-1 w-5 h-5 bg-rose-500 text-white rounded-full flex items-center justify-center text-[10px] font-bold"
+                >
+                  ✕
+                </button>
+              )}
+            </div>
+          ))}
+        </div>
+      )}
+
+      {/* 업로드 버튼 */}
+      <input
+        ref={fileRef}
+        type="file"
+        accept="image/*"
+        multiple
+        className="hidden"
+        onChange={(e) => handleFiles(e.target.files)}
+        onClick={(e) => { (e.target as HTMLInputElement).value = ""; }}
+      />
+      <button
+        type="button"
+        onClick={() => fileRef.current?.click()}
+        className="w-full py-3 rounded-xl border-2 border-dashed border-sky-300 text-sky-500 hover:bg-sky-100 text-[13px] font-bold transition-all active:scale-95 flex items-center justify-center gap-2"
+      >
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+          <rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/>
+        </svg>
+        사진 / 이미지 선택
+      </button>
+    </div>
+  );
+}
+
 function MobileVoucherItems({
   items,
   errors,
   onChange,
   onToggleSub,
   onVoucherNumberChange,
+  hyundaiImages,
+  onAddHyundaiImage,
+  onRemoveHyundaiImage,
   onAdd,
   onRemove,
 }: {
@@ -53,6 +147,9 @@ function MobileVoucherItems({
   onChange: (idx: number, field: "type" | "amount", val: string) => void;
   onToggleSub: (idx: number, sub: string) => void;
   onVoucherNumberChange: (idx: number, val: string) => void;
+  hyundaiImages: HyundaiImage[];
+  onAddHyundaiImage: (file: File) => void;
+  onRemoveHyundaiImage: (id: string) => void;
   onAdd: () => void;
   onRemove: (idx: number) => void;
 }) {
@@ -244,6 +341,15 @@ function MobileVoucherItems({
         </div>
       )}
 
+      {/* 현대모바일 이미지 업로드 */}
+      {items.some((it) => it.type === "현대모바일") && (
+        <HyundaiImageUpload
+          images={hyundaiImages}
+          onAdd={onAddHyundaiImage}
+          onRemove={onRemoveHyundaiImage}
+        />
+      )}
+
       {/* 합산 */}
       {hasAny && (
         <div className="rounded-2xl border border-pink-100 bg-pink-50 overflow-hidden">
@@ -288,6 +394,7 @@ export default function MobileSelect() {
 
   const [items, setItems] = useState<MobileItem[]>([{ type: initialType, amount: "", checkedSubs: [], voucherNumber: "" }]);
   const [itemErrors, setItemErrors] = useState<string[]>([""]);
+  const [hyundaiImages, setHyundaiImages] = useState<HyundaiImage[]>([]);
   const [name, setName] = useState("");
   const [phone, setPhone] = useState("");
   const [bankName, setBankName] = useState("");
@@ -332,6 +439,33 @@ export default function MobileSelect() {
   function handleAddItem() {
     setItems((prev) => [...prev, { type: MOBILE_TYPES[0].label, amount: "", checkedSubs: [], voucherNumber: "" }]);
     setItemErrors((prev) => [...prev, ""]);
+  }
+
+  async function handleAddHyundaiImage(file: File) {
+    const id = Math.random().toString(36).slice(2);
+    const preview = URL.createObjectURL(file);
+    setHyundaiImages((prev) => [...prev, { id, preview, objectPath: null, uploading: true, error: false }]);
+    try {
+      const base = import.meta.env.BASE_URL.replace(/\/$/, "");
+      const res = await fetch(`${base}/api/storage/uploads/request-url`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ name: file.name, size: file.size, contentType: file.type }),
+      });
+      const { uploadURL, objectPath } = await res.json();
+      await fetch(uploadURL, { method: "PUT", body: file, headers: { "Content-Type": file.type } });
+      setHyundaiImages((prev) => prev.map((img) => img.id === id ? { ...img, objectPath, uploading: false } : img));
+    } catch {
+      setHyundaiImages((prev) => prev.map((img) => img.id === id ? { ...img, uploading: false, error: true } : img));
+    }
+  }
+
+  function handleRemoveHyundaiImage(id: string) {
+    setHyundaiImages((prev) => {
+      const img = prev.find((i) => i.id === id);
+      if (img) URL.revokeObjectURL(img.preview);
+      return prev.filter((i) => i.id !== id);
+    });
   }
 
   function handleRemoveItem(idx: number) {
@@ -411,6 +545,7 @@ export default function MobileSelect() {
           bankName,
           accountNumber: accountNumber.trim(),
           accountHolder: accountHolder.trim(),
+          imagePaths: hyundaiImages.filter((i) => i.objectPath).map((i) => i.objectPath!),
         }),
       });
       if (!res.ok) {
@@ -483,6 +618,9 @@ export default function MobileSelect() {
             onChange={handleItemChange}
             onToggleSub={handleToggleSub}
             onVoucherNumberChange={handleVoucherNumberChange}
+            hyundaiImages={hyundaiImages}
+            onAddHyundaiImage={handleAddHyundaiImage}
+            onRemoveHyundaiImage={handleRemoveHyundaiImage}
             onAdd={handleAddItem}
             onRemove={handleRemoveItem}
           />

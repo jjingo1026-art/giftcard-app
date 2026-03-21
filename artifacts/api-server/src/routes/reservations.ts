@@ -108,6 +108,7 @@ router.post("/", async (req, res) => {
     amount?: number;
     category?: string;
     customerPin?: string;
+    imagePaths?: string[];
   };
 
   if (body.customerPin && !/^\d{4}$/.test(body.customerPin)) {
@@ -225,6 +226,7 @@ router.post("/", async (req, res) => {
       category: body.category,
       status: "pending",
       customerPin: body.customerPin ?? null,
+      imagePaths: body.imagePaths ?? [],
     })
     .returning();
 
