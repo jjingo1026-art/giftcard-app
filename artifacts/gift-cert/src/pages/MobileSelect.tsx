@@ -406,7 +406,7 @@ function MobileVoucherItems({
                   >
                     {MOBILE_TYPES.map((t) => (
                       <option key={t.label} value={t.label}>
-                        {t.icon} {t.label} ({t.rate}%)
+                        {t.icon} {t.label} ({t.rate}%){(t as any).sub ? ` ${(t as any).sub}` : ""}
                       </option>
                     ))}
                   </select>
