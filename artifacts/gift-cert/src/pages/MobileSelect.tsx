@@ -327,11 +327,11 @@ function ShinsegaeManualInput({
   onRemove: (idx: number) => void;
 }) {
   return (
-    <div className="rounded-2xl border-2 border-rose-200 bg-rose-50 p-4 space-y-3">
+    <div className="rounded-2xl border border-rose-100 bg-rose-50/30 p-4 space-y-3">
       <div className="flex items-center gap-2">
         <span className="text-[16px]">🏷️</span>
-        <p className="text-[13px] font-bold text-rose-700">상품권번호 입력</p>
-        <span className="text-[11px] bg-rose-100 text-rose-600 font-bold px-2 py-0.5 rounded-full">신세계모바일</span>
+        <p className="text-[13px] font-bold text-rose-500">상품권번호 입력</p>
+        <span className="text-[11px] bg-rose-50 text-rose-400 font-bold px-2 py-0.5 rounded-full border border-rose-100">신세계모바일</span>
       </div>
 
       <div className="space-y-2">
@@ -342,13 +342,13 @@ function ShinsegaeManualInput({
               value={num}
               onChange={(e) => onChange(idx, e.target.value.slice(0, 50))}
               placeholder={`상품권번호 ${idx + 1}`}
-              className="flex-1 px-4 py-3 rounded-xl border-2 border-rose-200 bg-white text-[14px] font-mono tracking-wider outline-none focus:border-rose-400 focus:ring-2 focus:ring-rose-100 transition-all placeholder:text-slate-300"
+              className="flex-1 px-4 py-3 rounded-xl border border-slate-200 bg-white text-[14px] font-mono tracking-wider outline-none focus:border-rose-200 focus:ring-2 focus:ring-rose-50 transition-all placeholder:text-slate-300"
             />
             {numbers.length > 1 && (
               <button
                 type="button"
                 onClick={() => onRemove(idx)}
-                className="w-9 h-9 flex-shrink-0 rounded-xl bg-rose-200 text-rose-700 flex items-center justify-center hover:bg-rose-300 active:scale-95 transition-all font-bold"
+                className="w-9 h-9 flex-shrink-0 rounded-xl bg-rose-100 text-rose-400 flex items-center justify-center hover:bg-rose-200 active:scale-95 transition-all font-bold"
               >
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
                   <path d="M5 12h14" />
@@ -359,7 +359,7 @@ function ShinsegaeManualInput({
               <button
                 type="button"
                 onClick={onAdd}
-                className="w-9 h-9 flex-shrink-0 rounded-xl bg-rose-200 text-rose-700 flex items-center justify-center hover:bg-rose-300 active:scale-95 transition-all font-bold"
+                className="w-9 h-9 flex-shrink-0 rounded-xl bg-rose-100 text-rose-400 flex items-center justify-center hover:bg-rose-200 active:scale-95 transition-all font-bold"
               >
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
                   <path d="M12 5v14M5 12h14" />
@@ -373,7 +373,7 @@ function ShinsegaeManualInput({
       {numbers.some((n) => n.trim()) && (
         <div className="px-1 pt-1 space-y-0.5">
           {numbers.filter((n) => n.trim()).map((n, i) => (
-            <p key={i} className="text-[11px] text-rose-600 font-semibold font-mono">{n}</p>
+            <p key={i} className="text-[11px] text-rose-400 font-semibold font-mono">{n}</p>
           ))}
         </div>
       )}
@@ -554,11 +554,11 @@ function ShinsegaeImageUpload({
       {images.length > 0 && (
         <div className="grid grid-cols-3 gap-2">
           {images.map((img) => (
-            <div key={img.id} className="relative aspect-square rounded-xl overflow-hidden border-2 border-rose-200 bg-white">
+            <div key={img.id} className="relative aspect-square rounded-xl overflow-hidden border border-rose-100 bg-white">
               <img src={img.preview} alt="바코드 이미지" className="w-full h-full object-cover" />
               {img.uploading && (
                 <div className="absolute inset-0 bg-white/70 flex items-center justify-center">
-                  <div className="w-5 h-5 border-2 border-rose-400 border-t-transparent rounded-full animate-spin" />
+                  <div className="w-5 h-5 border-2 border-rose-200 border-t-transparent rounded-full animate-spin" />
                 </div>
               )}
               {img.error && (
@@ -568,7 +568,7 @@ function ShinsegaeImageUpload({
               )}
               {!img.uploading && (
                 <button type="button" onClick={() => onRemove(img.id)}
-                  className="absolute top-1 right-1 w-5 h-5 bg-rose-500 text-white rounded-full flex items-center justify-center text-[10px] font-bold">✕</button>
+                  className="absolute top-1 right-1 w-5 h-5 bg-rose-300 text-white rounded-full flex items-center justify-center text-[10px] font-bold">✕</button>
               )}
             </div>
           ))}
@@ -578,7 +578,7 @@ function ShinsegaeImageUpload({
         onChange={(e) => handleFiles(e.target.files)}
         onClick={(e) => { (e.target as HTMLInputElement).value = ""; }} />
       <button type="button" onClick={() => fileRef.current?.click()}
-        className="w-full py-3 rounded-xl border-2 border-dashed border-rose-300 text-rose-500 hover:bg-rose-100 text-[13px] font-bold transition-all active:scale-95 flex items-center justify-center gap-2">
+        className="w-full py-3 rounded-xl border border-dashed border-rose-200 text-rose-400 hover:bg-rose-50 text-[13px] font-bold transition-all active:scale-95 flex items-center justify-center gap-2">
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
           <rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/>
         </svg>
@@ -801,10 +801,10 @@ function MobileVoucherItems({
               {/* Row 2: sub badge or radio checkboxes */}
               {typeInfo && (item.type === "롯데모바일" || item.type === "네이버페이 포인트" || item.type.startsWith("컬쳐랜드") || item.type === "신세계모바일") ? (() => {
                 const subList = item.type === "롯데모바일" ? LOTTE_SUBS : item.type === "네이버페이 포인트" ? NAVER_SUBS : item.type.startsWith("컬쳐랜드") ? CULTURE_SUBS : SHINSEGAE_SUBS;
-                const accentColor = item.type === "롯데모바일" ? "#f97316" : item.type === "네이버페이 포인트" ? "#03C75A" : item.type.startsWith("컬쳐랜드") ? "#6366f1" : "#e11d48";
-                const bgClass = item.type === "롯데모바일" ? "bg-orange-50 border-orange-400" : item.type === "네이버페이 포인트" ? "bg-green-50 border-green-400" : item.type.startsWith("컬쳐랜드") ? "bg-indigo-50 border-indigo-400" : "bg-rose-50 border-rose-400";
-                const textClass = item.type === "롯데모바일" ? "text-orange-700" : item.type === "네이버페이 포인트" ? "text-green-700" : item.type.startsWith("컬쳐랜드") ? "text-indigo-700" : "text-rose-700";
-                const labelClass = item.type === "롯데모바일" ? "text-orange-500" : item.type === "네이버페이 포인트" ? "text-green-600" : item.type.startsWith("컬쳐랜드") ? "text-indigo-500" : "text-rose-500";
+                const accentColor = item.type === "롯데모바일" ? "#f97316" : item.type === "네이버페이 포인트" ? "#03C75A" : item.type.startsWith("컬쳐랜드") ? "#6366f1" : "#fca5a5";
+                const bgClass = item.type === "롯데모바일" ? "bg-orange-50 border-orange-400" : item.type === "네이버페이 포인트" ? "bg-green-50 border-green-400" : item.type.startsWith("컬쳐랜드") ? "bg-indigo-50 border-indigo-400" : "bg-rose-50/50 border-rose-200";
+                const textClass = item.type === "롯데모바일" ? "text-orange-700" : item.type === "네이버페이 포인트" ? "text-green-700" : item.type.startsWith("컬쳐랜드") ? "text-indigo-700" : "text-rose-500";
+                const labelClass = item.type === "롯데모바일" ? "text-orange-500" : item.type === "네이버페이 포인트" ? "text-green-600" : item.type.startsWith("컬쳐랜드") ? "text-indigo-500" : "text-rose-400";
                 return (
                   <div className="flex flex-col gap-1.5 px-1 pt-1">
                     <p className={`text-[11px] font-bold mb-0.5 ${labelClass}`}>해당하는 항목을 선택해 주세요</p>
@@ -998,11 +998,11 @@ function MobileVoucherItems({
 
       {/* 신세계모바일 바코드 업로드 */}
       {items.some((it) => it.type === "신세계모바일" && it.checkedSubs.includes("바코드업로드")) && (
-        <div className="rounded-2xl border-2 border-rose-200 bg-rose-50 p-4 space-y-3">
+        <div className="rounded-2xl border border-rose-100 bg-rose-50/30 p-4 space-y-3">
           <div className="flex items-center gap-2">
             <span className="text-[16px]">📊</span>
-            <p className="text-[13px] font-bold text-rose-700">바코드 이미지 업로드</p>
-            <span className="text-[11px] bg-rose-100 text-rose-600 font-bold px-2 py-0.5 rounded-full">신세계모바일</span>
+            <p className="text-[13px] font-bold text-rose-500">바코드 이미지 업로드</p>
+            <span className="text-[11px] bg-rose-50 text-rose-400 font-bold px-2 py-0.5 rounded-full border border-rose-100">신세계모바일</span>
           </div>
           <ShinsegaeImageUpload
             images={shinsegaeImages}
