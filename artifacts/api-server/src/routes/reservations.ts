@@ -1,8 +1,8 @@
 import { Router, type IRouter } from "express";
 import { db } from "@workspace/db";
-import { reservationsTable, usersTable } from "@workspace/db/schema";
+import { reservationsTable, usersTable, chatsTable } from "@workspace/db/schema";
 import { eq, and, inArray } from "drizzle-orm";
-import { broadcast } from "../socket";
+import { broadcast, emitToRoom } from "../socket";
 
 const normalizePhone = (phone: string) => phone.replace(/[^0-9]/g, "");
 
@@ -234,6 +234,51 @@ router.post("/", async (req, res) => {
 
   if (isUrgent) {
     broadcast("newUrgent", inserted);
+  }
+
+  // 모바일상품권 판매신청 시 채팅으로 자동 요약 메시지 전송
+  if (body.kind === "mobile" && body.items && body.items.length > 0) {
+    const fmt = (n: number) => n.toLocaleString("ko-KR") + "원";
+    const lines: string[] = [];
+    lines.push(`📱 모바일상품권 판매신청`);
+    lines.push(`👤 신청자: ${body.name ?? "미입력"} / ${normalizedPhone}`);
+    lines.push(`🏦 입금계좌: ${body.bankName ?? ""} ${body.accountNumber ?? ""} (${body.accountHolder ?? ""})`);
+    lines.push(`━━━━━━━━━━━━━━`);
+
+    for (const item of body.items as (typeof body.items[0] & { note?: string })[]) {
+      const ratePct = (item.rate / 100).toFixed(0);
+      lines.push(`💳 ${item.type}`);
+      lines.push(`   액면가 ${fmt(item.amount)}  →  입금 ${fmt(item.payment)} (${ratePct}%)`);
+      if (item.note) {
+        const noteLines = item.note.split(" / ").filter(Boolean);
+        for (const nl of noteLines) lines.push(`   📋 ${nl}`);
+      }
+    }
+
+    lines.push(`━━━━━━━━━━━━━━`);
+    lines.push(`💰 총 입금예정금액: ${fmt(totalPayment)}`);
+
+    const summaryMsg = lines.join("\n");
+    const [chatRow] = await db.insert(chatsTable).values({
+      reservationId: inserted.id,
+      sender: "system",
+      senderName: "시스템",
+      message: summaryMsg,
+    }).returning();
+    emitToRoom(inserted.id, "newMessage", { ...chatRow, time: chatRow.time.toISOString() });
+
+    // 이미지가 있으면 각각 별도 메시지로 전송
+    if (body.imagePaths && body.imagePaths.length > 0) {
+      for (const imgUrl of body.imagePaths) {
+        const [imgRow] = await db.insert(chatsTable).values({
+          reservationId: inserted.id,
+          sender: "system",
+          senderName: "시스템",
+          message: `[IMG:${imgUrl}]`,
+        }).returning();
+        emitToRoom(inserted.id, "newMessage", { ...imgRow, time: imgRow.time.toISOString() });
+      }
+    }
   }
 
   res.status(201).json(inserted);
