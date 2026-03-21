@@ -7,7 +7,8 @@ const MOBILE_TYPES = [
   { label: "네이버페이 포인트", icon: "💚", color: "#03C75A", rate: 95 },
   { label: "컬쳐랜드 상품권", icon: "📚", color: "#6366f1", rate: 90 },
   { label: "컬쳐랜드 교환권", icon: "📚", color: "#6366f1", rate: 90 },
-  { label: "북앤라이프", icon: "📖", color: "#8b5cf6", rate: 90 },
+  { label: "북앤라이프 도서문화상품권", icon: "📖", color: "#8b5cf6", rate: 90 },
+  { label: "북앤라이프 교환권", icon: "📖", color: "#8b5cf6", rate: 90 },
   { label: "문화상품권(18핀)", icon: "🎫", color: "#ec4899", rate: 90 },
   { label: "구글기프트카드", sub: "카카오톡 구매", icon: "🎮", color: "#4ade80", rate: 90 },
 ];
@@ -853,7 +854,7 @@ function MobileVoucherItems({
       )}
 
       {/* 북앤라이프 상품권번호 입력 */}
-      {items.some((it) => it.type === "북앤라이프") && (
+      {items.some((it) => it.type.startsWith("북앤라이프")) && (
         <BooknlifeManualInput
           numbers={booknlifeNumbers}
           onChange={onBooknlifeNumberChange}
@@ -1157,7 +1158,7 @@ export default function MobileSelect() {
                 ...(it.type === "신세계모바일" && it.checkedSubs.includes("상품권번호입력")
                   ? shinsegaeNumbers.filter(Boolean).map((n) => `번호: ${n}`)
                   : []),
-                ...(it.type === "북앤라이프"
+                ...(it.type.startsWith("북앤라이프")
                   ? booknlifeNumbers.filter(Boolean).map((n) => `번호: ${n}`)
                   : []),
               ].join(" / "),
