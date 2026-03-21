@@ -307,6 +307,7 @@ function HomePage({ onGoUrgent, initialType = DEFAULT_TYPE, onTypeChange }: { on
     if (!name.trim()) fe.name = "이름을 입력해주세요";
     if (!phone.trim()) fe.phone = "연락처를 입력해주세요";
     if (!date) fe.date = "날짜 선택";
+    else if (date < new Date().toISOString().split("T")[0]) fe.date = "지난 날짜는 선택할 수 없습니다";
     if (!time || !isValidTime(time)) fe.time = "시간을 선택해주세요";
     if (!location.trim()) fe.location = "거래 장소를 입력해주세요";
     if (!accountNumber.trim()) fe.accountNumber = "계좌번호를 입력해주세요";
@@ -482,6 +483,7 @@ function HomePage({ onGoUrgent, initialType = DEFAULT_TYPE, onTypeChange }: { on
                 <input
                   type="date"
                   value={date}
+                  min={new Date().toISOString().split("T")[0]}
                   onChange={async (e) => {
                     const d = e.target.value;
                     setDate(d);
