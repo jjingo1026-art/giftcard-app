@@ -5,10 +5,10 @@ export default function Privacy() {
 
   function handleAgree() {
     if (isUrgent) {
-      location.href = "/?urgent=1&agreed=1";
+      location.href = "/rates?urgent=1&agreed=1";
     } else {
       const typeParam = type ? `&type=${encodeURIComponent(type)}` : "";
-      location.href = `/?agreed=1${typeParam}`;
+      location.href = `/rates?agreed=1${typeParam}`;
     }
   }
 
@@ -16,7 +16,14 @@ export default function Privacy() {
     <div className="min-h-screen bg-slate-50">
       <header className="bg-white border-b border-slate-100 sticky top-0 z-40 shadow-sm">
         <div className="max-w-md mx-auto px-4 py-3.5 flex items-center gap-3">
-          <button onClick={() => { window.location.href = isUrgent ? "/terms.html?urgent=1" : `/terms.html?type=${encodeURIComponent(type)}`; }} className="text-slate-400 hover:text-slate-600 text-lg">←</button>
+          <button
+            onClick={() => { window.location.href = isUrgent ? "/terms?urgent=1" : `/terms?type=${encodeURIComponent(type)}`; }}
+            className="w-8 h-8 flex items-center justify-center rounded-xl hover:bg-slate-100 transition-colors"
+          >
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="text-slate-500">
+              <path d="M19 12H5M12 19l-7-7 7-7"/>
+            </svg>
+          </button>
           <h1 className="text-[16px] font-bold text-slate-800">개인정보 수집 및 이용 동의</h1>
         </div>
       </header>

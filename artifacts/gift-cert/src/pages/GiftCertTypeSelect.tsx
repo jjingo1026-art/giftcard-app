@@ -41,7 +41,7 @@ export default function GiftCertTypeSelect() {
 
           {/* 지류상품권 버튼 */}
           <button
-            onClick={() => navigate("/rates")}
+            onClick={() => { window.location.href = "/terms"; }}
             className="w-full rounded-2xl px-6 py-5 text-left flex items-center gap-4 transition-all active:scale-[0.98] shadow-md hover:shadow-lg"
             style={{ background: "linear-gradient(135deg,#6366f1,#818cf8)" }}
           >
