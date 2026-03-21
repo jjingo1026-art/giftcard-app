@@ -120,6 +120,11 @@ router.post("/", async (req, res) => {
     return;
   }
 
+  if (body.name && !/^[가-힣a-zA-Z\s]+$/.test(body.name.trim())) {
+    res.status(400).json({ error: "이름은 한글 또는 영문만 입력 가능합니다." });
+    return;
+  }
+
   if (body.kind !== "urgent" && body.time) {
     if (!isValidTime(body.time)) {
       res.status(400).json({ error: "예약 시간은 10분 단위로만 가능합니다" });

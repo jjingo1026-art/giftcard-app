@@ -363,6 +363,7 @@ function HomePage({ onGoUrgent, initialType = DEFAULT_TYPE, onTypeChange, rateGr
   function validate() {
     const fe: typeof fieldErrors = {};
     if (!name.trim()) fe.name = "이름을 입력해주세요";
+    else if (!/^[가-힣a-zA-Z\s]+$/.test(name.trim())) fe.name = "이름은 한글 또는 영문만 입력 가능합니다";
     if (!phone.trim()) fe.phone = "연락처를 입력해주세요";
     if (!date) fe.date = "날짜 선택";
     else if (date < new Date().toISOString().split("T")[0]) fe.date = "지난 날짜는 선택할 수 없습니다";
@@ -579,7 +580,7 @@ function HomePage({ onGoUrgent, initialType = DEFAULT_TYPE, onTypeChange, rateGr
           </div>
           <form onSubmit={handleSubmit} className="px-5 pb-5 space-y-4">
             <Field label="이름" required error={fieldErrors.name}>
-              <input type="text" value={name} onChange={(e) => { setName(e.target.value); setFieldErrors((p) => ({ ...p, name: "" })); }} placeholder="홍길동" className={inputCls(!!fieldErrors.name)} />
+              <input type="text" value={name} onChange={(e) => { setName(e.target.value.replace(/[^가-힣a-zA-Z\s]/g, "")); setFieldErrors((p) => ({ ...p, name: "" })); }} placeholder="홍길동" className={inputCls(!!fieldErrors.name)} />
             </Field>
             <Field label="연락처" required error={fieldErrors.phone}>
               <input type="tel" value={phone} onChange={(e) => { setPhone(e.target.value); setFieldErrors((p) => ({ ...p, phone: "" })); }} placeholder="010-0000-0000" className={inputCls(!!fieldErrors.phone)} />
@@ -1007,6 +1008,7 @@ function UrgentPage({ onBack, initialType = DEFAULT_TYPE }: { onBack: () => void
   function validate() {
     const fe: typeof fieldErrors = {};
     if (!name.trim()) fe.name = "성명을 입력해주세요";
+    else if (!/^[가-힣a-zA-Z\s]+$/.test(name.trim())) fe.name = "이름은 한글 또는 영문만 입력 가능합니다";
     if (!phone.trim()) fe.phone = "판매자 전화번호를 입력해주세요";
     if (!locationMain.trim()) fe.locationMain = "거래 장소를 입력해주세요";
     if (!accountNumber.trim()) fe.accountNumber = "계좌번호를 입력해주세요";
@@ -1091,7 +1093,7 @@ function UrgentPage({ onBack, initialType = DEFAULT_TYPE }: { onBack: () => void
           </div>
           <form onSubmit={handleSubmit} className="px-5 pb-5 space-y-4">
             <Field label="성명" required error={fieldErrors.name}>
-              <input type="text" value={name} onChange={(e) => { setName(e.target.value); setFieldErrors((p) => ({ ...p, name: "" })); }} placeholder="홍길동" className={inputCls(!!fieldErrors.name, "rose")} />
+              <input type="text" value={name} onChange={(e) => { setName(e.target.value.replace(/[^가-힣a-zA-Z\s]/g, "")); setFieldErrors((p) => ({ ...p, name: "" })); }} placeholder="홍길동" className={inputCls(!!fieldErrors.name, "rose")} />
             </Field>
             <Field label="판매자 전화번호" required error={fieldErrors.phone}>
               <input type="tel" value={phone} onChange={(e) => { setPhone(e.target.value); setFieldErrors((p) => ({ ...p, phone: "" })); }} placeholder="010-0000-0000" className={inputCls(!!fieldErrors.phone, "rose")} />
