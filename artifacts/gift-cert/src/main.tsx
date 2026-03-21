@@ -25,6 +25,7 @@ import AdminAllReservations from "./pages/AdminAllReservations";
 import AdminAssign from "./pages/AdminAssign";
 import AdminSettings from "./pages/AdminSettings";
 import AdminChatList from "./pages/AdminChatList";
+import AdminStaffOverview from "./pages/AdminStaffOverview";
 import StaffChatList from "./pages/StaffChatList";
 import BusinessInfo from "./pages/BusinessInfo";
 import "./index.css";
@@ -60,6 +61,8 @@ createRoot(document.getElementById("root")!).render(
       <Route path="/admin/settings.html" component={AdminSettings} />
       <Route path="/admin/chats" component={AdminChatList} />
       <Route path="/admin/chats.html" component={AdminChatList} />
+      <Route path="/admin/staff-overview" component={AdminStaffOverview} />
+      <Route path="/admin/staff-overview.html" component={AdminStaffOverview} />
       <Route path="/staff/dashboard" component={StaffDashboard} />
       <Route path="/staff/dashboard.html" component={StaffDashboard} />
       <Route path="/staff/card" component={StaffCard} />

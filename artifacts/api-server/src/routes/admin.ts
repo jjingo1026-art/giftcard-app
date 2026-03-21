@@ -244,6 +244,43 @@ router.get("/staff-summary", requireAuth, async (_req, res) => {
   res.json(summary);
 });
 
+// 관리자용: 매입담당자 전체현황 (승인된 + 거래희망지역 + 예약통계)
+router.get("/staff-overview", requireAuth, async (_req, res) => {
+  const [staffList, grouped] = await Promise.all([
+    db.select({
+        id: staffTable.id,
+        name: staffTable.name,
+        phone: staffTable.phone,
+        preferredLocation: staffTable.preferredLocation,
+      })
+      .from(staffTable)
+      .where(eq(staffTable.status, "approved")),
+    db.select({
+        staffId: reservationsTable.assignedStaffId,
+        status:  reservationsTable.status,
+        count:   sql<number>`COUNT(*)`,
+      })
+      .from(reservationsTable)
+      .where(sql`${reservationsTable.assignedStaffId} IS NOT NULL`)
+      .groupBy(reservationsTable.assignedStaffId, reservationsTable.status),
+  ]);
+
+  const overview = staffList.map((s) => {
+    const rows = grouped.filter((g) => g.staffId === s.id);
+    return {
+      id:                s.id,
+      name:              s.name,
+      phone:             s.phone,
+      preferredLocation: s.preferredLocation ?? null,
+      assigned:          Number(rows.find((g) => g.status === "assigned")?.count  ?? 0),
+      completed:         Number(rows.find((g) => g.status === "completed")?.count ?? 0),
+      total:             rows.reduce((sum, g) => sum + Number(g.count), 0),
+    };
+  });
+
+  res.json(overview);
+});
+
 // 관리자용: 특정 매입담당자의 예약 조회
 // GET /staff/:staffId/reservations?status=pending|assigned|completed|cancelled
 router.get("/staff/:staffId/reservations", requireAuth, async (req, res) => {

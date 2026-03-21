@@ -504,6 +504,13 @@ export default function AdminDashboard() {
               <p id={id} className={`text-[24px] font-black mt-0.5 ${color}`}>{value}</p>
             </div>
           ))}
+          <div
+            onClick={() => { window.location.href = "/admin/staff-overview.html"; }}
+            className="bg-indigo-50 rounded-2xl border border-indigo-100 shadow-sm px-4 py-3 cursor-pointer hover:border-indigo-300 hover:bg-indigo-100/60 active:scale-[0.98] transition-all"
+          >
+            <p className="text-[11px] text-indigo-400 font-medium">매입담당자</p>
+            <p className="text-[13px] font-black mt-0.5 text-indigo-700">👨‍🔧 현황 →</p>
+          </div>
         </div>
 
         {/* 💬 채팅 인박스 */}
@@ -614,35 +621,6 @@ export default function AdminDashboard() {
           </div>
         )}
 
-        {/* 매입담당자 현황 */}
-        {staffSummary.length > 0 && (
-          <>
-            <h2 className="text-[15px] font-bold text-slate-700">👨‍🔧 매입담당자 현황</h2>
-            <div className="grid grid-cols-1 gap-2">
-              {staffSummary.map((s) => (
-                <div
-                  key={s.id}
-                  onClick={() => { location.href = "/admin/staff/view.html"; }}
-                  className="bg-white rounded-2xl border border-slate-100 shadow-sm px-4 py-3.5 flex items-center justify-between cursor-pointer hover:border-indigo-200 hover:bg-indigo-50/30 transition-all active:scale-[0.99]"
-                >
-                  <div className="flex items-center gap-3 min-w-0">
-                    <div className="w-9 h-9 rounded-full bg-indigo-100 flex items-center justify-center text-[16px] flex-shrink-0">👨‍🔧</div>
-                    <div className="min-w-0">
-                      <p className="text-[14px] font-bold text-slate-800">{s.name}</p>
-                      {s.preferredLocation && (
-                        <p className="text-[11px] text-slate-400 mt-0.5 truncate">📍 {s.preferredLocation}</p>
-                      )}
-                    </div>
-                  </div>
-                  <div className="flex items-center gap-2 text-[12px] font-bold flex-shrink-0">
-                    <span className="bg-blue-50 text-blue-600 px-2.5 py-1 rounded-full">진행 {s.assigned}건</span>
-                    <span className="bg-emerald-50 text-emerald-600 px-2.5 py-1 rounded-full">완료 {s.completed}건</span>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </>
-        )}
 
         {/* 처리완료 고객 검색 (캘린더 위) */}
         {showCompletedSearch && (() => {
