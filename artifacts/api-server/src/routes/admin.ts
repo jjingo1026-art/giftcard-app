@@ -168,7 +168,7 @@ router.post("/privacy-cleanup", requireAuth, async (_req, res) => {
 });
 
 router.get("/staff", requireAuth, async (_req, res) => {
-  const rows = await db.select({ id: staffTable.id, name: staffTable.name, phone: staffTable.phone, status: staffTable.status }).from(staffTable);
+  const rows = await db.select({ id: staffTable.id, name: staffTable.name, phone: staffTable.phone, status: staffTable.status, preferredLocation: staffTable.preferredLocation }).from(staffTable);
   res.json(rows);
 });
 
@@ -191,6 +191,16 @@ router.post("/staff/:id/reject", requireAuth, async (req, res) => {
   const [user] = await db.select().from(staffTable).where(eq(staffTable.id, id));
   if (!user) { res.status(404).json({ success: false, error: "직원을 찾을 수 없습니다." }); return; }
   await db.update(staffTable).set({ status: "rejected" }).where(eq(staffTable.id, id));
+  res.json({ success: true });
+});
+
+router.patch("/staff/:id", requireAuth, async (req, res) => {
+  const id = Number(req.params.id);
+  if (isNaN(id)) { res.status(400).json({ success: false, error: "잘못된 ID" }); return; }
+  const { preferredLocation } = req.body as { preferredLocation?: string };
+  const [user] = await db.select().from(staffTable).where(eq(staffTable.id, id));
+  if (!user) { res.status(404).json({ success: false, error: "담당자를 찾을 수 없습니다." }); return; }
+  await db.update(staffTable).set({ preferredLocation: preferredLocation ?? null }).where(eq(staffTable.id, id));
   res.json({ success: true });
 });
 
