@@ -424,6 +424,13 @@ export default function AdminDashboard() {
               )}
             </button>
             <button
+              onClick={() => { window.location.href = "/admin/noshow"; }}
+              className="text-[12px] text-rose-500 hover:text-rose-700 font-semibold transition-colors px-3 py-1.5 rounded-xl hover:bg-rose-50"
+              title="노쇼 관리"
+            >
+              🚫 노쇼
+            </button>
+            <button
               onClick={() => { window.location.href = "/admin/revenue.html"; }}
               className="text-[12px] text-emerald-500 hover:text-emerald-700 font-semibold transition-colors px-3 py-1.5 rounded-xl hover:bg-emerald-50"
             >

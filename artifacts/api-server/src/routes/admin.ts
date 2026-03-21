@@ -1449,6 +1449,123 @@ router.patch("/users/:id/unblock", requireAuth, async (req, res) => {
   res.json({ success: true });
 });
 
+// GET /admin/noshow/users — 노쇼 사용자 목록 조회
+router.get("/noshow/users", requireAuth, async (_req, res) => {
+  // 노쇼 기록이 있거나 차단된 모든 사용자 조회
+  const users = await db
+    .select()
+    .from(usersTable)
+    .where(sql`${usersTable.noShowCount} > 0 OR ${usersTable.isBlocked} = true`)
+    .orderBy(desc(usersTable.noShowCount));
+
+  // 각 사용자의 최신 예약에서 이름 가져오기
+  const userIds = users.map((u) => u.id);
+  let nameMap: Record<string, string> = {};
+  if (userIds.length > 0) {
+    const latestReservations = await db
+      .select({ phone: reservationsTable.phone, name: reservationsTable.name })
+      .from(reservationsTable)
+      .where(inArray(reservationsTable.phone, userIds))
+      .orderBy(desc(reservationsTable.id));
+    for (const r of latestReservations) {
+      if (r.phone && r.name && !nameMap[r.phone]) {
+        nameMap[r.phone] = r.name;
+      }
+    }
+  }
+
+  // 각 사용자의 노쇼 예약 목록 (최근 5건)
+  let noshowMap: Record<string, { id: number; date: string; giftcardType: string | null; createdAt: Date }[]> = {};
+  if (userIds.length > 0) {
+    const noshowRows = await db
+      .select({
+        id: reservationsTable.id,
+        phone: reservationsTable.phone,
+        date: reservationsTable.date,
+        giftcardType: reservationsTable.giftcardType,
+        createdAt: reservationsTable.createdAt,
+      })
+      .from(reservationsTable)
+      .where(and(inArray(reservationsTable.phone, userIds), eq(reservationsTable.status, "no_show")))
+      .orderBy(desc(reservationsTable.id));
+    for (const r of noshowRows) {
+      if (!r.phone) continue;
+      if (!noshowMap[r.phone]) noshowMap[r.phone] = [];
+      if (noshowMap[r.phone].length < 5) noshowMap[r.phone].push(r);
+    }
+  }
+
+  res.json(
+    users.map((u) => ({
+      id: u.id,
+      name: nameMap[u.id] ?? null,
+      noShowCount: u.noShowCount,
+      isBlocked: u.isBlocked,
+      blockedUntil: u.blockedUntil,
+      createdAt: u.createdAt,
+      updatedAt: u.updatedAt,
+      recentNoshows: noshowMap[u.id] ?? [],
+    }))
+  );
+});
+
+// GET /admin/noshow/reservations — 노쇼 예약 목록 조회
+router.get("/noshow/reservations", requireAuth, async (_req, res) => {
+  const rows = await db
+    .select()
+    .from(reservationsTable)
+    .where(eq(reservationsTable.status, "no_show"))
+    .orderBy(desc(reservationsTable.id));
+
+  res.json(
+    rows.map((r) => ({
+      id: r.id,
+      name: r.name,
+      phone: r.phone,
+      date: r.date,
+      giftcardType: r.giftcardType,
+      amount: r.amount,
+      type: r.type,
+      createdAt: r.createdAt,
+    }))
+  );
+});
+
+// PATCH /admin/users/:id/reset-noshow — 노쇼 카운트 초기화 및 차단 해제
+router.patch("/users/:id/reset-noshow", requireAuth, async (req, res) => {
+  const userId = req.params.id;
+  if (!userId) { res.status(400).json({ error: "사용자 ID가 필요합니다." }); return; }
+
+  await db.insert(usersTable)
+    .values({ id: userId, noShowCount: 0, isBlocked: false, blockedUntil: null, updatedAt: new Date() })
+    .onConflictDoUpdate({
+      target: usersTable.id,
+      set: { noShowCount: 0, isBlocked: false, blockedUntil: null, updatedAt: new Date() },
+    });
+
+  res.json({ success: true });
+});
+
+// PATCH /admin/users/:id/block-days — 지정 일수 임시 차단
+router.patch("/users/:id/block-days", requireAuth, async (req, res) => {
+  const userId = req.params.id;
+  const { days } = req.body as { days?: number };
+  if (!userId) { res.status(400).json({ error: "사용자 ID가 필요합니다." }); return; }
+  if (!days || days < 1) { res.status(400).json({ error: "차단 일수가 필요합니다." }); return; }
+
+  const blockedUntil = new Date();
+  blockedUntil.setDate(blockedUntil.getDate() + days);
+
+  await db.insert(usersTable)
+    .values({ id: userId, isBlocked: true, blockedUntil, updatedAt: new Date() })
+    .onConflictDoUpdate({
+      target: usersTable.id,
+      set: { isBlocked: true, blockedUntil, updatedAt: new Date() },
+    });
+
+  res.json({ success: true });
+});
+
 // GET /admin/site-settings — 사이트 설정 조회 (관리자용)
 router.get("/site-settings", requireAuth, async (_req, res) => {
   const rows = await db.select().from(siteSettingsTable);
