@@ -43,7 +43,7 @@ export default function MobileGiftCert() {
               <div
                 key={g.label}
                 onClick={() => { window.location.href = `/mobile/terms?type=${encodeURIComponent(g.label)}`; }}
-                className="flex flex-col items-center justify-center px-3 py-5 rounded-2xl cursor-pointer active:scale-[0.97] transition-all text-center"
+                className="flex flex-col items-center justify-center px-3 py-3 rounded-2xl cursor-pointer active:scale-[0.97] transition-all text-center"
                 style={{ backgroundColor: g.color + "12" }}
               >
                 <span className="text-[28px] leading-none">{g.icon}</span>
