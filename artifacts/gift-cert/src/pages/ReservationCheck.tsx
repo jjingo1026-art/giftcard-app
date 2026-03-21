@@ -41,6 +41,7 @@ function fmt(n?: number | null) {
 export default function ReservationCheck() {
   const [, navigate] = useLocation();
   const [phone, setPhone] = useState("");
+  const [pin, setPin] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [reservation, setReservation] = useState<ReservationInfo | null>(null);
@@ -95,7 +96,9 @@ export default function ReservationCheck() {
     if (!p) { setError("전화번호를 입력해주세요."); return; }
     setError(""); setLoading(true); setSearched(false); setEditMode(false);
     try {
-      const res = await fetch(`/api/admin/customer/reservation?phone=${encodeURIComponent(p)}`);
+      const params = new URLSearchParams({ phone: p });
+      if (pin.trim()) params.set("pin", pin.trim());
+      const res = await fetch(`/api/admin/customer/reservation?${params}`);
       const data = await res.json();
       if (data.success) {
         setReservation(data.reservation);
@@ -103,6 +106,7 @@ export default function ReservationCheck() {
       } else {
         setReservation(null);
         setStaffInfo(null);
+        setError(data.error ?? "조회 결과가 없습니다.");
       }
     } catch {
       setError("조회 중 오류가 발생했습니다.");
@@ -120,7 +124,7 @@ export default function ReservationCheck() {
       const res = await fetch("/api/admin/customer/cancel", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ phone: reservation.phone, reservationId: reservation.id }),
+        body: JSON.stringify({ phone: reservation.phone, reservationId: reservation.id, pin: pin.trim() || undefined }),
       });
       const data = await res.json();
       if (data.success) {
@@ -185,6 +189,7 @@ export default function ReservationCheck() {
           time: editTime || undefined,
           location: editLocation || undefined,
           items: itemsPayload,
+          pin: pin.trim() || undefined,
         }),
       });
       const data = await res.json();
@@ -488,25 +493,40 @@ export default function ReservationCheck() {
       <div className="max-w-lg mx-auto px-4 py-6 space-y-4">
         {/* 검색 박스 */}
         <div className="bg-white rounded-2xl border border-slate-100 shadow-sm px-5 py-5 space-y-3">
-          <label className="block text-[12px] font-bold text-slate-400 uppercase tracking-wide">전화번호</label>
-          <div className="flex gap-2">
+          <div>
+            <label className="block text-[12px] font-bold text-slate-400 uppercase tracking-wide mb-2">전화번호</label>
             <input
               type="tel"
               value={phone}
               onChange={(e) => setPhone(e.target.value)}
               onKeyDown={(e) => e.key === "Enter" && check()}
               placeholder="010-0000-0000"
-              className="flex-1 px-4 py-3 rounded-xl border border-slate-200 text-[14px] text-slate-700 outline-none focus:border-indigo-400 bg-slate-50"
+              className="w-full px-4 py-3 rounded-xl border border-slate-200 text-[14px] text-slate-700 outline-none focus:border-indigo-400 bg-slate-50"
             />
-            <button
-              onClick={check}
-              disabled={loading}
-              className="px-5 py-3 rounded-xl text-white text-[14px] font-bold transition-all active:scale-95 disabled:opacity-40 whitespace-nowrap"
-              style={{ background: "linear-gradient(135deg,#6366f1,#8b5cf6)" }}
-            >
-              {loading ? "조회 중…" : getLabel("search", lang)}
-            </button>
           </div>
+          <div>
+            <label className="block text-[12px] font-bold text-slate-400 uppercase tracking-wide mb-2">
+              비밀번호 <span className="text-slate-300 font-normal normal-case">(설정한 경우 입력)</span>
+            </label>
+            <input
+              type="password"
+              inputMode="numeric"
+              maxLength={4}
+              value={pin}
+              onChange={(e) => setPin(e.target.value.replace(/\D/g, "").slice(0, 4))}
+              onKeyDown={(e) => e.key === "Enter" && check()}
+              placeholder="숫자 4자리"
+              className="w-full px-4 py-3 rounded-xl border border-slate-200 text-[14px] text-slate-700 outline-none focus:border-indigo-400 bg-slate-50 tracking-[0.3em]"
+            />
+          </div>
+          <button
+            onClick={check}
+            disabled={loading}
+            className="w-full py-3 rounded-xl text-white text-[14px] font-bold transition-all active:scale-95 disabled:opacity-40"
+            style={{ background: "linear-gradient(135deg,#6366f1,#8b5cf6)" }}
+          >
+            {loading ? "조회 중…" : getLabel("search", lang)}
+          </button>
           {error && <p className="text-[12px] text-rose-500">{error}</p>}
         </div>
 

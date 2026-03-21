@@ -337,7 +337,7 @@ function HomePage({ onGoUrgent, initialType = DEFAULT_TYPE, onTypeChange, rateGr
   const [accountNumber, setAccountNumber] = useState("");
   const [accountHolder, setAccountHolder] = useState("");
   const [items, setItems] = useState<VoucherItem[]>([{ type: initialType, amount: "", isGift: false }]);
-  const [fieldErrors, setFieldErrors] = useState<{ name?: string; phone?: string; date?: string; time?: string; locationMain?: string; accountNumber?: string; accountHolder?: string; agreeMatch?: string }>({});
+  const [fieldErrors, setFieldErrors] = useState<{ name?: string; phone?: string; date?: string; time?: string; locationMain?: string; accountNumber?: string; accountHolder?: string; agreeMatch?: string; pin?: string }>({});
   const [itemErrors, setItemErrors] = useState<string[]>([""]);
   const [agreeMatch, setAgreeMatch] = useState(false);
   const [submissions, setSubmissions] = useState<ReservationEntry[]>([]);
@@ -348,6 +348,8 @@ function HomePage({ onGoUrgent, initialType = DEFAULT_TYPE, onTypeChange, rateGr
   const [showForm, setShowForm] = useState(() => new URLSearchParams(window.location.search).get("agreed") === "1");
   const [userLang, setUserLang] = useState(() => getSavedLang());
   const [langPickerOpen, setLangPickerOpen] = useState(false);
+  const [customerPin, setCustomerPin] = useState("");
+  const [customerPinConfirm, setCustomerPinConfirm] = useState("");
 
   function addItem() { setItems((p) => [...p, { type: DEFAULT_TYPE, amount: "", isGift: false }]); setItemErrors((p) => [...p, ""]); }
   function removeItem(idx: number) { setItems((p) => p.filter((_, i) => i !== idx)); setItemErrors((p) => p.filter((_, i) => i !== idx)); }
@@ -369,6 +371,8 @@ function HomePage({ onGoUrgent, initialType = DEFAULT_TYPE, onTypeChange, rateGr
     if (!accountNumber.trim()) fe.accountNumber = "계좌번호를 입력해주세요";
     if (!accountHolder.trim()) fe.accountHolder = "예금주를 입력해주세요";
     if (!agreeMatch) fe.agreeMatch = "신청자와 예금주 동일 여부를 확인해주세요";
+    if (customerPin && !/^\d{4}$/.test(customerPin)) fe.pin = "비밀번호는 숫자 4자리여야 합니다";
+    else if (customerPin && customerPin !== customerPinConfirm) fe.pin = "비밀번호가 일치하지 않습니다";
     setFieldErrors(fe);
     const ie = items.map((item) => (parseFloat(item.amount) || 0) <= 0 ? "금액을 입력해주세요" : "");
     setItemErrors(ie);
@@ -389,7 +393,7 @@ function HomePage({ onGoUrgent, initialType = DEFAULT_TYPE, onTypeChange, rateGr
       const res = await fetch("/api/reservations", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ kind: "reservation", isUrgent: false, name, phone, date, time, location, items: savedItems, totalPayment, bankName, accountNumber, accountHolder }),
+        body: JSON.stringify({ kind: "reservation", isUrgent: false, name, phone, date, time, location, items: savedItems, totalPayment, bankName, accountNumber, accountHolder, customerPin: customerPin || undefined }),
       });
       if (!res.ok) {
         const data = await res.json().catch(() => ({}));
@@ -730,6 +734,41 @@ function HomePage({ onGoUrgent, initialType = DEFAULT_TYPE, onTypeChange, rateGr
               {fieldErrors.agreeMatch && <p className="text-[11px] text-rose-500">⚠ {fieldErrors.agreeMatch}</p>}
             </div>
 
+            {/* 예약 비밀번호 (선택) */}
+            <div className="rounded-2xl border border-slate-200 bg-slate-50/60 overflow-hidden">
+              <div className="px-4 pt-3.5 pb-1 flex items-center gap-2">
+                <svg width="14" height="14" viewBox="0 0 20 20" fill="none" className="text-slate-400 flex-shrink-0"><rect x="3" y="8" width="14" height="10" rx="2" stroke="currentColor" strokeWidth="1.6"/><path d="M7 8V6a3 3 0 0 1 6 0v2" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round"/></svg>
+                <span className="text-[12px] font-bold text-slate-500 uppercase tracking-wide">예약 비밀번호 설정</span>
+                <span className="text-[11px] text-slate-400">(선택)</span>
+              </div>
+              <div className="px-4 pb-4 space-y-2.5 mt-2">
+                <p className="text-[12px] text-slate-400">예약 확인 시 사용할 숫자 4자리 비밀번호를 설정하세요.</p>
+                <input
+                  type="password"
+                  inputMode="numeric"
+                  maxLength={4}
+                  value={customerPin}
+                  onChange={(e) => { setCustomerPin(e.target.value.replace(/\D/g, "").slice(0, 4)); setFieldErrors((p) => ({ ...p, pin: "" })); }}
+                  placeholder="숫자 4자리"
+                  className={`w-full px-3 py-2.5 rounded-xl border text-[14px] text-slate-800 outline-none transition-all bg-white placeholder:text-slate-300 tracking-[0.3em]
+                    ${fieldErrors.pin ? "border-rose-300 focus:border-rose-400 focus:ring-2 focus:ring-rose-100" : "border-slate-200 focus:border-indigo-400 focus:ring-2 focus:ring-indigo-50"}`}
+                />
+                {customerPin.length > 0 && (
+                  <input
+                    type="password"
+                    inputMode="numeric"
+                    maxLength={4}
+                    value={customerPinConfirm}
+                    onChange={(e) => { setCustomerPinConfirm(e.target.value.replace(/\D/g, "").slice(0, 4)); setFieldErrors((p) => ({ ...p, pin: "" })); }}
+                    placeholder="비밀번호 확인"
+                    className={`w-full px-3 py-2.5 rounded-xl border text-[14px] text-slate-800 outline-none transition-all bg-white placeholder:text-slate-300 tracking-[0.3em]
+                      ${fieldErrors.pin ? "border-rose-300 focus:border-rose-400 focus:ring-2 focus:ring-rose-100" : "border-slate-200 focus:border-indigo-400 focus:ring-2 focus:ring-indigo-50"}`}
+                  />
+                )}
+                {fieldErrors.pin && <p className="text-[11px] text-rose-500">⚠ {fieldErrors.pin}</p>}
+              </div>
+            </div>
+
             <button type="submit" className="w-full py-4 rounded-2xl text-white text-[15px] font-bold transition-all duration-150 active:scale-95" style={{ background: "linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%)" }}>
               {getLabel("reservation_submit", userLang)}
             </button>
@@ -946,13 +985,15 @@ function UrgentPage({ onBack, initialType = DEFAULT_TYPE }: { onBack: () => void
   const [accountNumber, setAccountNumber] = useState("");
   const [accountHolder, setAccountHolder] = useState("");
   const [items, setItems] = useState<VoucherItem[]>([{ type: initialType, amount: "", isGift: false }]);
-  const [fieldErrors, setFieldErrors] = useState<{ name?: string; phone?: string; locationMain?: string; accountNumber?: string; accountHolder?: string; agreeMatch?: string }>({});
+  const [fieldErrors, setFieldErrors] = useState<{ name?: string; phone?: string; locationMain?: string; accountNumber?: string; accountHolder?: string; agreeMatch?: string; pin?: string }>({});
   const [itemErrors, setItemErrors] = useState<string[]>([""]);
   const [agreeMatch, setAgreeMatch] = useState(false);
   const [submissions, setSubmissions] = useState<UrgentEntry[]>([]);
   const [toast, setToast] = useState(false);
   const [errorMsg, setErrorMsg] = useState("");
   const [counter, setCounter] = useState(0);
+  const [customerPin, setCustomerPin] = useState("");
+  const [customerPinConfirm, setCustomerPinConfirm] = useState("");
   const urgentLang = getSavedLang();
 
   function addItem() { setItems((p) => [...p, { type: DEFAULT_TYPE, amount: "", isGift: false }]); setItemErrors((p) => [...p, ""]); }
@@ -971,6 +1012,8 @@ function UrgentPage({ onBack, initialType = DEFAULT_TYPE }: { onBack: () => void
     if (!accountNumber.trim()) fe.accountNumber = "계좌번호를 입력해주세요";
     if (!accountHolder.trim()) fe.accountHolder = "예금주를 입력해주세요";
     if (!agreeMatch) fe.agreeMatch = "신청자와 예금주 동일 여부를 확인해주세요";
+    if (customerPin && !/^\d{4}$/.test(customerPin)) fe.pin = "비밀번호는 숫자 4자리여야 합니다";
+    else if (customerPin && customerPin !== customerPinConfirm) fe.pin = "비밀번호가 일치하지 않습니다";
     setFieldErrors(fe);
     const ie = items.map((item) => (parseFloat(item.amount) || 0) <= 0 ? "금액을 입력해주세요" : "");
     setItemErrors(ie);
@@ -991,7 +1034,7 @@ function UrgentPage({ onBack, initialType = DEFAULT_TYPE }: { onBack: () => void
       const res = await fetch("/api/reservations", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ kind: "urgent", isUrgent: true, name, phone, location, items: savedItems, totalPayment, bankName, accountNumber, accountHolder }),
+        body: JSON.stringify({ kind: "urgent", isUrgent: true, name, phone, location, items: savedItems, totalPayment, bankName, accountNumber, accountHolder, customerPin: customerPin || undefined }),
       });
       if (!res.ok) {
         const data = await res.json().catch(() => ({}));
@@ -1156,6 +1199,41 @@ function UrgentPage({ onBack, initialType = DEFAULT_TYPE }: { onBack: () => void
                 </span>
               </label>
               {fieldErrors.agreeMatch && <p className="text-[11px] text-rose-500">⚠ {fieldErrors.agreeMatch}</p>}
+            </div>
+
+            {/* 예약 비밀번호 (선택) */}
+            <div className="rounded-2xl border border-slate-200 bg-slate-50/60 overflow-hidden">
+              <div className="px-4 pt-3.5 pb-1 flex items-center gap-2">
+                <svg width="14" height="14" viewBox="0 0 20 20" fill="none" className="text-slate-400 flex-shrink-0"><rect x="3" y="8" width="14" height="10" rx="2" stroke="currentColor" strokeWidth="1.6"/><path d="M7 8V6a3 3 0 0 1 6 0v2" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round"/></svg>
+                <span className="text-[12px] font-bold text-slate-500 uppercase tracking-wide">예약 비밀번호 설정</span>
+                <span className="text-[11px] text-slate-400">(선택)</span>
+              </div>
+              <div className="px-4 pb-4 space-y-2.5 mt-2">
+                <p className="text-[12px] text-slate-400">예약 확인 시 사용할 숫자 4자리 비밀번호를 설정하세요.</p>
+                <input
+                  type="password"
+                  inputMode="numeric"
+                  maxLength={4}
+                  value={customerPin}
+                  onChange={(e) => { setCustomerPin(e.target.value.replace(/\D/g, "").slice(0, 4)); setFieldErrors((p) => ({ ...p, pin: "" })); }}
+                  placeholder="숫자 4자리"
+                  className={`w-full px-3 py-2.5 rounded-xl border text-[14px] text-slate-800 outline-none transition-all bg-white placeholder:text-slate-300 tracking-[0.3em]
+                    ${fieldErrors.pin ? "border-rose-300 focus:border-rose-400 focus:ring-2 focus:ring-rose-100" : "border-slate-200 focus:border-rose-400 focus:ring-2 focus:ring-rose-50"}`}
+                />
+                {customerPin.length > 0 && (
+                  <input
+                    type="password"
+                    inputMode="numeric"
+                    maxLength={4}
+                    value={customerPinConfirm}
+                    onChange={(e) => { setCustomerPinConfirm(e.target.value.replace(/\D/g, "").slice(0, 4)); setFieldErrors((p) => ({ ...p, pin: "" })); }}
+                    placeholder="비밀번호 확인"
+                    className={`w-full px-3 py-2.5 rounded-xl border text-[14px] text-slate-800 outline-none transition-all bg-white placeholder:text-slate-300 tracking-[0.3em]
+                      ${fieldErrors.pin ? "border-rose-300 focus:border-rose-400 focus:ring-2 focus:ring-rose-100" : "border-slate-200 focus:border-rose-400 focus:ring-2 focus:ring-rose-50"}`}
+                  />
+                )}
+                {fieldErrors.pin && <p className="text-[11px] text-rose-500">⚠ {fieldErrors.pin}</p>}
+              </div>
             </div>
 
             <button type="submit" className="w-full py-4 rounded-2xl text-white text-[15px] font-bold transition-all duration-150 active:scale-95 flex items-center justify-center gap-2" style={{ background: "linear-gradient(135deg, #f43f5e 0%, #e11d48 100%)" }}>

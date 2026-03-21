@@ -25,6 +25,7 @@ export const reservationsTable = pgTable("reservations", {
   assignedStaffId: integer("assigned_staff_id"),
   completedAt: timestamp("completed_at"),
   cancelledAt: timestamp("cancelled_at"),
+  customerPin: text("customer_pin"),
 }, (table) => [
   index("idx_reservations_date_status").on(table.date, table.status),
   index("idx_phone_status").on(table.phone, table.status),

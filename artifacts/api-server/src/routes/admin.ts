@@ -1251,7 +1251,7 @@ router.post("/messages/:reservationId", async (req, res) => {
 
 // ── 고객용: 예약 취소 ─────────────────────────────────────────────────────────
 router.post("/customer/cancel", async (req, res) => {
-  const { phone, reservationId } = req.body as { phone?: string; reservationId?: number };
+  const { phone, reservationId, pin } = req.body as { phone?: string; reservationId?: number; pin?: string };
   if (!phone || !reservationId) {
     res.status(400).json({ success: false, error: "phone, reservationId 필수입니다." }); return;
   }
@@ -1265,6 +1265,9 @@ router.post("/customer/cancel", async (req, res) => {
   }
   if (row.phone !== phone) {
     res.status(403).json({ success: false, error: "전화번호가 일치하지 않습니다." }); return;
+  }
+  if (row.customerPin && pin !== row.customerPin) {
+    res.status(403).json({ success: false, error: "비밀번호가 일치하지 않습니다." }); return;
   }
   if (row.status === "cancelled") {
     res.json({ success: false, error: "이미 취소된 예약입니다." }); return;
@@ -1293,11 +1296,12 @@ router.post("/customer/cancel", async (req, res) => {
 // ── 고객용: 예약 수정 ─────────────────────────────────────────────────────────
 router.post("/customer/update", async (req, res) => {
   type ReqItem = { type: string; amount: number; rate: number; payment: number; isGift: boolean };
-  const { phone, reservationId, date, time, location, giftcardType, amount, isGift, items } = req.body as {
+  const { phone, reservationId, date, time, location, giftcardType, amount, isGift, items, pin } = req.body as {
     phone?: string; reservationId?: number;
     date?: string; time?: string; location?: string;
     giftcardType?: string; amount?: number; isGift?: boolean;
     items?: ReqItem[];
+    pin?: string;
   };
   if (!phone || !reservationId) {
     res.status(400).json({ success: false, error: "phone, reservationId 필수입니다." }); return;
@@ -1307,6 +1311,9 @@ router.post("/customer/update", async (req, res) => {
   const normalizePhone = (p: string) => p.replace(/\D/g, "");
   if (normalizePhone(row.phone ?? "") !== normalizePhone(phone)) {
     res.status(403).json({ success: false, error: "전화번호가 일치하지 않습니다." }); return;
+  }
+  if (row.customerPin && pin !== row.customerPin) {
+    res.status(403).json({ success: false, error: "비밀번호가 일치하지 않습니다." }); return;
   }
   if (["cancelled", "completed", "no_show"].includes(row.status ?? "")) {
     res.json({ success: false, error: "수정할 수 없는 상태의 예약입니다." }); return;
@@ -1367,7 +1374,7 @@ router.post("/customer/update", async (req, res) => {
 
 // ── 고객용: 전화번호로 예약 조회 ─────────────────────────────────────────────
 router.get("/customer/reservation", async (req, res) => {
-  const { phone } = req.query as { phone?: string };
+  const { phone, pin } = req.query as { phone?: string; pin?: string };
   if (!phone) {
     res.status(400).json({ success: false, error: "phone 파라미터가 필요합니다." });
     return;
@@ -1388,8 +1395,15 @@ router.get("/customer/reservation", async (req, res) => {
 
   const result = rows[0];
   if (!result) {
-    res.json({ success: false });
+    res.json({ success: false, error: "예약 내역을 찾을 수 없습니다." });
     return;
+  }
+
+  if (result.customerPin) {
+    if (!pin || pin !== result.customerPin) {
+      res.json({ success: false, error: "비밀번호가 일치하지 않습니다." });
+      return;
+    }
   }
 
   const [assignedStaff] = result.assignedStaffId

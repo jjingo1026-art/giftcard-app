@@ -107,7 +107,13 @@ router.post("/", async (req, res) => {
     giftcardType?: string;
     amount?: number;
     category?: string;
+    customerPin?: string;
   };
+
+  if (body.customerPin && !/^\d{4}$/.test(body.customerPin)) {
+    res.status(400).json({ error: "비밀번호는 숫자 4자리여야 합니다." });
+    return;
+  }
 
   if (!body.phone) {
     res.status(400).json({ error: "필수 항목이 누락되었습니다." });
@@ -213,6 +219,7 @@ router.post("/", async (req, res) => {
       amount: totalAmount,
       category: body.category,
       status: "pending",
+      customerPin: body.customerPin ?? null,
     })
     .returning();
 
