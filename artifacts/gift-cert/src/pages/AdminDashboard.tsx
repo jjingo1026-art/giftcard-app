@@ -4,7 +4,8 @@ import FullCalendar from "@fullcalendar/react";
 import dayGridPlugin from "@fullcalendar/daygrid";
 import interactionPlugin from "@fullcalendar/interaction";
 import { io } from "socket.io-client";
-import { getSoundEnabled, setSoundEnabled, playNotificationSound } from "@/lib/notificationSound";
+import { getSoundEnabled, playNotificationSound } from "@/lib/notificationSound";
+import SoundBell from "@/components/SoundBell";
 import { getAdminToken, clearAdminToken, adminFetch } from "./AdminLogin";
 import { formatDateKo } from "@/lib/store";
 
@@ -89,15 +90,6 @@ export default function AdminDashboard() {
   const [chatInboxOpen, setChatInboxOpen] = useState(true);
   const [newChatAlert, setNewChatAlert] = useState<{ reservationId: number; lastSender: string; lastMessage: string } | null>(null);
   const chatAlertTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const [soundOn, setSoundOn] = useState(() => getSoundEnabled("admin"));
-
-  function toggleSound() {
-    const next = !soundOn;
-    setSoundOn(next);
-    setSoundEnabled("admin", next);
-    if (next) playNotificationSound();
-  }
-
   const token = getAdminToken();
   if (!token) { navigate("/admin/login"); return null; }
 
@@ -144,7 +136,7 @@ export default function AdminDashboard() {
     const socket = io({ transports: ["websocket", "polling"] });
 
     socket.on("newReservation", (reservation: Reservation) => {
-      if (getSoundEnabled("admin")) playNotificationSound();
+      if (getSoundEnabled("admin")) playNotificationSound("admin");
       setAllEntries((prev) => {
         if (prev.some((r) => r.id === reservation.id)) return prev;
         return [reservation, ...prev];
@@ -184,7 +176,7 @@ export default function AdminDashboard() {
     });
 
     socket.on("newUrgent", (reservation: Reservation) => {
-      if (getSoundEnabled("admin")) playNotificationSound();
+      if (getSoundEnabled("admin")) playNotificationSound("admin");
       if (urgentAlertTimerRef.current) clearTimeout(urgentAlertTimerRef.current);
       setNewUrgentAlert(reservation);
       urgentAlertTimerRef.current = setTimeout(() => setNewUrgentAlert(null), 8000);
@@ -217,7 +209,7 @@ export default function AdminDashboard() {
     });
 
     socket.on("chatAlert", (msg: { reservationId: number; senderName: string; message: string; time: string; sender: string }) => {
-      if (getSoundEnabled("admin")) playNotificationSound();
+      if (getSoundEnabled("admin")) playNotificationSound("admin");
       // 실시간 인박스 갱신
       setChatInbox((prev) => {
         const existing = prev.find((c) => c.reservationId === msg.reservationId);
@@ -417,16 +409,7 @@ export default function AdminDashboard() {
             {allEntries.length > 0 && <p className="text-[11px] text-slate-400 mt-0.5">총 {allEntries.length}건</p>}
           </div>
           <div className="flex items-center gap-2">
-            {/* 알림 소리 토글 */}
-            <button
-              onClick={toggleSound}
-              title={soundOn ? "알림 소리 끄기" : "알림 소리 켜기"}
-              className="w-9 h-9 flex items-center justify-center rounded-xl hover:bg-slate-100 transition-colors flex-shrink-0"
-            >
-              {soundOn
-                ? <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#6366f1" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M18 8a6 6 0 0 1 0 8"/><path d="M22 4a10 10 0 0 1 0 16"/><path d="M11 5L6 9H2v6h4l5 4V5z"/></svg>
-                : <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#94a3b8" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M11 5L6 9H2v6h4l5 4V5z"/><line x1="23" y1="9" x2="17" y2="15"/><line x1="17" y1="9" x2="23" y2="15"/></svg>}
-            </button>
+            <SoundBell role="admin" />
             {/* 채팅 목록 버튼 */}
             <button
               onClick={() => { window.location.href = "/admin/chats"; }}
