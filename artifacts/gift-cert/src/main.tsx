@@ -35,6 +35,7 @@ import MobileGiftCert from "./pages/MobileGiftCert";
 import MobileTerms from "./pages/MobileTerms";
 import MobilePrivacy from "./pages/MobilePrivacy";
 import MobileSelect from "./pages/MobileSelect";
+import MobileCheck from "./pages/MobileCheck";
 import "./index.css";
 
 const base = import.meta.env.BASE_URL.replace(/\/$/, "");
@@ -107,6 +108,7 @@ createRoot(document.getElementById("root")!).render(
       <Route path="/mobile/terms" component={MobileTerms} />
       <Route path="/mobile/privacy" component={MobilePrivacy} />
       <Route path="/mobile/select" component={MobileSelect} />
+      <Route path="/mobile/check" component={MobileCheck} />
       <Route path="/rates" component={App} />
       <Route path="/rates.html" component={App} />
       <Route path="/" component={GiftCertTypeSelect} />

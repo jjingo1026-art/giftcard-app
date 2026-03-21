@@ -69,12 +69,13 @@ export default function MobileGiftCert() {
           </div>
         </div>
 
-        <div className="bg-pink-50 border border-pink-100 rounded-2xl px-5 py-4 flex items-start gap-3">
-          <span className="text-[20px] flex-shrink-0 mt-0.5">💡</span>
-          <p className="text-[12.5px] text-pink-700 leading-relaxed">
-            원하시는 상품권 종류를 탭하면 판매 신청을 진행할 수 있습니다.
-          </p>
-        </div>
+        <button
+          onClick={() => { window.location.href = "/mobile/check"; }}
+          className="w-full py-4 rounded-2xl text-white text-[15px] font-bold transition-all active:scale-[0.98] flex items-center justify-center gap-2 shadow-sm"
+          style={{ background: "linear-gradient(135deg, #ec4899 0%, #f43f5e 100%)" }}
+        >
+          📋 판매신청 확인
+        </button>
       </div>
     </div>
   );

@@ -1372,7 +1372,7 @@ router.post("/customer/update", async (req, res) => {
 
 // ── 고객용: 전화번호로 예약 조회 ─────────────────────────────────────────────
 router.get("/customer/reservation", async (req, res) => {
-  const { phone, pin } = req.query as { phone?: string; pin?: string };
+  const { phone, pin, kind } = req.query as { phone?: string; pin?: string; kind?: string };
   if (!phone) {
     res.status(400).json({ success: false, error: "phone 파라미터가 필요합니다." });
     return;
@@ -1380,15 +1380,16 @@ router.get("/customer/reservation", async (req, res) => {
 
   const normalizedPhone = phone.replace(/[^0-9]/g, "");
 
+  const conditions = [
+    eq(reservationsTable.phone, normalizedPhone),
+    inArray(reservationsTable.status, ["pending", "assigned", "cancelled", "no_show"]),
+    ...(kind ? [eq(reservationsTable.kind, kind)] : []),
+  ];
+
   const rows = await db
     .select()
     .from(reservationsTable)
-    .where(
-      and(
-        eq(reservationsTable.phone, normalizedPhone),
-        inArray(reservationsTable.status, ["pending", "assigned", "cancelled", "no_show"])
-      )
-    )
+    .where(and(...conditions))
     .orderBy(desc(reservationsTable.createdAt));
 
   const result = rows[0];
