@@ -19,6 +19,7 @@ interface MobileItem {
   type: string;
   amount: string;
   checkedSubs: string[];
+  voucherNumber: string;
 }
 
 function formatKRW(n: number) {
@@ -43,6 +44,7 @@ function MobileVoucherItems({
   errors,
   onChange,
   onToggleSub,
+  onVoucherNumberChange,
   onAdd,
   onRemove,
 }: {
@@ -50,6 +52,7 @@ function MobileVoucherItems({
   errors: string[];
   onChange: (idx: number, field: "type" | "amount", val: string) => void;
   onToggleSub: (idx: number, sub: string) => void;
+  onVoucherNumberChange: (idx: number, val: string) => void;
   onAdd: () => void;
   onRemove: (idx: number) => void;
 }) {
@@ -185,6 +188,39 @@ function MobileVoucherItems({
         권종 추가
       </button>
 
+      {/* 23으로 시작하는 교환권 번호 입력 */}
+      {items.some((it) => it.type === "롯데모바일" && it.checkedSubs.includes("23으로 시작하는 교환권")) && (
+        <div className="rounded-2xl border-2 border-orange-200 bg-orange-50 p-4 space-y-3">
+          <div className="flex items-center gap-2">
+            <span className="text-[16px]">🎟️</span>
+            <p className="text-[13px] font-bold text-orange-700">상품권 번호 입력</p>
+            <span className="text-[11px] bg-orange-100 text-orange-500 font-bold px-2 py-0.5 rounded-full">23으로 시작</span>
+          </div>
+          {items.map((it, idx) =>
+            it.type === "롯데모바일" && it.checkedSubs.includes("23으로 시작하는 교환권") ? (
+              <div key={idx} className="space-y-1.5">
+                {items.filter((i) => i.type === "롯데모바일" && i.checkedSubs.includes("23으로 시작하는 교환권")).length > 1 && (
+                  <p className="text-[11px] font-semibold text-orange-600">항목 {idx + 1}</p>
+                )}
+                <input
+                  type="text"
+                  inputMode="numeric"
+                  value={it.voucherNumber}
+                  onChange={(e) => onVoucherNumberChange(idx, e.target.value.replace(/[^0-9]/g, "").slice(0, 16))}
+                  placeholder="23XXXXXXXXXXXX (숫자만 입력)"
+                  className="w-full px-4 py-3 rounded-xl border-2 border-orange-200 bg-white text-[14px] font-mono tracking-wider outline-none focus:border-orange-400 focus:ring-2 focus:ring-orange-100 transition-all placeholder:text-slate-300"
+                />
+                {it.voucherNumber && (
+                  <p className="text-[11px] text-orange-600 font-semibold px-1">
+                    입력된 번호: <span className="font-mono">{it.voucherNumber}</span>
+                  </p>
+                )}
+              </div>
+            ) : null
+          )}
+        </div>
+      )}
+
       {/* 합산 */}
       {hasAny && (
         <div className="rounded-2xl border border-pink-100 bg-pink-50 overflow-hidden">
@@ -227,7 +263,7 @@ export default function MobileSelect() {
   const agreed = params.get("agreed") === "1";
   const initialType = params.get("type") ?? MOBILE_TYPES[0].label;
 
-  const [items, setItems] = useState<MobileItem[]>([{ type: initialType, amount: "", checkedSubs: [] }]);
+  const [items, setItems] = useState<MobileItem[]>([{ type: initialType, amount: "", checkedSubs: [], voucherNumber: "" }]);
   const [itemErrors, setItemErrors] = useState<string[]>([""]);
   const [name, setName] = useState("");
   const [phone, setPhone] = useState("");
@@ -256,17 +292,23 @@ export default function MobileSelect() {
     setItems((prev) => prev.map((it, i) => {
       if (i !== idx) return it;
       const already = it.checkedSubs.includes(sub);
+      const newSubs = already
+        ? it.checkedSubs.filter((s) => s !== sub)
+        : [...it.checkedSubs, sub];
       return {
         ...it,
-        checkedSubs: already
-          ? it.checkedSubs.filter((s) => s !== sub)
-          : [...it.checkedSubs, sub],
+        checkedSubs: newSubs,
+        voucherNumber: sub === "23으로 시작하는 교환권" && already ? "" : it.voucherNumber,
       };
     }));
   }
 
+  function handleVoucherNumberChange(idx: number, val: string) {
+    setItems((prev) => prev.map((it, i) => i === idx ? { ...it, voucherNumber: val } : it));
+  }
+
   function handleAddItem() {
-    setItems((prev) => [...prev, { type: MOBILE_TYPES[0].label, amount: "", checkedSubs: [] }]);
+    setItems((prev) => [...prev, { type: MOBILE_TYPES[0].label, amount: "", checkedSubs: [], voucherNumber: "" }]);
     setItemErrors((prev) => [...prev, ""]);
   }
 
@@ -317,8 +359,15 @@ export default function MobileSelect() {
         rate: Math.round(rate * 100),
         payment,
         isGift: false,
-        ...(it.type === "롯데모바일" && it.checkedSubs.length > 0
-          ? { note: it.checkedSubs.join(", ") }
+        ...(it.type === "롯데모바일" && (it.checkedSubs.length > 0 || it.voucherNumber)
+          ? {
+              note: [
+                ...it.checkedSubs,
+                ...(it.voucherNumber && it.checkedSubs.includes("23으로 시작하는 교환권")
+                  ? [`번호: ${it.voucherNumber}`]
+                  : []),
+              ].join(" / "),
+            }
           : {}),
       };
     });
@@ -411,6 +460,7 @@ export default function MobileSelect() {
             errors={itemErrors}
             onChange={handleItemChange}
             onToggleSub={handleToggleSub}
+            onVoucherNumberChange={handleVoucherNumberChange}
             onAdd={handleAddItem}
             onRemove={handleRemoveItem}
           />
