@@ -326,6 +326,38 @@ function MobileVoucherItems({
         </div>
       )}
 
+      {/* 네이버페이 쿠폰번호 입력 */}
+      {items.some((it) => it.type === "네이버페이 포인트" && it.checkedSubs.includes("쿠폰")) && (
+        <div className="rounded-2xl border-2 border-green-200 bg-green-50 p-4 space-y-3">
+          <div className="flex items-center gap-2">
+            <span className="text-[16px]">🎟️</span>
+            <p className="text-[13px] font-bold text-green-700">쿠폰번호 입력</p>
+            <span className="text-[11px] bg-green-100 text-green-600 font-bold px-2 py-0.5 rounded-full">네이버페이</span>
+          </div>
+          {items.map((it, idx) =>
+            it.type === "네이버페이 포인트" && it.checkedSubs.includes("쿠폰") ? (
+              <div key={idx} className="space-y-1.5">
+                {items.filter((i) => i.type === "네이버페이 포인트" && i.checkedSubs.includes("쿠폰")).length > 1 && (
+                  <p className="text-[11px] font-semibold text-green-600">항목 {idx + 1}</p>
+                )}
+                <input
+                  type="text"
+                  value={it.voucherNumber}
+                  onChange={(e) => onVoucherNumberChange(idx, e.target.value.replace(/[^0-9A-Za-z\-]/g, "").slice(0, 30))}
+                  placeholder="쿠폰번호 입력"
+                  className="w-full px-4 py-3 rounded-xl border-2 border-green-200 bg-white text-[14px] font-mono tracking-wider outline-none focus:border-green-400 focus:ring-2 focus:ring-green-100 transition-all placeholder:text-slate-300"
+                />
+                {it.voucherNumber && (
+                  <p className="text-[11px] text-green-600 font-semibold px-1">
+                    입력된 번호: <span className="font-mono">{it.voucherNumber}</span>
+                  </p>
+                )}
+              </div>
+            ) : null
+          )}
+        </div>
+      )}
+
       {/* 앱 선물하기 안내 */}
       {items.some((it) => it.type === "롯데모바일" && it.checkedSubs.includes("앱 선물하기")) && (
         <div className="rounded-2xl border-2 border-orange-200 bg-orange-50 p-4 space-y-2.5">
@@ -431,7 +463,7 @@ export default function MobileSelect() {
       if (i !== idx) return it;
       const already = it.checkedSubs.includes(sub);
       const newSubs = already ? [] : [sub];
-      const clearNumber = already || sub !== "23으로 시작하는 교환권";
+      const clearNumber = already || (sub !== "23으로 시작하는 교환권" && sub !== "쿠폰");
       return {
         ...it,
         checkedSubs: newSubs,
@@ -523,11 +555,14 @@ export default function MobileSelect() {
         rate: Math.round(rate * 100),
         payment,
         isGift: false,
-        ...(it.type === "롯데모바일" && (it.checkedSubs.length > 0 || it.voucherNumber)
+        ...(it.checkedSubs.length > 0 || it.voucherNumber
           ? {
               note: [
                 ...it.checkedSubs,
-                ...(it.voucherNumber && it.checkedSubs.includes("23으로 시작하는 교환권")
+                ...(it.voucherNumber && (
+                  it.checkedSubs.includes("23으로 시작하는 교환권") ||
+                  it.checkedSubs.includes("쿠폰")
+                )
                   ? [`번호: ${it.voucherNumber}`]
                   : []),
               ].join(" / "),
