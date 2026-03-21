@@ -490,7 +490,7 @@ function HomePage({ onGoUrgent, initialType = DEFAULT_TYPE, onTypeChange }: { on
               <div className="flex items-center gap-3">
                 <div className="w-9 h-9 rounded-2xl bg-indigo-50 flex items-center justify-center text-[18px]">🔍</div>
                 <div>
-                  <p className="text-[14px] font-bold text-slate-800">예약 확인</p>
+                  <p className="text-[14px] font-bold text-slate-800">{getLabel("reservation_check", userLang)}</p>
                   <p className="text-[11px] text-slate-400 mt-0.5">전화번호로 예약 현황 조회</p>
                 </div>
               </div>
