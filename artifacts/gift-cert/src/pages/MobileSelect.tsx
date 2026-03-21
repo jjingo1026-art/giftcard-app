@@ -16,6 +16,7 @@ const BANKS = ["카카오뱅크", "토스뱅크", "국민은행", "신한은행"
 const LOTTE_SUBS = ["23으로 시작하는 교환권", "앱 선물하기"];
 const NAVER_SUBS = ["쿠폰", "선물하기"];
 const CULTURE_SUBS = ["자동추출하기", "수동입력하기"];
+const SHINSEGAE_SUBS = ["바코드업로드", "상품권번호입력"];
 
 interface MobileItem {
   type: string;
@@ -425,12 +426,12 @@ function MobileVoucherItems({
               </div>
 
               {/* Row 2: sub badge or radio checkboxes */}
-              {typeInfo && (item.type === "롯데모바일" || item.type === "네이버페이 포인트" || item.type === "컬쳐랜드") ? (() => {
-                const subList = item.type === "롯데모바일" ? LOTTE_SUBS : item.type === "네이버페이 포인트" ? NAVER_SUBS : CULTURE_SUBS;
-                const accentColor = item.type === "롯데모바일" ? "#f97316" : item.type === "네이버페이 포인트" ? "#03C75A" : "#6366f1";
-                const bgClass = item.type === "롯데모바일" ? "bg-orange-50 border-orange-400" : item.type === "네이버페이 포인트" ? "bg-green-50 border-green-400" : "bg-indigo-50 border-indigo-400";
-                const textClass = item.type === "롯데모바일" ? "text-orange-700" : item.type === "네이버페이 포인트" ? "text-green-700" : "text-indigo-700";
-                const labelClass = item.type === "롯데모바일" ? "text-orange-500" : item.type === "네이버페이 포인트" ? "text-green-600" : "text-indigo-500";
+              {typeInfo && (item.type === "롯데모바일" || item.type === "네이버페이 포인트" || item.type === "컬쳐랜드" || item.type === "신세계모바일") ? (() => {
+                const subList = item.type === "롯데모바일" ? LOTTE_SUBS : item.type === "네이버페이 포인트" ? NAVER_SUBS : item.type === "컬쳐랜드" ? CULTURE_SUBS : SHINSEGAE_SUBS;
+                const accentColor = item.type === "롯데모바일" ? "#f97316" : item.type === "네이버페이 포인트" ? "#03C75A" : item.type === "컬쳐랜드" ? "#6366f1" : "#e11d48";
+                const bgClass = item.type === "롯데모바일" ? "bg-orange-50 border-orange-400" : item.type === "네이버페이 포인트" ? "bg-green-50 border-green-400" : item.type === "컬쳐랜드" ? "bg-indigo-50 border-indigo-400" : "bg-rose-50 border-rose-400";
+                const textClass = item.type === "롯데모바일" ? "text-orange-700" : item.type === "네이버페이 포인트" ? "text-green-700" : item.type === "컬쳐랜드" ? "text-indigo-700" : "text-rose-700";
+                const labelClass = item.type === "롯데모바일" ? "text-orange-500" : item.type === "네이버페이 포인트" ? "text-green-600" : item.type === "컬쳐랜드" ? "text-indigo-500" : "text-rose-500";
                 return (
                   <div className="flex flex-col gap-1.5 px-1 pt-1">
                     <p className={`text-[11px] font-bold mb-0.5 ${labelClass}`}>해당하는 항목을 선택해 주세요</p>
