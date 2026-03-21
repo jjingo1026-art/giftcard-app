@@ -257,6 +257,24 @@ router.post("/staff/refresh", (req, res) => {
   }
 });
 
+router.patch("/staff/change-password", requireStaffAuth, async (req: any, res) => {
+  const { currentPassword, newPassword } = req.body as { currentPassword?: string; newPassword?: string };
+  if (!currentPassword || !newPassword) {
+    res.status(400).json({ success: false, error: "현재 비밀번호와 새 비밀번호를 모두 입력해주세요." }); return;
+  }
+  if (newPassword.length < 8) {
+    res.status(400).json({ success: false, error: "새 비밀번호는 8자리 이상이어야 합니다." }); return;
+  }
+  const staffId = req.staffId as number;
+  const [staff] = await db.select().from(staffTable).where(eq(staffTable.id, staffId)).limit(1);
+  if (!staff) { res.status(404).json({ success: false, error: "담당자 정보를 찾을 수 없습니다." }); return; }
+  if (staff.password !== currentPassword) {
+    res.status(401).json({ success: false, error: "현재 비밀번호가 올바르지 않습니다." }); return;
+  }
+  await db.update(staffTable).set({ password: newPassword }).where(eq(staffTable.id, staffId));
+  res.json({ success: true, message: "비밀번호가 변경되었습니다." });
+});
+
 router.post("/staff/register", async (req, res) => {
   const { name, phone, password, preferredLocation } = req.body as { name?: string; phone?: string; password?: string; preferredLocation?: string };
   if (!name || !phone || !password) {

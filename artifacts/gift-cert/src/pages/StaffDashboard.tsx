@@ -211,6 +211,44 @@ export default function StaffDashboard() {
   const [newAssignAlert, setNewAssignAlert] = useState<Reservation | null>(null);
   const alertTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
+  /* 비밀번호 변경 모달 */
+  const [showPwModal, setShowPwModal] = useState(false);
+  const [curPw, setCurPw] = useState("");
+  const [newPw, setNewPw] = useState("");
+  const [confirmPw, setConfirmPw] = useState("");
+  const [pwErr, setPwErr] = useState("");
+  const [pwOk, setPwOk] = useState("");
+  const [pwSaving, setPwSaving] = useState(false);
+  const [showCurPw, setShowCurPw] = useState(false);
+  const [showNewPw, setShowNewPw] = useState(false);
+
+  function closePwModal() {
+    setShowPwModal(false);
+    setCurPw(""); setNewPw(""); setConfirmPw("");
+    setPwErr(""); setPwOk("");
+    setShowCurPw(false); setShowNewPw(false);
+  }
+
+  async function handlePwChange(e: React.FormEvent) {
+    e.preventDefault();
+    setPwErr(""); setPwOk("");
+    if (!curPw) { setPwErr("현재 비밀번호를 입력해주세요."); return; }
+    if (newPw.length < 8) { setPwErr("새 비밀번호는 8자리 이상이어야 합니다."); return; }
+    if (newPw !== confirmPw) { setPwErr("새 비밀번호가 일치하지 않습니다."); return; }
+    setPwSaving(true);
+    try {
+      const res = await staffFetch("/api/admin/staff/change-password", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ currentPassword: curPw, newPassword: newPw }),
+      });
+      const data = await res.json();
+      if (!res.ok || !data.success) { setPwErr(data.error ?? "변경에 실패했습니다."); }
+      else { setPwOk("비밀번호가 성공적으로 변경되었습니다."); setCurPw(""); setNewPw(""); setConfirmPw(""); }
+    } catch { setPwErr("서버 오류가 발생했습니다."); }
+    finally { setPwSaving(false); }
+  }
+
   useEffect(() => {
     if (!token) { window.location.href = "/staff/login"; return; }
     staffFetch("/api/admin/staff/my-reservations")
@@ -365,6 +403,16 @@ export default function StaffDashboard() {
             )}
           </button>
           <button
+            onClick={() => setShowPwModal(true)}
+            title="비밀번호 변경"
+            className="w-10 h-10 flex items-center justify-center rounded-xl hover:bg-slate-100 transition-colors text-slate-400 hover:text-indigo-500 flex-shrink-0"
+          >
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
+              <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+            </svg>
+          </button>
+          <button
             onClick={() => {
               localStorage.removeItem("gc_staff_token");
               localStorage.removeItem("gc_staff_id");
@@ -486,6 +534,87 @@ export default function StaffDashboard() {
             onClick={() => setNewAssignAlert(null)}
             className="absolute -top-2 -right-2 w-6 h-6 bg-slate-700 text-white rounded-full text-[11px] font-black hover:bg-slate-900 transition-colors flex items-center justify-center"
           >✕</button>
+        </div>
+      )}
+
+      {/* 비밀번호 변경 모달 */}
+      {showPwModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm px-4">
+          <div className="w-full max-w-sm bg-white rounded-3xl shadow-2xl overflow-hidden">
+            <div className="bg-gradient-to-r from-indigo-500 to-indigo-600 px-6 py-5 flex items-center justify-between">
+              <div>
+                <p className="text-white font-black text-[17px]">비밀번호 변경</p>
+                <p className="text-indigo-100 text-[12px] mt-0.5">8자리 이상으로 설정해주세요</p>
+              </div>
+              <button onClick={closePwModal} className="w-8 h-8 rounded-full bg-white/20 text-white hover:bg-white/30 transition-colors flex items-center justify-center text-[18px] font-bold">✕</button>
+            </div>
+            <form onSubmit={handlePwChange} className="px-6 py-5 space-y-4">
+              {/* 현재 비밀번호 */}
+              <div className="space-y-1.5">
+                <label className="block text-[12px] font-bold text-slate-500 uppercase tracking-wide">현재 비밀번호</label>
+                <div className="relative">
+                  <input
+                    type={showCurPw ? "text" : "password"}
+                    value={curPw}
+                    onChange={(e) => setCurPw(e.target.value)}
+                    placeholder="현재 비밀번호 입력"
+                    autoComplete="current-password"
+                    className="w-full border border-slate-200 rounded-xl px-3 py-2.5 text-[14px] font-medium text-slate-700 bg-slate-50 focus:outline-none focus:border-indigo-300 focus:bg-white transition-all pr-10"
+                  />
+                  <button type="button" onClick={() => setShowCurPw(!showCurPw)} className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600">
+                    {showCurPw
+                      ? <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M17.94 17.94A10.07 10.07 0 0112 20c-7 0-11-8-11-8a18.45 18.45 0 015.06-5.94"/><path d="M9.9 4.24A9.12 9.12 0 0112 4c7 0 11 8 11 8a18.5 18.5 0 01-2.16 3.19"/><line x1="1" y1="1" x2="23" y2="23"/></svg>
+                      : <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>}
+                  </button>
+                </div>
+              </div>
+              {/* 새 비밀번호 */}
+              <div className="space-y-1.5">
+                <label className="block text-[12px] font-bold text-slate-500 uppercase tracking-wide">새 비밀번호</label>
+                <div className="relative">
+                  <input
+                    type={showNewPw ? "text" : "password"}
+                    value={newPw}
+                    onChange={(e) => setNewPw(e.target.value)}
+                    placeholder="8자리 이상 입력"
+                    autoComplete="new-password"
+                    className="w-full border border-slate-200 rounded-xl px-3 py-2.5 text-[14px] font-medium text-slate-700 bg-slate-50 focus:outline-none focus:border-indigo-300 focus:bg-white transition-all pr-10"
+                  />
+                  <button type="button" onClick={() => setShowNewPw(!showNewPw)} className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600">
+                    {showNewPw
+                      ? <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M17.94 17.94A10.07 10.07 0 0112 20c-7 0-11-8-11-8a18.45 18.45 0 015.06-5.94"/><path d="M9.9 4.24A9.12 9.12 0 0112 4c7 0 11 8 11 8a18.5 18.5 0 01-2.16 3.19"/><line x1="1" y1="1" x2="23" y2="23"/></svg>
+                      : <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>}
+                  </button>
+                </div>
+              </div>
+              {/* 새 비밀번호 확인 */}
+              <div className="space-y-1.5">
+                <label className="block text-[12px] font-bold text-slate-500 uppercase tracking-wide">새 비밀번호 확인</label>
+                <input
+                  type="password"
+                  value={confirmPw}
+                  onChange={(e) => setConfirmPw(e.target.value)}
+                  placeholder="새 비밀번호 재입력"
+                  autoComplete="new-password"
+                  className="w-full border border-slate-200 rounded-xl px-3 py-2.5 text-[14px] font-medium text-slate-700 bg-slate-50 focus:outline-none focus:border-indigo-300 focus:bg-white transition-all"
+                />
+              </div>
+
+              {pwErr && <p className="text-[13px] font-semibold text-rose-500 bg-rose-50 px-3 py-2 rounded-xl">{pwErr}</p>}
+              {pwOk && <p className="text-[13px] font-semibold text-emerald-600 bg-emerald-50 px-3 py-2 rounded-xl">{pwOk}</p>}
+
+              <div className="flex gap-2 pt-1">
+                <button type="button" onClick={closePwModal} className="flex-1 py-2.5 rounded-xl border border-slate-200 text-[13px] font-bold text-slate-500 hover:bg-slate-50 transition-colors">취소</button>
+                <button
+                  type="submit"
+                  disabled={pwSaving}
+                  className="flex-1 py-2.5 rounded-xl bg-indigo-500 text-white text-[13px] font-bold hover:bg-indigo-600 transition-colors disabled:opacity-50"
+                >
+                  {pwSaving ? "변경 중..." : "비밀번호 변경"}
+                </button>
+              </div>
+            </form>
+          </div>
         </div>
       )}
 
