@@ -1615,7 +1615,7 @@ export default function MobileSelect() {
           type="submit"
           disabled={submitting}
           className="w-full py-4 rounded-2xl text-white text-[15px] font-bold transition-all active:scale-[0.98] shadow-sm disabled:opacity-60"
-          style={{ background: "linear-gradient(135deg, #ec4899 0%, #f43f5e 100%)" }}
+          style={{ background: "linear-gradient(135deg, #3b82f6 0%, #2563eb 100%)" }}
         >
           {submitting ? "신청 중..." : "📱 판매 신청하기"}
         </button>
