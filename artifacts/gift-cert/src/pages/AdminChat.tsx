@@ -140,6 +140,16 @@ export default function AdminChat() {
     setMsg("");
   }
 
+  function sendQuick(text: string) {
+    if (!socketRef.current) return;
+    socketRef.current.emit("sendMessage", {
+      reservationId: Number(reservationId),
+      sender: "admin",
+      language: userLang,
+      message: text,
+    });
+  }
+
   function handleKey(e: React.KeyboardEvent) {
     if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); send(); }
   }
@@ -374,6 +384,30 @@ export default function AdminChat() {
         </div>
 
         <input ref={imgInputRef} type="file" accept="image/*" className="hidden" onChange={onImgChange} />
+
+        {/* 모바일 빠른 전송 버튼 */}
+        {reservationKind === "mobile" && (
+          <div className="flex gap-2 mt-3 flex-wrap">
+            <button
+              onClick={() => sendQuick("입금이 완료되었습니다 감사합니다 좋은하루 되세요^^")}
+              className="flex-1 min-w-0 px-3 py-2 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-700 text-[12px] font-bold hover:bg-emerald-100 active:scale-[0.97] transition-all whitespace-nowrap"
+            >
+              ✅ 입금완료
+            </button>
+            <button
+              onClick={() => sendQuick("일부 상품권에 문제가 있습니다")}
+              className="flex-1 min-w-0 px-3 py-2 rounded-xl bg-amber-50 border border-amber-200 text-amber-700 text-[12px] font-bold hover:bg-amber-100 active:scale-[0.97] transition-all whitespace-nowrap"
+            >
+              ⚠️ 일부하자
+            </button>
+            <button
+              onClick={() => sendQuick("상품권 번호가 유효하지 않습니다 확인하시고 다시 신청해주세요")}
+              className="flex-1 min-w-0 px-3 py-2 rounded-xl bg-rose-50 border border-rose-200 text-rose-700 text-[12px] font-bold hover:bg-rose-100 active:scale-[0.97] transition-all whitespace-nowrap"
+            >
+              ❌ 전체하자
+            </button>
+          </div>
+        )}
 
         <div className="flex gap-2 mt-3">
           <button
