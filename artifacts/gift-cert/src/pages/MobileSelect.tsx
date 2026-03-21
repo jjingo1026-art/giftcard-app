@@ -111,6 +111,72 @@ function NaverGiftInfo() {
   );
 }
 
+function ShinsegaeManualInput({
+  numbers,
+  onChange,
+  onAdd,
+  onRemove,
+}: {
+  numbers: string[];
+  onChange: (idx: number, val: string) => void;
+  onAdd: () => void;
+  onRemove: (idx: number) => void;
+}) {
+  return (
+    <div className="rounded-2xl border-2 border-rose-200 bg-rose-50 p-4 space-y-3">
+      <div className="flex items-center gap-2">
+        <span className="text-[16px]">🏷️</span>
+        <p className="text-[13px] font-bold text-rose-700">상품권번호 입력</p>
+        <span className="text-[11px] bg-rose-100 text-rose-600 font-bold px-2 py-0.5 rounded-full">신세계모바일</span>
+      </div>
+
+      <div className="space-y-2">
+        {numbers.map((num, idx) => (
+          <div key={idx} className="flex items-center gap-2">
+            <input
+              type="text"
+              value={num}
+              onChange={(e) => onChange(idx, e.target.value.slice(0, 50))}
+              placeholder={`상품권번호 ${idx + 1}`}
+              className="flex-1 px-4 py-3 rounded-xl border-2 border-rose-200 bg-white text-[14px] font-mono tracking-wider outline-none focus:border-rose-400 focus:ring-2 focus:ring-rose-100 transition-all placeholder:text-slate-300"
+            />
+            {numbers.length > 1 && (
+              <button
+                type="button"
+                onClick={() => onRemove(idx)}
+                className="w-9 h-9 flex-shrink-0 rounded-xl bg-rose-200 text-rose-700 flex items-center justify-center hover:bg-rose-300 active:scale-95 transition-all font-bold"
+              >
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
+                  <path d="M5 12h14" />
+                </svg>
+              </button>
+            )}
+            {idx === numbers.length - 1 && (
+              <button
+                type="button"
+                onClick={onAdd}
+                className="w-9 h-9 flex-shrink-0 rounded-xl bg-rose-200 text-rose-700 flex items-center justify-center hover:bg-rose-300 active:scale-95 transition-all font-bold"
+              >
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
+                  <path d="M12 5v14M5 12h14" />
+                </svg>
+              </button>
+            )}
+          </div>
+        ))}
+      </div>
+
+      {numbers.some((n) => n.trim()) && (
+        <div className="px-1 pt-1 space-y-0.5">
+          {numbers.filter((n) => n.trim()).map((n, i) => (
+            <p key={i} className="text-[11px] text-rose-600 font-semibold font-mono">{n}</p>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
 function CultureManualInput({
   numbers,
   onChange,
@@ -403,6 +469,10 @@ function MobileVoucherItems({
   shinsegaeImages,
   onAddShinsegaeImage,
   onRemoveShinsegaeImage,
+  shinsegaeNumbers,
+  onShinsegaeNumberChange,
+  onShinsegaeNumberAdd,
+  onShinsegaeNumberRemove,
   cultureImages,
   onAddCultureImage,
   onRemoveCultureImage,
@@ -424,6 +494,10 @@ function MobileVoucherItems({
   shinsegaeImages: HyundaiImage[];
   onAddShinsegaeImage: (file: File) => void;
   onRemoveShinsegaeImage: (id: string) => void;
+  shinsegaeNumbers: string[];
+  onShinsegaeNumberChange: (idx: number, val: string) => void;
+  onShinsegaeNumberAdd: () => void;
+  onShinsegaeNumberRemove: (idx: number) => void;
   cultureImages: CultureImage[];
   onAddCultureImage: (file: File) => void;
   onRemoveCultureImage: (id: string) => void;
@@ -694,6 +768,16 @@ function MobileVoucherItems({
         </div>
       )}
 
+      {/* 신세계모바일 상품권번호 수동입력 */}
+      {items.some((it) => it.type === "신세계모바일" && it.checkedSubs.includes("상품권번호입력")) && (
+        <ShinsegaeManualInput
+          numbers={shinsegaeNumbers}
+          onChange={onShinsegaeNumberChange}
+          onAdd={onShinsegaeNumberAdd}
+          onRemove={onShinsegaeNumberRemove}
+        />
+      )}
+
       {/* 현대모바일 이미지 업로드 */}
       {items.some((it) => it.type === "현대모바일") && (
         <HyundaiImageUpload
@@ -749,6 +833,7 @@ export default function MobileSelect() {
   const [itemErrors, setItemErrors] = useState<string[]>([""]);
   const [hyundaiImages, setHyundaiImages] = useState<HyundaiImage[]>([]);
   const [shinsegaeImages, setShinsegaeImages] = useState<HyundaiImage[]>([]);
+  const [shinsegaeNumbers, setShinsegaeNumbers] = useState<string[]>([""]);
   const [cultureImages, setCultureImages] = useState<CultureImage[]>([]);
   const [cultureManualNumbers, setCultureManualNumbers] = useState<string[]>([""]);
   const [name, setName] = useState("");
@@ -885,6 +970,18 @@ export default function MobileSelect() {
     });
   }
 
+  function handleShinsegaeNumberChange(idx: number, val: string) {
+    setShinsegaeNumbers((prev) => prev.map((n, i) => i === idx ? val : n));
+  }
+
+  function handleShinsegaeNumberAdd() {
+    setShinsegaeNumbers((prev) => [...prev, ""]);
+  }
+
+  function handleShinsegaeNumberRemove(idx: number) {
+    setShinsegaeNumbers((prev) => prev.length > 1 ? prev.filter((_, i) => i !== idx) : prev);
+  }
+
   function handleCultureManualChange(idx: number, val: string) {
     setCultureManualNumbers((prev) => prev.map((n, i) => i === idx ? val : n));
   }
@@ -959,6 +1056,9 @@ export default function MobileSelect() {
                   : []),
                 ...(it.type === "컬쳐랜드" && it.checkedSubs.includes("수동입력하기")
                   ? cultureManualNumbers.filter(Boolean).map((n) => `번호: ${n}`)
+                  : []),
+                ...(it.type === "신세계모바일" && it.checkedSubs.includes("상품권번호입력")
+                  ? shinsegaeNumbers.filter(Boolean).map((n) => `번호: ${n}`)
                   : []),
               ].join(" / "),
             }
@@ -1065,6 +1165,10 @@ export default function MobileSelect() {
             shinsegaeImages={shinsegaeImages}
             onAddShinsegaeImage={handleAddShinsegaeImage}
             onRemoveShinsegaeImage={handleRemoveShinsegaeImage}
+            shinsegaeNumbers={shinsegaeNumbers}
+            onShinsegaeNumberChange={handleShinsegaeNumberChange}
+            onShinsegaeNumberAdd={handleShinsegaeNumberAdd}
+            onShinsegaeNumberRemove={handleShinsegaeNumberRemove}
             cultureImages={cultureImages}
             onAddCultureImage={handleAddCultureImage}
             onRemoveCultureImage={handleRemoveCultureImage}
