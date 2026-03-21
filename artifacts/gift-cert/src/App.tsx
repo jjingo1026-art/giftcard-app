@@ -217,9 +217,11 @@ function VoucherItems({
   baseDeduct: number;
   accent?: string;
 }) {
-  const totalPayment = items.reduce((sum, item) => sum + computeItem(item, baseDeduct).payment, 0);
+  const rawTotalPayment = items.reduce((sum, item) => sum + computeItem(item, baseDeduct).payment, 0);
   const totalFace = items.reduce((sum, item) => sum + (parseFloat(item.amount) || 0), 0);
   const hasAnyAmount = items.some((item) => (parseFloat(item.amount) || 0) > 0);
+  const travelDeduct = hasAnyAmount && totalFace < 300000 ? 3000 : 0;
+  const totalPayment = Math.max(0, rawTotalPayment - travelDeduct);
   const cl = accent === "rose"
     ? { bg: "bg-rose-50", border: "border-rose-100", text: "text-rose-500", textDark: "text-rose-600", dashed: "border-rose-200 text-rose-400 hover:bg-rose-50" }
     : { bg: "bg-indigo-50", border: "border-indigo-100", text: "text-indigo-500", textDark: "text-indigo-600", dashed: "border-indigo-200 text-indigo-400 hover:bg-indigo-50" };
@@ -309,15 +311,23 @@ function VoucherItems({
       </button>
 
       {hasAnyAmount && (
-        <div className={`flex items-center justify-between px-4 py-3 rounded-2xl border ${cl.bg} ${cl.border}`}>
-          <div className="space-y-0.5">
-            <p className={`text-[11px] ${cl.text}`}>총 상품권금액</p>
-            <p className={`text-[13px] font-semibold ${cl.text}`}>{formatKRW(totalFace)}</p>
+        <div className={`rounded-2xl border ${cl.bg} ${cl.border} overflow-hidden`}>
+          <div className={`flex items-center justify-between px-4 py-3`}>
+            <div className="space-y-0.5">
+              <p className={`text-[11px] ${cl.text}`}>총 상품권금액</p>
+              <p className={`text-[13px] font-semibold ${cl.text}`}>{formatKRW(totalFace)}</p>
+            </div>
+            <div className="text-right space-y-0.5">
+              <p className={`text-[11px] ${cl.text}`}>{items.length > 1 ? "합산 입금받을 금액" : "입금받을 금액"}</p>
+              <p className={`text-[20px] font-black tabular-nums ${cl.textDark}`}>{formatKRW(totalPayment)}</p>
+            </div>
           </div>
-          <div className="text-right space-y-0.5">
-            <p className={`text-[11px] ${cl.text}`}>{items.length > 1 ? "합산 입금받을 금액" : "입금받을 금액"}</p>
-            <p className={`text-[20px] font-black tabular-nums ${cl.textDark}`}>{formatKRW(totalPayment)}</p>
-          </div>
+          {travelDeduct > 0 && (
+            <div className="flex items-center justify-between px-4 py-2 bg-amber-50 border-t border-amber-100">
+              <p className="text-[11px] text-amber-600 font-semibold">이동경비 차감</p>
+              <p className="text-[12px] font-bold text-amber-700">- {formatKRW(travelDeduct)}</p>
+            </div>
+          )}
         </div>
       )}
 
@@ -401,7 +411,8 @@ function HomePage({ onGoUrgent, initialType = DEFAULT_TYPE, onTypeChange, rateGr
       const { amountNum, rate, payment } = computeItem(item, 0);
       return { type: item.type, amount: amountNum, rate, payment, isGift: item.isGift };
     });
-    const totalPayment = savedItems.reduce((s, it) => s + it.payment, 0);
+    const totalFace = savedItems.reduce((s, it) => s + it.amount, 0);
+    const totalPayment = Math.max(0, savedItems.reduce((s, it) => s + it.payment, 0) - (totalFace < 300000 ? 3000 : 0));
     let id = getNextId();
     try {
       const res = await fetch("/api/reservations", {
@@ -1068,7 +1079,8 @@ function UrgentPage({ onBack, initialType = DEFAULT_TYPE }: { onBack: () => void
       const { amountNum, rate, payment } = computeItem(item, 0.01);
       return { type: item.type, amount: amountNum, rate, payment, isGift: item.isGift };
     });
-    const totalPayment = savedItems.reduce((s, it) => s + it.payment, 0);
+    const totalFace = savedItems.reduce((s, it) => s + it.amount, 0);
+    const totalPayment = Math.max(0, savedItems.reduce((s, it) => s + it.payment, 0) - (totalFace < 300000 ? 3000 : 0));
     let id = getNextId();
     try {
       const res = await fetch("/api/reservations", {
