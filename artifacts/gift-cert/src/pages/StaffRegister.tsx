@@ -176,7 +176,7 @@ export default function StaffRegister() {
     setMsg(""); setError("");
     if (!name.trim()) { setError("이름을 입력해주세요."); return; }
     if (phone.replace(/\D/g, "").length < 10) { setError("올바른 전화번호를 입력해주세요."); return; }
-    if (pw.length < 4) { setError("비밀번호는 4자 이상 입력해주세요."); return; }
+    if (pw.length < 8) { setError("비밀번호는 8자리 이상 입력해주세요."); return; }
     if (pw !== pwConfirm) { setError("비밀번호가 일치하지 않습니다."); return; }
 
     const preferredLocation = [loc1, loc2, loc3].filter(Boolean).join(" ") || undefined;
@@ -303,7 +303,7 @@ export default function StaffRegister() {
               <label className="block text-[12px] font-bold text-slate-500 uppercase tracking-wide">비밀번호</label>
               <div className="relative">
                 <input
-                  placeholder="4자 이상"
+                  placeholder="8자리 이상"
                   type={showPw ? "text" : "password"}
                   value={pw}
                   onChange={(e) => setPw(e.target.value)}

@@ -50,7 +50,7 @@ export default function AdminSettings() {
     if (!currentPassword) { showToast("현재 비밀번호를 입력해주세요.", false); return; }
     if (!newId && !newPassword) { showToast("변경할 아이디 또는 비밀번호를 입력해주세요.", false); return; }
     if (newPassword && newPassword !== confirmPassword) { showToast("새 비밀번호가 일치하지 않습니다.", false); return; }
-    if (newPassword && newPassword.length < 4) { showToast("비밀번호는 4자리 이상이어야 합니다.", false); return; }
+    if (newPassword && newPassword.length < 8) { showToast("비밀번호는 8자리 이상이어야 합니다.", false); return; }
 
     setSaving(true);
     try {
@@ -150,7 +150,7 @@ export default function AdminSettings() {
                 type="password"
                 value={newPassword}
                 onChange={(e) => setNewPassword(e.target.value)}
-                placeholder="새 비밀번호 입력 (4자리 이상)"
+                placeholder="새 비밀번호 입력 (8자리 이상)"
                 autoComplete="new-password"
                 className="w-full border border-slate-200 rounded-xl px-3 py-2.5 text-[14px] font-medium text-slate-700 bg-slate-50 focus:outline-none focus:border-indigo-300 focus:bg-white transition-all"
               />

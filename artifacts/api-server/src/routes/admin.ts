@@ -143,6 +143,10 @@ router.patch("/credentials", requireAuth, async (req, res) => {
     res.status(400).json({ error: "변경할 아이디 또는 비밀번호를 입력해주세요." });
     return;
   }
+  if (newPassword && newPassword.length < 8) {
+    res.status(400).json({ error: "비밀번호는 8자리 이상이어야 합니다." });
+    return;
+  }
   const updatedId = newId?.trim() || creds.adminId;
   const updatedPassword = newPassword || creds.adminPassword;
 
@@ -257,6 +261,9 @@ router.post("/staff/register", async (req, res) => {
   const { name, phone, password, preferredLocation } = req.body as { name?: string; phone?: string; password?: string; preferredLocation?: string };
   if (!name || !phone || !password) {
     res.status(400).json({ success: false, error: "name, phone, password는 필수입니다." }); return;
+  }
+  if (password.length < 8) {
+    res.status(400).json({ success: false, error: "비밀번호는 8자리 이상이어야 합니다." }); return;
   }
   const allStaff = await db.select().from(staffTable);
   const normalizePhone = (p: string) => p.replace(/\D/g, "");
