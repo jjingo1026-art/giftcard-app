@@ -124,12 +124,13 @@ const inputCls = (err?: boolean, accent = "indigo") =>
 
 declare global {
   interface Window {
-    daum?: { Postcode: new (opts: { oncomplete: (d: { address: string; buildingName: string }) => void }) => { open: () => void } };
+    daum?: { Postcode: new (opts: { q?: string; oncomplete: (d: { address: string; buildingName: string }) => void }) => { open: () => void } };
   }
 }
 
-function openDaumPostcode(onSelect: (addr: string) => void) {
+function openDaumPostcode(onSelect: (addr: string) => void, initialQuery?: string) {
   const run = () => new window.daum!.Postcode({
+    q: initialQuery ?? "",
     oncomplete(d) { onSelect(d.address + (d.buildingName ? ` (${d.buildingName})` : "")); },
   }).open();
   if (window.daum?.Postcode) { run(); return; }
@@ -151,7 +152,7 @@ function LocationSearchInput({ value, onChange, error, accent = "indigo" }: { va
       />
       <button
         type="button"
-        onClick={() => openDaumPostcode(onChange)}
+        onClick={() => openDaumPostcode(onChange, value.trim() || undefined)}
         className={`flex-shrink-0 px-3.5 py-3 rounded-2xl text-[13px] font-bold border-2 transition-all active:scale-95 flex items-center gap-1.5
           ${accent === "rose"
             ? "border-rose-200 bg-rose-50 text-rose-400 hover:bg-rose-100 hover:border-rose-300"
