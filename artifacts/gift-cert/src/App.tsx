@@ -499,13 +499,21 @@ function HomePage({ onGoUrgent, initialType = DEFAULT_TYPE, onTypeChange }: { on
               </svg>
             </a>
 
-            <div className="flex items-center gap-3 px-4 py-3.5 bg-indigo-50 rounded-2xl border border-indigo-100">
-              <span className="text-[22px]">👆</span>
-              <div>
-                <p className="text-[13px] font-semibold text-indigo-700">사업자정보 확인</p>
-                <p className="text-[11px] text-indigo-400 mt-0.5">공지사항 확인 및 개인정보 동의 후 예약 가능합니다</p>
+            <a
+              href="/business"
+              className="flex items-center justify-between px-4 py-3.5 bg-indigo-50 rounded-2xl border border-indigo-100 active:scale-[0.98] transition-all"
+            >
+              <div className="flex items-center gap-3">
+                <span className="text-[22px]">🏢</span>
+                <div>
+                  <p className="text-[13px] font-semibold text-indigo-700">사업자정보 확인</p>
+                  <p className="text-[11px] text-indigo-400 mt-0.5">공지사항 확인 및 개인정보 동의 후 예약 가능합니다</p>
+                </div>
               </div>
-            </div>
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#818cf8" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M9 18l6-6-6-6"/>
+              </svg>
+            </a>
           </>
         )}
 
