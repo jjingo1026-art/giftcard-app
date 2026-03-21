@@ -194,6 +194,7 @@ export default function StaffCard() {
     try {
       await staffFetch(`/api/admin/reservations/${id}/complete`, { method: "POST" });
       setR((prev) => prev ? { ...prev, status: "completed" } : prev);
+      await sendChatMessage("매입이 완료되었습니다 좋은하루 되세요^^");
     } finally { setCompleting(false); }
   }
 
