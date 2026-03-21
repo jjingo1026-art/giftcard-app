@@ -253,6 +253,61 @@ function CultureAutoExtract({
   );
 }
 
+function ShinsegaeImageUpload({
+  images,
+  onAdd,
+  onRemove,
+}: {
+  images: HyundaiImage[];
+  onAdd: (file: File) => void;
+  onRemove: (id: string) => void;
+}) {
+  const fileRef = useRef<HTMLInputElement>(null);
+
+  function handleFiles(files: FileList | null) {
+    if (!files) return;
+    Array.from(files).forEach((f) => { if (f.type.startsWith("image/")) onAdd(f); });
+  }
+
+  return (
+    <div className="space-y-3">
+      {images.length > 0 && (
+        <div className="grid grid-cols-3 gap-2">
+          {images.map((img) => (
+            <div key={img.id} className="relative aspect-square rounded-xl overflow-hidden border-2 border-rose-200 bg-white">
+              <img src={img.preview} alt="바코드 이미지" className="w-full h-full object-cover" />
+              {img.uploading && (
+                <div className="absolute inset-0 bg-white/70 flex items-center justify-center">
+                  <div className="w-5 h-5 border-2 border-rose-400 border-t-transparent rounded-full animate-spin" />
+                </div>
+              )}
+              {img.error && (
+                <div className="absolute inset-0 bg-rose-50/90 flex items-center justify-center">
+                  <span className="text-[18px]">⚠️</span>
+                </div>
+              )}
+              {!img.uploading && (
+                <button type="button" onClick={() => onRemove(img.id)}
+                  className="absolute top-1 right-1 w-5 h-5 bg-rose-500 text-white rounded-full flex items-center justify-center text-[10px] font-bold">✕</button>
+              )}
+            </div>
+          ))}
+        </div>
+      )}
+      <input ref={fileRef} type="file" accept="image/*" multiple className="hidden"
+        onChange={(e) => handleFiles(e.target.files)}
+        onClick={(e) => { (e.target as HTMLInputElement).value = ""; }} />
+      <button type="button" onClick={() => fileRef.current?.click()}
+        className="w-full py-3 rounded-xl border-2 border-dashed border-rose-300 text-rose-500 hover:bg-rose-100 text-[13px] font-bold transition-all active:scale-95 flex items-center justify-center gap-2">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+          <rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/>
+        </svg>
+        사진 / 이미지 선택
+      </button>
+    </div>
+  );
+}
+
 function HyundaiImageUpload({
   images,
   onAdd,
@@ -345,6 +400,9 @@ function MobileVoucherItems({
   hyundaiImages,
   onAddHyundaiImage,
   onRemoveHyundaiImage,
+  shinsegaeImages,
+  onAddShinsegaeImage,
+  onRemoveShinsegaeImage,
   cultureImages,
   onAddCultureImage,
   onRemoveCultureImage,
@@ -363,6 +421,9 @@ function MobileVoucherItems({
   hyundaiImages: HyundaiImage[];
   onAddHyundaiImage: (file: File) => void;
   onRemoveHyundaiImage: (id: string) => void;
+  shinsegaeImages: HyundaiImage[];
+  onAddShinsegaeImage: (file: File) => void;
+  onRemoveShinsegaeImage: (id: string) => void;
   cultureImages: CultureImage[];
   onAddCultureImage: (file: File) => void;
   onRemoveCultureImage: (id: string) => void;
@@ -617,6 +678,22 @@ function MobileVoucherItems({
         />
       )}
 
+      {/* 신세계모바일 바코드 업로드 */}
+      {items.some((it) => it.type === "신세계모바일" && it.checkedSubs.includes("바코드업로드")) && (
+        <div className="rounded-2xl border-2 border-rose-200 bg-rose-50 p-4 space-y-3">
+          <div className="flex items-center gap-2">
+            <span className="text-[16px]">📊</span>
+            <p className="text-[13px] font-bold text-rose-700">바코드 이미지 업로드</p>
+            <span className="text-[11px] bg-rose-100 text-rose-600 font-bold px-2 py-0.5 rounded-full">신세계모바일</span>
+          </div>
+          <ShinsegaeImageUpload
+            images={shinsegaeImages}
+            onAdd={onAddShinsegaeImage}
+            onRemove={onRemoveShinsegaeImage}
+          />
+        </div>
+      )}
+
       {/* 현대모바일 이미지 업로드 */}
       {items.some((it) => it.type === "현대모바일") && (
         <HyundaiImageUpload
@@ -671,6 +748,7 @@ export default function MobileSelect() {
   const [items, setItems] = useState<MobileItem[]>([{ type: initialType, amount: "", checkedSubs: [], voucherNumber: "" }]);
   const [itemErrors, setItemErrors] = useState<string[]>([""]);
   const [hyundaiImages, setHyundaiImages] = useState<HyundaiImage[]>([]);
+  const [shinsegaeImages, setShinsegaeImages] = useState<HyundaiImage[]>([]);
   const [cultureImages, setCultureImages] = useState<CultureImage[]>([]);
   const [cultureManualNumbers, setCultureManualNumbers] = useState<string[]>([""]);
   const [name, setName] = useState("");
@@ -780,6 +858,33 @@ export default function MobileSelect() {
     });
   }
 
+  async function handleAddShinsegaeImage(file: File) {
+    const id = Math.random().toString(36).slice(2);
+    const preview = URL.createObjectURL(file);
+    setShinsegaeImages((prev) => [...prev, { id, preview, uploading: true }]);
+    try {
+      const base = import.meta.env.BASE_URL.replace(/\/$/, "");
+      const res = await fetch(`${base}/api/storage/uploads/request-url`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ name: file.name, size: file.size, contentType: file.type }),
+      });
+      const { uploadURL, objectPath } = await res.json();
+      await fetch(uploadURL, { method: "PUT", body: file, headers: { "Content-Type": file.type } });
+      setShinsegaeImages((prev) => prev.map((img) => img.id === id ? { ...img, objectPath, uploading: false } : img));
+    } catch {
+      setShinsegaeImages((prev) => prev.map((img) => img.id === id ? { ...img, uploading: false, error: true } : img));
+    }
+  }
+
+  function handleRemoveShinsegaeImage(id: string) {
+    setShinsegaeImages((prev) => {
+      const img = prev.find((i) => i.id === id);
+      if (img) URL.revokeObjectURL(img.preview);
+      return prev.filter((i) => i.id !== id);
+    });
+  }
+
   function handleCultureManualChange(idx: number, val: string) {
     setCultureManualNumbers((prev) => prev.map((n, i) => i === idx ? val : n));
   }
@@ -878,7 +983,10 @@ export default function MobileSelect() {
           bankName,
           accountNumber: accountNumber.trim(),
           accountHolder: accountHolder.trim(),
-          imagePaths: hyundaiImages.filter((i) => i.objectPath).map((i) => i.objectPath!),
+          imagePaths: [
+            ...hyundaiImages.filter((i) => i.objectPath).map((i) => i.objectPath!),
+            ...shinsegaeImages.filter((i) => i.objectPath).map((i) => i.objectPath!),
+          ],
         }),
       });
       if (!res.ok) {
@@ -954,6 +1062,9 @@ export default function MobileSelect() {
             hyundaiImages={hyundaiImages}
             onAddHyundaiImage={handleAddHyundaiImage}
             onRemoveHyundaiImage={handleRemoveHyundaiImage}
+            shinsegaeImages={shinsegaeImages}
+            onAddShinsegaeImage={handleAddShinsegaeImage}
+            onRemoveShinsegaeImage={handleRemoveShinsegaeImage}
             cultureImages={cultureImages}
             onAddCultureImage={handleAddCultureImage}
             onRemoveCultureImage={handleRemoveCultureImage}
