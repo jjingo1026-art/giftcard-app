@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from "react";
 import { io } from "socket.io-client";
+import { staffFetch } from "@/lib/authFetch";
 
 interface SavedItem {
   type: string;
@@ -212,20 +213,13 @@ export default function StaffDashboard() {
 
   useEffect(() => {
     if (!token) { window.location.href = "/staff/login"; return; }
-    fetch("/api/admin/staff/my-reservations", {
-      headers: { Authorization: `Bearer ${token}` },
-    })
-      .then((r) => {
-        if (r.status === 401) { localStorage.clear(); window.location.href = "/staff/login"; }
-        return r.json();
-      })
+    staffFetch("/api/admin/staff/my-reservations")
+      .then((r) => r.json())
       .then((data) => setEntries(Array.isArray(data) ? data : []))
       .catch(() => setError("데이터를 불러올 수 없습니다."))
       .finally(() => setLoading(false));
 
-    fetch("/api/admin/staff/chat-list", {
-      headers: { Authorization: `Bearer ${token}` },
-    })
+    staffFetch("/api/admin/staff/chat-list")
       .then((r) => r.json())
       .then((data) => {
         if (Array.isArray(data)) {

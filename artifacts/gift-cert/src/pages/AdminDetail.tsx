@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from "react";
 import { useLocation, useParams } from "wouter";
 import { io, Socket } from "socket.io-client";
-import { getAdminToken, clearAdminToken } from "./AdminLogin";
+import { getAdminToken, clearAdminToken, adminFetch } from "./AdminLogin";
 import { formatPhone, formatDateKo } from "@/lib/store";
 
 interface ChatMessage {
@@ -93,10 +93,9 @@ export default function AdminDetail() {
     setLoading(true);
     try {
       const [resEntry, resStaff] = await Promise.all([
-        fetch(`/api/admin/reservations/${resolvedId}`, { headers: { Authorization: `Bearer ${token}` } }),
-        fetch(`/api/admin/staff`, { headers: { Authorization: `Bearer ${token}` } }),
+        adminFetch(`/api/admin/reservations/${resolvedId}`),
+        adminFetch(`/api/admin/staff`),
       ]);
-      if (resEntry.status === 401) { clearAdminToken(); navigate("/admin/login"); return; }
       if (resEntry.status === 404) { navigate("/admin/dashboard"); return; }
       setEntry(await resEntry.json());
       if (resStaff.ok) setStaffList(await resStaff.json());
@@ -136,9 +135,9 @@ export default function AdminDetail() {
     if (!entry || saving) return;
     setSaving(true);
     try {
-      const res = await fetch(`/api/admin/reservations/${entry.id}/status`, {
+      const res = await adminFetch(`/api/admin/reservations/${entry.id}/status`, {
         method: "POST",
-        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ status }),
       });
       const data = await res.json();
@@ -155,9 +154,9 @@ export default function AdminDetail() {
     const member = staffList.find((s) => s.id === staffId);
     setSaving(true);
     try {
-      const res = await fetch(`/api/admin/reservations/${entry.id}/assign`, {
+      const res = await adminFetch(`/api/admin/reservations/${entry.id}/assign`, {
         method: "POST",
-        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ staffId }),
       });
       const data = await res.json();

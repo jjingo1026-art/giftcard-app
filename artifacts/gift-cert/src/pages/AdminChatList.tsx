@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useLocation } from "wouter";
-import { getAdminToken } from "./AdminLogin";
+import { getAdminToken, adminFetch } from "./AdminLogin";
 
 interface ChatListItem {
   reservationId: number;
@@ -53,7 +53,7 @@ export default function AdminChatList() {
   const [search, setSearch] = useState("");
 
   useEffect(() => {
-    fetch("/api/admin/chat-list", { headers: { Authorization: `Bearer ${token}` } })
+    adminFetch("/api/admin/chat-list")
       .then((r) => r.json())
       .then((data) => { if (Array.isArray(data)) setItems(data); })
       .catch(() => {})

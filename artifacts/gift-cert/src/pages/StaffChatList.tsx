@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { staffFetch } from "@/lib/authFetch";
 
 interface ChatRoom {
   reservationId: number;
@@ -50,13 +51,8 @@ export default function StaffChatList() {
 
   useEffect(() => {
     if (!token) { window.location.href = "/staff/login"; return; }
-    fetch("/api/admin/staff/chat-list", {
-      headers: { Authorization: `Bearer ${token}` },
-    })
-      .then((r) => {
-        if (r.status === 401) { localStorage.clear(); window.location.href = "/staff/login"; }
-        return r.json();
-      })
+    staffFetch("/api/admin/staff/chat-list")
+      .then((r) => r.json())
       .then((data) => setRooms(Array.isArray(data) ? data : []))
       .catch(() => {})
       .finally(() => setLoading(false));

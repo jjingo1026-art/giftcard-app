@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from "react";
 import { io, Socket } from "socket.io-client";
+import { staffFetch } from "@/lib/authFetch";
 import { useImageUpload } from "@/hooks/useImageUpload";
 
 interface SavedItem {
@@ -97,13 +98,8 @@ export default function StaffCard() {
     if (!token) { window.location.href = "/staff/login"; return; }
     if (!id) { window.location.href = "/staff/dashboard"; return; }
 
-    fetch("/api/admin/staff/my-reservations", {
-      headers: { Authorization: `Bearer ${token}` },
-    })
-      .then((res) => {
-        if (res.status === 401) { localStorage.clear(); window.location.href = "/staff/login"; }
-        return res.json();
-      })
+    staffFetch("/api/admin/staff/my-reservations")
+      .then((res) => res.json())
       .then((data: Reservation[]) => {
         const found = Array.isArray(data) ? data.find((x) => String(x.id) === id) : null;
         setR(found ?? null);
@@ -196,10 +192,7 @@ export default function StaffCard() {
     if (!r || !confirm("완료 처리하시겠습니까?")) return;
     setCompleting(true);
     try {
-      await fetch(`/api/admin/reservations/${id}/complete`, {
-        method: "POST",
-        headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
-      });
+      await staffFetch(`/api/admin/reservations/${id}/complete`, { method: "POST" });
       setR((prev) => prev ? { ...prev, status: "completed" } : prev);
     } finally { setCompleting(false); }
   }
@@ -208,9 +201,9 @@ export default function StaffCard() {
     if (!r || !confirm("노쇼 처리하시겠습니까?")) return;
     setNoShowing(true);
     try {
-      await fetch(`/api/admin/reservations/${id}/status`, {
+      await staffFetch(`/api/admin/reservations/${id}/status`, {
         method: "POST",
-        headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ status: "no_show" }),
       });
       setR((prev) => prev ? { ...prev, status: "no_show" } : prev);

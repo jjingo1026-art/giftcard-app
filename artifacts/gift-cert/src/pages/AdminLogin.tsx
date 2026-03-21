@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useLocation } from "wouter";
+export { adminFetch, staffFetch } from "@/lib/authFetch";
 
 const TOKEN_KEY = "gc_admin_token";
 

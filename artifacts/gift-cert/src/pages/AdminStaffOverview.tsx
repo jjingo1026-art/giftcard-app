@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useLocation } from "wouter";
-import { getAdminToken, clearAdminToken } from "./AdminLogin";
+import { getAdminToken, clearAdminToken, adminFetch } from "./AdminLogin";
 
 interface StaffMember {
   id: number;
@@ -22,11 +22,8 @@ export default function AdminStaffOverview() {
   if (!token) { navigate("/admin/login"); return null; }
 
   useEffect(() => {
-    fetch("/api/admin/staff-overview", { headers: { Authorization: `Bearer ${token}` } })
-      .then((r) => {
-        if (r.status === 401) { clearAdminToken(); navigate("/admin/login"); }
-        return r.json();
-      })
+    adminFetch("/api/admin/staff-overview")
+      .then((r) => r.json())
       .then((data) => { setStaff(data); setLoading(false); })
       .catch(() => setLoading(false));
   }, []);

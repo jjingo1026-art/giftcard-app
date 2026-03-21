@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from "react";
-import { getAdminToken, clearAdminToken } from "./AdminLogin";
+import { getAdminToken, clearAdminToken, adminFetch } from "./AdminLogin";
 
 interface ReservationItem {
   type: string;
@@ -73,15 +73,10 @@ export default function AdminAllReservations() {
 
   useEffect(() => {
     if (!token) { window.location.href = "/admin/login.html"; return; }
-    fetch("/api/admin/reservations", {
-      headers: { Authorization: `Bearer ${token}` },
-    })
-      .then((r) => {
-        if (r.status === 401) { clearAdminToken(); window.location.href = "/admin/login.html"; throw new Error("401"); }
-        return r.json();
-      })
+    adminFetch("/api/admin/reservations")
+      .then((r) => r.json())
       .then((data: Reservation[]) => setAllData(data))
-      .catch((e) => { if (e.message !== "401") setError("데이터를 불러올 수 없습니다."); })
+      .catch(() => setError("데이터를 불러올 수 없습니다."))
       .finally(() => setLoading(false));
   }, []);
 

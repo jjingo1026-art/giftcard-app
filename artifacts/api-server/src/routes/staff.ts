@@ -2,21 +2,9 @@ import { Router, type IRouter } from "express";
 import { db } from "@workspace/db";
 import { reservationsTable } from "@workspace/db/schema";
 import { eq, desc, and } from "drizzle-orm";
-import { staffTokens } from "./admin";
+import { requireStaffAuth } from "./admin";
 
 const router: IRouter = Router();
-
-function requireStaffAuth(req: any, res: any, next: any) {
-  const auth = req.headers.authorization ?? "";
-  const token = auth.startsWith("Bearer ") ? auth.slice(7) : "";
-  const entry = staffTokens.get(token);
-  if (!entry || Date.now() > entry.exp) {
-    res.status(401).json({ error: "인증이 필요합니다." });
-    return;
-  }
-  req.staffId = entry.staffId;
-  next();
-}
 
 const VALID_STATUSES = ["pending", "assigned", "completed", "cancelled", "no_show"] as const;
 type Status = typeof VALID_STATUSES[number];

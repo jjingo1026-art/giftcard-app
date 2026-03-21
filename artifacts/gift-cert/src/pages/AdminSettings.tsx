@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { getAdminToken, clearAdminToken } from "./AdminLogin";
+import { getAdminToken, clearAdminToken, adminFetch } from "./AdminLogin";
 
 function formatKo(date: Date) {
   return `${date.getFullYear()}년 ${date.getMonth() + 1}월 ${date.getDate()}일`;
@@ -33,10 +33,7 @@ export default function AdminSettings() {
     if (!confirm(`${cutoffDate} 이전 예약의 고객 개인정보를 지금 즉시 삭제합니다.\n계속하시겠습니까?`)) return;
     setCleaning(true);
     try {
-      const res = await fetch("/api/admin/privacy-cleanup", {
-        method: "POST",
-        headers: { Authorization: `Bearer ${token}` },
-      });
+      const res = await adminFetch("/api/admin/privacy-cleanup", { method: "POST" });
       const data = await res.json();
       if (!res.ok) { showToast(data.error ?? "삭제 실패", false); return; }
       setCleanResult({ cleaned: data.cleaned, ran: new Date() });
@@ -57,9 +54,9 @@ export default function AdminSettings() {
 
     setSaving(true);
     try {
-      const res = await fetch("/api/admin/credentials", {
+      const res = await adminFetch("/api/admin/credentials", {
         method: "PATCH",
-        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           currentPassword,
           ...(newId ? { newId } : {}),

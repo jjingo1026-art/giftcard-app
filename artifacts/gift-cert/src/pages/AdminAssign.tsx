@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { getAdminToken, clearAdminToken } from "./AdminLogin";
+import { getAdminToken, clearAdminToken, adminFetch } from "./AdminLogin";
 
 interface ReservationItem {
   type: string;
@@ -70,21 +70,17 @@ export default function AdminAssign() {
   useEffect(() => {
     if (!token) { window.location.href = "/admin/login.html"; return; }
 
-    const headers = { Authorization: `Bearer ${token}` };
     setLoading(true);
 
     Promise.all([
-      fetch("/api/admin/reservations", { headers }).then((r) => {
-        if (r.status === 401) { clearAdminToken(); window.location.href = "/admin/login.html"; throw new Error("401"); }
-        return r.json();
-      }),
-      fetch("/api/admin/staff", { headers }).then((r) => r.json()),
+      adminFetch("/api/admin/reservations").then((r) => r.json()),
+      adminFetch("/api/admin/staff").then((r) => r.json()),
     ])
       .then(([data, staff]) => {
         setAllData(data);
         setStaffList(staff);
       })
-      .catch((e) => { if (e.message !== "401") setError("데이터를 불러올 수 없습니다."); })
+      .catch(() => setError("데이터를 불러올 수 없습니다."))
       .finally(() => setLoading(false));
   }, []);
 
@@ -104,9 +100,9 @@ export default function AdminAssign() {
     if (!staffId) { showToast("담당자를 선택해주세요"); return; }
     setAssigning(reservationId);
     try {
-      const res = await fetch(`/api/admin/reservations/${reservationId}/assign`, {
+      const res = await adminFetch(`/api/admin/reservations/${reservationId}/assign`, {
         method: "PATCH",
-        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ staffId }),
       });
       if (!res.ok) throw new Error();

@@ -3,14 +3,19 @@ import { db } from "@workspace/db";
 import { reservationsTable, chatsTable, staffTable, penaltiesTable, usersTable, adminSettingsTable } from "@workspace/db/schema";
 import { eq, desc, asc, and, sql, gte, lte, inArray, isNull } from "drizzle-orm";
 import { runPrivacyCleanup } from "../cleanup";
-import crypto from "crypto";
 import { emitToRoom, broadcast } from "../socket";
+import {
+  generateAccessToken,
+  generateRefreshToken,
+  verifyAccessToken,
+  verifyRefreshToken,
+  REFRESH_MS,
+} from "../lib/jwt";
 
 const router: IRouter = Router();
 
 const DEFAULT_ADMIN_ID = process.env.ADMIN_ID ?? "admin";
 const DEFAULT_ADMIN_PASSWORD = process.env.ADMIN_PASSWORD ?? "1234";
-const tokens = new Map<string, number>();
 
 async function getAdminCredentials(): Promise<{ adminId: string; adminPassword: string }> {
   const rows = await db.select().from(adminSettingsTable).limit(1);
@@ -28,10 +33,7 @@ async function seedAdminSettings() {
   }
 }
 seedAdminSettings().catch(console.error);
-export const staffTokens = new Map<string, { staffId: number; exp: number }>();
 
-
-// 기존 staff 데이터 시드 (서버 최초 기동 시 DB에 없을 경우 삽입)
 async function seedStaff() {
   const existing = await db.select().from(staffTable);
   if (existing.length === 0) {
@@ -42,39 +44,36 @@ async function seedStaff() {
 }
 seedStaff().catch(console.error);
 
-
-function requireStaffAuth(req: any, res: any, next: any) {
+function extractBearer(req: any): string {
   const auth = req.headers.authorization ?? "";
-  const token = auth.startsWith("Bearer ") ? auth.slice(7) : "";
-  const entry = staffTokens.get(token);
-  if (!entry || Date.now() > entry.exp) {
+  return auth.startsWith("Bearer ") ? auth.slice(7) : "";
+}
+
+export function requireStaffAuth(req: any, res: any, next: any) {
+  const token = extractBearer(req);
+  try {
+    const payload = verifyAccessToken(token);
+    if (payload.role !== "staff" || !payload.staffId) throw new Error();
+    req.staffId = payload.staffId;
+    next();
+  } catch {
     res.status(401).json({ error: "인증이 필요합니다." });
-    return;
   }
-  req.staffId = entry.staffId;
-  next();
 }
 
 function requireAuth(req: any, res: any, next: any) {
-  const auth = req.headers.authorization ?? "";
-  const token = auth.startsWith("Bearer ") ? auth.slice(7) : "";
-  const exp = tokens.get(token);
-  if (!exp || Date.now() > exp) {
+  const token = extractBearer(req);
+  try {
+    const payload = verifyAccessToken(token);
+    if (payload.role !== "admin") throw new Error();
+    next();
+  } catch {
     res.status(401).json({ error: "인증이 필요합니다." });
-    return;
   }
-  next();
 }
 
 function requireAdmin(req: any, res: any, next: any) {
-  const auth = req.headers.authorization ?? "";
-  const token = auth.startsWith("Bearer ") ? auth.slice(7) : "";
-  const exp = tokens.get(token);
-  if (!exp || Date.now() > exp) {
-    res.status(403).json({ error: "관리자 권한이 필요합니다." });
-    return;
-  }
-  next();
+  requireAuth(req, res, next);
 }
 
 router.post("/login", async (req, res) => {
@@ -84,10 +83,29 @@ router.post("/login", async (req, res) => {
     res.status(401).json({ success: false, error: "아이디 또는 비밀번호가 올바르지 않습니다." });
     return;
   }
-  const token = crypto.randomUUID();
-  const expiresAt = Date.now() + 1000 * 60 * 60 * 8;
-  tokens.set(token, expiresAt);
-  res.json({ token, expiresAt });
+  const payload = { id: "admin", role: "admin" as const };
+  const accessToken  = generateAccessToken(payload);
+  const refreshToken = generateRefreshToken(payload);
+  res.cookie("gc_admin_refresh", refreshToken, {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === "production",
+    sameSite: "lax",
+    maxAge: REFRESH_MS,
+    path: "/api/admin",
+  });
+  res.json({ token: accessToken });
+});
+
+router.post("/refresh", (req, res) => {
+  const token = (req as any).cookies?.gc_admin_refresh;
+  if (!token) { res.status(401).json({ error: "refresh token 없음" }); return; }
+  try {
+    const payload = verifyRefreshToken(token);
+    const newAccess = generateAccessToken({ id: payload.id, role: "admin" });
+    res.json({ token: newAccess });
+  } catch {
+    res.status(403).json({ error: "refresh token 만료 또는 유효하지 않음" });
+  }
 });
 
 router.patch("/credentials", requireAuth, async (req, res) => {
@@ -120,7 +138,6 @@ router.patch("/credentials", requireAuth, async (req, res) => {
   } else {
     await db.insert(adminSettingsTable).values({ adminId: updatedId, adminPassword: updatedPassword });
   }
-  tokens.clear();
   res.json({ success: true });
 });
 
@@ -184,10 +201,30 @@ router.post("/staff/login", async (req, res) => {
   if (user.status !== "approved") {
     res.json({ success: false, message: "관리자 승인 대기 중입니다. 승인 후 로그인하세요." }); return;
   }
-  const token = crypto.randomUUID();
-  const expiresAt = Date.now() + 1000 * 60 * 60 * 8;
-  staffTokens.set(token, { staffId: user.id, exp: expiresAt });
-  res.json({ success: true, token, expiresAt, staffId: user.id, name: user.name });
+  const payload = { id: String(user.id), role: "staff" as const, staffId: user.id };
+  const accessToken  = generateAccessToken(payload);
+  const refreshToken = generateRefreshToken(payload);
+  res.cookie("gc_staff_refresh", refreshToken, {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === "production",
+    sameSite: "lax",
+    maxAge: REFRESH_MS,
+    path: "/api/admin/staff",
+  });
+  res.json({ success: true, token: accessToken, staffId: user.id, name: user.name });
+});
+
+router.post("/staff/refresh", (req, res) => {
+  const token = (req as any).cookies?.gc_staff_refresh;
+  if (!token) { res.status(401).json({ error: "refresh token 없음" }); return; }
+  try {
+    const payload = verifyRefreshToken(token);
+    if (payload.role !== "staff" || !payload.staffId) throw new Error();
+    const newAccess = generateAccessToken({ id: payload.id, role: "staff", staffId: payload.staffId });
+    res.json({ token: newAccess });
+  } catch {
+    res.status(403).json({ error: "refresh token 만료 또는 유효하지 않음" });
+  }
 });
 
 router.post("/staff/register", async (req, res) => {

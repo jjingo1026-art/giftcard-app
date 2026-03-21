@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { getAdminToken, clearAdminToken } from "./AdminLogin";
+import { getAdminToken, clearAdminToken, adminFetch } from "./AdminLogin";
 import { useLocation } from "wouter";
 import { formatPhone } from "@/lib/store";
 
@@ -17,10 +17,7 @@ export default function StaffApprove() {
 
   async function load() {
     setLoading(true);
-    const res = await fetch("/api/admin/staff/pending", {
-      headers: { Authorization: `Bearer ${token}` },
-    });
-    if (res.status === 401) { clearAdminToken(); navigate("/admin/login"); return; }
+    const res = await adminFetch("/api/admin/staff/pending");
     setList(await res.json());
     setLoading(false);
   }
@@ -29,20 +26,14 @@ export default function StaffApprove() {
 
   async function approve(id: number) {
     setApproving(id);
-    await fetch(`/api/admin/staff/${id}/approve`, {
-      method: "POST",
-      headers: { Authorization: `Bearer ${token}` },
-    });
+    await adminFetch(`/api/admin/staff/${id}/approve`, { method: "POST" });
     setApproving(null);
     load();
   }
 
   async function reject(id: number) {
     setRejecting(id);
-    await fetch(`/api/admin/staff/${id}/reject`, {
-      method: "POST",
-      headers: { Authorization: `Bearer ${token}` },
-    });
+    await adminFetch(`/api/admin/staff/${id}/reject`, { method: "POST" });
     setRejecting(null);
     load();
   }

@@ -4,7 +4,7 @@ import FullCalendar from "@fullcalendar/react";
 import dayGridPlugin from "@fullcalendar/daygrid";
 import interactionPlugin from "@fullcalendar/interaction";
 import { io } from "socket.io-client";
-import { getAdminToken, clearAdminToken } from "./AdminLogin";
+import { getAdminToken, clearAdminToken, adminFetch } from "./AdminLogin";
 import { formatDateKo } from "@/lib/store";
 
 interface Reservation {
@@ -93,41 +93,39 @@ export default function AdminDashboard() {
   if (!token) { navigate("/admin/login"); return null; }
 
   useEffect(() => {
-    const headers = { Authorization: `Bearer ${token}` };
-
     setLoading(true);
-    fetch("/api/admin/reservations", { headers })
-      .then((r) => { if (r.status === 401) { clearAdminToken(); navigate("/admin/login"); } return r.json(); })
+    adminFetch("/api/admin/reservations")
+      .then((r) => r.json())
       .then((data) => { setAllEntries(data); setEntries(data); })
       .catch(() => setError("데이터를 불러올 수 없습니다."))
       .finally(() => setLoading(false));
 
-    fetch("/api/admin/staff-summary", { headers })
+    adminFetch("/api/admin/staff-summary")
       .then((r) => r.json())
       .then(setStaffSummary)
       .catch(() => {});
 
-    fetch("/api/admin/dashboard", { headers })
+    adminFetch("/api/admin/dashboard")
       .then((r) => r.json())
       .then((data) => setDashboardStats(data))
       .catch(() => {});
 
-    fetch("/api/admin/staff", { headers })
+    adminFetch("/api/admin/staff")
       .then((r) => r.json())
       .then((data: any[]) => setStaffList(data.map((s) => ({ id: s.id, name: s.name }))))
       .catch(() => {});
 
-    fetch("/api/admin/reservations/calendar", { headers })
+    adminFetch("/api/admin/reservations/calendar")
       .then((r) => r.json())
       .then(setCalendarData)
       .catch(() => {});
 
-    fetch("/api/admin/staff/pending", { headers })
+    adminFetch("/api/admin/staff/pending")
       .then((r) => r.json())
       .then(setPendingStaff)
       .catch(() => {});
 
-    fetch("/api/admin/chat-inbox", { headers })
+    adminFetch("/api/admin/chat-inbox")
       .then((r) => r.json())
       .then((data) => { if (Array.isArray(data)) setChatInbox(data); })
       .catch(() => {});
@@ -250,9 +248,9 @@ export default function AdminDashboard() {
     if (!staffId) return;
     setAssigning(reservationId);
     try {
-      await fetch(`/api/admin/reservations/${reservationId}/assign`, {
+      await adminFetch(`/api/admin/reservations/${reservationId}/assign`, {
         method: "PATCH",
-        headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ staffId }),
       });
       setAllEntries((prev) => prev.map((r) =>
@@ -268,10 +266,7 @@ export default function AdminDashboard() {
   async function approveStaff(id: number) {
     setApprovingStaff(id);
     try {
-      await fetch(`/api/admin/staff/${id}/approve`, {
-        method: "POST",
-        headers: { Authorization: `Bearer ${token}` },
-      });
+      await adminFetch(`/api/admin/staff/${id}/approve`, { method: "POST" });
       setPendingStaff((prev) => prev.filter((s) => s.id !== id));
     } finally {
       setApprovingStaff(null);
@@ -281,10 +276,7 @@ export default function AdminDashboard() {
   async function rejectStaff(id: number) {
     setRejectingStaff(id);
     try {
-      await fetch(`/api/admin/staff/${id}/reject`, {
-        method: "POST",
-        headers: { Authorization: `Bearer ${token}` },
-      });
+      await adminFetch(`/api/admin/staff/${id}/reject`, { method: "POST" });
       setPendingStaff((prev) => prev.filter((s) => s.id !== id));
     } finally {
       setRejectingStaff(null);
@@ -327,10 +319,7 @@ export default function AdminDashboard() {
     setLoading(true);
     setError("");
     try {
-      const res = await fetch(`/api/admin/reservations?date=${date}`, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
-      if (res.status === 401) { clearAdminToken(); navigate("/admin/login"); return; }
+      const res = await adminFetch(`/api/admin/reservations?date=${date}`);
       setEntries(await res.json());
     } catch {
       setError("데이터를 불러올 수 없습니다.");

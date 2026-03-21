@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useLocation } from "wouter";
-import { getAdminToken, clearAdminToken } from "./AdminLogin";
+import { getAdminToken, clearAdminToken, adminFetch } from "./AdminLogin";
 import { formatDateKo } from "@/lib/store";
 
 interface StaffSummary {
@@ -88,10 +88,8 @@ export default function AdminStaffView() {
 
   useEffect(() => {
     Promise.all([
-      fetch("/api/admin/staff-summary", { headers: { Authorization: `Bearer ${token}` } })
-        .then((r) => { if (r.status === 401) { clearAdminToken(); navigate("/admin/login"); } return r.json(); }),
-      fetch("/api/admin/staff", { headers: { Authorization: `Bearer ${token}` } })
-        .then((r) => r.json()),
+      adminFetch("/api/admin/staff-summary").then((r) => r.json()),
+      adminFetch("/api/admin/staff").then((r) => r.json()),
     ])
       .then(([summaryData, staffData]: [StaffSummary[], any[]]) => {
         const merged = summaryData.map((s) => {
@@ -109,10 +107,8 @@ export default function AdminStaffView() {
     if (!selectedId) return;
     setLoadingList(true);
     setList([]);
-    fetch(`/api/admin/staff/${selectedId}/reservations?status=${activeStatus}`, {
-      headers: { Authorization: `Bearer ${token}` },
-    })
-      .then((r) => { if (r.status === 401) { clearAdminToken(); navigate("/admin/login"); } return r.json(); })
+    adminFetch(`/api/admin/staff/${selectedId}/reservations?status=${activeStatus}`)
+      .then((r) => r.json())
       .then(setList)
       .catch(() => setError("예약 목록을 불러올 수 없습니다."))
       .finally(() => setLoadingList(false));
@@ -122,10 +118,7 @@ export default function AdminStaffView() {
     if (!deleteTarget) return;
     setDeleting(true);
     try {
-      await fetch(`/api/admin/staff/${deleteTarget.id}`, {
-        method: "DELETE",
-        headers: { Authorization: `Bearer ${token}` },
-      });
+      await adminFetch(`/api/admin/staff/${deleteTarget.id}`, { method: "DELETE" });
       setSummary((prev) => prev.filter((s) => s.id !== deleteTarget.id));
       if (selectedId === deleteTarget.id) setSelectedId(null);
       setDeleteTarget(null);
