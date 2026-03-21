@@ -2,7 +2,7 @@ import { useState } from "react";
 
 const MOBILE_TYPES = [
   { label: "신세계모바일", sub: "이마트교환권", icon: "🛒", color: "#e11d48", rate: 95 },
-  { label: "롯데모바일", sub: "23으로 시작·앱 선물하기", icon: "🧡", color: "#f97316", rate: 95 },
+  { label: "롯데모바일", subs: ["23으로 시작하는 교환권", "앱선물하기"], icon: "🧡", color: "#f97316", rate: 95 },
   { label: "현대모바일", sub: "H포인트 상품권 제외", icon: "🏬", color: "#0ea5e9", rate: 95 },
   { label: "네이버페이 포인트", icon: "💚", color: "#03C75A", rate: 95 },
   { label: "컬쳐랜드", icon: "📚", color: "#6366f1", rate: 90 },
@@ -184,12 +184,21 @@ export default function MobileSelect() {
                   <span className="text-[28px]">{t.icon}</span>
                   <span className="text-[13px] font-bold text-slate-700 text-center leading-snug mt-2">{t.label}</span>
                   <span className="text-[24px] font-black tabular-nums mt-1.5" style={{ color: t.color }}>{t.rate}%</span>
-                  {"sub" in t && (t as any).sub && (
+                  {"subs" in t && (t as any).subs ? (
+                    <div className="flex flex-col items-center gap-1 mt-1.5">
+                      {(t as any).subs.map((s: string, i: number) => (
+                        <span key={i} className="text-[11px] font-medium leading-snug px-2 py-0.5 rounded-full text-center"
+                          style={{ color: t.color, backgroundColor: t.color + "18" }}>
+                          {s}
+                        </span>
+                      ))}
+                    </div>
+                  ) : "sub" in t && (t as any).sub ? (
                     <span className="text-[11px] font-medium leading-snug mt-1.5 px-2 py-0.5 rounded-full text-center"
                       style={{ color: t.color, backgroundColor: t.color + "18" }}>
                       {(t as any).sub}
                     </span>
-                  )}
+                  ) : null}
                 </button>
               );
             })}

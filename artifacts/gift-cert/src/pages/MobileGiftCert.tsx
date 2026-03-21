@@ -1,6 +1,6 @@
 const MOBILE_RATES = [
   { label: "신세계모바일", sub: "이마트교환권", icon: "🛒", color: "#e11d48", rate: 95 },
-  { label: "롯데모바일", sub: "23으로 시작·앱 선물하기", icon: "🧡", color: "#f97316", rate: 95 },
+  { label: "롯데모바일", subs: ["23으로 시작하는 교환권", "앱선물하기"], icon: "🧡", color: "#f97316", rate: 95 },
   { label: "현대모바일", sub: "H포인트 상품권 제외", icon: "🏬", color: "#0ea5e9", rate: 95 },
   { label: "네이버페이 포인트", icon: "💚", color: "#03C75A", rate: 95 },
   { label: "컬쳐랜드", icon: "📚", color: "#6366f1", rate: 90 },
@@ -49,12 +49,21 @@ export default function MobileGiftCert() {
                 <span className="text-[28px] leading-none">{g.icon}</span>
                 <span className="text-[13px] font-bold text-slate-700 leading-snug text-center mt-2">{g.label}</span>
                 <span className="text-[26px] font-black tabular-nums leading-none mt-1.5" style={{ color: g.color }}>{g.rate}%</span>
-                {g.sub && (
+                {"subs" in g && (g as any).subs ? (
+                  <div className="flex flex-col items-center gap-1 mt-1.5">
+                    {(g as any).subs.map((s: string, i: number) => (
+                      <span key={i} className="text-[11px] font-medium leading-snug px-2 py-0.5 rounded-full"
+                        style={{ color: g.color, backgroundColor: g.color + "18" }}>
+                        {s}
+                      </span>
+                    ))}
+                  </div>
+                ) : "sub" in g && (g as any).sub ? (
                   <span className="text-[11px] font-medium leading-snug mt-1.5 px-2 py-0.5 rounded-full"
                     style={{ color: g.color, backgroundColor: g.color + "18" }}>
-                    {g.sub}
+                    {(g as any).sub}
                   </span>
-                )}
+                ) : null}
               </div>
             ))}
           </div>
