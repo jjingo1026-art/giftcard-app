@@ -49,7 +49,7 @@ export default function BusinessInfo() {
             </svg>
           </button>
           <div>
-            <h1 className="text-[16px] font-bold text-slate-800">사업자정보 확인</h1>
+            <h1 className="text-[16px] font-bold text-slate-800">사업자정보 / 고객센터</h1>
             <p className="text-[11px] text-slate-400 mt-0.5">Business Information</p>
           </div>
         </div>

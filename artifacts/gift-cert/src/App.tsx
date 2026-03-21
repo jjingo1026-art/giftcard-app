@@ -515,7 +515,7 @@ function HomePage({ onGoUrgent, initialType = DEFAULT_TYPE, onTypeChange, rateGr
               <div className="flex items-center gap-3">
                 <span className="text-[22px]">🏢</span>
                 <div>
-                  <p className="text-[13px] font-semibold text-indigo-700">사업자정보 확인</p>
+                  <p className="text-[13px] font-semibold text-indigo-700">사업자정보 / 고객센터</p>
                 </div>
               </div>
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#818cf8" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
