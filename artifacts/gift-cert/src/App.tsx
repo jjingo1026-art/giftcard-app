@@ -502,7 +502,7 @@ function HomePage({ onGoUrgent, initialType = DEFAULT_TYPE, onTypeChange }: { on
             <div className="flex items-center gap-3 px-4 py-3.5 bg-indigo-50 rounded-2xl border border-indigo-100">
               <span className="text-[22px]">👆</span>
               <div>
-                <p className="text-[13px] font-semibold text-indigo-700">위 권종을 클릭해주세요</p>
+                <p className="text-[13px] font-semibold text-indigo-700">사업자정보 확인</p>
                 <p className="text-[11px] text-indigo-400 mt-0.5">공지사항 확인 및 개인정보 동의 후 예약 가능합니다</p>
               </div>
             </div>
