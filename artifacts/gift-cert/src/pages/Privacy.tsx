@@ -92,6 +92,14 @@ export default function Privacy() {
         >
           이용약관 및 개인정보 수집에 동의합니다. (필수)
         </button>
+
+        {/* 약관보기 버튼 */}
+        <button
+          onClick={() => { window.open(isUrgent ? "/terms.html?urgent=1" : `/terms.html?type=${encodeURIComponent(type)}`, "_blank"); }}
+          className="w-full py-3.5 rounded-2xl text-[14px] font-semibold text-slate-500 bg-white border border-slate-200 transition-all active:scale-[0.98] shadow-sm hover:bg-slate-50"
+        >
+          약관 보기
+        </button>
       </div>
     </div>
   );
