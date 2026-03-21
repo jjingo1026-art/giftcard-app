@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from "react";
 import { io } from "socket.io-client";
+import { getSoundEnabled, setSoundEnabled, playNotificationSound } from "@/lib/notificationSound";
 import { staffFetch } from "@/lib/authFetch";
 
 interface SavedItem {
@@ -210,6 +211,14 @@ export default function StaffDashboard() {
   const [unreadCount, setUnreadCount] = useState(0);
   const [newAssignAlert, setNewAssignAlert] = useState<Reservation | null>(null);
   const alertTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const [soundOn, setSoundOn] = useState(() => getSoundEnabled("staff"));
+
+  function toggleSound() {
+    const next = !soundOn;
+    setSoundOn(next);
+    setSoundEnabled("staff", next);
+    if (next) playNotificationSound();
+  }
 
   /* 비밀번호 변경 모달 */
   const [showPwModal, setShowPwModal] = useState(false);
@@ -274,6 +283,7 @@ export default function StaffDashboard() {
 
     socket.on("staffAssigned", ({ staffId, reservation }: { staffId: number; reservation: Reservation }) => {
       if (staffId !== myStaffId) return;
+      if (getSoundEnabled("staff")) playNotificationSound();
 
       // 예약 목록에 추가 (중복 방지)
       setEntries((prev) => {
@@ -401,6 +411,15 @@ export default function StaffDashboard() {
                 {unreadCount > 99 ? "99+" : unreadCount}
               </span>
             )}
+          </button>
+          <button
+            onClick={toggleSound}
+            title={soundOn ? "알림 소리 끄기" : "알림 소리 켜기"}
+            className="w-10 h-10 flex items-center justify-center rounded-xl hover:bg-slate-100 transition-colors flex-shrink-0"
+          >
+            {soundOn
+              ? <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#6366f1" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M18 8a6 6 0 0 1 0 8"/><path d="M22 4a10 10 0 0 1 0 16"/><path d="M11 5L6 9H2v6h4l5 4V5z"/></svg>
+              : <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#94a3b8" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M11 5L6 9H2v6h4l5 4V5z"/><line x1="23" y1="9" x2="17" y2="15"/><line x1="17" y1="9" x2="23" y2="15"/></svg>}
           </button>
           <button
             onClick={() => setShowPwModal(true)}
