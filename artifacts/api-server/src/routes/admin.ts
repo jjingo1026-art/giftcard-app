@@ -1,7 +1,8 @@
 import { Router, type IRouter } from "express";
 import { db } from "@workspace/db";
-import { reservationsTable, chatsTable, staffTable, penaltiesTable, usersTable, adminSettingsTable } from "@workspace/db/schema";
+import { reservationsTable, chatsTable, staffTable, penaltiesTable, usersTable, adminSettingsTable, adminAccountsTable } from "@workspace/db/schema";
 import { eq, desc, asc, and, sql, gte, lte, inArray, isNull } from "drizzle-orm";
+import bcrypt from "bcrypt";
 import { runPrivacyCleanup } from "../cleanup";
 import { emitToRoom, broadcast } from "../socket";
 import {
@@ -78,12 +79,27 @@ function requireAdmin(req: any, res: any, next: any) {
 
 router.post("/login", async (req, res) => {
   const { id, password } = req.body as { id?: string; password?: string };
-  const creds = await getAdminCredentials();
-  if (id !== creds.adminId || password !== creds.adminPassword) {
+  if (!id || !password) {
     res.status(401).json({ success: false, error: "아이디 또는 비밀번호가 올바르지 않습니다." });
     return;
   }
-  const payload = { id: "admin", role: "admin" as const };
+
+  let authenticated = false;
+
+  const account = await db.select().from(adminAccountsTable).where(eq(adminAccountsTable.username, id)).limit(1);
+  if (account.length > 0) {
+    authenticated = await bcrypt.compare(password, account[0].passwordHash);
+  } else {
+    const creds = await getAdminCredentials();
+    authenticated = (id === creds.adminId && password === creds.adminPassword);
+  }
+
+  if (!authenticated) {
+    res.status(401).json({ success: false, error: "아이디 또는 비밀번호가 올바르지 않습니다." });
+    return;
+  }
+
+  const payload = { id, role: "admin" as const };
   const accessToken  = generateAccessToken(payload);
   const refreshToken = generateRefreshToken(payload);
   res.cookie("gc_admin_refresh", refreshToken, {
