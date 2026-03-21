@@ -550,7 +550,7 @@ export default function StaffCard() {
 
             {/* 자주 쓰는 문구 */}
             <div className="flex-shrink-0 bg-white border-t border-slate-100 px-3 pt-2.5 pb-0">
-              <div className="flex gap-1.5 overflow-x-auto pb-2 scrollbar-hide" style={{ scrollbarWidth: "none" }}>
+              <div className="flex flex-wrap gap-1.5 pb-1">
                 {[
                   "안녕하세요",
                   "가는중 입니다 약속장소에서 뵙겠습니다",
