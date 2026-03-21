@@ -438,17 +438,18 @@ function HomePage({ onGoUrgent, initialType = DEFAULT_TYPE, onTypeChange }: { on
         {/* 언어 선택 드롭다운 */}
         {langPickerOpen && (
           <div className="border-t border-slate-100 bg-white/95 backdrop-blur-md px-4 py-2.5">
-            <div className="max-w-md mx-auto flex gap-1.5 overflow-x-auto pb-0.5 scrollbar-none">
+            <div className="max-w-md mx-auto flex flex-col gap-1">
               {LANGUAGES.map((l) => (
                 <button
                   key={l.code}
                   onClick={() => { setUserLang(l.code); saveLang(l.code); setLangPickerOpen(false); }}
-                  className={`flex-shrink-0 flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[12px] font-semibold border transition-all whitespace-nowrap active:scale-95
+                  className={`w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-[13px] font-semibold border transition-all active:scale-[0.98]
                     ${userLang === l.code
                       ? "bg-indigo-500 text-white border-indigo-500 shadow-sm"
-                      : "bg-white text-slate-500 border-slate-200 hover:border-indigo-300 hover:text-indigo-500"}`}
+                      : "bg-white text-slate-600 border-slate-200 hover:border-indigo-300 hover:text-indigo-500"}`}
                 >
-                  <span>{l.flag}</span> {l.label}
+                  <span className="text-[16px] leading-none">{l.flag}</span>
+                  <span>{l.label}</span>
                 </button>
               ))}
             </div>
