@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { useLocation } from "wouter";
 
 const DEFAULT_BUSINESS = {
   name: "우리동네상품권",
@@ -12,7 +13,16 @@ const DEFAULT_BUSINESS = {
 };
 
 export default function BusinessInfo() {
+  const [, navigate] = useLocation();
   const [biz, setBiz] = useState(DEFAULT_BUSINESS);
+
+  function goBack() {
+    if (window.history.length > 1) {
+      window.history.back();
+    } else {
+      navigate("/");
+    }
+  }
 
   useEffect(() => {
     const base = import.meta.env.BASE_URL.replace(/\/$/, "");
@@ -41,7 +51,7 @@ export default function BusinessInfo() {
       <header className="bg-white border-b border-slate-100 shadow-sm sticky top-0 z-40">
         <div className="max-w-lg mx-auto px-4 py-3.5 flex items-center gap-3">
           <button
-            onClick={() => { window.history.back(); }}
+            onClick={goBack}
             className="w-8 h-8 flex items-center justify-center rounded-xl hover:bg-slate-100 transition-colors"
           >
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">

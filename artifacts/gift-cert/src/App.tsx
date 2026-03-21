@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { Link } from "wouter";
 import { getNextId, saveEntry, formatDateKo } from "@/lib/store";
 import { LANGUAGES, getSavedLang, saveLang } from "@/lib/languages";
 import { getLabel } from "@/lib/uiTranslations";
@@ -519,7 +520,7 @@ function HomePage({ onGoUrgent, initialType = DEFAULT_TYPE, onTypeChange, rateGr
               </svg>
             </a>
 
-            <a
+            <Link
               href="/business"
               className="flex items-center justify-between px-4 py-3.5 bg-indigo-50 rounded-2xl border border-indigo-100 active:scale-[0.98] transition-all"
             >
@@ -532,7 +533,7 @@ function HomePage({ onGoUrgent, initialType = DEFAULT_TYPE, onTypeChange, rateGr
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#818cf8" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
                 <path d="M9 18l6-6-6-6"/>
               </svg>
-            </a>
+            </Link>
           </>
         )}
 
