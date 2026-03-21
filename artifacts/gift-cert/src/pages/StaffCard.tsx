@@ -255,8 +255,8 @@ export default function StaffCard() {
         : [];
   const totalFace = items.reduce((s, it) => s + Number(it.amount), 0);
 
-  /* 하단 바 높이 계산 (액션바 + 채팅버튼 여백) */
-  const bottomPad = isActive ? "pb-40" : "pb-24";
+  /* 하단 바 높이 계산 */
+  const bottomPad = isActive ? "pb-28" : "pb-8";
 
   return (
     <div className={`min-h-screen bg-slate-50 ${bottomPad}`}>
@@ -278,6 +278,21 @@ export default function StaffCard() {
             <h1 className="text-[15px] font-bold text-slate-800">예약 상세카드</h1>
             {r && <p className="text-[11px] text-slate-400 mt-0.5">#{r.id} · {r.name || r.phone}</p>}
           </div>
+          {r && (
+            <button
+              onClick={() => setChatOpen(true)}
+              className="relative w-10 h-10 flex items-center justify-center rounded-xl hover:bg-indigo-50 transition-colors text-indigo-500 flex-shrink-0"
+            >
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
+              </svg>
+              {unread > 0 && (
+                <span className="absolute -top-0.5 -right-0.5 bg-rose-500 text-white text-[10px] font-black min-w-[16px] h-[16px] rounded-full flex items-center justify-center px-1">
+                  {unread > 9 ? "9+" : unread}
+                </span>
+              )}
+            </button>
+          )}
         </div>
       </header>
 
@@ -428,31 +443,6 @@ export default function StaffCard() {
             </div>
           </div>
         </div>
-      )}
-
-      {/* ── 플로팅 채팅 버튼 ── */}
-      {!loading && r && (
-        <button
-          onClick={() => setChatOpen(true)}
-          className="fixed z-40 flex items-center justify-center shadow-xl active:scale-95 transition-all"
-          style={{
-            bottom: isActive ? "92px" : "24px",
-            right: "20px",
-            width: "56px",
-            height: "56px",
-            borderRadius: "18px",
-            background: "linear-gradient(135deg,#6366f1,#4f46e5)",
-          }}
-        >
-          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-            <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
-          </svg>
-          {unread > 0 && (
-            <span className="absolute -top-1.5 -right-1.5 bg-rose-500 text-white text-[10px] font-black min-w-[18px] h-[18px] rounded-full flex items-center justify-center px-1 shadow-md">
-              {unread > 9 ? "9+" : unread}
-            </span>
-          )}
-        </button>
       )}
 
       {/* ── 채팅 창 ── */}
