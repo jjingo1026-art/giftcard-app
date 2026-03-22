@@ -207,7 +207,7 @@ export default function AdminChat() {
           <button
             onClick={() => {
               const isMobile = fromParam === "mobile" || reservationKind === "mobile";
-              navigate(isMobile ? "/admin/mobile-dashboard" : "/admin/dashboard");
+              navigate(isMobile ? "/admin/mobile" : "/admin/dashboard");
             }}
             className="w-8 h-8 rounded-xl bg-slate-100 flex items-center justify-center hover:bg-slate-200 transition-colors flex-shrink-0"
           >
