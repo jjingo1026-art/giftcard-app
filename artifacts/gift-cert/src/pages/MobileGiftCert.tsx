@@ -72,6 +72,7 @@ export default function MobileGiftCert() {
         >
           📋 판매신청 확인
         </button>
+        <p className="text-center text-[12px] text-slate-400 font-medium -mt-1">신청하신 전화번호로 판매신청한 내역을 확인할 수 있습니다</p>
 
         <a
           href="/mobile/business"
