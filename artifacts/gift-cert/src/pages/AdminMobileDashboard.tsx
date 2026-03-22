@@ -249,7 +249,7 @@ export default function AdminMobileDashboard() {
     setUpdatingId(id);
     try {
       await adminFetch(`/api/admin/reservations/${id}/status`, {
-        method: "PATCH",
+        method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ status }),
       });

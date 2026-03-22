@@ -1037,6 +1037,10 @@ router.post("/reservations/:id/status", async (req, res) => {
     emitToRoom(id, "newMessage", { ...autoMsg, time: autoMsg.time.toISOString() });
   }
 
+  // 실시간: 상태 변경 즉시 대시보드에 브로드캐스트
+  const [updated] = await db.select().from(reservationsTable).where(eq(reservationsTable.id, id));
+  if (updated) broadcast("reservationUpdated", updated);
+
   res.json({ success: true });
 });
 
