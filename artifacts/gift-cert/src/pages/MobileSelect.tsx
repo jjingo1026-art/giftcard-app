@@ -572,13 +572,13 @@ function CultureAutoExtract({
       {/* 바코드 이미지 업로드 */}
       {showBarcode && (
         <div className="space-y-2 border-t border-indigo-100 pt-3">
-          <p className="text-[11px] font-bold text-indigo-600 flex items-center gap-1">📊 바코드 업로드</p>
+          <p className="text-[11px] font-bold text-indigo-600 flex items-center gap-1">📊 이미지 업로드</p>
           <button
             type="button"
             onClick={() => barRef.current?.click()}
             className="w-full flex items-center justify-center gap-2 py-2.5 rounded-xl border-2 border-dashed border-indigo-300 bg-white text-indigo-600 hover:bg-indigo-50 active:scale-95 transition-all text-[13px] font-bold"
           >
-            <span className="text-[18px]">📊</span> 바코드 이미지 선택
+            <span className="text-[18px]">📊</span> 이미지 찾기
           </button>
         </div>
       )}
