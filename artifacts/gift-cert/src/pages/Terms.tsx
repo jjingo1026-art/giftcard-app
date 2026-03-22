@@ -29,7 +29,7 @@ const SECTIONS = [
       },
       {
         heading: "제6조 (매입 거절)",
-        body: "다음의 경우 매입이 거절될 수 있습니다.",
+        body: "다음의 경우 매입이 거절됩니다.",
         bullets: ["상품권 훼손 또는 사용된 경우", "정상적인 유통 경로가 아닌 경우", "기타 거래가 부적절하다고 판단되는 경우"],
       },
       {
@@ -158,11 +158,13 @@ export default function Terms() {
           <button
             onClick={() => {
               if (fromPrivacy) window.close();
-              else window.history.back();
+              else window.location.href = "/";
             }}
-            className="text-slate-400 hover:text-slate-600 text-lg"
+            className="w-8 h-8 flex items-center justify-center rounded-xl hover:bg-slate-100 transition-colors"
           >
-            ←
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="text-slate-500">
+              <path d="M19 12H5M12 19l-7-7 7-7"/>
+            </svg>
           </button>
           <h1 className="text-[16px] font-bold text-slate-800">이용약관 및 개인정보처리방침</h1>
         </div>
@@ -187,13 +189,13 @@ export default function Terms() {
         </div>
       </div>
 
-      <div className="max-w-md mx-auto px-4 py-5 pb-10 space-y-3">
+      <div className="max-w-md mx-auto px-4 py-3 pb-6 space-y-3">
         <div className="bg-white rounded-3xl border border-slate-100 shadow-sm overflow-hidden">
-          <div className="px-5 pt-5 pb-3 border-b border-slate-100 flex items-center gap-2">
+          <div className="px-5 pt-4 pb-2 border-b border-slate-100 flex items-center gap-2">
             <span className="text-[20px]">{section.icon}</span>
             <h2 className="text-[15px] font-bold text-slate-800">{section.title}</h2>
           </div>
-          <div className="px-5 py-5 space-y-5">
+          <div className="px-5 py-3 space-y-3">
             {customTexts[section.id] ? (
               customTexts[section.id].split("\n").filter(Boolean).map((line, i) => (
                 <p key={i} className="text-[13.5px] text-slate-600 leading-relaxed">{line}</p>
@@ -229,7 +231,7 @@ export default function Terms() {
             className="w-full py-4 rounded-2xl text-white text-[15px] font-bold transition-all active:scale-[0.98] shadow-sm"
             style={{ background: "linear-gradient(135deg, #6366f1 0%, #4f46e5 100%)" }}
           >
-            확인했습니다
+            이용약관에 동의 합니다
           </button>
         )}
       </div>
