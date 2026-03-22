@@ -1,6 +1,8 @@
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
+import { io, Socket } from "socket.io-client";
 import LangPicker, { useLang } from "@/components/LangPicker";
 import { getLabel } from "@/lib/uiTranslations";
+import { getSoundEnabled, playNotificationSound } from "@/lib/notificationSound";
 
 interface ReservationItem { type: string; amount: number; rate: number; payment: number; }
 interface StaffInfo { id: number; name: string; phone: string; }
@@ -45,6 +47,27 @@ export default function MobileCheck() {
   const [cancelling, setCancelling] = useState(false);
   const [cancelError, setCancelError] = useState("");
   const [cancelDone, setCancelDone] = useState(false);
+  const [adminAlert, setAdminAlert] = useState<{ message: string } | null>(null);
+  const socketRef = useRef<Socket | null>(null);
+  const reservationRef = useRef<ReservationInfo | null>(null);
+
+  useEffect(() => {
+    reservationRef.current = reservation;
+  }, [reservation]);
+
+  useEffect(() => {
+    const socket = io({ transports: ["websocket", "polling"] });
+    socketRef.current = socket;
+    socket.on("adminChatAlert", (data: { reservationId: number; senderName: string; message: string }) => {
+      const cur = reservationRef.current;
+      if (!cur) return;
+      if (data.reservationId !== cur.id) return;
+      if (getSoundEnabled("customer")) playNotificationSound("customer");
+      setAdminAlert({ message: data.message });
+      setTimeout(() => setAdminAlert(null), 10000);
+    });
+    return () => { socket.disconnect(); };
+  }, []);
 
   function handlePhone(v: string) {
     const d = v.replace(/[^0-9]/g, "").slice(0, 11);
@@ -115,6 +138,27 @@ export default function MobileCheck() {
       {cancelDone && (
         <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 px-5 py-3 rounded-full bg-slate-800 text-white text-[14px] font-medium shadow-lg">
           신청이 취소되었습니다.
+        </div>
+      )}
+
+      {/* 관리자 채팅 알림 배너 */}
+      {adminAlert && reservation && (
+        <div
+          className="fixed top-20 left-1/2 -translate-x-1/2 z-50 w-[calc(100%-2rem)] max-w-md animate-bounce-once"
+          style={{ animation: "slideDown 0.3s ease-out" }}
+        >
+          <button
+            onClick={() => { window.location.href = `/chat?id=${reservation.id}&from=mobile`; }}
+            className="w-full flex items-center gap-3 px-4 py-3.5 rounded-2xl shadow-xl text-left"
+            style={{ background: "linear-gradient(135deg,#7c3aed,#6d28d9)", color: "#fff" }}
+          >
+            <span className="text-2xl flex-shrink-0">💬</span>
+            <div className="flex-1 min-w-0">
+              <p className="text-[13px] font-bold">관리자가 메시지를 보냈습니다</p>
+              <p className="text-[12px] opacity-80 truncate">{adminAlert.message}</p>
+            </div>
+            <span className="text-[12px] font-bold opacity-80 flex-shrink-0">채팅 열기 →</span>
+          </button>
         </div>
       )}
 

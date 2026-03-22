@@ -266,6 +266,8 @@ router.post("/", async (req, res) => {
       message: summaryMsg,
     }).returning();
     emitToRoom(inserted.id, "newMessage", { ...chatRow, time: chatRow.time.toISOString() });
+    // 관리자 모바일 대시보드 채팅함 알림 (전역 브로드캐스트)
+    broadcast("chatAlert", { ...chatRow, time: chatRow.time.toISOString(), reservationId: inserted.id, senderName: "📱 신규 모바일 판매신청" });
 
     // 이미지가 있으면 각각 별도 메시지로 전송
     if (body.imagePaths && body.imagePaths.length > 0) {

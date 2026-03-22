@@ -1157,6 +1157,10 @@ router.post("/chat/send", async (req, res) => {
       .from(reservationsTable).where(eq(reservationsTable.id, reservationId));
     broadcast("chatAlert", { ...msgOut, reservationInfo: resv ?? null });
   }
+  // 관리자 메시지는 고객(판매자)에게 전역 알림
+  if (sender === "admin") {
+    broadcast("adminChatAlert", { reservationId, senderName: inserted.senderName, message: inserted.message });
+  }
   res.json({ success: true, id: inserted.id });
 });
 

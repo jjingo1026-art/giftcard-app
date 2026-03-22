@@ -52,6 +52,10 @@ export function initSocket(httpServer: HttpServer) {
       if (sender !== "admin" && sender !== "system") {
         io.emit("chatAlert", msg);
       }
+      // 관리자 메시지는 고객(판매자)에게 알림 브로드캐스트
+      if (sender === "admin") {
+        io.emit("adminChatAlert", { reservationId, senderName: senderName ?? "관리자", message: trimmed });
+      }
     });
 
     // 읽음 처리: 내가 아닌 발신자의 메시지를 read=true 로 업데이트

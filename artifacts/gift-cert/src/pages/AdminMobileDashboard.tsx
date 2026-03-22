@@ -207,8 +207,8 @@ export default function AdminMobileDashboard() {
       if (r.kind !== "mobile") return;
       setEntries((prev) => prev.map((e) => e.id === r.id ? { ...e, ...r } : e));
     });
-    socket.on("newMessage", (msg: { reservationId: number; senderName: string; message: string; senderRole: string }) => {
-      if (msg.senderRole === "admin") return;
+    socket.on("chatAlert", (msg: { reservationId: number; senderName: string; message: string; sender: string }) => {
+      if (msg.sender === "admin") return;
       if (getSoundEnabled("admin")) playNotificationSound("admin");
       setChatInbox((prev) => {
         const exists = prev.find((c) => c.reservationId === msg.reservationId);
