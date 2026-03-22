@@ -1550,6 +1550,11 @@ export default function MobileSelect() {
     if (hasCultureExchange && !cultureExchangeNumbers.some((n) => n.trim())) {
       errs.cultureExchange = "컬쳐랜드 교환권 번호를 1개 이상 입력해야 합니다.";
     }
+    // 문화상품권(18핀): 번호 1개 이상 필수
+    const hasMunhwa = items.some((it) => it.type === "문화상품권(18핀)");
+    if (hasMunhwa && !munhwaNumbers.some((n) => n.trim())) {
+      errs.munhwa = "문화상품권 번호를 1개 이상 입력해야 합니다.";
+    }
     // 북앤라이프: 번호 1개 이상 필수
     const hasBooknlifeGift = items.some((it) => it.type === "북앤라이프 도서문화상품권");
     const hasBooknlifeGwon = items.some((it) => it.type === "북앤라이프 교환권");
@@ -1811,6 +1816,11 @@ export default function MobileSelect() {
         {errors.cultureExchange && (
           <p className="text-[13px] font-semibold text-indigo-700 bg-indigo-50 border border-indigo-200 rounded-2xl px-4 py-3">
             ⚠ {errors.cultureExchange}
+          </p>
+        )}
+        {errors.munhwa && (
+          <p className="text-[13px] font-semibold text-pink-700 bg-pink-50 border border-pink-200 rounded-2xl px-4 py-3">
+            ⚠ {errors.munhwa}
           </p>
         )}
         {errors.booknlife && (
