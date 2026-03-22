@@ -18,6 +18,8 @@ const base = import.meta.env.BASE_URL.replace(/\/$/, "");
 export default function MobileGiftCert() {
   const [lang, setLang] = useLang();
   const [rates, setRates] = useState<Record<string, number>>({});
+  const [noticeOpen, setNoticeOpen] = useState(false);
+  const [noticeText, setNoticeText] = useState("");
 
   useEffect(() => {
     fetch(`${base}/api/site-settings`)
@@ -26,9 +28,21 @@ export default function MobileGiftCert() {
         if (data.mobile_rates) {
           try { setRates(JSON.parse(data.mobile_rates)); } catch {}
         }
+        if (data.mobile_notice_enabled === "1" && data.mobile_notice_text?.trim()) {
+          const dismissed = sessionStorage.getItem("mobile_notice_dismissed");
+          if (dismissed !== data.mobile_notice_text) {
+            setNoticeText(data.mobile_notice_text);
+            setNoticeOpen(true);
+          }
+        }
       })
       .catch(() => {});
   }, []);
+
+  function dismissNotice() {
+    sessionStorage.setItem("mobile_notice_dismissed", noticeText);
+    setNoticeOpen(false);
+  }
 
   function getRate(label: string, def: number) {
     return rates[label] ?? def;
@@ -36,6 +50,31 @@ export default function MobileGiftCert() {
 
   return (
     <div className="min-h-screen bg-slate-50">
+
+      {/* 공지 팝업 */}
+      {noticeOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center px-5" style={{ background: "rgba(0,0,0,0.45)" }}>
+          <div className="bg-white rounded-3xl shadow-2xl w-full max-w-sm overflow-hidden">
+            <div className="flex items-center gap-2 px-5 pt-5 pb-3 border-b border-slate-100">
+              <span className="text-[20px]">📢</span>
+              <h2 className="text-[16px] font-black text-slate-800">공지사항</h2>
+            </div>
+            <div className="px-5 py-4 max-h-[55vh] overflow-y-auto">
+              <p className="text-[14px] text-slate-700 leading-relaxed whitespace-pre-wrap">{noticeText}</p>
+            </div>
+            <div className="px-5 pb-5">
+              <button
+                onClick={dismissNotice}
+                className="w-full py-3.5 rounded-2xl text-white text-[15px] font-bold transition-all active:scale-[0.98]"
+                style={{ background: "linear-gradient(135deg, #ec4899 0%, #f43f5e 100%)" }}
+              >
+                확인했습니다
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       <header className="sticky top-0 z-30 bg-white border-b border-slate-100 shadow-sm">
         <div className="max-w-lg mx-auto px-4 py-3.5 flex items-center gap-3">
           <button

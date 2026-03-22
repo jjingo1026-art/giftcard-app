@@ -111,6 +111,8 @@ export default function AdminMobileDashboard() {
   const [termsText, setTermsText] = useState("");
   const [guideText, setGuideText] = useState("");
   const [privacyText, setPrivacyText] = useState("");
+  const [noticeEnabled, setNoticeEnabled] = useState(false);
+  const [noticeText, setNoticeText] = useState("");
 
   const token = getAdminToken();
   if (!token) { navigate("/admin/login"); return null; }
@@ -148,6 +150,8 @@ export default function AdminMobileDashboard() {
       if (data.mobile_terms_text !== undefined) setTermsText(data.mobile_terms_text);
       if (data.mobile_guide_text !== undefined) setGuideText(data.mobile_guide_text);
       if (data.mobile_privacy_text !== undefined) setPrivacyText(data.mobile_privacy_text);
+      if (data.mobile_notice_enabled !== undefined) setNoticeEnabled(data.mobile_notice_enabled === "1");
+      if (data.mobile_notice_text !== undefined) setNoticeText(data.mobile_notice_text);
     } catch {} finally { setSettingsLoading(false); }
   }
 
@@ -181,6 +185,14 @@ export default function AdminMobileDashboard() {
     await saveSetting("mobile_guide_text", guideText);
     await saveSetting("mobile_privacy_text", privacyText);
     setSettingsSaving(null); setSettingsToast("이용약관/개인정보 저장 완료!");
+    setTimeout(() => setSettingsToast(""), 2000);
+  }
+
+  async function saveNotice() {
+    setSettingsSaving("notice");
+    await saveSetting("mobile_notice_enabled", noticeEnabled ? "1" : "0");
+    await saveSetting("mobile_notice_text", noticeText);
+    setSettingsSaving(null); setSettingsToast("공지 팝업 저장 완료!");
     setTimeout(() => setSettingsToast(""), 2000);
   }
 
@@ -467,6 +479,45 @@ export default function AdminMobileDashboard() {
                     <button onClick={saveTerms} disabled={settingsSaving === "terms"}
                       className="w-full py-3 rounded-xl bg-violet-500 text-white font-bold text-[14px] hover:bg-violet-600 transition-colors disabled:opacity-60">
                       {settingsSaving === "terms" ? "저장 중..." : "💾 약관/개인정보 저장"}
+                    </button>
+                  </div>
+                </div>
+
+                {/* 공지 팝업 설정 */}
+                <div className="bg-white rounded-2xl border border-violet-100 shadow-sm overflow-hidden">
+                  <div className="px-4 pt-4 pb-3 border-b border-slate-50 flex items-center justify-between">
+                    <div>
+                      <p className="text-[14px] font-bold text-slate-700">📢 공지 팝업 설정</p>
+                      <p className="text-[12px] text-slate-400 mt-0.5">모바일 시세 페이지 진입 시 팝업 표시</p>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => setNoticeEnabled((v) => !v)}
+                      className={`relative w-12 h-6 rounded-full transition-colors duration-200 focus:outline-none ${noticeEnabled ? "bg-violet-500" : "bg-slate-200"}`}
+                    >
+                      <span className={`absolute top-0.5 left-0.5 w-5 h-5 rounded-full bg-white shadow transition-transform duration-200 ${noticeEnabled ? "translate-x-6" : "translate-x-0"}`} />
+                    </button>
+                  </div>
+                  <div className="px-4 py-4">
+                    <label className="block text-[12px] font-bold text-slate-500 mb-1.5">📝 팝업 내용</label>
+                    <textarea
+                      value={noticeText}
+                      onChange={(e) => setNoticeText(e.target.value)}
+                      rows={5}
+                      placeholder="공지할 내용을 입력하세요. 비워두면 팝업이 표시되지 않습니다."
+                      className="w-full px-4 py-3 border border-slate-200 rounded-xl text-[13px] text-slate-700 focus:outline-none focus:border-violet-400 resize-none leading-relaxed"
+                    />
+                    <div className="flex items-center gap-2 mt-2">
+                      <span className={`inline-flex items-center gap-1 text-[12px] font-semibold px-2.5 py-1 rounded-full ${noticeEnabled ? "bg-violet-100 text-violet-700" : "bg-slate-100 text-slate-500"}`}>
+                        {noticeEnabled ? "🟢 표시 중" : "⚫ 숨김"}
+                      </span>
+                      <span className="text-[11px] text-slate-400">저장 후 즉시 반영됩니다</span>
+                    </div>
+                  </div>
+                  <div className="px-4 pb-4">
+                    <button onClick={saveNotice} disabled={settingsSaving === "notice"}
+                      className="w-full py-3 rounded-xl bg-violet-500 text-white font-bold text-[14px] hover:bg-violet-600 transition-colors disabled:opacity-60">
+                      {settingsSaving === "notice" ? "저장 중..." : "💾 공지 팝업 저장"}
                     </button>
                   </div>
                 </div>
