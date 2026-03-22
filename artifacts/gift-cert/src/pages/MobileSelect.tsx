@@ -1555,7 +1555,7 @@ export default function MobileSelect() {
         rate: Math.round(rate * 100),
         payment,
         isGift: false,
-        ...(it.checkedSubs.length > 0 || it.voucherNumber || (it.type.startsWith("컬쳐랜드") && it.checkedSubs.includes("자동추출하기") && cultureImages.length > 0)
+        ...(it.checkedSubs.length > 0 || it.voucherNumber || it.type === "컬쳐랜드 캐시 선물하기" || (it.type.startsWith("컬쳐랜드") && it.checkedSubs.includes("자동추출하기") && cultureImages.length > 0)
           ? {
               note: [
                 ...it.checkedSubs,
@@ -1564,6 +1564,9 @@ export default function MobileSelect() {
                   : []),
                 ...(it.type === "네이버페이 포인트" && it.checkedSubs.includes("선물하기")
                   ? [`선물하기 안내 아이디(${mobileSettings.naverUserId})로 선물이 전달됩니다`]
+                  : []),
+                ...(it.type === "컬쳐랜드 캐시 선물하기"
+                  ? [`선물하기 안내 전화번호(${mobileSettings.culturePhone || mobileSettings.lottePhone})로 선물이 전달됩니다`]
                   : []),
                 ...(it.voucherNumber && (
                   it.checkedSubs.includes("23으로 시작하는 교환권") ||
