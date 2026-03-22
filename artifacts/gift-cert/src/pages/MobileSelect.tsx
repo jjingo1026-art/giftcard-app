@@ -260,17 +260,19 @@ function BooknlifeManualInput({
   onChange,
   onAdd,
   onRemove,
+  label = "상품권번호 입력",
 }: {
   numbers: string[];
   onChange: (idx: number, val: string) => void;
   onAdd: () => void;
   onRemove: (idx: number) => void;
+  label?: string;
 }) {
   return (
     <div className="rounded-2xl border-2 border-violet-200 bg-violet-50 p-4 space-y-3">
       <div className="flex items-center gap-2">
         <span className="text-[16px]">🏷️</span>
-        <p className="text-[13px] font-bold text-violet-700">상품권번호 입력</p>
+        <p className="text-[13px] font-bold text-violet-700">{label}</p>
         <span className="text-[11px] bg-violet-100 text-violet-600 font-bold px-2 py-0.5 rounded-full">북앤라이프</span>
       </div>
 
@@ -1149,15 +1151,21 @@ function MobileVoucherItems({
         );
       })()}
 
-      {/* 북앤라이프 상품권번호 입력 */}
-      {items.some((it) => it.type.startsWith("북앤라이프")) && (
-        <BooknlifeManualInput
-          numbers={booknlifeNumbers}
-          onChange={onBooknlifeNumberChange}
-          onAdd={onBooknlifeNumberAdd}
-          onRemove={onBooknlifeNumberRemove}
-        />
-      )}
+      {/* 북앤라이프 상품권/교환권번호 입력 */}
+      {items.some((it) => it.type.startsWith("북앤라이프")) && (() => {
+        const hasGwon = items.some((it) => it.type === "북앤라이프 교환권");
+        const hasGift = items.some((it) => it.type === "북앤라이프 도서문화상품권");
+        const inputLabel = hasGwon && hasGift ? "상품권/교환권번호 입력" : hasGwon ? "교환권번호 입력" : "상품권번호 입력";
+        return (
+          <BooknlifeManualInput
+            numbers={booknlifeNumbers}
+            onChange={onBooknlifeNumberChange}
+            onAdd={onBooknlifeNumberAdd}
+            onRemove={onBooknlifeNumberRemove}
+            label={inputLabel}
+          />
+        );
+      })()}
 
       {/* 문화상품권 상품권번호 입력 */}
       {items.some((it) => it.type === "문화상품권(18핀)") && (
