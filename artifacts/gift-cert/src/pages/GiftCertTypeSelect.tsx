@@ -8,7 +8,7 @@ export default function GiftCertTypeSelect() {
 
       {/* 상단 뱃지 */}
       <div className="pt-10 flex justify-center">
-        <div className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-[11px] font-bold tracking-wide"
+        <div className="inline-flex items-center gap-2 px-5 py-2 rounded-full text-[13px] font-bold tracking-wide"
           style={{ background: "linear-gradient(135deg,#6366f1,#8b5cf6)", color: "white", boxShadow: "0 2px 12px rgba(99,102,241,0.35)" }}>
           ✅ 빠르고 안전한 정식등록업체
         </div>
