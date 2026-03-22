@@ -74,7 +74,6 @@ function formatDateTime(iso: string) {
   return `${month}/${day} ${hour}:${min}`;
 }
 
-type StatusFilter = "all" | "pending" | "completed" | "cancelled";
 
 const MOBILE_DEFAULT_RATES: Record<string, number> = {
   "신세계모바일": 95, "롯데모바일": 95, "현대모바일": 95, "네이버페이 포인트": 95,
@@ -86,7 +85,8 @@ export default function AdminMobileDashboard() {
   const [, navigate] = useLocation();
   const [entries, setEntries] = useState<MobileReservation[]>([]);
   const [loading, setLoading] = useState(false);
-  const [statusFilter, setStatusFilter] = useState<StatusFilter>("all");
+  const [showCompleted, setShowCompleted] = useState(false);
+  const [showCancelled, setShowCancelled] = useState(false);
   const [searchPhone, setSearchPhone] = useState("");
   const [updatingId, setUpdatingId] = useState<number | null>(null);
   const [expandedId, setExpandedId] = useState<number | null>(null);
@@ -260,7 +260,8 @@ export default function AdminMobileDashboard() {
   }
 
   const filtered = entries.filter((e) => {
-    if (statusFilter !== "all" && e.status !== statusFilter) return false;
+    if (e.status === "completed" && !showCompleted) return false;
+    if (e.status === "cancelled" && !showCancelled) return false;
     if (searchPhone && !e.phone.includes(searchPhone.replace(/[^0-9]/g, ""))) return false;
     return true;
   });
@@ -563,25 +564,26 @@ export default function AdminMobileDashboard() {
           </div>
         </div>
 
-        {/* 상태 필터 탭 */}
+        {/* 상태 카운트 + 토글 */}
         <div className="grid grid-cols-4 gap-1.5">
-          {(["all", "pending", "completed", "cancelled"] as StatusFilter[]).map((s) => {
-            const count = s === "all" ? counts.total : counts[s];
-            const labels: Record<StatusFilter, string> = { all: "전체", pending: "대기", completed: "완료", cancelled: "취소" };
-            const colors: Record<StatusFilter, string> = {
-              all: statusFilter === "all" ? "bg-violet-600 text-white shadow-sm" : "bg-white text-slate-600 border border-slate-200",
-              pending: statusFilter === "pending" ? "bg-amber-500 text-white shadow-sm" : "bg-white text-amber-600 border border-amber-100",
-              completed: statusFilter === "completed" ? "bg-emerald-500 text-white shadow-sm" : "bg-white text-emerald-600 border border-emerald-100",
-              cancelled: statusFilter === "cancelled" ? "bg-slate-500 text-white shadow-sm" : "bg-white text-slate-500 border border-slate-200",
-            };
-            return (
-              <button key={s} onClick={() => setStatusFilter(s)}
-                className={`rounded-xl px-2 py-2.5 text-center transition-all active:scale-[0.97] ${colors[s]}`}>
-                <p className="text-[10px] font-semibold opacity-80">{labels[s]}</p>
-                <p className="text-[18px] font-black leading-tight">{count}</p>
-              </button>
-            );
-          })}
+          <div className="rounded-xl px-2 py-2.5 text-center bg-white border border-slate-200">
+            <p className="text-[10px] font-semibold text-slate-500 opacity-80">전체</p>
+            <p className="text-[18px] font-black leading-tight text-slate-700">{counts.total}</p>
+          </div>
+          <div className="rounded-xl px-2 py-2.5 text-center bg-white border border-amber-100">
+            <p className="text-[10px] font-semibold text-amber-600 opacity-80">대기</p>
+            <p className="text-[18px] font-black leading-tight text-amber-600">{counts.pending}</p>
+          </div>
+          <button onClick={() => setShowCompleted((v) => !v)}
+            className={`rounded-xl px-2 py-2.5 text-center transition-all active:scale-[0.97] ${showCompleted ? "bg-emerald-500 text-white shadow-sm" : "bg-white text-emerald-600 border border-emerald-100"}`}>
+            <p className="text-[10px] font-semibold opacity-80">완료{showCompleted ? " ✓" : ""}</p>
+            <p className="text-[18px] font-black leading-tight">{counts.completed}</p>
+          </button>
+          <button onClick={() => setShowCancelled((v) => !v)}
+            className={`rounded-xl px-2 py-2.5 text-center transition-all active:scale-[0.97] ${showCancelled ? "bg-slate-500 text-white shadow-sm" : "bg-white text-slate-500 border border-slate-200"}`}>
+            <p className="text-[10px] font-semibold opacity-80">취소{showCancelled ? " ✓" : ""}</p>
+            <p className="text-[18px] font-black leading-tight">{counts.cancelled}</p>
+          </button>
         </div>
 
         {/* 검색 */}
