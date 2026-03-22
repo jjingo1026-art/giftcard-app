@@ -794,13 +794,13 @@ export default function AdminMobileDashboard() {
                       {/* 채팅 버튼 */}
                       <button
                         onClick={() => { window.location.href = `/admin/chat?id=${entry.id}&from=mobile`; }}
-                        className="w-full py-3 rounded-xl flex items-center justify-center gap-2 font-bold text-[13px] transition-all active:scale-[0.98] relative
-                          bg-indigo-50 text-indigo-700 hover:bg-indigo-100 border border-indigo-200"
+                        className="w-full py-4 rounded-2xl flex items-center justify-center gap-2.5 font-bold text-[15px] transition-all active:scale-[0.98] relative
+                          bg-indigo-50 text-indigo-700 hover:bg-indigo-100 border-2 border-indigo-200 shadow-sm"
                       >
-                        <span className="text-[16px]">💬</span>
+                        <span className="text-[20px]">💬</span>
                         판매자와 채팅하기
                         {getUnread(entry.id) > 0 && (
-                          <span className="absolute top-2 right-3 min-w-[20px] h-[20px] rounded-full bg-rose-500 text-white text-[10px] font-black flex items-center justify-center px-1 leading-none">
+                          <span className="absolute top-2.5 right-4 min-w-[22px] h-[22px] rounded-full bg-rose-500 text-white text-[11px] font-black flex items-center justify-center px-1 leading-none">
                             {getUnread(entry.id)}
                           </span>
                         )}
