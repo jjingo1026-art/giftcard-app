@@ -165,7 +165,7 @@ export default function StaffDetail() {
                   <button
                     key={l.code}
                     onClick={() => changeLang(l.code)}
-                    className={`flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-semibold border transition-all w-full
+                    className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-semibold border transition-all
                       ${userLang === l.code
                         ? "bg-white text-indigo-600 border-white"
                         : "bg-white/10 text-indigo-100 border-white/20 hover:bg-white/20"}`}

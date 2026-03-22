@@ -152,7 +152,7 @@ export default function CustomerChat() {
                 <button
                   key={l.code}
                   onClick={() => changeLang(l.code)}
-                  className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[12px] font-semibold border transition-all w-full
+                  className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[12px] font-semibold border transition-all
                     ${userLang === l.code
                       ? "bg-indigo-500 text-white border-indigo-500"
                       : "bg-white text-slate-500 border-slate-200 hover:border-indigo-300"}`}
