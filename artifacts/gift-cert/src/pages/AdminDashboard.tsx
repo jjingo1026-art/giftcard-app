@@ -95,7 +95,7 @@ export default function AdminDashboard() {
 
   useEffect(() => {
     setLoading(true);
-    adminFetch("/api/admin/reservations")
+    adminFetch("/api/admin/reservations?limit=500")
       .then((r) => r.json())
       .then((data) => { setAllEntries(data); setEntries(data); })
       .catch(() => setError("데이터를 불러올 수 없습니다."))
@@ -145,8 +145,8 @@ export default function AdminDashboard() {
         if (prev.some((r) => r.id === reservation.id)) return prev;
         return [reservation, ...prev];
       });
-      // 캘린더 즉시 반영
-      if (reservation.date) {
+      // 캘린더 즉시 반영 — 지류(reservation/urgent)만, 모바일 제외
+      if (reservation.date && reservation.kind !== "mobile") {
         setCalendarData((prev) => {
           const exists = prev.find((c) => c.date === reservation.date);
           if (exists) {
@@ -946,7 +946,13 @@ export default function AdminDashboard() {
             height={680}
           />
           {dateFilter && (() => {
-            const dayEntries   = allEntries.filter((r) => r.date === dateFilter);
+            // 캘린더 집계와 동일 조건: 지류(reservation/urgent)만, 취소·노쇼 제외
+            const dayEntries = allEntries.filter((r) =>
+              r.date === dateFilter &&
+              (r.kind === "reservation" || r.kind === "urgent") &&
+              r.status !== "cancelled" &&
+              r.status !== "no_show"
+            );
             const dayUnassigned = [...dayEntries.filter((r) => !r.assignedStaffId)]
               .sort((a, b) => (a.time ?? "").localeCompare(b.time ?? ""));
             const dateTotal          = dayEntries.length;
