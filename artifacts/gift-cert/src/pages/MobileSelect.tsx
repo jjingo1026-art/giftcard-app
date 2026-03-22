@@ -150,13 +150,21 @@ function MunhwaManualInput({
       <div className="space-y-2">
         {numbers.map((num, idx) => (
           <div key={idx} className="flex items-center gap-2">
-            <input
-              type="text"
-              value={num}
-              onChange={(e) => onChange(idx, e.target.value.slice(0, 50))}
-              placeholder={`상품권번호 ${idx + 1}`}
-              className="flex-1 px-4 py-3 rounded-xl border-2 border-pink-200 bg-white text-[14px] font-mono tracking-wider outline-none focus:border-pink-400 focus:ring-2 focus:ring-pink-100 transition-all placeholder:text-slate-300"
-            />
+            <div className="flex-1 relative">
+              <input
+                type="text"
+                inputMode="numeric"
+                value={num}
+                onChange={(e) => onChange(idx, e.target.value.replace(/\D/g, "").slice(0, 18))}
+                placeholder={`상품권번호 ${idx + 1} (18자리)`}
+                className={`w-full px-4 py-3 pr-12 rounded-xl border-2 bg-white text-[14px] font-mono tracking-wider outline-none transition-all placeholder:text-slate-300
+                  ${num.length === 18 ? "border-pink-400 focus:border-pink-500" : num.length > 0 ? "border-amber-300 focus:border-amber-400" : "border-pink-200 focus:border-pink-400"} focus:ring-2 focus:ring-pink-100`}
+              />
+              <span className={`absolute right-3 top-1/2 -translate-y-1/2 text-[11px] font-bold tabular-nums
+                ${num.length === 18 ? "text-pink-500" : num.length > 0 ? "text-amber-500" : "text-slate-300"}`}>
+                {num.length}/18
+              </span>
+            </div>
             {idx === 0 ? (
               <button
                 type="button"
@@ -1583,10 +1591,15 @@ export default function MobileSelect() {
     if (hasCultureExchange && !cultureExchangeNumbers.some((n) => n.trim())) {
       errs.cultureExchange = "컬쳐랜드 교환권 번호를 1개 이상 입력해야 합니다.";
     }
-    // 문화상품권(18핀): 번호 1개 이상 필수
+    // 문화상품권(18핀): 번호 1개 이상 필수 + 18자리 검증
     const hasMunhwa = items.some((it) => it.type === "문화상품권(18핀)");
-    if (hasMunhwa && !munhwaNumbers.some((n) => n.trim())) {
-      errs.munhwa = "문화상품권 번호를 1개 이상 입력해야 합니다.";
+    if (hasMunhwa) {
+      const filledNums = munhwaNumbers.filter((n) => n.trim());
+      if (!filledNums.length) {
+        errs.munhwa = "문화상품권 번호를 1개 이상 입력해야 합니다.";
+      } else if (filledNums.some((n) => n.length !== 18)) {
+        errs.munhwa = "문화상품권 번호는 숫자 18자리여야 합니다.";
+      }
     }
     // 구글 카카오톡 교환권: 번호 1개 이상 필수
     const hasGoogle = items.some((it) => it.type === "구글 카카오톡 교환권");
