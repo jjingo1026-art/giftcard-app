@@ -43,6 +43,7 @@ export default function AdminChat() {
   const [userLang, setUserLang] = useState(() => getSavedLang());
   const [showLangPicker, setShowLangPicker] = useState(false);
   const [reservationKind, setReservationKind] = useState<string | null>(null);
+  const [reservationStatus, setReservationStatus] = useState<string | null>(null);
   const [copyToast, setCopyToast] = useState<string | null>(null);
   const chatBoxRef = useRef<HTMLDivElement>(null);
   const socketRef = useRef<Socket | null>(null);
@@ -95,7 +96,10 @@ export default function AdminChat() {
       headers: { Authorization: `Bearer ${token}` },
     })
       .then((r) => r.json())
-      .then((data) => { if (data?.kind) setReservationKind(data.kind); })
+      .then((data) => {
+        if (data?.kind) setReservationKind(data.kind);
+        if (data?.status) setReservationStatus(data.status);
+      })
       .catch(() => {});
 
     const socket = io({ transports: ["websocket", "polling"] });
@@ -152,6 +156,22 @@ export default function AdminChat() {
 
   function handleKey(e: React.KeyboardEvent) {
     if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); send(); }
+  }
+
+  async function handleComplete() {
+    sendQuick("입금이 완료되었습니다 감사합니다 좋은하루 되세요^^");
+    try {
+      await fetch(`/api/admin/reservations/${reservationId}/status`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({ status: "completed" }),
+      });
+      setReservationStatus("completed");
+    } catch {
+    }
   }
 
   function changeLang(code: string) {
@@ -388,12 +408,18 @@ export default function AdminChat() {
         {/* 모바일 빠른 전송 버튼 */}
         {reservationKind === "mobile" && (
           <div className="flex gap-2 mt-3 flex-wrap">
-            <button
-              onClick={() => sendQuick("입금이 완료되었습니다 감사합니다 좋은하루 되세요^^")}
-              className="flex-1 min-w-0 px-3 py-2 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-700 text-[12px] font-bold hover:bg-emerald-100 active:scale-[0.97] transition-all whitespace-nowrap"
-            >
-              ✅ 입금완료
-            </button>
+            {reservationStatus === "completed" ? (
+              <div className="flex-1 min-w-0 px-3 py-2 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-700 text-[12px] font-bold text-center">
+                ✅ 처리 완료됨
+              </div>
+            ) : (
+              <button
+                onClick={handleComplete}
+                className="flex-1 min-w-0 px-3 py-2 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-700 text-[12px] font-bold hover:bg-emerald-100 active:scale-[0.97] transition-all whitespace-nowrap"
+              >
+                ✅ 처리완료
+              </button>
+            )}
             <button
               onClick={() => sendQuick("일부 상품권에 문제가 있습니다")}
               className="flex-1 min-w-0 px-3 py-2 rounded-xl bg-amber-50 border border-amber-200 text-amber-700 text-[12px] font-bold hover:bg-amber-100 active:scale-[0.97] transition-all whitespace-nowrap"
