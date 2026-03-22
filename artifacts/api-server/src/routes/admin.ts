@@ -1336,10 +1336,13 @@ router.post("/customer/cancel", async (req, res) => {
     }
   }
 
-  await db
+  const [updated] = await db
     .update(reservationsTable)
     .set({ status: "cancelled", cancelledAt: new Date() })
-    .where(eq(reservationsTable.id, reservationId));
+    .where(eq(reservationsTable.id, Number(reservationId)))
+    .returning();
+
+  if (updated) broadcast("reservationUpdated", updated);
 
   res.json({ success: true });
 });
