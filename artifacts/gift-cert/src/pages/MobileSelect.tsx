@@ -667,7 +667,7 @@ function HyundaiImageUpload({
         <span className="text-[11px] bg-sky-100 text-sky-500 font-bold px-2 py-0.5 rounded-full">현대모바일</span>
       </div>
       <p className="text-[12px] text-sky-600 leading-relaxed">
-        현대모바일 상품권의 이미지 또는 사진을 첨부해 주세요.
+        현대모바일 상품권 바코드 이미지를 첨부해 주세요.
       </p>
 
       {/* 미리보기 그리드 */}
