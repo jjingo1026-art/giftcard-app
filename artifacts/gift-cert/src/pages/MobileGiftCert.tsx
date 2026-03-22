@@ -1,3 +1,5 @@
+import { useState, useEffect } from "react";
+
 const MOBILE_RATES = [
   { label: "신세계모바일", sub: "이마트교환권", icon: "🛒", color: "#e11d48", rate: 95 },
   { label: "롯데모바일", subs: ["23으로 시작하는 교환권", "앱선물하기"], icon: "🧡", color: "#f97316", rate: 95 },
@@ -9,7 +11,26 @@ const MOBILE_RATES = [
   { label: "구글 카카오톡 교환권", selectType: "구글기프트카드", sub: "카카오톡 구매 숫자 12자리", icon: "🎮", color: "#4ade80", rate: 90 },
 ];
 
+const base = import.meta.env.BASE_URL.replace(/\/$/, "");
+
 export default function MobileGiftCert() {
+  const [rates, setRates] = useState<Record<string, number>>({});
+
+  useEffect(() => {
+    fetch(`${base}/api/site-settings`)
+      .then((r) => r.json())
+      .then((data: Record<string, string>) => {
+        if (data.mobile_rates) {
+          try { setRates(JSON.parse(data.mobile_rates)); } catch {}
+        }
+      })
+      .catch(() => {});
+  }, []);
+
+  function getRate(label: string, def: number) {
+    return rates[label] ?? def;
+  }
+
   return (
     <div className="min-h-screen bg-slate-50">
       <header className="sticky top-0 z-30 bg-white border-b border-slate-100 shadow-sm">
@@ -48,7 +69,7 @@ export default function MobileGiftCert() {
               >
                 <span className="text-[28px] leading-none">{g.icon}</span>
                 <span className="text-[13px] font-bold text-slate-700 leading-snug text-center mt-2">{g.label}</span>
-                <span className="text-[26px] font-black tabular-nums leading-none mt-1.5" style={{ color: g.color }}>{g.rate}%</span>
+                <span className="text-[26px] font-black tabular-nums leading-none mt-1.5" style={{ color: g.color }}>{getRate((g as any).selectType ?? g.label, g.rate)}%</span>
                 {"subs" in g && (g as any).subs ? (
                   <span className="text-[11px] font-medium leading-snug mt-1.5 px-2 py-0.5 rounded-full"
                     style={{ color: g.color, backgroundColor: g.color + "18" }}>

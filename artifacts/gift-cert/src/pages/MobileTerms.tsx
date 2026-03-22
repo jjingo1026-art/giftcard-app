@@ -1,4 +1,6 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
+
+const base = import.meta.env.BASE_URL.replace(/\/$/, "");
 
 const SECTIONS = [
   {
@@ -41,6 +43,18 @@ export default function MobileTerms() {
   const params = new URLSearchParams(location.search);
   const type = params.get("type") ?? "";
   const [activeTab, setActiveTab] = useState(0);
+  const [customTerms, setCustomTerms] = useState("");
+  const [customGuide, setCustomGuide] = useState("");
+
+  useEffect(() => {
+    fetch(`${base}/api/site-settings`)
+      .then((r) => r.json())
+      .then((data: Record<string, string>) => {
+        if (data.mobile_terms_text !== undefined) setCustomTerms(data.mobile_terms_text);
+        if (data.mobile_guide_text !== undefined) setCustomGuide(data.mobile_guide_text);
+      })
+      .catch(() => {});
+  }, []);
 
   const section = SECTIONS[activeTab];
 
@@ -92,7 +106,11 @@ export default function MobileTerms() {
             <h2 className="text-[15px] font-bold text-slate-800">{section.title}</h2>
           </div>
           <div className="px-5 py-5 space-y-5">
-            {section.content.map((item, i) => (
+            {(section.id === "terms" && customTerms) || (section.id === "guide" && customGuide) ? (
+              <p className="text-[13.5px] text-slate-600 leading-relaxed whitespace-pre-line">
+                {section.id === "terms" ? customTerms : customGuide}
+              </p>
+            ) : section.content.map((item, i) => (
               <div key={i} className="space-y-2">
                 <p className="text-[13px] font-bold text-pink-600">{item.heading}</p>
                 {item.body && <p className="text-[13.5px] text-slate-600 leading-relaxed whitespace-pre-line">{item.body}</p>}

@@ -1,4 +1,6 @@
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
+
+const base = import.meta.env.BASE_URL.replace(/\/$/, "");
 
 const MOBILE_TYPES = [
   { label: "신세계모바일", sub: "이마트교환권", icon: "🛒", color: "#e11d48", rate: 95 },
@@ -64,11 +66,11 @@ function computeItem(item: MobileItem) {
   return { amountNum, rate, payment, typeInfo };
 }
 
-function NaverGiftInfo() {
+function NaverGiftInfo({ naverId = "jjingo1026" }: { naverId?: string }) {
   const [copied, setCopied] = useState(false);
 
   function handleCopy() {
-    navigator.clipboard.writeText("jjingo1026").then(() => {
+    navigator.clipboard.writeText(naverId).then(() => {
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
     });
@@ -85,7 +87,7 @@ function NaverGiftInfo() {
         <div className="flex items-center gap-3">
           <div className="w-9 h-9 rounded-xl bg-green-100 flex items-center justify-center flex-shrink-0 text-[16px]">💚</div>
           <div>
-            <p className="text-[13px] font-black text-green-800 tracking-wide">jjingo1026</p>
+            <p className="text-[13px] font-black text-green-800 tracking-wide">{naverId}</p>
             <p className="text-[11px] text-green-600 mt-0.5">추정호</p>
           </div>
         </div>
@@ -990,7 +992,7 @@ function MobileVoucherItems({
           <div className="flex items-center gap-3 px-3 py-3 bg-white rounded-xl border border-orange-100">
             <div className="w-9 h-9 rounded-xl bg-orange-100 flex items-center justify-center flex-shrink-0 text-[18px]">📲</div>
             <div>
-              <p className="text-[13px] font-black text-orange-700 tracking-wide">010-7190-9534</p>
+              <p className="text-[13px] font-black text-orange-700 tracking-wide">{mobileSettings.lottePhone}</p>
               <p className="text-[12px] text-orange-600 mt-0.5">위 번호로 선물하기를 보내주세요</p>
             </div>
           </div>
@@ -1005,7 +1007,7 @@ function MobileVoucherItems({
 
       {/* 네이버페이 선물하기 안내 */}
       {items.some((it) => it.type === "네이버페이 포인트" && it.checkedSubs.includes("선물하기")) && (
-        <NaverGiftInfo />
+        <NaverGiftInfo naverId={mobileSettings.naverUserId} />
       )}
 
       {/* 컬쳐랜드 캐시 선물하기 안내 */}
@@ -1018,7 +1020,7 @@ function MobileVoucherItems({
           <div className="flex items-center gap-3 px-3 py-3 bg-white rounded-xl border border-indigo-100">
             <div className="w-9 h-9 rounded-xl bg-indigo-100 flex items-center justify-center flex-shrink-0 text-[18px]">📲</div>
             <div>
-              <p className="text-[13px] font-black text-indigo-700 tracking-wide">010-7190-9534</p>
+              <p className="text-[13px] font-black text-indigo-700 tracking-wide">{mobileSettings.culturePhone || mobileSettings.lottePhone}</p>
               <p className="text-[12px] text-indigo-500 mt-0.5">위 번호로 캐시 선물하기를 보내주세요</p>
             </div>
           </div>
@@ -1193,6 +1195,20 @@ export default function MobileSelect() {
   const [submitting, setSubmitting] = useState(false);
   const [done, setDone] = useState<{ id: number; totalPayment: number } | null>(null);
   const [errorMsg, setErrorMsg] = useState("");
+  const [mobileSettings, setMobileSettings] = useState({ lottePhone: "010-7190-9534", naverUserId: "jjingo1026", culturePhone: "" });
+
+  useEffect(() => {
+    fetch(`${base}/api/site-settings`)
+      .then((r) => r.json())
+      .then((data: Record<string, string>) => {
+        setMobileSettings({
+          lottePhone: data.mobile_lotte_phone || "010-7190-9534",
+          naverUserId: data.mobile_naver_id || "jjingo1026",
+          culturePhone: data.mobile_culture_phone || "",
+        });
+      })
+      .catch(() => {});
+  }, []);
 
   if (!agreed) {
     location.href = `/mobile/terms?type=${encodeURIComponent(initialType)}`;

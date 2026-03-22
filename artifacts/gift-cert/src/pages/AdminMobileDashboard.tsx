@@ -76,6 +76,12 @@ function formatDateTime(iso: string) {
 
 type StatusFilter = "all" | "pending" | "completed" | "cancelled";
 
+const MOBILE_DEFAULT_RATES: Record<string, number> = {
+  "신세계모바일": 95, "롯데모바일": 95, "현대모바일": 95, "네이버페이 포인트": 95,
+  "컬쳐랜드 상품권": 90, "컬쳐랜드 교환권": 90, "컬쳐랜드 캐시 선물하기": 90,
+  "북앤라이프 도서문화상품권": 90, "북앤라이프 교환권": 90, "문화상품권(18핀)": 90, "구글기프트카드": 90,
+};
+
 export default function AdminMobileDashboard() {
   const [, navigate] = useLocation();
   const [entries, setEntries] = useState<MobileReservation[]>([]);
@@ -93,6 +99,18 @@ export default function AdminMobileDashboard() {
   const [rangeStart, setRangeStart] = useState(todayKST);
   const [rangeEnd, setRangeEnd] = useState(todayKST);
   const [rangeSearched, setRangeSearched] = useState(false);
+
+  const [viewMode, setViewMode] = useState<"list" | "settings">("list");
+  const [settingsLoading, setSettingsLoading] = useState(false);
+  const [settingsSaving, setSettingsSaving] = useState<string | null>(null);
+  const [settingsToast, setSettingsToast] = useState("");
+  const [mobileRates, setMobileRates] = useState<Record<string, number>>({ ...MOBILE_DEFAULT_RATES });
+  const [lottePhone, setLottePhone] = useState("010-7190-9534");
+  const [naverUserId, setNaverUserId] = useState("jjingo1026");
+  const [culturePhone, setCulturePhone] = useState("010-7190-9534");
+  const [termsText, setTermsText] = useState("");
+  const [guideText, setGuideText] = useState("");
+  const [privacyText, setPrivacyText] = useState("");
 
   const token = getAdminToken();
   if (!token) { navigate("/admin/login"); return null; }
@@ -112,9 +130,60 @@ export default function AdminMobileDashboard() {
     }
   }
 
+  async function loadSettings() {
+    setSettingsLoading(true);
+    try {
+      const res = await adminFetch("/api/admin/site-settings");
+      const data = await res.json();
+      if (data.mobile_rates) {
+        try { setMobileRates({ ...MOBILE_DEFAULT_RATES, ...JSON.parse(data.mobile_rates) }); } catch {}
+      }
+      if (data.mobile_lotte_phone) setLottePhone(data.mobile_lotte_phone);
+      if (data.mobile_naver_id) setNaverUserId(data.mobile_naver_id);
+      if (data.mobile_culture_phone) setCulturePhone(data.mobile_culture_phone);
+      if (data.mobile_terms_text !== undefined) setTermsText(data.mobile_terms_text);
+      if (data.mobile_guide_text !== undefined) setGuideText(data.mobile_guide_text);
+      if (data.mobile_privacy_text !== undefined) setPrivacyText(data.mobile_privacy_text);
+    } catch {} finally { setSettingsLoading(false); }
+  }
+
+  async function saveSetting(key: string, value: string) {
+    return adminFetch("/api/admin/site-settings", {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ key, value }),
+    });
+  }
+
+  async function saveRates() {
+    setSettingsSaving("rates");
+    await saveSetting("mobile_rates", JSON.stringify(mobileRates));
+    setSettingsSaving(null); setSettingsToast("모바일 시세 저장 완료!");
+    setTimeout(() => setSettingsToast(""), 2000);
+  }
+
+  async function saveContacts() {
+    setSettingsSaving("contacts");
+    await saveSetting("mobile_lotte_phone", lottePhone);
+    await saveSetting("mobile_naver_id", naverUserId);
+    await saveSetting("mobile_culture_phone", culturePhone);
+    setSettingsSaving(null); setSettingsToast("연락처 저장 완료!");
+    setTimeout(() => setSettingsToast(""), 2000);
+  }
+
+  async function saveTerms() {
+    setSettingsSaving("terms");
+    await saveSetting("mobile_terms_text", termsText);
+    await saveSetting("mobile_guide_text", guideText);
+    await saveSetting("mobile_privacy_text", privacyText);
+    setSettingsSaving(null); setSettingsToast("이용약관/개인정보 저장 완료!");
+    setTimeout(() => setSettingsToast(""), 2000);
+  }
+
   useEffect(() => {
     loadEntries();
     loadStats();
+    loadSettings();
     adminFetch("/api/admin/chat-inbox")
       .then((r) => r.json())
       .then((data) => { if (Array.isArray(data)) setChatInbox(data); })
@@ -276,9 +345,10 @@ export default function AdminMobileDashboard() {
               <span>📄</span> 지류
             </button>
             <button
-              onClick={() => { window.location.href = "/admin/settings.html"; }}
-              className="text-[12px] text-slate-400 hover:text-slate-700 font-semibold transition-colors px-2 py-1.5 rounded-xl hover:bg-slate-100"
-              title="설정"
+              onClick={() => setViewMode((m) => m === "settings" ? "list" : "settings")}
+              className={`text-[12px] font-semibold transition-colors px-2 py-1.5 rounded-xl
+                ${viewMode === "settings" ? "bg-violet-100 text-violet-700" : "text-slate-400 hover:text-slate-700 hover:bg-slate-100"}`}
+              title="모바일 설정"
             >⚙️</button>
             <button
               onClick={() => { clearAdminToken(); navigate("/admin/login"); }}
@@ -288,7 +358,119 @@ export default function AdminMobileDashboard() {
         </div>
       </header>
 
+      {settingsToast && (
+        <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 bg-slate-800 text-white text-[13px] font-semibold px-5 py-2.5 rounded-2xl shadow-xl">
+          {settingsToast}
+        </div>
+      )}
+
       <div className="max-w-2xl mx-auto px-4 py-4 space-y-3">
+
+        {/* ⚙️ 설정 뷰 */}
+        {viewMode === "settings" && (
+          <div className="space-y-3">
+            <div className="flex items-center justify-between px-1">
+              <p className="text-[14px] font-bold text-violet-700">⚙️ 모바일 설정</p>
+              <button onClick={() => setViewMode("list")} className="text-[12px] text-slate-400 hover:text-slate-700 font-semibold px-3 py-1.5 rounded-xl hover:bg-slate-100 transition-all">← 목록으로</button>
+            </div>
+
+            {settingsLoading ? (
+              <div className="text-center py-10 text-slate-400 text-[14px]">불러오는 중...</div>
+            ) : (
+              <>
+                {/* 모바일 시세 */}
+                <div className="bg-white rounded-2xl border border-violet-100 shadow-sm overflow-hidden">
+                  <div className="px-4 pt-4 pb-3 border-b border-slate-50">
+                    <p className="text-[14px] font-bold text-slate-700">📊 모바일 상품권 시세</p>
+                    <p className="text-[12px] text-slate-400 mt-0.5">각 권종의 매입 요율(%)을 설정합니다.</p>
+                  </div>
+                  <div className="px-4 py-2">
+                    {Object.keys(MOBILE_DEFAULT_RATES).map((label) => (
+                      <div key={label} className="flex items-center justify-between py-3 border-b border-slate-50 last:border-0">
+                        <p className="text-[13px] font-semibold text-slate-700">{label}</p>
+                        <div className="flex items-center gap-1.5">
+                          <input
+                            type="number" min={50} max={100} step={0.5}
+                            value={mobileRates[label] ?? MOBILE_DEFAULT_RATES[label]}
+                            onChange={(e) => setMobileRates((r) => ({ ...r, [label]: parseFloat(e.target.value) || 0 }))}
+                            className="w-20 px-3 py-1.5 text-center text-[15px] font-black text-violet-600 border-2 border-violet-100 rounded-xl focus:outline-none focus:border-violet-400"
+                          />
+                          <span className="text-[13px] font-bold text-slate-500">%</span>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                  <div className="px-4 pb-4">
+                    <button onClick={saveRates} disabled={settingsSaving === "rates"}
+                      className="w-full py-3 rounded-xl bg-violet-500 text-white font-bold text-[14px] hover:bg-violet-600 transition-colors disabled:opacity-60">
+                      {settingsSaving === "rates" ? "저장 중..." : "💾 시세 저장"}
+                    </button>
+                  </div>
+                </div>
+
+                {/* 연락처 설정 */}
+                <div className="bg-white rounded-2xl border border-violet-100 shadow-sm overflow-hidden">
+                  <div className="px-4 pt-4 pb-3 border-b border-slate-50">
+                    <p className="text-[14px] font-bold text-slate-700">📞 선물하기 연락처</p>
+                    <p className="text-[12px] text-slate-400 mt-0.5">각 선물하기 안내에 표시되는 연락처를 설정합니다.</p>
+                  </div>
+                  <div className="px-4 py-4 space-y-4">
+                    {[
+                      { label: "🧡 롯데모바일 앱선물하기 전화번호", value: lottePhone, onChange: setLottePhone, placeholder: "010-XXXX-XXXX" },
+                      { label: "💚 네이버페이 선물하기 아이디", value: naverUserId, onChange: setNaverUserId, placeholder: "네이버 아이디" },
+                      { label: "📚 컬쳐랜드 캐시 선물하기 전화번호", value: culturePhone, onChange: setCulturePhone, placeholder: "010-XXXX-XXXX" },
+                    ].map(({ label, value, onChange, placeholder }) => (
+                      <div key={label}>
+                        <label className="block text-[12px] font-bold text-slate-500 mb-1.5">{label}</label>
+                        <input
+                          type="text" value={value} onChange={(e) => onChange(e.target.value)} placeholder={placeholder}
+                          className="w-full px-4 py-2.5 border border-slate-200 rounded-xl text-[14px] text-slate-700 font-mono focus:outline-none focus:border-violet-400"
+                        />
+                      </div>
+                    ))}
+                  </div>
+                  <div className="px-4 pb-4">
+                    <button onClick={saveContacts} disabled={settingsSaving === "contacts"}
+                      className="w-full py-3 rounded-xl bg-violet-500 text-white font-bold text-[14px] hover:bg-violet-600 transition-colors disabled:opacity-60">
+                      {settingsSaving === "contacts" ? "저장 중..." : "💾 연락처 저장"}
+                    </button>
+                  </div>
+                </div>
+
+                {/* 이용약관 / 개인정보 */}
+                <div className="bg-white rounded-2xl border border-violet-100 shadow-sm overflow-hidden">
+                  <div className="px-4 pt-4 pb-3 border-b border-slate-50">
+                    <p className="text-[14px] font-bold text-slate-700">📄 이용약관 / 개인정보 수집</p>
+                    <p className="text-[12px] text-slate-400 mt-0.5">내용 입력 시 기존 약관 대체. 비워두면 기본값 유지.</p>
+                  </div>
+                  <div className="px-4 py-4 space-y-5">
+                    {[
+                      { label: "📋 모바일 이용약관", value: termsText, onChange: setTermsText, placeholder: "이용약관 내용을 입력하세요. 각 줄이 단락으로 표시됩니다." },
+                      { label: "💡 거래 안내", value: guideText, onChange: setGuideText, placeholder: "거래 안내 내용을 입력하세요." },
+                      { label: "🔒 개인정보 수집 및 이용 동의", value: privacyText, onChange: setPrivacyText, placeholder: "개인정보 수집 및 이용 동의 내용을 입력하세요." },
+                    ].map(({ label, value, onChange, placeholder }) => (
+                      <div key={label}>
+                        <label className="block text-[12px] font-bold text-slate-500 mb-1.5">{label}</label>
+                        <textarea
+                          value={value} onChange={(e) => onChange(e.target.value)} rows={6} placeholder={placeholder}
+                          className="w-full px-4 py-3 border border-slate-200 rounded-xl text-[13px] text-slate-700 focus:outline-none focus:border-violet-400 resize-none leading-relaxed"
+                        />
+                      </div>
+                    ))}
+                  </div>
+                  <div className="px-4 pb-4">
+                    <button onClick={saveTerms} disabled={settingsSaving === "terms"}
+                      className="w-full py-3 rounded-xl bg-violet-500 text-white font-bold text-[14px] hover:bg-violet-600 transition-colors disabled:opacity-60">
+                      {settingsSaving === "terms" ? "저장 중..." : "💾 약관/개인정보 저장"}
+                    </button>
+                  </div>
+                </div>
+              </>
+            )}
+          </div>
+        )}
+
+        {viewMode === "list" && <>
 
         {/* 매출 통계 */}
         <div className="bg-white border border-violet-100 rounded-2xl shadow-sm overflow-hidden">
@@ -584,6 +766,8 @@ export default function AdminMobileDashboard() {
         )}
 
         <div className="h-8" />
+        </>}
+
       </div>
     </div>
   );
