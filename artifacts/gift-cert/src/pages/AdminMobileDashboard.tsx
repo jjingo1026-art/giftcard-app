@@ -476,6 +476,23 @@ export default function AdminMobileDashboard() {
 
         {viewMode === "list" && <>
 
+        {/* 모바일 매출 페이지 바로가기 */}
+        <button
+          onClick={() => { window.location.href = "/admin/mobile/revenue"; }}
+          className="w-full flex items-center justify-between px-4 py-3.5 bg-violet-600 hover:bg-violet-700 active:scale-[0.99] text-white rounded-2xl shadow-sm transition-all"
+        >
+          <div className="flex items-center gap-2.5">
+            <span className="text-[20px]">📊</span>
+            <div className="text-left">
+              <p className="text-[14px] font-black">모바일 매출 조회</p>
+              <p className="text-[11px] text-violet-200">기간별 상세 매출 내역</p>
+            </div>
+          </div>
+          <svg width="16" height="16" viewBox="0 0 20 20" fill="none">
+            <path d="M8 4l6 6-6 6" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+          </svg>
+        </button>
+
         {/* 매출 통계 */}
         <div className="bg-white border border-violet-100 rounded-2xl shadow-sm overflow-hidden">
           <div className="px-4 pt-3.5 pb-2 flex items-center justify-between border-b border-violet-50">
