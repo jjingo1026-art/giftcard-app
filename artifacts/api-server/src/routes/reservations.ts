@@ -1,8 +1,8 @@
 import { Router, type IRouter } from "express";
 import { db } from "@workspace/db";
-import { reservationsTable, usersTable } from "@workspace/db/schema";
-import { eq, and, inArray } from "drizzle-orm";
-import { broadcast } from "../socket";
+import { reservationsTable, usersTable, chatsTable, siteSettingsTable } from "@workspace/db/schema";
+import { eq, and, inArray, sql } from "drizzle-orm";
+import { broadcast, emitToRoom } from "../socket";
 
 const normalizePhone = (phone: string) => phone.replace(/[^0-9]/g, "");
 
@@ -63,6 +63,28 @@ router.post("/:id/status", async (req, res) => {
   res.json({ success: true });
 });
 
+router.get("/total-count", async (_req, res) => {
+  try {
+    const [countResult] = await db.select({ count: sql<number>`count(*)` }).from(reservationsTable);
+    const count = Number(countResult?.count ?? 0);
+
+    const existing = await db.select().from(siteSettingsTable).where(eq(siteSettingsTable.key, "counter_start_time"));
+    let startTime: number;
+    if (existing.length > 0) {
+      startTime = Number(existing[0].value);
+    } else {
+      startTime = Date.now();
+      await db.insert(siteSettingsTable)
+        .values({ key: "counter_start_time", value: String(startTime) })
+        .onConflictDoUpdate({ target: siteSettingsTable.key, set: { value: String(startTime) } });
+    }
+
+    res.json({ count, startTime });
+  } catch {
+    res.json({ count: 0, startTime: Date.now() });
+  }
+});
+
 router.get("/count-by-date", async (_req, res) => {
   const data = await db.select().from(reservationsTable);
 
@@ -108,6 +130,7 @@ router.post("/", async (req, res) => {
     amount?: number;
     category?: string;
     customerPin?: string;
+    imagePaths?: string[];
   };
 
   if (body.customerPin && !/^\d{4}$/.test(body.customerPin)) {
@@ -134,18 +157,31 @@ router.post("/", async (req, res) => {
 
   const normalizedPhone = normalizePhone(body.phone);
 
+  // 종류별 중복 신청 체크: 모바일은 모바일끼리, 지류/긴급은 지류/긴급끼리만 비교
+  const isMobile = body.kind === "mobile";
+  const activeStatusFilter = ["pending", "assigned"];
+  const duplicateConditions = isMobile
+    ? and(
+        eq(reservationsTable.phone, normalizedPhone),
+        eq(reservationsTable.kind, "mobile"),
+        inArray(reservationsTable.status, activeStatusFilter)
+      )
+    : and(
+        eq(reservationsTable.phone, normalizedPhone),
+        inArray(reservationsTable.kind, ["reservation", "urgent"]),
+        inArray(reservationsTable.status, activeStatusFilter)
+      );
+
   const exists = await db
     .select()
     .from(reservationsTable)
-    .where(
-      and(
-        eq(reservationsTable.phone, normalizedPhone),
-        inArray(reservationsTable.status, ["pending", "assigned"])
-      )
-    );
+    .where(duplicateConditions);
 
   if (exists.length > 0) {
-    res.status(400).json({ error: "현재 진행중인 예약이 있습니다.\n예약을 취소하시거나 거래가 완료되어야 예약신청이 가능합니다." });
+    const msg = isMobile
+      ? "현재 접수 처리중인 판매신청이 있습니다.\n처리가 완료되어야 재신청이 가능합니다."
+      : "현재 진행중인 예약이 있습니다.\n예약을 취소하시거나 거래가 완료되어야 예약신청이 가능합니다.";
+    res.status(400).json({ error: msg });
     return;
   }
 
@@ -225,6 +261,7 @@ router.post("/", async (req, res) => {
       category: body.category,
       status: "pending",
       customerPin: body.customerPin ?? null,
+      imagePaths: body.imagePaths ?? [],
     })
     .returning();
 
@@ -232,6 +269,53 @@ router.post("/", async (req, res) => {
 
   if (isUrgent) {
     broadcast("newUrgent", inserted);
+  }
+
+  // 모바일상품권 판매신청 시 채팅으로 자동 요약 메시지 전송
+  if (body.kind === "mobile" && body.items && body.items.length > 0) {
+    const fmt = (n: number) => n.toLocaleString("ko-KR") + "원";
+    const lines: string[] = [];
+    lines.push(`📱 모바일상품권 판매신청`);
+    lines.push(`👤 신청자: ${body.name ?? "미입력"} / ${normalizedPhone}`);
+    lines.push(`🏦 입금계좌: ${body.bankName ?? ""} ${body.accountNumber ?? ""} (${body.accountHolder ?? ""})`);
+    lines.push(`━━━━━━━━━━━━━━`);
+
+    for (const item of body.items as (typeof body.items[0] & { note?: string })[]) {
+      const ratePct = item.rate;
+      lines.push(`💳 ${item.type}`);
+      lines.push(`   액면가 ${fmt(item.amount)}  →  입금 ${fmt(item.payment)} (${ratePct}%)`);
+      if (item.note) {
+        const noteLines = item.note.split(" / ").filter(Boolean);
+        for (const nl of noteLines) lines.push(`   📋 ${nl}`);
+      }
+    }
+
+    lines.push(`━━━━━━━━━━━━━━`);
+    lines.push(`💰 총 입금예정금액: ${fmt(totalPayment)}`);
+
+    const summaryMsg = lines.join("\n");
+    const [chatRow] = await db.insert(chatsTable).values({
+      reservationId: inserted.id,
+      sender: "system",
+      senderName: "시스템",
+      message: summaryMsg,
+    }).returning();
+    emitToRoom(inserted.id, "newMessage", { ...chatRow, time: chatRow.time.toISOString() });
+    // 관리자 모바일 대시보드 채팅함 알림 (전역 브로드캐스트)
+    broadcast("chatAlert", { ...chatRow, time: chatRow.time.toISOString(), reservationId: inserted.id, senderName: "📱 신규 모바일 판매신청" });
+
+    // 이미지가 있으면 각각 별도 메시지로 전송
+    if (body.imagePaths && body.imagePaths.length > 0) {
+      for (const imgUrl of body.imagePaths) {
+        const [imgRow] = await db.insert(chatsTable).values({
+          reservationId: inserted.id,
+          sender: "system",
+          senderName: "시스템",
+          message: `[IMG:${imgUrl}]`,
+        }).returning();
+        emitToRoom(inserted.id, "newMessage", { ...imgRow, time: imgRow.time.toISOString() });
+      }
+    }
   }
 
   res.status(201).json(inserted);
