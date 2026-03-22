@@ -71,11 +71,16 @@ const TIME_OPTIONS: string[] = (() => {
 })();
 
 const KOREAN_BANKS = [
-  "KB국민은행", "신한은행", "우리은행", "하나은행", "IBK기업은행",
-  "NH농협은행", "SC제일은행", "씨티은행", "카카오뱅크", "케이뱅크",
-  "토스뱅크", "수협은행", "전북은행", "광주은행", "경남은행",
-  "부산은행", "대구은행", "제주은행", "새마을금고", "신협",
-  "우체국", "산업은행", "수출입은행",
+  "카카오뱅크", "토스뱅크", "케이뱅크",
+  "국민은행", "신한은행", "우리은행", "하나은행",
+  "기업은행", "농협은행", "수협은행", "SC제일은행", "씨티은행",
+  "산업은행", "수출입은행",
+  "부산은행", "경남은행", "대구은행", "광주은행", "전북은행", "제주은행",
+  "새마을금고", "신협", "우체국",
+  "키움증권", "미래에셋증권", "삼성증권", "NH투자증권", "한국투자증권",
+  "KB증권", "신한투자증권", "하나증권", "대신증권", "메리츠증권",
+  "토스증권", "카카오페이증권",
+  "기타",
 ];
 
 interface VoucherItem { type: string; amount: string; isGift: boolean; }
@@ -217,9 +222,11 @@ function VoucherItems({
   baseDeduct: number;
   accent?: string;
 }) {
-  const totalPayment = items.reduce((sum, item) => sum + computeItem(item, baseDeduct).payment, 0);
+  const rawTotalPayment = items.reduce((sum, item) => sum + computeItem(item, baseDeduct).payment, 0);
   const totalFace = items.reduce((sum, item) => sum + (parseFloat(item.amount) || 0), 0);
   const hasAnyAmount = items.some((item) => (parseFloat(item.amount) || 0) > 0);
+  const travelDeduct = hasAnyAmount && totalFace < 300000 ? 3000 : 0;
+  const totalPayment = Math.max(0, rawTotalPayment - travelDeduct);
   const cl = accent === "rose"
     ? { bg: "bg-rose-50", border: "border-rose-100", text: "text-rose-500", textDark: "text-rose-600", dashed: "border-rose-200 text-rose-400 hover:bg-rose-50" }
     : { bg: "bg-indigo-50", border: "border-indigo-100", text: "text-indigo-500", textDark: "text-indigo-600", dashed: "border-indigo-200 text-indigo-400 hover:bg-indigo-50" };
@@ -309,14 +316,34 @@ function VoucherItems({
       </button>
 
       {hasAnyAmount && (
-        <div className={`flex items-center justify-between px-4 py-3 rounded-2xl border ${cl.bg} ${cl.border}`}>
-          <div className="space-y-0.5">
-            <p className={`text-[11px] ${cl.text}`}>총 액면가</p>
-            <p className={`text-[13px] font-semibold ${cl.text}`}>{formatKRW(totalFace)}</p>
+        <div className={`rounded-2xl border ${cl.bg} ${cl.border} overflow-hidden`}>
+          <div className={`flex items-center justify-between px-4 py-3`}>
+            <div className="space-y-0.5">
+              <p className={`text-[11px] ${cl.text}`}>총 상품권금액</p>
+              <p className={`text-[13px] font-semibold ${cl.text}`}>{formatKRW(totalFace)}</p>
+            </div>
+            <div className="text-right space-y-0.5">
+              <p className={`text-[11px] ${cl.text}`}>{items.length > 1 ? "합산 입금받을 금액" : "입금받을 금액"}</p>
+              <p className={`text-[20px] font-black tabular-nums ${cl.textDark}`}>{formatKRW(totalPayment)}</p>
+            </div>
           </div>
-          <div className="text-right space-y-0.5">
-            <p className={`text-[11px] ${cl.text}`}>{items.length > 1 ? "합산 입금받을 금액" : "입금받을 금액"}</p>
-            <p className={`text-[20px] font-black tabular-nums ${cl.textDark}`}>{formatKRW(totalPayment)}</p>
+          {travelDeduct > 0 && (
+            <div className="flex items-center justify-between px-4 py-2 bg-amber-50 border-t border-amber-100">
+              <p className="text-[11px] text-amber-600 font-semibold">이동경비 차감</p>
+              <p className="text-[12px] font-bold text-amber-700">- {formatKRW(travelDeduct)}</p>
+            </div>
+          )}
+        </div>
+      )}
+
+      {hasAnyAmount && totalFace < 300000 && (
+        <div className="flex items-start gap-2.5 px-4 py-3 rounded-2xl bg-amber-50 border border-amber-200">
+          <span className="text-[15px] flex-shrink-0 mt-0.5">⚠️</span>
+          <div>
+            <p className="text-[12px] font-bold text-amber-700 leading-snug">30만원 미만 신청 안내</p>
+            <p className="text-[12px] text-amber-600 mt-0.5 leading-relaxed">
+              상품권금액 30만원 미만의 판매 신청은 이동경비로 인하여 <span className="font-bold">3,000원이 차감</span>됩니다.
+            </p>
           </div>
         </div>
       )}
@@ -330,7 +357,7 @@ function HomePage({ onGoUrgent, initialType = DEFAULT_TYPE, onTypeChange, rateGr
   const [name, setName] = useState("");
   const [phone, setPhone] = useState("");
   const [date, setDate] = useState("");
-  const [time, setTime] = useState("14:20");
+  const [time, setTime] = useState("12:00");
   const [takenSlots, setTakenSlots] = useState<string[]>([]);
   const [locationMain, setLocationMain] = useState("");
   const [locationDetail, setLocationDetail] = useState("");
@@ -389,7 +416,8 @@ function HomePage({ onGoUrgent, initialType = DEFAULT_TYPE, onTypeChange, rateGr
       const { amountNum, rate, payment } = computeItem(item, 0);
       return { type: item.type, amount: amountNum, rate, payment, isGift: item.isGift };
     });
-    const totalPayment = savedItems.reduce((s, it) => s + it.payment, 0);
+    const totalFace = savedItems.reduce((s, it) => s + it.amount, 0);
+    const totalPayment = Math.max(0, savedItems.reduce((s, it) => s + it.payment, 0) - (totalFace < 300000 ? 3000 : 0));
     let id = getNextId();
     try {
       const res = await fetch("/api/reservations", {
@@ -428,9 +456,14 @@ function HomePage({ onGoUrgent, initialType = DEFAULT_TYPE, onTypeChange, rateGr
       </div>
       <header className="bg-white/80 backdrop-blur-md border-b border-slate-100 sticky top-0 z-40">
         <div className="max-w-md mx-auto px-5 py-4 flex items-center gap-3">
-          {agreedPrivacy && (
-            <button onClick={() => { window.location.href = "/"; }} className="text-slate-400 hover:text-slate-600 text-lg flex-shrink-0">←</button>
-          )}
+          <button
+            onClick={() => { window.location.href = "/"; }}
+            className="w-8 h-8 flex items-center justify-center rounded-xl hover:bg-slate-100 transition-colors flex-shrink-0"
+          >
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="text-slate-500">
+              <path d="M19 12H5M12 19l-7-7 7-7"/>
+            </svg>
+          </button>
           <div className="flex-1 flex items-center gap-2 min-w-0">
             <div className="flex-1 min-w-0">
               <h1 className="text-[17px] font-bold text-slate-800">우리동네상품권 예약</h1>
@@ -604,7 +637,7 @@ function HomePage({ onGoUrgent, initialType = DEFAULT_TYPE, onTypeChange, rateGr
                           .filter((r) => r.status === "pending" || r.status === "assigned")
                           .map((r) => r.time ?? "");
                         setTakenSlots(taken.filter(Boolean));
-                        if (taken.includes(time)) setTime("14:20");
+                        if (taken.includes(time)) setTime("12:00");
                       } catch {
                         setTakenSlots([]);
                       }
@@ -771,6 +804,7 @@ function HomePage({ onGoUrgent, initialType = DEFAULT_TYPE, onTypeChange, rateGr
               </div>
             </div>
 
+            <p className="text-[12px] text-slate-400 text-center">입력하신 정보는 예약 및 거래 진행 목적으로만 사용됩니다.</p>
             <button type="submit" className="w-full py-4 rounded-2xl text-white text-[15px] font-bold transition-all duration-150 active:scale-95" style={{ background: "linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%)" }}>
               {getLabel("reservation_submit", userLang)}
             </button>
@@ -912,7 +946,7 @@ function SubmissionCard({ entry }: { entry: ReservationEntry | UrgentEntry }) {
       {/* ── 합계 ── */}
       <div className={`mx-4 mb-3 flex items-center justify-between px-4 py-3 rounded-2xl border ${ac.bg} ${ac.border}`}>
         <div>
-          <p className="text-[11px] text-slate-400">총 액면가</p>
+          <p className="text-[11px] text-slate-400">총 상품권금액</p>
           <p className="text-[13px] font-semibold text-slate-600">{formatKRW(entry.items.reduce((s, it) => s + it.amount, 0))}</p>
         </div>
         <div className="text-right">
@@ -1031,7 +1065,8 @@ function UrgentPage({ onBack, initialType = DEFAULT_TYPE }: { onBack: () => void
       const { amountNum, rate, payment } = computeItem(item, 0.01);
       return { type: item.type, amount: amountNum, rate, payment, isGift: item.isGift };
     });
-    const totalPayment = savedItems.reduce((s, it) => s + it.payment, 0);
+    const totalFace = savedItems.reduce((s, it) => s + it.amount, 0);
+    const totalPayment = Math.max(0, savedItems.reduce((s, it) => s + it.payment, 0) - (totalFace < 300000 ? 3000 : 0));
     let id = getNextId();
     try {
       const res = await fetch("/api/reservations", {
@@ -1239,6 +1274,7 @@ function UrgentPage({ onBack, initialType = DEFAULT_TYPE }: { onBack: () => void
               </div>
             </div>
 
+            <p className="text-[12px] text-slate-400 text-center">입력하신 정보는 예약 및 거래 진행 목적으로만 사용됩니다.</p>
             <button type="submit" className="w-full py-4 rounded-2xl text-white text-[15px] font-bold transition-all duration-150 active:scale-95 flex items-center justify-center gap-2" style={{ background: "linear-gradient(135deg, #f43f5e 0%, #e11d48 100%)" }}>
               <span>🚨</span> {getLabel("urgent_sell_submit", urgentLang)}
             </button>
@@ -1270,6 +1306,8 @@ export default function App() {
   const [selectedType, setSelectedType] = useState<string>(resolvedType);
   const [rateGroups, setRateGroups] = useState([...RATE_GROUPS]);
   const [noticeBanner, setNoticeBanner] = useState("");
+  const [popupOpen, setPopupOpen] = useState(false);
+  const [popupText, setPopupText] = useState("");
 
   useEffect(() => {
     const base = import.meta.env.BASE_URL.replace(/\/$/, "");
@@ -1289,17 +1327,56 @@ export default function App() {
         if (data.notice_active === "true" && data.notice_text) {
           setNoticeBanner(data.notice_text);
         }
+        if (data.paper_popup_enabled === "1" && data.paper_popup_text?.trim()) {
+          const dismissed = sessionStorage.getItem("paper_popup_dismissed");
+          if (dismissed !== data.paper_popup_text) {
+            setPopupText(data.paper_popup_text);
+            setPopupOpen(true);
+          }
+        }
       })
       .catch(() => {});
   }, []);
 
-  return page === "home"
-    ? <HomePage
-        onGoUrgent={() => setPage("urgent")}
-        initialType={selectedType}
-        onTypeChange={setSelectedType}
-        rateGroups={rateGroups}
-        noticeBanner={noticeBanner}
-      />
-    : <UrgentPage onBack={() => setPage("home")} initialType={selectedType} />;
+  function dismissPopup() {
+    sessionStorage.setItem("paper_popup_dismissed", popupText);
+    setPopupOpen(false);
+  }
+
+  return (
+    <>
+      {/* 지류 공지 팝업 */}
+      {popupOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center px-5" style={{ background: "rgba(0,0,0,0.45)" }}>
+          <div className="bg-white rounded-3xl shadow-2xl w-full max-w-sm overflow-hidden">
+            <div className="flex items-center gap-2 px-5 pt-5 pb-3 border-b border-slate-100">
+              <span className="text-[20px]">📢</span>
+              <h2 className="text-[16px] font-black text-slate-800">공지사항</h2>
+            </div>
+            <div className="px-5 py-4 max-h-[55vh] overflow-y-auto">
+              <p className="text-[14px] text-slate-700 leading-relaxed whitespace-pre-wrap">{popupText}</p>
+            </div>
+            <div className="px-5 pb-5">
+              <button
+                onClick={dismissPopup}
+                className="w-full py-3.5 rounded-2xl text-white text-[15px] font-bold transition-all active:scale-[0.98]"
+                style={{ background: "linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%)" }}
+              >
+                확인했습니다
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+      {page === "home"
+        ? <HomePage
+            onGoUrgent={() => setPage("urgent")}
+            initialType={selectedType}
+            onTypeChange={setSelectedType}
+            rateGroups={rateGroups}
+            noticeBanner={noticeBanner}
+          />
+        : <UrgentPage onBack={() => setPage("home")} initialType={selectedType} />}
+    </>
+  );
 }
