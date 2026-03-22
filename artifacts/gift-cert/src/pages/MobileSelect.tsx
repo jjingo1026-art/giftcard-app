@@ -1525,6 +1525,9 @@ export default function MobileSelect() {
                 ...(it.type === "롯데모바일" && it.checkedSubs.includes("앱 선물하기")
                   ? ["앱선물하기 안내에 있는 전화번호로 선물이 전달됩니다"]
                   : []),
+                ...(it.type === "네이버페이 포인트" && it.checkedSubs.includes("선물하기")
+                  ? [`선물하기 안내 아이디(${mobileSettings.naverUserId})로 선물이 전달됩니다`]
+                  : []),
                 ...(it.voucherNumber && (
                   it.checkedSubs.includes("23으로 시작하는 교환권") ||
                   it.checkedSubs.includes("쿠폰")
