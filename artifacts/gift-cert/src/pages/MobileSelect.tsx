@@ -1491,6 +1491,12 @@ export default function MobileSelect() {
       const uploadedCount = shinsegaeImages.filter((img) => img.objectPath !== null).length;
       if (uploadedCount === 0) errs.shinsegaeImages = "신세계모바일 바코드업로드 선택 시 이미지를 1개 이상 등록해야 합니다.";
     }
+    // 네이버페이 포인트 쿠폰: 쿠폰번호 1개 이상 필수
+    const hasNaverCoupon = items.some((it) => it.type === "네이버페이 포인트" && it.checkedSubs.includes("쿠폰"));
+    if (hasNaverCoupon) {
+      const hasAnyNumber = items.some((it) => it.type === "네이버페이 포인트" && it.checkedSubs.includes("쿠폰") && it.voucherNumber.trim());
+      if (!hasAnyNumber) errs.naverCoupon = "네이버페이 쿠폰번호를 1개 이상 입력해야 합니다.";
+    }
     setErrors(errs);
     return Object.keys(errs).length === 0;
   }
@@ -1714,6 +1720,11 @@ export default function MobileSelect() {
         {errors.shinsegaeImages && (
           <p className="text-[13px] font-semibold text-rose-500 bg-rose-50 border border-rose-200 rounded-2xl px-4 py-3">
             ⚠ {errors.shinsegaeImages}
+          </p>
+        )}
+        {errors.naverCoupon && (
+          <p className="text-[13px] font-semibold text-green-700 bg-green-50 border border-green-200 rounded-2xl px-4 py-3">
+            ⚠ {errors.naverCoupon}
           </p>
         )}
 
