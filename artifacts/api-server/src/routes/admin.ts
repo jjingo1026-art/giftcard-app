@@ -624,6 +624,7 @@ router.get("/dashboard", requireAuth, requireAdmin, async (req, res) => {
 });
 
 // GET /api/admin/reservations/calendar — 날짜별 총·미배정·배정 집계
+// 취소(cancelled), 노쇼(no_show), 모바일(mobile) 제외 — 지류 예약만 집계
 router.get("/reservations/calendar", requireAuth, requireAdmin, async (_req, res) => {
   try {
     const rows = await db
@@ -635,7 +636,11 @@ router.get("/reservations/calendar", requireAuth, requireAdmin, async (_req, res
         urgent:     sql<number>`COUNT(*) FILTER (WHERE ${reservationsTable.isUrgent} = true AND ${reservationsTable.assignedStaffId} IS NULL)`,
       })
       .from(reservationsTable)
-      .where(sql`${reservationsTable.date} IS NOT NULL`)
+      .where(
+        sql`${reservationsTable.date} IS NOT NULL
+          AND ${reservationsTable.kind} IN ('reservation', 'urgent')
+          AND ${reservationsTable.status} NOT IN ('cancelled', 'no_show')`
+      )
       .groupBy(reservationsTable.date)
       .orderBy(reservationsTable.date);
 
