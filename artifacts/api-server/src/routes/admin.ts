@@ -861,8 +861,8 @@ router.get("/mobile-stats", requireAuth, async (req, res) => {
     return and(
       eq(reservationsTable.kind, "mobile"),
       eq(reservationsTable.status, "completed"),
-      gte(reservationsTable.createdAt, startTs),
-      lte(reservationsTable.createdAt, endTs),
+      gte(reservationsTable.createdAt, new Date(startTs)),
+      lte(reservationsTable.createdAt, new Date(endTs)),
     );
   };
 

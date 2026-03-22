@@ -123,8 +123,12 @@ export default function AdminMobileDashboard() {
         : "/api/admin/mobile-stats";
       const res = await adminFetch(url);
       const data = await res.json();
-      setStats(data);
-      if (withRange) setRangeSearched(true);
+      if (res.ok && data?.today) {
+        setStats(data);
+        if (withRange) setRangeSearched(true);
+      } else {
+        setStats(null);
+      }
     } catch { } finally {
       setStatsLoading(false);
     }
@@ -487,16 +491,16 @@ export default function AdminMobileDashboard() {
             <div className="px-4 py-3.5">
               <p className="text-[10px] text-slate-400 font-semibold uppercase tracking-wide mb-1">오늘 매출</p>
               <p className="text-[22px] font-black text-emerald-600 tabular-nums leading-tight">
-                {stats ? formatKRW(Number(stats.today.payment)) : "—"}
+                {stats?.today ? formatKRW(Number(stats.today.payment)) : "—"}
               </p>
-              <p className="text-[11px] text-slate-400 mt-0.5">완료 {stats ? `${stats.today.count}건` : "—"}</p>
+              <p className="text-[11px] text-slate-400 mt-0.5">완료 {stats?.today ? `${stats.today.count}건` : "—"}</p>
             </div>
             <div className="px-4 py-3.5">
               <p className="text-[10px] text-slate-400 font-semibold uppercase tracking-wide mb-1">이번주 매출</p>
               <p className="text-[22px] font-black text-violet-600 tabular-nums leading-tight">
-                {stats ? formatKRW(Number(stats.week.payment)) : "—"}
+                {stats?.week ? formatKRW(Number(stats.week.payment)) : "—"}
               </p>
-              <p className="text-[11px] text-slate-400 mt-0.5">완료 {stats ? `${stats.week.count}건` : "—"}</p>
+              <p className="text-[11px] text-slate-400 mt-0.5">완료 {stats?.week ? `${stats.week.count}건` : "—"}</p>
             </div>
           </div>
 
