@@ -266,12 +266,12 @@ export default function AdminChat() {
         {/* 언어 선택 패널 */}
         {showLangPicker && (
           <div className="border-t border-slate-100 bg-white px-4 py-2">
-            <div className="grid grid-cols-2 gap-1.5">
+            <div className="flex flex-col gap-1.5 max-h-52 overflow-y-auto scrollbar-none">
               {LANGUAGES.map((l) => (
                 <button
                   key={l.code}
                   onClick={() => changeLang(l.code)}
-                  className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[11px] font-semibold border transition-all
+                  className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[11px] font-semibold border transition-all w-full
                     ${userLang === l.code
                       ? "bg-indigo-500 text-white border-indigo-500"
                       : "bg-white text-slate-500 border-slate-200 hover:border-indigo-300"}`}

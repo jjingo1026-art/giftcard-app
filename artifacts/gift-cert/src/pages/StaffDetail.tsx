@@ -160,12 +160,12 @@ export default function StaffDetail() {
           {/* 언어 선택 패널 */}
           {showLangPicker && (
             <div className="px-4 pb-3 border-t border-indigo-400/30">
-              <div className="grid grid-cols-2 gap-1.5 pt-2">
+              <div className="flex flex-col gap-1.5 pt-2 max-h-52 overflow-y-auto scrollbar-none">
                 {LANGUAGES.map((l) => (
                   <button
                     key={l.code}
                     onClick={() => changeLang(l.code)}
-                    className={`flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-semibold border transition-all
+                    className={`flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-semibold border transition-all w-full
                       ${userLang === l.code
                         ? "bg-white text-indigo-600 border-white"
                         : "bg-white/10 text-indigo-100 border-white/20 hover:bg-white/20"}`}
