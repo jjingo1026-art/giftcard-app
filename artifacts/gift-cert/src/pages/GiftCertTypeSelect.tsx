@@ -37,21 +37,21 @@ export default function GiftCertTypeSelect() {
         <p className="text-[13px] text-slate-400 mb-8">판매하실 상품권 종류를 선택해 주세요</p>
 
         {/* 선택 버튼 */}
-        <div className="w-full max-w-sm grid grid-cols-2 gap-3">
+        <div className="w-full max-w-sm grid grid-cols-2 gap-4">
 
           {/* 모바일상품권 버튼 (왼쪽) */}
           <button
             onClick={() => navigate("/mobile")}
-            className="rounded-2xl px-4 py-6 flex flex-col items-center gap-3 transition-all active:scale-[0.97] shadow-md hover:shadow-lg"
+            className="rounded-3xl px-5 py-8 flex flex-col items-center gap-4 transition-all active:scale-[0.97] shadow-lg hover:shadow-xl"
             style={{ background: "linear-gradient(135deg,#ec4899,#f43f5e)" }}
           >
-            <div className="w-14 h-14 rounded-2xl bg-white/20 flex items-center justify-center text-[32px]">
+            <div className="w-16 h-16 rounded-2xl bg-white/20 flex items-center justify-center text-[36px]">
               📱
             </div>
             <div className="text-center">
-              <p className="text-[15px] font-black text-white leading-tight">모바일</p>
-              <p className="text-[15px] font-black text-white leading-tight">상품권</p>
-              <p className="text-[10px] text-pink-200 mt-1.5 leading-snug">
+              <p className="text-[17px] font-black text-white leading-tight">모바일</p>
+              <p className="text-[17px] font-black text-white leading-tight">상품권</p>
+              <p className="text-[11px] text-pink-200 mt-2 leading-snug">
                 신세계·롯데·현대<br/>네이버페이·컬쳐랜드<br/>북앤라이프·문화·구글
               </p>
             </div>
@@ -60,16 +60,16 @@ export default function GiftCertTypeSelect() {
           {/* 지류상품권 버튼 (오른쪽) */}
           <button
             onClick={() => navigate("/rates")}
-            className="rounded-2xl px-4 py-6 flex flex-col items-center gap-3 transition-all active:scale-[0.97] shadow-md hover:shadow-lg"
+            className="rounded-3xl px-5 py-8 flex flex-col items-center gap-4 transition-all active:scale-[0.97] shadow-lg hover:shadow-xl"
             style={{ background: "linear-gradient(135deg,#6366f1,#818cf8)" }}
           >
-            <div className="w-14 h-14 rounded-2xl bg-white/20 flex items-center justify-center text-[32px]">
+            <div className="w-16 h-16 rounded-2xl bg-white/20 flex items-center justify-center text-[36px]">
               🎟️
             </div>
             <div className="text-center">
-              <p className="text-[15px] font-black text-white leading-tight">지류</p>
-              <p className="text-[15px] font-black text-white leading-tight">상품권</p>
-              <p className="text-[10px] text-indigo-200 mt-1.5 leading-snug">
+              <p className="text-[17px] font-black text-white leading-tight">지류</p>
+              <p className="text-[17px] font-black text-white leading-tight">상품권</p>
+              <p className="text-[11px] text-indigo-200 mt-2 leading-snug">
                 신세계·롯데·현대·갤러리아<br/>삼성·이랜드·AK·농협<br/>문화·온누리·주유권 등
               </p>
             </div>
