@@ -1511,11 +1511,18 @@ export default function MobileSelect() {
     if (hasShinsegaeNumber) {
       if (!shinsegaeNumbers.some((n) => n.trim())) errs.shinsegaeNumbers = "신세계모바일 상품권번호를 1개 이상 입력해야 합니다.";
     }
-    // 컬쳐랜드 자동추출하기: 추출된 번호 1개 이상 필수
-    const hasCultureAuto = items.some((it) => it.type.startsWith("컬쳐랜드") && it.checkedSubs.includes("자동추출하기"));
-    if (hasCultureAuto) {
+    // 컬쳐랜드 자동추출하기: 추출된 번호 1개 이상 필수 (상품권/교환권 공통)
+    const hasCultureGwonAuto = items.some((it) => it.type === "컬쳐랜드 교환권" && it.checkedSubs.includes("자동추출하기"));
+    const hasCultureGiftAuto = items.some((it) => it.type === "컬쳐랜드 상품권" && it.checkedSubs.includes("자동추출하기"));
+    if (hasCultureGwonAuto || hasCultureGiftAuto) {
       const extractedNumbers = cultureImages.flatMap((img) => img.numbers).filter(Boolean);
-      if (extractedNumbers.length === 0) errs.cultureExtract = "자동추출된 상품권 번호가 1개 이상 있어야 합니다. 이미지를 업로드해 주세요.";
+      if (extractedNumbers.length === 0) {
+        if (hasCultureGwonAuto && !hasCultureGiftAuto) {
+          errs.cultureExtract = "자동추출된 교환권 번호가 1개 이상 있어야 합니다. 메시지 이미지를 업로드해 주세요.";
+        } else {
+          errs.cultureExtract = "자동추출된 상품권 번호가 1개 이상 있어야 합니다. 이미지를 업로드해 주세요.";
+        }
+      }
     }
     // 컬쳐랜드 상품권 수동입력하기: 번호 1개 이상 필수
     const hasCultureManual = items.some((it) => it.type === "컬쳐랜드 상품권" && it.checkedSubs.includes("수동입력하기"));
