@@ -9,10 +9,24 @@ async function downloadImage(url: string) {
   try {
     const resp = await fetch(url);
     const blob = await resp.blob();
+    const ext = (blob.type.split("/")[1] || "jpg").replace("jpeg", "jpg");
+    const today = new Date().toISOString().slice(0, 10); // 2026-03-22
+    const filename = `우리동네상품권이미지_${today}_${Date.now()}.${ext}`;
+
+    // 모바일: Web Share API로 갤러리 저장 유도
+    const isMobile = /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
+    if (isMobile && navigator.canShare) {
+      const file = new File([blob], filename, { type: blob.type });
+      if (navigator.canShare({ files: [file] })) {
+        await navigator.share({ files: [file], title: "우리동네상품권 이미지" });
+        return;
+      }
+    }
+
+    // PC / 공유 불가: 날짜 포함 파일명으로 다운로드
     const a = document.createElement("a");
     a.href = URL.createObjectURL(blob);
-    const ext = blob.type.split("/")[1] || "jpg";
-    a.download = `barcode_${Date.now()}.${ext}`;
+    a.download = filename;
     a.click();
     URL.revokeObjectURL(a.href);
   } catch {
