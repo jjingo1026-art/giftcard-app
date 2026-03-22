@@ -77,6 +77,20 @@ function requireAdmin(req: any, res: any, next: any) {
   requireAuth(req, res, next);
 }
 
+function requireAdminOrStaff(req: any, res: any, next: any) {
+  const token = extractBearer(req);
+  try {
+    const payload = verifyAccessToken(token);
+    if (payload.role === "admin" || (payload.role === "staff" && payload.staffId)) {
+      next();
+    } else {
+      res.status(401).json({ error: "인증이 필요합니다." });
+    }
+  } catch {
+    res.status(401).json({ error: "인증이 필요합니다." });
+  }
+}
+
 router.post("/login", async (req, res) => {
   const { id, password } = req.body as { id?: string; password?: string };
   if (!id || !password) {
@@ -1142,7 +1156,7 @@ router.get("/chat/:reservationId", async (req, res) => {
   res.json(rows.map((r) => ({ ...r, time: r.time.toISOString() })));
 });
 
-router.post("/chat/send", async (req, res) => {
+router.post("/chat/send", requireAdminOrStaff, async (req, res) => {
   const { reservationId, sender, senderName, message } = req.body as { reservationId?: number; sender?: string; senderName?: string; message?: string };
   if (!reservationId || !sender || !message?.trim()) {
     res.status(400).json({ error: "reservationId, sender, message는 필수입니다." }); return;

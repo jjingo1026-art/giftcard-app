@@ -25,12 +25,25 @@ const loginLimiter = rateLimit({
   legacyHeaders: false,
 });
 
+const chatReadLimiter = rateLimit({
+  windowMs: 60 * 1000,
+  max: 60,
+  message: { error: "요청이 너무 많습니다. 잠시 후 다시 시도해주세요." },
+  standardHeaders: true,
+  legacyHeaders: false,
+});
+
 app.use("/api/admin/login", loginLimiter);
 app.use("/api/admin/staff/login", loginLimiter);
+app.use("/api/admin/chat", chatReadLimiter);
 
 app.use("/api", router);
 
 app.use((err: Error, _req: Request, res: Response, _next: NextFunction) => {
+  if ((err as any).type === "entity.too.large") {
+    res.status(413).json({ error: "요청 데이터가 너무 큽니다. 10MB 이하로 줄여주세요." });
+    return;
+  }
   console.error(err);
   res.status(500).json({ error: "서버 오류가 발생했습니다." });
 });
