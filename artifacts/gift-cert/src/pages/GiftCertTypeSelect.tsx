@@ -69,7 +69,9 @@ export default function GiftCertTypeSelect() {
             <div className="text-center">
               <p className="text-[15px] font-black text-white leading-tight">지류</p>
               <p className="text-[15px] font-black text-white leading-tight">상품권</p>
-              <p className="text-[10px] text-indigo-200 mt-1.5 leading-snug">백화점·마트·<br/>실물 상품권</p>
+              <p className="text-[10px] text-indigo-200 mt-1.5 leading-snug">
+                신세계·롯데·현대·갤러리아<br/>삼성·이랜드·AK·농협<br/>문화·온누리·주유권 등
+              </p>
             </div>
           </button>
         </div>
