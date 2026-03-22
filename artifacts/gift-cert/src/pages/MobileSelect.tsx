@@ -922,19 +922,24 @@ function MobileVoucherItems({
                 {items.filter((i) => i.type === "롯데모바일" && i.checkedSubs.includes("23으로 시작하는 교환권")).length > 1 && (
                   <p className="text-[11px] font-semibold text-orange-600">항목 {idx + 1}</p>
                 )}
-                <input
-                  type="text"
-                  inputMode="numeric"
-                  value={it.voucherNumber}
-                  onChange={(e) => onVoucherNumberChange(idx, e.target.value.replace(/[^0-9]/g, "").slice(0, 16))}
-                  placeholder="23XXXXXXXXXXXX (숫자만 입력)"
-                  className="w-full px-4 py-3 rounded-xl border-2 border-orange-200 bg-white text-[14px] font-mono tracking-wider outline-none focus:border-orange-400 focus:ring-2 focus:ring-orange-100 transition-all placeholder:text-slate-300"
-                />
-                {it.voucherNumber && (
-                  <p className="text-[11px] text-orange-600 font-semibold px-1">
-                    입력된 번호: <span className="font-mono">{it.voucherNumber}</span>
-                  </p>
-                )}
+                <div className="relative">
+                  <input
+                    type="text"
+                    inputMode="numeric"
+                    value={it.voucherNumber}
+                    onChange={(e) => onVoucherNumberChange(idx, e.target.value.replace(/[^0-9]/g, "").slice(0, 16))}
+                    placeholder="교환권 번호 16자리 입력"
+                    maxLength={16}
+                    className={`w-full px-4 py-3 rounded-xl border-2 bg-white text-[14px] font-mono tracking-wider outline-none transition-all placeholder:text-slate-300
+                      ${it.voucherNumber.length > 0 && it.voucherNumber.length !== 16
+                        ? "border-amber-400 focus:border-amber-500 focus:ring-2 focus:ring-amber-100"
+                        : "border-orange-200 focus:border-orange-400 focus:ring-2 focus:ring-orange-100"}`}
+                  />
+                  <span className={`absolute right-3 top-1/2 -translate-y-1/2 text-[11px] font-bold tabular-nums
+                    ${it.voucherNumber.length === 16 ? "text-orange-500" : it.voucherNumber.length > 0 ? "text-amber-500" : "text-slate-300"}`}>
+                    {it.voucherNumber.length}/16
+                  </span>
+                </div>
               </div>
             ) : null
           )}
