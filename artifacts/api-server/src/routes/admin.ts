@@ -1434,7 +1434,7 @@ router.get("/customer/reservation", async (req, res) => {
 
   const conditions = [
     eq(reservationsTable.phone, normalizedPhone),
-    inArray(reservationsTable.status, ["pending", "assigned", "cancelled", "no_show"]),
+    inArray(reservationsTable.status, ["pending", "assigned", "confirmed", "completed", "cancelled", "no_show"]),
     ...(kind ? [eq(reservationsTable.kind, kind)] : []),
   ];
 
