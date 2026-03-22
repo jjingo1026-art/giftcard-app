@@ -210,12 +210,23 @@ export default function StaffDetail() {
                     <p className="text-[10px] font-bold mb-0.5 opacity-60">{m.senderName}</p>
                   )}
                   {isImg ? (
-                    <img
-                      src={imgUrl}
-                      alt="이미지"
-                      className="max-w-[220px] max-h-[280px] rounded-2xl object-cover cursor-pointer"
-                      onClick={() => window.open(imgUrl, "_blank")}
-                    />
+                    <div className="flex items-center gap-2 bg-slate-50 border border-slate-200 rounded-2xl px-2.5 py-2 shadow-sm">
+                      <img
+                        src={imgUrl}
+                        alt="이미지"
+                        className="w-[60px] h-[60px] rounded-xl object-cover cursor-pointer border border-slate-200 flex-shrink-0"
+                        onClick={() => window.open(imgUrl, "_blank")}
+                      />
+                      <button
+                        onClick={() => window.open(imgUrl, "_blank")}
+                        className="flex items-center gap-1 px-2 py-1 rounded-lg bg-white text-slate-600 text-[10px] font-bold border border-slate-200 hover:bg-slate-100 active:scale-95 transition-all"
+                      >
+                        <svg width="10" height="10" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+                          <path d="M10 2v12m0 0l-4-4m4 4l4-4M3 17h14"/>
+                        </svg>
+                        보기
+                      </button>
+                    </div>
                   ) : (
                     <>
                       <p className="whitespace-pre-wrap">{displayText}</p>
