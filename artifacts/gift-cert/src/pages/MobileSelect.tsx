@@ -1328,6 +1328,10 @@ export default function MobileSelect() {
     const preview = URL.createObjectURL(file);
     setCultureImages((prev) => [...prev, { id, preview, uploading: true, numbers: [], error: false }]);
 
+    const hasGwonType = items.some((it) => it.type === "컬쳐랜드 교환권" && it.checkedSubs.includes("자동추출하기"));
+    const hasGwonType2 = items.some((it) => it.type === "컬쳐랜드 상품권" && it.checkedSubs.includes("자동추출하기"));
+    const voucherType = hasGwonType && hasGwonType2 ? "both" : hasGwonType ? "교환권" : "상품권";
+
     try {
       const base64 = await new Promise<string>((resolve, reject) => {
         const reader = new FileReader();
@@ -1340,7 +1344,7 @@ export default function MobileSelect() {
       const res = await fetch(`${base}/api/mobile/extract-voucher`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ imageBase64: base64, mimeType: file.type, mode }),
+        body: JSON.stringify({ imageBase64: base64, mimeType: file.type, mode, voucherType }),
       });
       const { numbers } = await res.json();
       setCultureImages((prev) => prev.map((img) => img.id === id ? { ...img, uploading: false, numbers: numbers ?? [] } : img));
