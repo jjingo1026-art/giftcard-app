@@ -147,12 +147,12 @@ export default function CustomerChat() {
         {/* 언어 선택 패널 */}
         {showLangPicker && (
           <div className="border-t border-slate-100 bg-white px-4 py-2">
-            <div className="flex gap-1.5 overflow-x-auto pb-1 scrollbar-none">
+            <div className="grid grid-cols-2 gap-1.5">
               {LANGUAGES.map((l) => (
                 <button
                   key={l.code}
                   onClick={() => changeLang(l.code)}
-                  className={`flex-shrink-0 flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[12px] font-semibold border transition-all whitespace-nowrap
+                  className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[12px] font-semibold border transition-all
                     ${userLang === l.code
                       ? "bg-indigo-500 text-white border-indigo-500"
                       : "bg-white text-slate-500 border-slate-200 hover:border-indigo-300"}`}
