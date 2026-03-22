@@ -1,7 +1,7 @@
 import { Router, type IRouter } from "express";
 import { db } from "@workspace/db";
 import { reservationsTable, usersTable, chatsTable } from "@workspace/db/schema";
-import { eq, and, inArray } from "drizzle-orm";
+import { eq, and, inArray, sql } from "drizzle-orm";
 import { broadcast, emitToRoom } from "../socket";
 
 const normalizePhone = (phone: string) => phone.replace(/[^0-9]/g, "");
@@ -61,6 +61,15 @@ router.post("/:id/status", async (req, res) => {
     .where(eq(reservationsTable.id, Number(req.params.id)));
 
   res.json({ success: true });
+});
+
+router.get("/total-count", async (_req, res) => {
+  try {
+    const result = await db.select({ count: sql<number>`count(*)` }).from(reservationsTable);
+    res.json({ count: Number(result[0]?.count ?? 0) });
+  } catch {
+    res.json({ count: 0 });
+  }
 });
 
 router.get("/count-by-date", async (_req, res) => {
