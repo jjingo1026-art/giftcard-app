@@ -295,25 +295,26 @@ export default function AdminChat() {
             const renderSystemText = (text: string) => {
               const lines = text.split("\n");
               return lines.map((line, i) => {
-                // 상품권 번호
+                // 상품권 번호 — "번호: xxxxxxx" 패턴
                 const numMatch = line.match(/번호:\s*(.+)/);
                 if (numMatch) {
                   const num = numMatch[1].trim();
                   return (
                     <div key={i} className="flex items-center gap-1.5 my-0.5">
-                      <span className="text-[13px] leading-snug flex-1">{line}</span>
+                      <span className="text-[13px] leading-snug flex-1 break-all">{line}</span>
                       <CopyBtn value={num} />
                     </div>
                   );
                 }
                 // 입금계좌 — "🏦 입금계좌: 은행명 계좌번호 (예금주)"
-                const acctMatch = line.match(/입금계좌:\s*(.+?)\s+(\d[\d\-]+)\s*\((.+?)\)/);
-                if (acctMatch) {
-                  const acctNum = acctMatch[2].replace(/-/g, "");
+                // 계좌번호: 8자리 이상 연속 숫자(하이픈 포함)로 추출
+                if (line.includes("입금계좌:")) {
+                  const acctNumMatch = line.match(/(\d[\d\-]{7,})/);
+                  const acctNum = acctNumMatch ? acctNumMatch[1].replace(/-/g, "") : "";
                   return (
                     <div key={i} className="flex items-center gap-1.5 my-0.5">
-                      <span className="text-[13px] leading-snug flex-1">{line}</span>
-                      <CopyBtn value={acctNum} label="계좌복사" />
+                      <span className="text-[13px] leading-snug flex-1 break-all">{line}</span>
+                      {acctNum && <CopyBtn value={acctNum} label="계좌복사" />}
                     </div>
                   );
                 }
