@@ -1,28 +1,38 @@
 import { useLocation } from "wouter";
 import { useEffect, useState, useRef } from "react";
 
+const TWENTY_MINUTES = 20 * 60 * 1000;
+
+function calcVirtual(startTime: number) {
+  return Math.floor((Date.now() - startTime) / TWENTY_MINUTES);
+}
+
 function useRequestCounter() {
-  const [baseCount, setBaseCount] = useState<number | null>(null);
+  const [data, setData] = useState<{ count: number; startTime: number } | null>(null);
   const [virtualAdd, setVirtualAdd] = useState(0);
-  const loadTimeRef = useRef(Date.now());
 
   useEffect(() => {
     fetch("/api/reservations/total-count")
       .then((r) => r.json())
-      .then((d) => setBaseCount(Number(d.count ?? 0)))
-      .catch(() => setBaseCount(0));
+      .then((d) => {
+        const count = Number(d.count ?? 0);
+        const startTime = Number(d.startTime ?? Date.now());
+        setData({ count, startTime });
+        setVirtualAdd(calcVirtual(startTime));
+      })
+      .catch(() => setData({ count: 0, startTime: Date.now() }));
   }, []);
 
   useEffect(() => {
+    if (!data) return;
     const interval = setInterval(() => {
-      const elapsed = Date.now() - loadTimeRef.current;
-      setVirtualAdd(Math.floor(elapsed / (20 * 60 * 1000)));
-    }, 60 * 1000);
+      setVirtualAdd(calcVirtual(data.startTime));
+    }, 30 * 1000);
     return () => clearInterval(interval);
-  }, []);
+  }, [data]);
 
-  if (baseCount === null) return null;
-  return baseCount + virtualAdd;
+  if (data === null) return null;
+  return data.count + virtualAdd;
 }
 
 function AnimatedCount({ value }: { value: number }) {

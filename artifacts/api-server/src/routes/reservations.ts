@@ -1,6 +1,6 @@
 import { Router, type IRouter } from "express";
 import { db } from "@workspace/db";
-import { reservationsTable, usersTable, chatsTable } from "@workspace/db/schema";
+import { reservationsTable, usersTable, chatsTable, siteSettingsTable } from "@workspace/db/schema";
 import { eq, and, inArray, sql } from "drizzle-orm";
 import { broadcast, emitToRoom } from "../socket";
 
@@ -65,10 +65,23 @@ router.post("/:id/status", async (req, res) => {
 
 router.get("/total-count", async (_req, res) => {
   try {
-    const result = await db.select({ count: sql<number>`count(*)` }).from(reservationsTable);
-    res.json({ count: Number(result[0]?.count ?? 0) });
+    const [countResult] = await db.select({ count: sql<number>`count(*)` }).from(reservationsTable);
+    const count = Number(countResult?.count ?? 0);
+
+    const existing = await db.select().from(siteSettingsTable).where(eq(siteSettingsTable.key, "counter_start_time"));
+    let startTime: number;
+    if (existing.length > 0) {
+      startTime = Number(existing[0].value);
+    } else {
+      startTime = Date.now();
+      await db.insert(siteSettingsTable)
+        .values({ key: "counter_start_time", value: String(startTime) })
+        .onConflictDoUpdate({ target: siteSettingsTable.key, set: { value: String(startTime) } });
+    }
+
+    res.json({ count, startTime });
   } catch {
-    res.json({ count: 0 });
+    res.json({ count: 0, startTime: Date.now() });
   }
 });
 
