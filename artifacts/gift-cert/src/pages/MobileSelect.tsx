@@ -853,10 +853,9 @@ function MobileVoucherItems({
 }) {
   const totalFace = items.reduce((s, it) => s + parseAmt(it.amount), 0);
   const hasAny = items.some((it) => parseAmt(it.amount) > 0);
-  const travelDeduct = hasAny && totalFace < 300000 ? 3000 : 0;
   const totalPayment = Math.max(
     0,
-    items.reduce((s, it) => s + computeItem(it).payment, 0) - travelDeduct
+    items.reduce((s, it) => s + computeItem(it).payment, 0)
   );
 
   return (
@@ -1238,26 +1237,9 @@ function MobileVoucherItems({
               <p className="text-[20px] font-black tabular-nums text-pink-700">{formatKRW(totalPayment)}</p>
             </div>
           </div>
-          {travelDeduct > 0 && (
-            <div className="flex items-center justify-between px-4 py-2 bg-amber-50 border-t border-amber-100">
-              <p className="text-[11px] text-amber-600 font-semibold">이동경비 차감</p>
-              <p className="text-[12px] font-bold text-amber-700">- {formatKRW(travelDeduct)}</p>
-            </div>
-          )}
         </div>
       )}
 
-      {hasAny && totalFace < 300000 && (
-        <div className="flex items-start gap-2.5 px-4 py-3 rounded-2xl bg-amber-50 border border-amber-200">
-          <span className="text-[15px] flex-shrink-0 mt-0.5">⚠️</span>
-          <div>
-            <p className="text-[12px] font-bold text-amber-700 leading-snug">30만원 미만 신청 안내</p>
-            <p className="text-[12px] text-amber-600 mt-0.5 leading-relaxed">
-              상품권금액 30만원 미만의 판매 신청은 이동경비로 인하여 <span className="font-bold">3,000원이 차감</span>됩니다.
-            </p>
-          </div>
-        </div>
-      )}
     </div>
   );
 }
@@ -1633,9 +1615,6 @@ export default function MobileSelect() {
     setSubmitting(true);
     setErrorMsg("");
 
-    const totalFace = items.reduce((s, it) => s + parseAmt(it.amount), 0);
-    const hasAny = items.some((it) => parseAmt(it.amount) > 0);
-    const travelDeduct = hasAny && totalFace < 300000 ? 3000 : 0;
     const apiItems = items.map((it) => {
       const { amountNum, rate, payment } = computeItem(it);
       return {
@@ -1689,7 +1668,7 @@ export default function MobileSelect() {
           : {}),
       };
     });
-    const totalPayment = Math.max(0, apiItems.reduce((s, it) => s + it.payment, 0) - travelDeduct);
+    const totalPayment = Math.max(0, apiItems.reduce((s, it) => s + it.payment, 0));
 
     try {
       const base = import.meta.env.BASE_URL.replace(/\/$/, "");
