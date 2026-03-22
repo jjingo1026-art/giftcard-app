@@ -192,20 +192,11 @@ export default function AdminDashboard() {
       setAllEntries((prev) => prev.map((r) => r.id === reservation.id ? { ...r, ...reservation } : r));
       setEntries((prev) => prev.map((r) => r.id === reservation.id ? { ...r, ...reservation } : r));
 
-      // 캘린더: 해당 날짜의 unassigned -1, assigned +1
-      if (reservation.date) {
-        setCalendarData((prev) =>
-          prev.map((c) =>
-            c.date === reservation.date
-              ? {
-                  ...c,
-                  unassigned: Math.max(0, c.unassigned - 1),
-                  assigned: c.assigned + 1,
-                }
-              : c
-          )
-        );
-      }
+      // 캘린더 최신 데이터로 갱신 (다른 탭/사용자의 배정도 반영)
+      adminFetch("/api/admin/reservations/calendar")
+        .then((r) => r.json())
+        .then(setCalendarData)
+        .catch(() => {});
     });
 
     socket.on("chatAlert", (msg: { reservationId: number; senderName: string; message: string; time: string; sender: string }) => {
@@ -257,11 +248,24 @@ export default function AdminDashboard() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ staffId }),
       });
+
+      // 예약 목록 즉시 반영
       setAllEntries((prev) => prev.map((r) =>
         r.id === reservationId
           ? { ...r, status: "assigned", assignedStaffId: staffId, assignedTo: staffList.find((s) => s.id === staffId)?.name }
           : r
       ));
+      setEntries((prev) => prev.map((r) =>
+        r.id === reservationId
+          ? { ...r, status: "assigned", assignedStaffId: staffId, assignedTo: staffList.find((s) => s.id === staffId)?.name }
+          : r
+      ));
+
+      // 캘린더 최신 데이터로 즉시 갱신
+      adminFetch("/api/admin/reservations/calendar")
+        .then((r) => r.json())
+        .then(setCalendarData)
+        .catch(() => {});
     } finally {
       setAssigning(null);
     }
