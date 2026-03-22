@@ -1508,6 +1508,16 @@ export default function MobileSelect() {
       const extractedNumbers = cultureImages.flatMap((img) => img.numbers).filter(Boolean);
       if (extractedNumbers.length === 0) errs.cultureExtract = "자동추출된 상품권 번호가 1개 이상 있어야 합니다. 이미지를 업로드해 주세요.";
     }
+    // 컬쳐랜드 상품권 수동입력하기: 번호 1개 이상 필수
+    const hasCultureManual = items.some((it) => it.type === "컬쳐랜드 상품권" && it.checkedSubs.includes("수동입력하기"));
+    if (hasCultureManual && !cultureManualNumbers.some((n) => n.trim())) {
+      errs.cultureManual = "컬쳐랜드 상품권 번호를 1개 이상 입력해야 합니다.";
+    }
+    // 컬쳐랜드 교환권 수동입력하기: 번호 1개 이상 필수
+    const hasCultureExchange = items.some((it) => it.type === "컬쳐랜드 교환권" && it.checkedSubs.includes("수동입력하기"));
+    if (hasCultureExchange && !cultureExchangeNumbers.some((n) => n.trim())) {
+      errs.cultureExchange = "컬쳐랜드 교환권 번호를 1개 이상 입력해야 합니다.";
+    }
     setErrors(errs);
     return Object.keys(errs).length === 0;
   }
@@ -1744,6 +1754,16 @@ export default function MobileSelect() {
         {errors.cultureExtract && (
           <p className="text-[13px] font-semibold text-indigo-700 bg-indigo-50 border border-indigo-200 rounded-2xl px-4 py-3">
             ⚠ {errors.cultureExtract}
+          </p>
+        )}
+        {errors.cultureManual && (
+          <p className="text-[13px] font-semibold text-indigo-700 bg-indigo-50 border border-indigo-200 rounded-2xl px-4 py-3">
+            ⚠ {errors.cultureManual}
+          </p>
+        )}
+        {errors.cultureExchange && (
+          <p className="text-[13px] font-semibold text-indigo-700 bg-indigo-50 border border-indigo-200 rounded-2xl px-4 py-3">
+            ⚠ {errors.cultureExchange}
           </p>
         )}
         {errors.naverCoupon && (
