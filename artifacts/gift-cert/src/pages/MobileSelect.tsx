@@ -1477,6 +1477,12 @@ export default function MobileSelect() {
     if (!/^[가-힣a-zA-Z\s]+$/.test(accountHolder.trim())) errs.accountHolder = "올바른 예금주명을 입력해 주세요.";
     if (customerPin.length !== 4) errs.customerPin = "조회 비밀번호 4자리를 입력해 주세요.";
     if (!agreeMatch) errs.agreeMatch = "신청자와 예금주 동일 여부를 확인해주세요.";
+    // 현대모바일: 이미지 1개 이상 필수
+    const hasHyundai = items.some((it) => it.type === "현대모바일");
+    if (hasHyundai) {
+      const uploadedCount = hyundaiImages.filter((img) => img.objectPath !== null).length;
+      if (uploadedCount === 0) errs.hyundaiImages = "현대모바일 상품권은 이미지를 1개 이상 등록해야 합니다.";
+    }
     setErrors(errs);
     return Object.keys(errs).length === 0;
   }
@@ -1687,6 +1693,12 @@ export default function MobileSelect() {
             onRemove={handleRemoveItem}
           />
         </div>
+
+        {errors.hyundaiImages && (
+          <p className="text-[13px] font-semibold text-rose-500 bg-rose-50 border border-rose-200 rounded-2xl px-4 py-3">
+            ⚠ {errors.hyundaiImages}
+          </p>
+        )}
 
         {/* 신청자 정보 */}
         <div className="bg-white rounded-3xl border border-slate-100 shadow-sm px-5 py-5 space-y-4">
