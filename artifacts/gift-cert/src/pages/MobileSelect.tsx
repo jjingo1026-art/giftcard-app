@@ -1542,6 +1542,11 @@ export default function MobileSelect() {
     if (hasCultureExchange && !cultureExchangeNumbers.some((n) => n.trim())) {
       errs.cultureExchange = "컬쳐랜드 교환권 번호를 1개 이상 입력해야 합니다.";
     }
+    // 북앤라이프 도서문화상품권: 번호 1개 이상 필수
+    const hasBooknlife = items.some((it) => it.type === "북앤라이프 도서문화상품권");
+    if (hasBooknlife && !booknlifeNumbers.some((n) => n.trim())) {
+      errs.booknlife = "북앤라이프 도서문화상품권 번호를 1개 이상 입력해야 합니다.";
+    }
     setErrors(errs);
     return Object.keys(errs).length === 0;
   }
@@ -1791,6 +1796,11 @@ export default function MobileSelect() {
         {errors.cultureExchange && (
           <p className="text-[13px] font-semibold text-indigo-700 bg-indigo-50 border border-indigo-200 rounded-2xl px-4 py-3">
             ⚠ {errors.cultureExchange}
+          </p>
+        )}
+        {errors.booknlife && (
+          <p className="text-[13px] font-semibold text-violet-700 bg-violet-50 border border-violet-200 rounded-2xl px-4 py-3">
+            ⚠ {errors.booknlife}
           </p>
         )}
         {errors.naverCoupon && (
