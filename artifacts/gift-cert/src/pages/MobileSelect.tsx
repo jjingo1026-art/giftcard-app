@@ -325,12 +325,19 @@ function ShinsegaeManualInput({
   onChange,
   onAdd,
   onRemove,
+  totalAmount = 0,
+  rate = 0.95,
 }: {
   numbers: string[];
   onChange: (idx: number, val: string) => void;
   onAdd: () => void;
   onRemove: (idx: number) => void;
+  totalAmount?: number;
+  rate?: number;
 }) {
+  const payment = totalAmount > 0 ? Math.round(totalAmount * rate) : 0;
+  const filledCount = numbers.filter((n) => n.trim().length === 12).length;
+
   return (
     <div className="rounded-2xl border border-rose-100 bg-rose-50/30 p-4 space-y-3">
       <div className="flex items-center gap-2">
@@ -381,6 +388,29 @@ function ShinsegaeManualInput({
           {numbers.filter((n) => n.trim()).map((n, i) => (
             <p key={i} className="text-[11px] text-rose-400 font-semibold font-mono">{n}</p>
           ))}
+        </div>
+      )}
+
+      {/* 금액 안내 */}
+      {totalAmount > 0 && (
+        <div className="rounded-xl bg-white border border-rose-200 px-4 py-3 space-y-1.5">
+          <div className="flex items-center justify-between">
+            <span className="text-[11px] text-slate-500 font-semibold">총 상품권 금액</span>
+            <span className="text-[13px] font-bold text-slate-700">{formatKRW(totalAmount)}</span>
+          </div>
+          <div className="flex items-center justify-between">
+            <span className="text-[11px] text-slate-500 font-semibold">적용 요율</span>
+            <span className="text-[13px] font-bold text-slate-600">{Math.round(rate * 100)}%</span>
+          </div>
+          <div className="border-t border-rose-100 pt-1.5 flex items-center justify-between">
+            <span className="text-[12px] text-rose-600 font-bold">입금받을 금액</span>
+            <span className="text-[16px] font-black text-rose-600">{formatKRW(payment)}</span>
+          </div>
+          {filledCount > 1 && (
+            <p className="text-[10px] text-slate-400 leading-tight">
+              ※ 번호 {filledCount}개 입력 시에도 금액란에 입력하신 총 금액으로 처리됩니다.
+            </p>
+          )}
         </div>
       )}
     </div>
@@ -1089,14 +1119,21 @@ function MobileVoucherItems({
       )}
 
       {/* 신세계모바일 상품권번호 수동입력 */}
-      {items.some((it) => it.type === "신세계모바일" && it.checkedSubs.includes("상품권번호입력")) && (
-        <ShinsegaeManualInput
-          numbers={shinsegaeNumbers}
-          onChange={onShinsegaeNumberChange}
-          onAdd={onShinsegaeNumberAdd}
-          onRemove={onShinsegaeNumberRemove}
-        />
-      )}
+      {items.some((it) => it.type === "신세계모바일" && it.checkedSubs.includes("상품권번호입력")) && (() => {
+        const ssItem = items.find((it) => it.type === "신세계모바일");
+        const ssAmt = ssItem ? parseAmt(ssItem.amount) : 0;
+        const ssRate = MOBILE_TYPES.find((t) => t.label === "신세계모바일")?.rate ?? 95;
+        return (
+          <ShinsegaeManualInput
+            numbers={shinsegaeNumbers}
+            onChange={onShinsegaeNumberChange}
+            onAdd={onShinsegaeNumberAdd}
+            onRemove={onShinsegaeNumberRemove}
+            totalAmount={ssAmt}
+            rate={ssRate / 100}
+          />
+        );
+      })()}
 
       {/* 북앤라이프 상품권번호 입력 */}
       {items.some((it) => it.type.startsWith("북앤라이프")) && (
