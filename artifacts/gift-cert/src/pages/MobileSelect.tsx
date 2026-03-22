@@ -511,10 +511,12 @@ function CultureAutoExtract({
   images,
   onAdd,
   onRemove,
+  showBarcode = true,
 }: {
   images: CultureImage[];
   onAdd: (file: File, mode: "message" | "barcode") => void;
   onRemove: (id: string) => void;
+  showBarcode?: boolean;
 }) {
   const msgRef = useRef<HTMLInputElement>(null);
   const barRef = useRef<HTMLInputElement>(null);
@@ -527,7 +529,7 @@ function CultureAutoExtract({
         <span className="text-[11px] bg-indigo-100 text-indigo-600 font-bold px-2 py-0.5 rounded-full">컬쳐랜드</span>
       </div>
 
-      <div className="grid grid-cols-2 gap-2">
+      <div className={`grid ${showBarcode ? "grid-cols-2" : "grid-cols-1"} gap-2`}>
         <button
           type="button"
           onClick={() => msgRef.current?.click()}
@@ -536,14 +538,16 @@ function CultureAutoExtract({
           <span className="text-[22px]">💬</span>
           <span className="text-[12px] font-bold">메시지 업로드</span>
         </button>
-        <button
-          type="button"
-          onClick={() => barRef.current?.click()}
-          className="flex flex-col items-center gap-1.5 py-3 px-2 rounded-xl border-2 border-dashed border-indigo-300 bg-white text-indigo-600 hover:bg-indigo-50 active:scale-95 transition-all"
-        >
-          <span className="text-[22px]">📊</span>
-          <span className="text-[12px] font-bold">바코드 업로드</span>
-        </button>
+        {showBarcode && (
+          <button
+            type="button"
+            onClick={() => barRef.current?.click()}
+            className="flex flex-col items-center gap-1.5 py-3 px-2 rounded-xl border-2 border-dashed border-indigo-300 bg-white text-indigo-600 hover:bg-indigo-50 active:scale-95 transition-all"
+          >
+            <span className="text-[22px]">📊</span>
+            <span className="text-[12px] font-bold">바코드 업로드</span>
+          </button>
+        )}
       </div>
 
       <input ref={msgRef} type="file" accept="image/*" className="hidden" onChange={(e) => { const f = e.target.files?.[0]; if (f) onAdd(f, "message"); e.target.value = ""; }} />
@@ -1100,6 +1104,7 @@ function MobileVoucherItems({
           images={cultureImages}
           onAdd={onAddCultureImage}
           onRemove={onRemoveCultureImage}
+          showBarcode={items.some((it) => it.type === "컬쳐랜드 상품권" && it.checkedSubs.includes("자동추출하기"))}
         />
       )}
 
