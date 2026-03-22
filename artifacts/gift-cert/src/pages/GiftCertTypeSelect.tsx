@@ -77,20 +77,20 @@ export default function GiftCertTypeSelect() {
         </div>
 
         {/* 신뢰 뱃지 */}
-        <div className="mt-10 flex items-center gap-4">
-          <div className="flex flex-col items-center gap-1">
-            <div className="text-[20px]">🏢</div>
-            <p className="text-[10px] text-slate-400 font-semibold">정식등록</p>
+        <div className="mt-10 flex items-center gap-5">
+          <div className="flex flex-col items-center gap-1.5">
+            <div className="text-[26px]">🏢</div>
+            <p className="text-[12px] text-slate-400 font-semibold">정식등록</p>
           </div>
-          <div className="w-px h-8 bg-slate-200" />
-          <div className="flex flex-col items-center gap-1">
-            <div className="text-[20px]">⚡</div>
-            <p className="text-[10px] text-slate-400 font-semibold">즉시처리</p>
+          <div className="w-px h-9 bg-slate-200" />
+          <div className="flex flex-col items-center gap-1.5">
+            <div className="text-[26px]">⚡</div>
+            <p className="text-[12px] text-slate-400 font-semibold">즉시처리</p>
           </div>
-          <div className="w-px h-8 bg-slate-200" />
-          <div className="flex flex-col items-center gap-1">
-            <div className="text-[20px]">🔒</div>
-            <p className="text-[10px] text-slate-400 font-semibold">안전거래</p>
+          <div className="w-px h-9 bg-slate-200" />
+          <div className="flex flex-col items-center gap-1.5">
+            <div className="text-[26px]">🔒</div>
+            <p className="text-[12px] text-slate-400 font-semibold">안전거래</p>
           </div>
         </div>
       </div>
