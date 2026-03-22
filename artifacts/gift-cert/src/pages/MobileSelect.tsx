@@ -1142,7 +1142,7 @@ function MobileVoucherItems({
           onAdd={onAddCultureImage}
           onAddText={onAddCultureText}
           onRemove={onRemoveCultureImage}
-          showBarcode={items.some((it) => it.type === "컬쳐랜드 상품권" && it.checkedSubs.includes("자동추출하기"))}
+          showBarcode={items.some((it) => (it.type === "컬쳐랜드 상품권" || it.type === "컬쳐랜드 교환권") && it.checkedSubs.includes("자동추출하기"))}
         />
       )}
 
