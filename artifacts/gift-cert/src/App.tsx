@@ -804,6 +804,7 @@ function HomePage({ onGoUrgent, initialType = DEFAULT_TYPE, onTypeChange, rateGr
               </div>
             </div>
 
+            <p className="text-[11px] text-slate-400 text-center">입력하신 정보는 예약 및 거래 진행 목적으로만 사용됩니다.</p>
             <button type="submit" className="w-full py-4 rounded-2xl text-white text-[15px] font-bold transition-all duration-150 active:scale-95" style={{ background: "linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%)" }}>
               {getLabel("reservation_submit", userLang)}
             </button>
@@ -1273,6 +1274,7 @@ function UrgentPage({ onBack, initialType = DEFAULT_TYPE }: { onBack: () => void
               </div>
             </div>
 
+            <p className="text-[11px] text-slate-400 text-center">입력하신 정보는 예약 및 거래 진행 목적으로만 사용됩니다.</p>
             <button type="submit" className="w-full py-4 rounded-2xl text-white text-[15px] font-bold transition-all duration-150 active:scale-95 flex items-center justify-center gap-2" style={{ background: "linear-gradient(135deg, #f43f5e 0%, #e11d48 100%)" }}>
               <span>🚨</span> {getLabel("urgent_sell_submit", urgentLang)}
             </button>

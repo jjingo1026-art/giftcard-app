@@ -2020,6 +2020,7 @@ export default function MobileSelect() {
           </div>
         )}
 
+        <p className="text-[11px] text-slate-400 text-center">입력하신 정보는 예약 및 거래 진행 목적으로만 사용됩니다.</p>
         <button
           type="submit"
           disabled={submitting}
