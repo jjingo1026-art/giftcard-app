@@ -6,7 +6,7 @@ const MOBILE_RATES = [
   { label: "컬쳐랜드", subs: ["상품권", "교환권"], icon: "📚", color: "#6366f1", rate: 90 },
   { label: "북앤라이프", subs: ["상품권", "교환권"], icon: "📖", color: "#8b5cf6", rate: 90 },
   { label: "문화상품권(18핀)", icon: "🎫", color: "#ec4899", rate: 90 },
-  { label: "구글 카카오톡 교환권", subs: ["카카오톡 구매", "숫자 12자리"], icon: "🎮", color: "#4ade80", rate: 90 },
+  { label: "구글 카카오톡 교환권", sub: "카카오톡 구매 숫자 12자리", icon: "🎮", color: "#4ade80", rate: 90 },
 ];
 
 export default function MobileGiftCert() {
