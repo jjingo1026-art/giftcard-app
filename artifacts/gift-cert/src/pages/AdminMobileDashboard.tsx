@@ -345,12 +345,13 @@ export default function AdminMobileDashboard() {
             {/* 채팅 전체 목록 버튼 */}
             <button
               onClick={() => { window.location.href = "/admin/chats"; }}
-              className="relative text-[12px] text-indigo-500 hover:text-indigo-700 font-semibold transition-colors px-3 py-1.5 rounded-xl hover:bg-indigo-50"
+              className="relative flex items-center gap-1.5 text-[13px] text-indigo-600 hover:text-indigo-800 font-bold transition-colors px-4 py-2 rounded-xl hover:bg-indigo-50 border border-indigo-200 bg-indigo-50/60"
               title="채팅 전체 목록"
             >
-              💬
+              <span className="text-[16px]">💬</span>
+              <span>채팅</span>
               {totalUnread > 0 && (
-                <span className="absolute -top-1 -right-1 min-w-[18px] h-[18px] rounded-full bg-rose-500 text-white text-[10px] font-black flex items-center justify-center px-1 leading-none">
+                <span className="absolute -top-1.5 -right-1.5 min-w-[20px] h-[20px] rounded-full bg-rose-500 text-white text-[10px] font-black flex items-center justify-center px-1 leading-none">
                   {totalUnread}
                 </span>
               )}
