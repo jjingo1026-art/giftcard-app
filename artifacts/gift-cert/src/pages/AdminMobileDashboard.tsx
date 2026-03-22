@@ -757,7 +757,7 @@ export default function AdminMobileDashboard() {
 
                       {/* 액션 버튼 */}
                       {isPending && (
-                        <div className="flex gap-2 pt-1">
+                        <div className="flex gap-2 pt-4">
                           <button
                             disabled={updatingId === entry.id}
                             onClick={() => updateStatus(entry.id, "completed")}
