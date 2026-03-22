@@ -325,6 +325,25 @@ export default function MobileCheck() {
                   </button>
                 </div>
               )}
+
+              {/* 취소 완료 후 재신청 안내 */}
+              {cancelDone && (
+                <div className="space-y-2 pt-1">
+                  <div className="flex items-start gap-2.5 px-4 py-3 rounded-2xl bg-slate-50 border border-slate-200">
+                    <span className="text-[15px] flex-shrink-0 mt-0.5">✅</span>
+                    <p className="text-[12px] text-slate-600 leading-relaxed font-medium">
+                      신청이 취소됐습니다. 새로 신청하시려면 아래 버튼을 눌러주세요.
+                    </p>
+                  </div>
+                  <button
+                    onClick={() => { window.location.href = "/mobile"; }}
+                    className="w-full py-3.5 rounded-2xl text-white text-[14px] font-bold transition-all active:scale-[0.98] flex items-center justify-center gap-2 shadow-sm"
+                    style={{ background: "linear-gradient(135deg,#ec4899,#f43f5e)" }}
+                  >
+                    <span>📱</span> 다시 신청하기
+                  </button>
+                </div>
+              )}
             </div>
           </div>
         )}

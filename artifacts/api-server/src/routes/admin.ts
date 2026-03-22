@@ -1305,15 +1305,16 @@ router.post("/customer/cancel", async (req, res) => {
   if (!phone || !reservationId) {
     res.status(400).json({ success: false, error: "phone, reservationId 필수입니다." }); return;
   }
+  const normalizePhone = (p: string) => p.replace(/\D/g, "");
   const [row] = await db
     .select()
     .from(reservationsTable)
-    .where(eq(reservationsTable.id, reservationId));
+    .where(eq(reservationsTable.id, Number(reservationId)));
 
   if (!row) {
     res.status(404).json({ success: false, error: "예약을 찾을 수 없습니다." }); return;
   }
-  if (row.phone !== phone) {
+  if (normalizePhone(row.phone ?? "") !== normalizePhone(phone)) {
     res.status(403).json({ success: false, error: "전화번호가 일치하지 않습니다." }); return;
   }
   if (row.customerPin && pin !== row.customerPin) {
