@@ -1232,6 +1232,7 @@ export default function MobileSelect() {
   const [bankName, setBankName] = useState("");
   const [accountNumber, setAccountNumber] = useState("");
   const [accountHolder, setAccountHolder] = useState("");
+  const [customerPin, setCustomerPin] = useState("");
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [submitting, setSubmitting] = useState(false);
   const [done, setDone] = useState<{ id: number; totalPayment: number } | null>(null);
@@ -1548,6 +1549,7 @@ export default function MobileSelect() {
           bankName,
           accountNumber: accountNumber.trim(),
           accountHolder: accountHolder.trim(),
+          ...(customerPin.length === 4 ? { customerPin } : {}),
           imagePaths: [
             ...hyundaiImages.filter((i) => i.objectPath).map((i) => i.objectPath!),
             ...shinsegaeImages.filter((i) => i.objectPath).map((i) => i.objectPath!),
@@ -1757,6 +1759,20 @@ export default function MobileSelect() {
           <div className="flex items-start gap-2.5 bg-amber-50 rounded-2xl px-4 py-3 border border-amber-100">
             <span className="text-[14px] flex-shrink-0">⚠️</span>
             <p className="text-[12px] text-amber-700 leading-relaxed">신청자 성함과 예금주명이 동일해야 합니다.</p>
+          </div>
+
+          <div className="space-y-1.5">
+            <label className="text-[12px] font-semibold text-slate-500">🔒 조회 비밀번호 <span className="text-slate-400 font-normal">(선택, 숫자 4자리)</span></label>
+            <input
+              type="text"
+              inputMode="numeric"
+              maxLength={4}
+              value={customerPin}
+              onChange={(e) => setCustomerPin(e.target.value.replace(/[^0-9]/g, "").slice(0, 4))}
+              placeholder="판매내역 조회 시 사용할 4자리 숫자"
+              className="w-full border border-slate-200 rounded-2xl px-4 py-3.5 text-[15px] focus:outline-none focus:ring-2 focus:ring-pink-300 tracking-widest"
+            />
+            <p className="text-[11px] text-slate-400">설정하면 판매내역 조회 시 비밀번호가 필요합니다.</p>
           </div>
         </div>
 
