@@ -106,7 +106,7 @@ export default function Privacy() {
           className="w-full py-4 rounded-2xl text-white text-[15px] font-bold transition-all active:scale-[0.98] shadow-sm"
           style={{ background: "linear-gradient(135deg, #6366f1 0%, #4f46e5 100%)" }}
         >
-          이용약관 및 개인정보 수집에 동의합니다. (필수)
+          개인정보 수집 및 이용에 동의합니다. (필수)
         </button>
 
         <button
