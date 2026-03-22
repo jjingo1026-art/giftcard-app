@@ -79,6 +79,8 @@ export default function AdminSiteSettings() {
   const [business, setBusiness] = useState({ ...DEFAULT_BUSINESS });
   const [noticeText, setNoticeText] = useState("");
   const [noticeActive, setNoticeActive] = useState(false);
+  const [popupText, setPopupText] = useState("");
+  const [popupEnabled, setPopupEnabled] = useState(false);
   const [termsValues, setTermsValues] = useState<Record<string, string>>({
     terms_service: "",
     terms_privacy: "",
@@ -97,6 +99,8 @@ export default function AdminSiteSettings() {
         }
         if (data.notice_text !== undefined) setNoticeText(data.notice_text);
         if (data.notice_active !== undefined) setNoticeActive(data.notice_active === "true");
+        if (data.paper_popup_text !== undefined) setPopupText(data.paper_popup_text);
+        if (data.paper_popup_enabled !== undefined) setPopupEnabled(data.paper_popup_enabled === "1");
         setTermsValues({
           terms_service: data.terms_service ?? "",
           terms_privacy: data.terms_privacy ?? "",
@@ -129,6 +133,14 @@ export default function AdminSiteSettings() {
     await saveSetting("notice_active", noticeActive ? "true" : "false");
     setSaving(false);
     showToast("공지사항 저장 완료!");
+  }
+
+  async function savePopup() {
+    setSaving(true);
+    await saveSetting("paper_popup_text", popupText);
+    await saveSetting("paper_popup_enabled", popupEnabled ? "1" : "0");
+    setSaving(false);
+    showToast("팝업 공지 저장 완료!");
   }
 
   async function saveTerms() {
@@ -305,6 +317,42 @@ export default function AdminSiteSettings() {
                   className="w-full py-3.5 rounded-2xl bg-indigo-500 text-white font-bold text-[15px] hover:bg-indigo-600 transition-colors active:scale-[0.98] disabled:opacity-60"
                 >
                   {saving ? "저장 중..." : "💾 공지사항 저장"}
+                </button>
+
+                {/* 팝업 공지 */}
+                <div className="bg-white rounded-2xl border border-slate-100 shadow-sm overflow-hidden">
+                  <div className="px-5 pt-4 pb-3 border-b border-slate-50 flex items-center justify-between">
+                    <div>
+                      <p className="text-[14px] font-bold text-slate-700">📢 팝업 공지</p>
+                      <p className="text-[12px] text-slate-400 mt-0.5">지류 시세 페이지 진입 시 팝업 표시</p>
+                    </div>
+                    <label className="flex items-center gap-2 cursor-pointer select-none">
+                      <span className="text-[13px] text-slate-500 font-medium">{popupEnabled ? "표시 중" : "숨김"}</span>
+                      <div
+                        onClick={() => setPopupEnabled((v) => !v)}
+                        className={`w-11 h-6 rounded-full transition-colors relative flex-shrink-0 ${popupEnabled ? "bg-indigo-500" : "bg-slate-200"}`}
+                      >
+                        <div className={`absolute top-0.5 w-5 h-5 bg-white rounded-full shadow transition-all ${popupEnabled ? "left-[22px]" : "left-0.5"}`} />
+                      </div>
+                    </label>
+                  </div>
+                  <div className="px-5 py-4">
+                    <textarea
+                      value={popupText}
+                      onChange={(e) => setPopupText(e.target.value)}
+                      rows={5}
+                      placeholder="팝업에 표시할 공지 내용을 입력하세요. 비워두면 팝업이 나타나지 않습니다."
+                      className="w-full px-4 py-3 border border-slate-200 rounded-xl text-[14px] text-slate-700 focus:outline-none focus:border-indigo-400 resize-none leading-relaxed"
+                    />
+                    <p className="text-[11px] text-slate-300 mt-1.5">저장 후 즉시 반영됩니다. 고객이 확인 후에는 같은 세션에서 다시 표시되지 않습니다.</p>
+                  </div>
+                </div>
+                <button
+                  onClick={savePopup}
+                  disabled={saving}
+                  className="w-full py-3.5 rounded-2xl bg-indigo-500 text-white font-bold text-[15px] hover:bg-indigo-600 transition-colors active:scale-[0.98] disabled:opacity-60"
+                >
+                  {saving ? "저장 중..." : "💾 팝업 공지 저장"}
                 </button>
               </div>
             )}

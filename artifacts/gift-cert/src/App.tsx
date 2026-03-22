@@ -1306,6 +1306,8 @@ export default function App() {
   const [selectedType, setSelectedType] = useState<string>(resolvedType);
   const [rateGroups, setRateGroups] = useState([...RATE_GROUPS]);
   const [noticeBanner, setNoticeBanner] = useState("");
+  const [popupOpen, setPopupOpen] = useState(false);
+  const [popupText, setPopupText] = useState("");
 
   useEffect(() => {
     const base = import.meta.env.BASE_URL.replace(/\/$/, "");
@@ -1325,17 +1327,56 @@ export default function App() {
         if (data.notice_active === "true" && data.notice_text) {
           setNoticeBanner(data.notice_text);
         }
+        if (data.paper_popup_enabled === "1" && data.paper_popup_text?.trim()) {
+          const dismissed = sessionStorage.getItem("paper_popup_dismissed");
+          if (dismissed !== data.paper_popup_text) {
+            setPopupText(data.paper_popup_text);
+            setPopupOpen(true);
+          }
+        }
       })
       .catch(() => {});
   }, []);
 
-  return page === "home"
-    ? <HomePage
-        onGoUrgent={() => setPage("urgent")}
-        initialType={selectedType}
-        onTypeChange={setSelectedType}
-        rateGroups={rateGroups}
-        noticeBanner={noticeBanner}
-      />
-    : <UrgentPage onBack={() => setPage("home")} initialType={selectedType} />;
+  function dismissPopup() {
+    sessionStorage.setItem("paper_popup_dismissed", popupText);
+    setPopupOpen(false);
+  }
+
+  return (
+    <>
+      {/* 지류 공지 팝업 */}
+      {popupOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center px-5" style={{ background: "rgba(0,0,0,0.45)" }}>
+          <div className="bg-white rounded-3xl shadow-2xl w-full max-w-sm overflow-hidden">
+            <div className="flex items-center gap-2 px-5 pt-5 pb-3 border-b border-slate-100">
+              <span className="text-[20px]">📢</span>
+              <h2 className="text-[16px] font-black text-slate-800">공지사항</h2>
+            </div>
+            <div className="px-5 py-4 max-h-[55vh] overflow-y-auto">
+              <p className="text-[14px] text-slate-700 leading-relaxed whitespace-pre-wrap">{popupText}</p>
+            </div>
+            <div className="px-5 pb-5">
+              <button
+                onClick={dismissPopup}
+                className="w-full py-3.5 rounded-2xl text-white text-[15px] font-bold transition-all active:scale-[0.98]"
+                style={{ background: "linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%)" }}
+              >
+                확인했습니다
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+      {page === "home"
+        ? <HomePage
+            onGoUrgent={() => setPage("urgent")}
+            initialType={selectedType}
+            onTypeChange={setSelectedType}
+            rateGroups={rateGroups}
+            noticeBanner={noticeBanner}
+          />
+        : <UrgentPage onBack={() => setPage("home")} initialType={selectedType} />}
+    </>
+  );
 }
