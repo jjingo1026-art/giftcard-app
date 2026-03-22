@@ -795,7 +795,7 @@ function MobileVoucherItems({
   onGoogleNumberAdd: () => void;
   onGoogleNumberRemove: (idx: number) => void;
   cultureImages: CultureImage[];
-  onAddCultureImage: (file: File) => void;
+  onAddCultureImage: (file: File, mode: "message" | "barcode") => void;
   onRemoveCultureImage: (id: string) => void;
   cultureManualNumbers: string[];
   onCultureManualChange: (idx: number, val: string) => void;
@@ -1318,7 +1318,7 @@ export default function MobileSelect() {
     });
   }
 
-  async function handleAddCultureImage(file: File) {
+  async function handleAddCultureImage(file: File, mode: "message" | "barcode" = "message") {
     const id = Math.random().toString(36).slice(2);
     const preview = URL.createObjectURL(file);
     setCultureImages((prev) => [...prev, { id, preview, uploading: true, numbers: [], error: false }]);
@@ -1335,7 +1335,7 @@ export default function MobileSelect() {
       const res = await fetch(`${base}/api/mobile/extract-voucher`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ imageBase64: base64, mimeType: file.type }),
+        body: JSON.stringify({ imageBase64: base64, mimeType: file.type, mode }),
       });
       const { numbers } = await res.json();
       setCultureImages((prev) => prev.map((img) => img.id === id ? { ...img, uploading: false, numbers: numbers ?? [] } : img));
