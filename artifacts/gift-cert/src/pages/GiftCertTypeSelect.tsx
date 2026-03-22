@@ -1,7 +1,70 @@
 import { useLocation } from "wouter";
+import { useEffect, useState, useRef } from "react";
+
+const TWENTY_MINUTES = 20 * 60 * 1000;
+
+function calcVirtual(startTime: number) {
+  return Math.floor((Date.now() - startTime) / TWENTY_MINUTES);
+}
+
+function useRequestCounter() {
+  const [data, setData] = useState<{ count: number; startTime: number } | null>(null);
+  const [virtualAdd, setVirtualAdd] = useState(0);
+
+  useEffect(() => {
+    fetch("/api/reservations/total-count")
+      .then((r) => r.json())
+      .then((d) => {
+        const count = Number(d.count ?? 0);
+        const startTime = Number(d.startTime ?? Date.now());
+        setData({ count, startTime });
+        setVirtualAdd(calcVirtual(startTime));
+      })
+      .catch(() => setData({ count: 0, startTime: Date.now() }));
+  }, []);
+
+  useEffect(() => {
+    if (!data) return;
+    const interval = setInterval(() => {
+      setVirtualAdd(calcVirtual(data.startTime));
+    }, 30 * 1000);
+    return () => clearInterval(interval);
+  }, [data]);
+
+  if (data === null) return null;
+  return data.count + virtualAdd;
+}
+
+function AnimatedCount({ value }: { value: number }) {
+  const [displayed, setDisplayed] = useState(value);
+  const prevRef = useRef(value);
+
+  useEffect(() => {
+    if (value === prevRef.current) return;
+    const start = prevRef.current;
+    const end = value;
+    const diff = end - start;
+    const duration = 800;
+    const startTime = Date.now();
+    const timer = setInterval(() => {
+      const elapsed = Date.now() - startTime;
+      const progress = Math.min(elapsed / duration, 1);
+      const eased = 1 - Math.pow(1 - progress, 3);
+      setDisplayed(Math.round(start + diff * eased));
+      if (progress >= 1) {
+        clearInterval(timer);
+        prevRef.current = end;
+      }
+    }, 16);
+    return () => clearInterval(timer);
+  }, [value]);
+
+  return <>{displayed.toLocaleString("ko-KR")}</>;
+}
 
 export default function GiftCertTypeSelect() {
   const [, navigate] = useLocation();
+  const count = useRequestCounter();
 
   return (
     <div className="min-h-screen flex flex-col" style={{ background: "linear-gradient(160deg, #f0f4ff 0%, #faf5ff 50%, #fff1f5 100%)" }}>
@@ -93,6 +156,17 @@ export default function GiftCertTypeSelect() {
             <p className="text-[12px] text-slate-400 font-semibold">안전거래</p>
           </div>
         </div>
+
+        {/* 누적 신청건수 */}
+        {count !== null && (
+          <div className="mt-6 flex flex-col items-center gap-1">
+            <p className="text-[11px] text-slate-400 font-medium">누적 신청건수</p>
+            <p className="text-[22px] font-black" style={{ color: "#6366f1" }}>
+              <AnimatedCount value={count} />
+              <span className="text-[15px] font-bold ml-0.5">건</span>
+            </p>
+          </div>
+        )}
       </div>
 
       {/* 하단 사업자정보 링크 */}
