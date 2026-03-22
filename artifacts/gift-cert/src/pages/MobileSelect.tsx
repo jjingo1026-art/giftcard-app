@@ -512,6 +512,7 @@ function CultureManualInput({
 interface CultureImage {
   id: string;
   preview: string;
+  sourceText?: string;
   uploading: boolean;
   numbers: string[];
   error: boolean;
@@ -520,16 +521,25 @@ interface CultureImage {
 function CultureAutoExtract({
   images,
   onAdd,
+  onAddText,
   onRemove,
   showBarcode = true,
 }: {
   images: CultureImage[];
-  onAdd: (file: File, mode: "message" | "barcode") => void;
+  onAdd: (file: File, mode: "barcode") => void;
+  onAddText: (text: string) => void;
   onRemove: (id: string) => void;
   showBarcode?: boolean;
 }) {
-  const msgRef = useRef<HTMLInputElement>(null);
   const barRef = useRef<HTMLInputElement>(null);
+  const [pasteText, setPasteText] = useState("");
+
+  function handleExtract() {
+    const trimmed = pasteText.trim();
+    if (!trimmed) return;
+    onAddText(trimmed);
+    setPasteText("");
+  }
 
   return (
     <div className="rounded-2xl border-2 border-indigo-200 bg-indigo-50 p-4 space-y-3">
@@ -539,35 +549,51 @@ function CultureAutoExtract({
         <span className="text-[11px] bg-indigo-100 text-indigo-600 font-bold px-2 py-0.5 rounded-full">컬쳐랜드</span>
       </div>
 
-      <div className={`grid ${showBarcode ? "grid-cols-2" : "grid-cols-1"} gap-2`}>
+      {/* 메시지 텍스트 붙여넣기 */}
+      <div className="space-y-2">
+        <p className="text-[11px] font-bold text-indigo-600 flex items-center gap-1">💬 메시지 붙여넣기</p>
+        <textarea
+          value={pasteText}
+          onChange={(e) => setPasteText(e.target.value)}
+          placeholder="카카오톡·문자 메시지를 여기에 붙여넣기(Ctrl+V / 길게 눌러 붙여넣기) 하세요"
+          rows={4}
+          className="w-full px-3 py-2.5 rounded-xl border-2 border-indigo-200 bg-white text-[13px] text-slate-700 placeholder:text-slate-300 outline-none focus:border-indigo-400 focus:ring-2 focus:ring-indigo-100 resize-none transition-all"
+        />
         <button
           type="button"
-          onClick={() => msgRef.current?.click()}
-          className="flex flex-col items-center gap-1.5 py-3 px-2 rounded-xl border-2 border-dashed border-indigo-300 bg-white text-indigo-600 hover:bg-indigo-50 active:scale-95 transition-all"
+          onClick={handleExtract}
+          disabled={!pasteText.trim()}
+          className="w-full py-2.5 rounded-xl bg-indigo-500 hover:bg-indigo-600 disabled:opacity-40 disabled:cursor-not-allowed text-white text-[13px] font-bold transition-all active:scale-[0.98] flex items-center justify-center gap-2"
         >
-          <span className="text-[22px]">💬</span>
-          <span className="text-[12px] font-bold">메시지 업로드</span>
+          <span>🔍</span> 번호 추출하기
         </button>
-        {showBarcode && (
+      </div>
+
+      {/* 바코드 이미지 업로드 */}
+      {showBarcode && (
+        <div className="space-y-2 border-t border-indigo-100 pt-3">
+          <p className="text-[11px] font-bold text-indigo-600 flex items-center gap-1">📊 바코드 업로드</p>
           <button
             type="button"
             onClick={() => barRef.current?.click()}
-            className="flex flex-col items-center gap-1.5 py-3 px-2 rounded-xl border-2 border-dashed border-indigo-300 bg-white text-indigo-600 hover:bg-indigo-50 active:scale-95 transition-all"
+            className="w-full flex items-center justify-center gap-2 py-2.5 rounded-xl border-2 border-dashed border-indigo-300 bg-white text-indigo-600 hover:bg-indigo-50 active:scale-95 transition-all text-[13px] font-bold"
           >
-            <span className="text-[22px]">📊</span>
-            <span className="text-[12px] font-bold">바코드 업로드</span>
+            <span className="text-[18px]">📊</span> 바코드 이미지 선택
           </button>
-        )}
-      </div>
+        </div>
+      )}
 
-      <input ref={msgRef} type="file" accept="image/*" className="hidden" onChange={(e) => { const f = e.target.files?.[0]; if (f) onAdd(f, "message"); e.target.value = ""; }} />
       <input ref={barRef} type="file" accept="image/*" className="hidden" onChange={(e) => { const f = e.target.files?.[0]; if (f) onAdd(f, "barcode"); e.target.value = ""; }} />
 
       {images.length > 0 && (
-        <div className="space-y-2">
+        <div className="space-y-2 border-t border-indigo-100 pt-3">
           {images.map((img) => (
             <div key={img.id} className="flex gap-3 p-3 bg-white rounded-xl border border-indigo-100">
-              <img src={img.preview} alt="" className="w-14 h-14 object-cover rounded-lg flex-shrink-0 border border-indigo-100" />
+              {img.sourceText ? (
+                <div className="w-14 h-14 flex-shrink-0 rounded-lg border border-indigo-100 bg-indigo-50 flex items-center justify-center text-[22px]">💬</div>
+              ) : (
+                <img src={img.preview} alt="" className="w-14 h-14 object-cover rounded-lg flex-shrink-0 border border-indigo-100" />
+              )}
               <div className="flex-1 min-w-0">
                 {img.uploading ? (
                   <div className="flex items-center gap-2 h-full">
@@ -768,6 +794,7 @@ function MobileVoucherItems({
   onGoogleNumberRemove,
   cultureImages,
   onAddCultureImage,
+  onAddCultureText,
   onRemoveCultureImage,
   cultureManualNumbers,
   onCultureManualChange,
@@ -809,7 +836,8 @@ function MobileVoucherItems({
   onGoogleNumberAdd: () => void;
   onGoogleNumberRemove: (idx: number) => void;
   cultureImages: CultureImage[];
-  onAddCultureImage: (file: File, mode: "message" | "barcode") => void;
+  onAddCultureImage: (file: File, mode: "barcode") => void;
+  onAddCultureText: (text: string) => void;
   onRemoveCultureImage: (id: string) => void;
   cultureManualNumbers: string[];
   onCultureManualChange: (idx: number, val: string) => void;
@@ -1113,6 +1141,7 @@ function MobileVoucherItems({
         <CultureAutoExtract
           images={cultureImages}
           onAdd={onAddCultureImage}
+          onAddText={onAddCultureText}
           onRemove={onRemoveCultureImage}
           showBarcode={items.some((it) => it.type === "컬쳐랜드 상품권" && it.checkedSubs.includes("자동추출하기"))}
         />
@@ -1339,7 +1368,29 @@ export default function MobileSelect() {
     });
   }
 
-  async function handleAddCultureImage(file: File, mode: "message" | "barcode" = "message") {
+  async function handleAddCultureText(text: string) {
+    const id = Math.random().toString(36).slice(2);
+    setCultureImages((prev) => [...prev, { id, preview: "", sourceText: text, uploading: true, numbers: [], error: false }]);
+
+    const hasGwonType = items.some((it) => it.type === "컬쳐랜드 교환권" && it.checkedSubs.includes("자동추출하기"));
+    const hasGwonType2 = items.some((it) => it.type === "컬쳐랜드 상품권" && it.checkedSubs.includes("자동추출하기"));
+    const voucherType = hasGwonType && hasGwonType2 ? "both" : hasGwonType ? "교환권" : "상품권";
+
+    try {
+      const base = import.meta.env.BASE_URL.replace(/\/$/, "");
+      const res = await fetch(`${base}/api/mobile/extract-voucher`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ text, voucherType }),
+      });
+      const { numbers } = await res.json();
+      setCultureImages((prev) => prev.map((img) => img.id === id ? { ...img, uploading: false, numbers: numbers ?? [] } : img));
+    } catch {
+      setCultureImages((prev) => prev.map((img) => img.id === id ? { ...img, uploading: false, error: true } : img));
+    }
+  }
+
+  async function handleAddCultureImage(file: File, mode: "barcode" = "barcode") {
     const id = Math.random().toString(36).slice(2);
     const preview = URL.createObjectURL(file);
     setCultureImages((prev) => [...prev, { id, preview, uploading: true, numbers: [], error: false }]);
@@ -1778,6 +1829,7 @@ export default function MobileSelect() {
             onGoogleNumberRemove={handleGoogleNumberRemove}
             cultureImages={cultureImages}
             onAddCultureImage={handleAddCultureImage}
+            onAddCultureText={handleAddCultureText}
             onRemoveCultureImage={handleRemoveCultureImage}
             cultureManualNumbers={cultureManualNumbers}
             onCultureManualChange={handleCultureManualChange}

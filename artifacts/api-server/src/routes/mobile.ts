@@ -10,13 +10,15 @@ const openai = new OpenAI({
 
 /**
  * POST /mobile/extract-voucher
- * 이미지에서 컬쳐랜드 상품권/교환권 번호를 추출합니다.
- * Body: { imageBase64: string, mimeType: string, mode?: "message"|"barcode", voucherType?: "상품권"|"교환권"|"both" }
+ * 컬쳐랜드 상품권/교환권 번호를 추출합니다.
+ * Body (이미지): { imageBase64: string, mimeType: string, mode?: "message"|"barcode", voucherType?: "상품권"|"교환권"|"both" }
+ * Body (텍스트): { text: string, voucherType?: "상품권"|"교환권"|"both" }
  */
 router.post("/mobile/extract-voucher", async (req: Request, res: Response) => {
-  const { imageBase64, mimeType, mode = "message", voucherType = "both" } = req.body ?? {};
-  if (!imageBase64 || !mimeType) {
-    res.status(400).json({ error: "imageBase64와 mimeType은 필수입니다." });
+  const { imageBase64, mimeType, text, mode = "message", voucherType = "both" } = req.body ?? {};
+
+  if (!imageBase64 && !text) {
+    res.status(400).json({ error: "imageBase64 또는 text 중 하나는 필수입니다." });
     return;
   }
 
@@ -32,8 +34,7 @@ router.post("/mobile/extract-voucher", async (req: Request, res: Response) => {
 번호가 없거나 확인 불가능한 경우: {"numbers": []}
 다른 설명은 필요 없습니다.`;
   } else if (voucherType === "교환권") {
-    prompt = `이 이미지는 컬쳐랜드 교환권 발송 메시지 캡처 화면입니다.
-메시지 안에 포함된 컬쳐랜드 교환권 번호를 모두 추출해주세요.
+    prompt = `다음 텍스트(컬쳐랜드 교환권 발송 메시지)에서 컬쳐랜드 교환권 번호를 모두 추출해주세요.
 교환권 번호는 보통 숫자로만 이루어진 12~13자리 숫자입니다.
 예시: 1234567890123 또는 123456789012
 
@@ -42,8 +43,7 @@ router.post("/mobile/extract-voucher", async (req: Request, res: Response) => {
 번호가 없거나 확인 불가능한 경우: {"numbers": []}
 다른 설명은 필요 없습니다.`;
   } else if (voucherType === "상품권") {
-    prompt = `이 이미지는 컬쳐랜드 상품권 발송 메시지 캡처 화면입니다.
-메시지 안에 포함된 컬쳐랜드 상품권 번호(PIN 번호)를 모두 추출해주세요.
+    prompt = `다음 텍스트(컬쳐랜드 상품권 발송 메시지)에서 컬쳐랜드 상품권 번호(PIN 번호)를 모두 추출해주세요.
 상품권 번호는 숫자로만 이루어진 16~18자리 숫자이거나, 하이픈(-)으로 구분된 숫자 그룹입니다.
 예시: 1234567890123456 또는 1234-5678-9012-3456
 
@@ -52,8 +52,7 @@ router.post("/mobile/extract-voucher", async (req: Request, res: Response) => {
 번호가 없거나 확인 불가능한 경우: {"numbers": []}
 다른 설명은 필요 없습니다.`;
   } else {
-    prompt = `이 이미지는 컬쳐랜드 상품권 또는 교환권 발송 메시지 캡처 화면입니다.
-메시지 안에 포함된 컬쳐랜드 상품권 번호(PIN 번호) 또는 교환권 번호를 모두 추출해주세요.
+    prompt = `다음 텍스트(컬쳐랜드 상품권 또는 교환권 발송 메시지)에서 상품권/교환권 번호를 모두 추출해주세요.
 - 상품권 번호: 숫자로만 이루어진 16~18자리 (예: 1234567890123456 또는 1234-5678-9012-3456)
 - 교환권 번호: 숫자로만 이루어진 12~13자리 (예: 1234567890123)
 
@@ -64,28 +63,43 @@ router.post("/mobile/extract-voucher", async (req: Request, res: Response) => {
   }
 
   try {
-    const response = await openai.chat.completions.create({
-      model: "gpt-4o",
-      max_completion_tokens: 512,
-      messages: [
-        {
-          role: "user",
-          content: [
-            {
-              type: "image_url",
-              image_url: {
-                url: `data:${mimeType};base64,${imageBase64}`,
-                detail: "high",
+    let response;
+
+    if (text) {
+      response = await openai.chat.completions.create({
+        model: "gpt-4o",
+        max_completion_tokens: 512,
+        messages: [
+          {
+            role: "user",
+            content: `${prompt}\n\n---\n${text}`,
+          },
+        ],
+      });
+    } else {
+      response = await openai.chat.completions.create({
+        model: "gpt-4o",
+        max_completion_tokens: 512,
+        messages: [
+          {
+            role: "user",
+            content: [
+              {
+                type: "image_url",
+                image_url: {
+                  url: `data:${mimeType};base64,${imageBase64}`,
+                  detail: "high",
+                },
               },
-            },
-            {
-              type: "text",
-              text: prompt,
-            },
-          ],
-        },
-      ],
-    });
+              {
+                type: "text",
+                text: prompt,
+              },
+            ],
+          },
+        ],
+      });
+    }
 
     const content = response.choices[0]?.message?.content ?? "";
     let numbers: string[] = [];
