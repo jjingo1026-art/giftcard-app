@@ -402,13 +402,22 @@ function CultureManualInput({
       <div className="space-y-2">
         {numbers.map((num, idx) => (
           <div key={idx} className="flex items-center gap-2">
-            <input
-              type="text"
-              value={num}
-              onChange={(e) => onChange(idx, e.target.value.replace(/[^0-9\-]/g, "").slice(0, 24))}
-              placeholder={`상품권번호 ${idx + 1}`}
-              className="flex-1 px-4 py-3 rounded-xl border-2 border-indigo-200 bg-white text-[14px] font-mono tracking-wider outline-none focus:border-indigo-400 focus:ring-2 focus:ring-indigo-100 transition-all placeholder:text-slate-300"
-            />
+            <div className="flex-1 relative">
+              <input
+                type="text"
+                inputMode="numeric"
+                value={num}
+                onChange={(e) => onChange(idx, e.target.value.replace(/[^0-9]/g, "").slice(0, 16))}
+                placeholder={`상품권번호 ${idx + 1} (16자리)`}
+                maxLength={16}
+                className={`w-full px-4 py-3 rounded-xl border-2 bg-white text-[14px] font-mono tracking-wider outline-none transition-all placeholder:text-slate-300
+                  ${num.length > 0 && num.length !== 16 ? "border-amber-400 focus:border-amber-500 focus:ring-2 focus:ring-amber-100" : "border-indigo-200 focus:border-indigo-400 focus:ring-2 focus:ring-indigo-100"}`}
+              />
+              <span className={`absolute right-3 top-1/2 -translate-y-1/2 text-[11px] font-bold tabular-nums
+                ${num.length === 16 ? "text-indigo-500" : num.length > 0 ? "text-amber-500" : "text-slate-300"}`}>
+                {num.length}/16
+              </span>
+            </div>
             {idx === 0 ? (
               <button
                 type="button"
