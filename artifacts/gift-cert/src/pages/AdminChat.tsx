@@ -157,7 +157,7 @@ export default function AdminChat() {
     socketRef.current.emit("sendMessage", {
       reservationId: Number(reservationId),
       sender: "admin",
-      language: userLang,
+      language: "ko",
       message: msg,
     });
     setMsg("");
@@ -168,7 +168,7 @@ export default function AdminChat() {
     socketRef.current.emit("sendMessage", {
       reservationId: Number(reservationId),
       sender: "admin",
-      language: userLang,
+      language: "ko",
       message: text,
     });
   }
@@ -299,7 +299,7 @@ export default function AdminChat() {
             const isImg = m.message.startsWith("[IMG:");
             const imgUrl = isImg ? m.message.slice(5, -1) : "";
             const displayText = isImg ? "" : getTranslated(m, userLang);
-            const isTranslated = !isImg && userLang !== "ko" && displayText !== m.message;
+            const isTranslated = !isImg && !!m.translatedText && (m.language ?? "ko") !== userLang && displayText !== m.message;
 
             // 시스템 메시지: "번호:" / "입금계좌:" 포함 라인 파싱
             const CopyBtn = ({ value, label = "복사" }: { value: string; label?: string }) => (

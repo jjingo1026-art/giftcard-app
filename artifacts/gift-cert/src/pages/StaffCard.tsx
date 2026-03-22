@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from "react";
 import { io, Socket } from "socket.io-client";
 import { staffFetch } from "@/lib/authFetch";
 import { useImageUpload } from "@/hooks/useImageUpload";
+import { getTranslated } from "@/lib/languages";
 
 interface SavedItem {
   type: string;
@@ -37,6 +38,8 @@ interface Message {
   message: string;
   time: string;
   read: boolean;
+  language?: string;
+  translatedText?: Record<string, string> | null;
 }
 
 const STATUS_LABEL: Record<string, { text: string; cls: string }> = {
@@ -507,6 +510,8 @@ export default function StaffCard() {
                 const isMine = m.sender === "staff";
                 const isImg = m.message.startsWith("[IMG:");
                 const imgUrl = isImg ? m.message.slice(5, -1) : "";
+                const displayText = isImg ? "" : getTranslated(m, "ko");
+                const isTranslated = !isImg && !!m.translatedText && (m.language ?? "ko") !== "ko" && displayText !== m.message;
                 return (
                   <div key={m.id} className={`flex flex-col ${isMine ? "items-end" : "items-start"}`}>
                     <div className={`max-w-[75%] rounded-2xl text-[14px] shadow-sm overflow-hidden ${
@@ -539,7 +544,10 @@ export default function StaffCard() {
                           </button>
                         </div>
                       ) : (
-                        <p className="whitespace-pre-wrap">{m.message}</p>
+                        <p className="whitespace-pre-wrap">{displayText}</p>
+                      )}
+                      {isTranslated && (
+                        <p className={`text-[10px] mt-0.5 ${isMine ? "text-indigo-200" : "text-slate-400"} italic`}>🌐 번역됨</p>
                       )}
                       {!isImg && (
                         <p className={`text-[10px] mt-0.5 ${isMine ? "text-indigo-200" : "text-slate-400"}`}>

@@ -88,7 +88,7 @@ export default function StaffDetail() {
       reservationId: Number(reservationId),
       sender: "staff",
       senderName: staffName,
-      language: userLang,
+      language: "ko",
       message: msg,
     });
     setMsg("");
@@ -195,7 +195,7 @@ export default function StaffDetail() {
             const isImg = m.message.startsWith("[IMG:");
             const imgUrl = isImg ? m.message.slice(5, -1) : "";
             const displayText = isImg ? "" : getTranslated(m, userLang);
-            const isTranslated = !isImg && userLang !== "ko" && displayText !== m.message;
+            const isTranslated = !isImg && !!m.translatedText && (m.language ?? "ko") !== userLang && displayText !== m.message;
             return (
               <div key={m.id} className={`flex flex-col ${isMine ? "items-end" : "items-start"}`}>
                 <div className={`max-w-[75%] rounded-2xl text-[14px] shadow-sm overflow-hidden ${

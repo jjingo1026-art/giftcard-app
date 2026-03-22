@@ -21,9 +21,13 @@ export function getLangFlag(code: string) {
   return LANGUAGES.find((l) => l.code === code)?.flag ?? "🌐";
 }
 
-export function getTranslated(msg: { message: string; translatedText?: Record<string, string> | null }, lang: string): string {
-  if (lang === "ko") return msg.message;
-  return msg.translatedText?.[lang] ?? msg.message;
+export function getTranslated(
+  msg: { message: string; language?: string; translatedText?: Record<string, string> | null },
+  viewLang: string
+): string {
+  const sourceLang = msg.language ?? "ko";
+  if (viewLang === sourceLang) return msg.message;
+  return msg.translatedText?.[viewLang] ?? msg.message;
 }
 
 const STORAGE_KEY = "gc_chat_lang";

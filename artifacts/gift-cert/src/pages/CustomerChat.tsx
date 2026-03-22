@@ -179,7 +179,7 @@ export default function CustomerChat() {
             const isImg = m.message.startsWith("[IMG:");
             const imgUrl = isImg ? m.message.slice(5, -1) : "";
             const displayText = isImg ? "" : getTranslated(m, userLang);
-            const isTranslated = !isImg && userLang !== "ko" && displayText !== m.message;
+            const isTranslated = !isImg && !!m.translatedText && (m.language ?? "ko") !== userLang && displayText !== m.message;
             return (
               <div key={m.id} className={`flex flex-col ${isMine ? "items-end" : "items-start"}`}>
                 <div className={`max-w-[75%] rounded-2xl text-[14px] overflow-hidden ${
