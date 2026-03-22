@@ -15,7 +15,7 @@ const MOBILE_TYPES = [
   { label: "북앤라이프 도서문화상품권", icon: "📖", color: "#8b5cf6", rate: 90 },
   { label: "북앤라이프 교환권", icon: "📖", color: "#8b5cf6", rate: 90 },
   { label: "문화상품권(18핀)", icon: "🎫", color: "#ec4899", rate: 90 },
-  { label: "구글기프트카드", sub: "카카오톡 구매", icon: "🎮", color: "#4ade80", rate: 90 },
+  { label: "구글 카카오톡 교환권", icon: "🎮", color: "#4ade80", rate: 90 },
 ];
 
 const BANKS = [
@@ -208,7 +208,7 @@ function GoogleManualInput({
       <div className="flex items-center gap-2">
         <span className="text-[16px]">🏷️</span>
         <p className="text-[13px] font-bold text-green-700">상품권번호 입력</p>
-        <span className="text-[11px] bg-green-100 text-green-600 font-bold px-2 py-0.5 rounded-full">구글기프트카드</span>
+        <span className="text-[11px] bg-green-100 text-green-600 font-bold px-2 py-0.5 rounded-full">구글 카카오톡 교환권</span>
       </div>
       <div className="space-y-2">
         {numbers.map((num, idx) => (
@@ -1177,8 +1177,8 @@ function MobileVoucherItems({
         />
       )}
 
-      {/* 구글기프트카드 상품권번호 입력 */}
-      {items.some((it) => it.type === "구글기프트카드") && (
+      {/* 구글 카카오톡 교환권 상품권번호 입력 */}
+      {items.some((it) => it.type === "구글 카카오톡 교환권") && (
         <GoogleManualInput
           numbers={googleNumbers}
           onChange={onGoogleNumberChange}
@@ -1625,7 +1625,7 @@ export default function MobileSelect() {
                 ...(it.type === "문화상품권(18핀)"
                   ? munhwaNumbers.filter(Boolean).map((n) => `번호: ${n}`)
                   : []),
-                ...(it.type === "구글기프트카드"
+                ...(it.type === "구글 카카오톡 교환권"
                   ? googleNumbers.filter(Boolean).map((n) => `번호: ${n}`)
                   : []),
               ].join(" / "),

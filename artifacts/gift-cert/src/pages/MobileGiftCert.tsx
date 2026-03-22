@@ -10,7 +10,7 @@ const MOBILE_RATES = [
   { label: "컬쳐랜드", selectType: "컬쳐랜드 상품권", subs: ["상품권", "교환권", "캐시 선물하기"], icon: "📚", color: "#6366f1", rate: 90 },
   { label: "북앤라이프", selectType: "북앤라이프 도서문화상품권", subs: ["상품권", "교환권"], icon: "📖", color: "#8b5cf6", rate: 90 },
   { label: "문화상품권(18핀)", icon: "🎫", color: "#ec4899", rate: 90 },
-  { label: "구글 카카오톡 교환권", selectType: "구글기프트카드", sub: "카카오톡 구매 숫자 12자리", icon: "🎮", color: "#4ade80", rate: 90 },
+  { label: "구글 카카오톡 교환권", selectType: "구글 카카오톡 교환권", sub: "카카오톡 구매 숫자 12자리", icon: "🎮", color: "#4ade80", rate: 90 },
 ];
 
 const base = import.meta.env.BASE_URL.replace(/\/$/, "");

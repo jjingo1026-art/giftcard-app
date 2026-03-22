@@ -53,7 +53,7 @@ const TYPE_COLORS: Record<string, string> = {
   "컬쳐랜드": "bg-indigo-100 text-indigo-700",
   "북앤라이프": "bg-violet-100 text-violet-700",
   "문화상품권": "bg-pink-100 text-pink-700",
-  "구글기프트카드": "bg-green-100 text-green-700",
+  "구글 카카오톡 교환권": "bg-green-100 text-green-700",
 };
 
 function getTypeColor(type: string) {
@@ -79,7 +79,7 @@ type StatusFilter = "all" | "pending" | "completed" | "cancelled";
 const MOBILE_DEFAULT_RATES: Record<string, number> = {
   "신세계모바일": 95, "롯데모바일": 95, "현대모바일": 95, "네이버페이 포인트": 95,
   "컬쳐랜드 상품권": 90, "컬쳐랜드 교환권": 90, "컬쳐랜드 캐시 선물하기": 90,
-  "북앤라이프 도서문화상품권": 90, "북앤라이프 교환권": 90, "문화상품권(18핀)": 90, "구글기프트카드": 90,
+  "북앤라이프 도서문화상품권": 90, "북앤라이프 교환권": 90, "문화상품권(18핀)": 90, "구글 카카오톡 교환권": 90,
 };
 
 export default function AdminMobileDashboard() {
