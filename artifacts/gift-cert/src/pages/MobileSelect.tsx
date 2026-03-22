@@ -902,7 +902,6 @@ function MobileVoucherItems({
                 <input
                   type="text"
                   inputMode="numeric"
-                  pattern="[0-9]*"
                   value={item.amount}
                   onChange={(e) => {
                     const raw = e.target.value.replace(/[^0-9]/g, "");
