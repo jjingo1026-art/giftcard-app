@@ -347,7 +347,7 @@ function ShinsegaeManualInput({
               value={num}
               onChange={(e) => onChange(idx, e.target.value.slice(0, 50))}
               placeholder={`상품권번호 ${idx + 1}`}
-              className="flex-1 px-4 py-3 rounded-xl border border-slate-200 bg-white text-[14px] font-mono tracking-wider outline-none focus:border-rose-200 focus:ring-2 focus:ring-rose-50 transition-all placeholder:text-slate-300"
+              className="flex-1 px-4 py-3 rounded-xl border-2 border-rose-300 bg-rose-50 text-[14px] font-mono tracking-wider outline-none focus:border-rose-500 focus:ring-2 focus:ring-rose-100 transition-all placeholder:text-rose-300 text-rose-800"
             />
             {idx === 0 ? (
               <button
