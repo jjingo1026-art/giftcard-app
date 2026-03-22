@@ -50,14 +50,10 @@ export default function MobileGiftCert() {
                 <span className="text-[13px] font-bold text-slate-700 leading-snug text-center mt-2">{g.label}</span>
                 <span className="text-[26px] font-black tabular-nums leading-none mt-1.5" style={{ color: g.color }}>{g.rate}%</span>
                 {"subs" in g && (g as any).subs ? (
-                  <div className="flex flex-col items-center gap-1 mt-1.5">
-                    {(g as any).subs.map((s: string, i: number) => (
-                      <span key={i} className="text-[11px] font-medium leading-snug px-2 py-0.5 rounded-full"
-                        style={{ color: g.color, backgroundColor: g.color + "18" }}>
-                        {s}
-                      </span>
-                    ))}
-                  </div>
+                  <span className="text-[11px] font-medium leading-snug mt-1.5 px-2 py-0.5 rounded-full"
+                    style={{ color: g.color, backgroundColor: g.color + "18" }}>
+                    {(g as any).subs.join(" · ")}
+                  </span>
                 ) : "sub" in g && (g as any).sub ? (
                   <span className="text-[11px] font-medium leading-snug mt-1.5 px-2 py-0.5 rounded-full"
                     style={{ color: g.color, backgroundColor: g.color + "18" }}>
