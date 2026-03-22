@@ -67,12 +67,12 @@ export default function MobileGiftCert() {
 
         <button
           onClick={() => { window.location.href = "/mobile/check"; }}
-          className="w-full py-4 rounded-2xl text-white text-[15px] font-bold transition-all active:scale-[0.98] flex items-center justify-center gap-2 shadow-sm"
+          className="w-full py-3.5 rounded-2xl text-white transition-all active:scale-[0.98] flex flex-col items-center justify-center gap-0.5 shadow-sm"
           style={{ background: "linear-gradient(135deg, #ec4899 0%, #f43f5e 100%)" }}
         >
-          📋 판매신청 확인
+          <span className="text-[15px] font-bold flex items-center gap-2">📋 판매신청 확인</span>
+          <span className="text-[11px] font-medium opacity-85">신청하신 전화번호로 판매신청한 내역을 확인할 수 있습니다</span>
         </button>
-        <p className="text-center text-[12px] text-slate-400 font-medium -mt-1">신청하신 전화번호로 판매신청한 내역을 확인할 수 있습니다</p>
 
         <a
           href="/mobile/business"
