@@ -303,7 +303,7 @@ export default function AdminMobileDashboard() {
       >
         {newChatAlert && (
           <div
-            onClick={() => { window.location.href = `/admin/chat?id=${newChatAlert.reservationId}`; }}
+            onClick={() => { window.location.href = `/admin/chat?id=${newChatAlert.reservationId}&from=mobile`; }}
             className="bg-indigo-600 text-white rounded-2xl shadow-2xl px-4 py-3.5 flex items-center gap-3 cursor-pointer active:scale-[0.98] transition-transform"
           >
             <span className="text-2xl flex-shrink-0">💬</span>
@@ -723,7 +723,7 @@ export default function AdminMobileDashboard() {
 
                       {/* 채팅 버튼 */}
                       <button
-                        onClick={() => { window.location.href = `/admin/chat?id=${entry.id}`; }}
+                        onClick={() => { window.location.href = `/admin/chat?id=${entry.id}&from=mobile`; }}
                         className="w-full py-3 rounded-xl flex items-center justify-center gap-2 font-bold text-[13px] transition-all active:scale-[0.98] relative
                           bg-indigo-50 text-indigo-700 hover:bg-indigo-100 border border-indigo-200"
                       >

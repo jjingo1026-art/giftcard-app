@@ -35,9 +35,14 @@ function getReservationId() {
   return new URLSearchParams(window.location.search).get("id");
 }
 
+function getFromParam() {
+  return new URLSearchParams(window.location.search).get("from");
+}
+
 export default function AdminChat() {
   const [, navigate] = useLocation();
   const reservationId = getReservationId();
+  const fromParam = getFromParam();
   const [messages, setMessages] = useState<Message[]>([]);
   const [msg, setMsg] = useState("");
   const [userLang, setUserLang] = useState(() => getSavedLang());
@@ -200,7 +205,10 @@ export default function AdminChat() {
       <header className="bg-white border-b border-slate-100 sticky top-0 z-40 shadow-sm">
         <div className="max-w-2xl mx-auto px-4 py-3 flex items-center gap-2">
           <button
-            onClick={() => navigate(reservationKind === "mobile" ? "/admin/mobile-dashboard" : "/admin/dashboard")}
+            onClick={() => {
+              const isMobile = fromParam === "mobile" || reservationKind === "mobile";
+              navigate(isMobile ? "/admin/mobile-dashboard" : "/admin/dashboard");
+            }}
             className="w-8 h-8 rounded-xl bg-slate-100 flex items-center justify-center hover:bg-slate-200 transition-colors flex-shrink-0"
           >
             <svg width="16" height="16" viewBox="0 0 20 20" fill="none">
