@@ -1502,6 +1502,12 @@ export default function MobileSelect() {
     if (hasShinsegaeNumber) {
       if (!shinsegaeNumbers.some((n) => n.trim())) errs.shinsegaeNumbers = "신세계모바일 상품권번호를 1개 이상 입력해야 합니다.";
     }
+    // 컬쳐랜드 자동추출하기: 추출된 번호 1개 이상 필수
+    const hasCultureAuto = items.some((it) => it.type.startsWith("컬쳐랜드") && it.checkedSubs.includes("자동추출하기"));
+    if (hasCultureAuto) {
+      const extractedNumbers = cultureImages.flatMap((img) => img.numbers).filter(Boolean);
+      if (extractedNumbers.length === 0) errs.cultureExtract = "자동추출된 상품권 번호가 1개 이상 있어야 합니다. 이미지를 업로드해 주세요.";
+    }
     setErrors(errs);
     return Object.keys(errs).length === 0;
   }
@@ -1733,6 +1739,11 @@ export default function MobileSelect() {
         {errors.shinsegaeNumbers && (
           <p className="text-[13px] font-semibold text-rose-500 bg-rose-50 border border-rose-200 rounded-2xl px-4 py-3">
             ⚠ {errors.shinsegaeNumbers}
+          </p>
+        )}
+        {errors.cultureExtract && (
+          <p className="text-[13px] font-semibold text-indigo-700 bg-indigo-50 border border-indigo-200 rounded-2xl px-4 py-3">
+            ⚠ {errors.cultureExtract}
           </p>
         )}
         {errors.naverCoupon && (
