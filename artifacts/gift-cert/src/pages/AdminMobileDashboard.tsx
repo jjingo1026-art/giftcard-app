@@ -621,7 +621,7 @@ export default function AdminMobileDashboard() {
         ) : filtered.length === 0 ? (
           <div className="text-center py-16 text-slate-400">
             <p className="text-4xl mb-3">📭</p>
-            <p className="text-[14px] font-semibold">내역이 없습니다</p>
+            <p className="text-[14px] font-semibold">미처리 내역이 없습니다</p>
           </div>
         ) : (
           <div className="space-y-2.5">
