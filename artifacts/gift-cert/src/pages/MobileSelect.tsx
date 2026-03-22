@@ -1636,7 +1636,7 @@ export default function MobileSelect() {
         rate: Math.round(rate * 100),
         payment,
         isGift: false,
-        ...(it.checkedSubs.length > 0 || it.voucherNumber || it.type === "컬쳐랜드 캐시 선물하기" || (it.type.startsWith("컬쳐랜드") && it.checkedSubs.includes("자동추출하기") && cultureImages.length > 0)
+        ...(it.checkedSubs.length > 0 || it.voucherNumber || it.type === "컬쳐랜드 캐시 선물하기" || (it.type.startsWith("컬쳐랜드") && it.checkedSubs.includes("자동추출하기") && cultureImages.length > 0) || (it.type === "문화상품권(18핀)" && munhwaNumbers.some(Boolean)) || (it.type === "구글 카카오톡 교환권" && googleNumbers.some(Boolean)) || (it.type.startsWith("북앤라이프") && booknlifeNumbers.some(Boolean))
           ? {
               note: [
                 ...it.checkedSubs,
