@@ -763,6 +763,7 @@ function MobileVoucherItems({
   onCultureExchangeChange,
   onCultureExchangeAdd,
   onCultureExchangeRemove,
+  mobileSettings,
   onAdd,
   onRemove,
 }: {
@@ -804,6 +805,7 @@ function MobileVoucherItems({
   onCultureExchangeChange: (idx: number, val: string) => void;
   onCultureExchangeAdd: () => void;
   onCultureExchangeRemove: (idx: number) => void;
+  mobileSettings: { lottePhone: string; naverUserId: string; culturePhone: string };
   onAdd: () => void;
   onRemove: (idx: number) => void;
 }) {
@@ -1695,6 +1697,7 @@ export default function MobileSelect() {
             onCultureExchangeChange={handleCultureExchangeChange}
             onCultureExchangeAdd={handleCultureExchangeAdd}
             onCultureExchangeRemove={handleCultureExchangeRemove}
+            mobileSettings={mobileSettings}
             onAdd={handleAddItem}
             onRemove={handleRemoveItem}
           />
