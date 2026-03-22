@@ -385,18 +385,26 @@ function CultureManualInput({
   onChange,
   onAdd,
   onRemove,
+  maxLen = 16,
+  minLen = 16,
+  label = "컬쳐랜드",
 }: {
   numbers: string[];
   onChange: (idx: number, val: string) => void;
   onAdd: () => void;
   onRemove: (idx: number) => void;
+  maxLen?: number;
+  minLen?: number;
+  label?: string;
 }) {
+  const placeholder = minLen === maxLen ? `${maxLen}자리` : `${minLen}~${maxLen}자리`;
+  const isValid = (n: string) => n.length >= minLen && n.length <= maxLen;
   return (
     <div className="rounded-2xl border-2 border-indigo-200 bg-indigo-50 p-4 space-y-3">
       <div className="flex items-center gap-2">
         <span className="text-[16px]">✏️</span>
         <p className="text-[13px] font-bold text-indigo-700">상품권번호 수동입력</p>
-        <span className="text-[11px] bg-indigo-100 text-indigo-600 font-bold px-2 py-0.5 rounded-full">컬쳐랜드</span>
+        <span className="text-[11px] bg-indigo-100 text-indigo-600 font-bold px-2 py-0.5 rounded-full">{label}</span>
       </div>
 
       <div className="space-y-2">
@@ -407,15 +415,15 @@ function CultureManualInput({
                 type="text"
                 inputMode="numeric"
                 value={num}
-                onChange={(e) => onChange(idx, e.target.value.replace(/[^0-9]/g, "").slice(0, 16))}
-                placeholder={`상품권번호 ${idx + 1} (16자리)`}
-                maxLength={16}
+                onChange={(e) => onChange(idx, e.target.value.replace(/[^0-9]/g, "").slice(0, maxLen))}
+                placeholder={`상품권번호 ${idx + 1} (${placeholder})`}
+                maxLength={maxLen}
                 className={`w-full px-4 py-3 rounded-xl border-2 bg-white text-[14px] font-mono tracking-wider outline-none transition-all placeholder:text-slate-300
-                  ${num.length > 0 && num.length !== 16 ? "border-amber-400 focus:border-amber-500 focus:ring-2 focus:ring-amber-100" : "border-indigo-200 focus:border-indigo-400 focus:ring-2 focus:ring-indigo-100"}`}
+                  ${num.length > 0 && !isValid(num) ? "border-amber-400 focus:border-amber-500 focus:ring-2 focus:ring-amber-100" : "border-indigo-200 focus:border-indigo-400 focus:ring-2 focus:ring-indigo-100"}`}
               />
               <span className={`absolute right-3 top-1/2 -translate-y-1/2 text-[11px] font-bold tabular-nums
-                ${num.length === 16 ? "text-indigo-500" : num.length > 0 ? "text-amber-500" : "text-slate-300"}`}>
-                {num.length}/16
+                ${isValid(num) && num.length > 0 ? "text-indigo-500" : num.length > 0 ? "text-amber-500" : "text-slate-300"}`}>
+                {num.length}/{maxLen}
               </span>
             </div>
             {idx === 0 ? (
@@ -714,6 +722,10 @@ function MobileVoucherItems({
   onCultureManualChange,
   onCultureManualAdd,
   onCultureManualRemove,
+  cultureExchangeNumbers,
+  onCultureExchangeChange,
+  onCultureExchangeAdd,
+  onCultureExchangeRemove,
   onAdd,
   onRemove,
 }: {
@@ -751,6 +763,10 @@ function MobileVoucherItems({
   onCultureManualChange: (idx: number, val: string) => void;
   onCultureManualAdd: () => void;
   onCultureManualRemove: (idx: number) => void;
+  cultureExchangeNumbers: string[];
+  onCultureExchangeChange: (idx: number, val: string) => void;
+  onCultureExchangeAdd: () => void;
+  onCultureExchangeRemove: (idx: number) => void;
   onAdd: () => void;
   onRemove: (idx: number) => void;
 }) {
@@ -985,13 +1001,29 @@ function MobileVoucherItems({
         <NaverGiftInfo />
       )}
 
-      {/* 컬쳐랜드 수동입력 */}
-      {items.some((it) => it.type.startsWith("컬쳐랜드") && it.checkedSubs.includes("수동입력하기")) && (
+      {/* 컬쳐랜드 상품권 수동입력 (16자리) */}
+      {items.some((it) => it.type === "컬쳐랜드 상품권" && it.checkedSubs.includes("수동입력하기")) && (
         <CultureManualInput
           numbers={cultureManualNumbers}
           onChange={onCultureManualChange}
           onAdd={onCultureManualAdd}
           onRemove={onCultureManualRemove}
+          maxLen={16}
+          minLen={16}
+          label="컬쳐랜드 상품권"
+        />
+      )}
+
+      {/* 컬쳐랜드 교환권 수동입력 (12~13자리) */}
+      {items.some((it) => it.type === "컬쳐랜드 교환권" && it.checkedSubs.includes("수동입력하기")) && (
+        <CultureManualInput
+          numbers={cultureExchangeNumbers}
+          onChange={onCultureExchangeChange}
+          onAdd={onCultureExchangeAdd}
+          onRemove={onCultureExchangeRemove}
+          maxLen={13}
+          minLen={12}
+          label="컬쳐랜드 교환권"
         />
       )}
 
@@ -1121,6 +1153,7 @@ export default function MobileSelect() {
   const [googleNumbers, setGoogleNumbers] = useState<string[]>([""]);
   const [cultureImages, setCultureImages] = useState<CultureImage[]>([]);
   const [cultureManualNumbers, setCultureManualNumbers] = useState<string[]>([""]);
+  const [cultureExchangeNumbers, setCultureExchangeNumbers] = useState<string[]>([""]);
   const [name, setName] = useState("");
   const [phone, setPhone] = useState("");
   const [bankName, setBankName] = useState("");
@@ -1315,6 +1348,18 @@ export default function MobileSelect() {
     setCultureManualNumbers((prev) => prev.filter((_, i) => i !== idx));
   }
 
+  function handleCultureExchangeChange(idx: number, val: string) {
+    setCultureExchangeNumbers((prev) => prev.map((n, i) => i === idx ? val : n));
+  }
+
+  function handleCultureExchangeAdd() {
+    setCultureExchangeNumbers((prev) => [...prev, ""]);
+  }
+
+  function handleCultureExchangeRemove(idx: number) {
+    setCultureExchangeNumbers((prev) => prev.filter((_, i) => i !== idx));
+  }
+
   function handleRemoveItem(idx: number) {
     setItems((prev) => prev.filter((_, i) => i !== idx));
     setItemErrors((prev) => prev.filter((_, i) => i !== idx));
@@ -1375,8 +1420,11 @@ export default function MobileSelect() {
                 ...(it.type.startsWith("컬쳐랜드") && it.checkedSubs.includes("자동추출하기")
                   ? cultureImages.flatMap((img) => img.numbers).filter(Boolean).map((n) => `번호: ${n}`)
                   : []),
-                ...(it.type.startsWith("컬쳐랜드") && it.checkedSubs.includes("수동입력하기")
+                ...(it.type === "컬쳐랜드 상품권" && it.checkedSubs.includes("수동입력하기")
                   ? cultureManualNumbers.filter(Boolean).map((n) => `번호: ${n}`)
+                  : []),
+                ...(it.type === "컬쳐랜드 교환권" && it.checkedSubs.includes("수동입력하기")
+                  ? cultureExchangeNumbers.filter(Boolean).map((n) => `번호: ${n}`)
                   : []),
                 ...(it.type === "신세계모바일" && it.checkedSubs.includes("상품권번호입력")
                   ? shinsegaeNumbers.filter(Boolean).map((n) => `번호: ${n}`)
@@ -1538,6 +1586,10 @@ export default function MobileSelect() {
             onCultureManualChange={handleCultureManualChange}
             onCultureManualAdd={handleCultureManualAdd}
             onCultureManualRemove={handleCultureManualRemove}
+            cultureExchangeNumbers={cultureExchangeNumbers}
+            onCultureExchangeChange={handleCultureExchangeChange}
+            onCultureExchangeAdd={handleCultureExchangeAdd}
+            onCultureExchangeRemove={handleCultureExchangeRemove}
             onAdd={handleAddItem}
             onRemove={handleRemoveItem}
           />
