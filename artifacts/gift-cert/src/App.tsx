@@ -357,7 +357,7 @@ function HomePage({ onGoUrgent, initialType = DEFAULT_TYPE, onTypeChange, rateGr
   const [name, setName] = useState("");
   const [phone, setPhone] = useState("");
   const [date, setDate] = useState("");
-  const [time, setTime] = useState("14:20");
+  const [time, setTime] = useState("12:00");
   const [takenSlots, setTakenSlots] = useState<string[]>([]);
   const [locationMain, setLocationMain] = useState("");
   const [locationDetail, setLocationDetail] = useState("");
@@ -637,7 +637,7 @@ function HomePage({ onGoUrgent, initialType = DEFAULT_TYPE, onTypeChange, rateGr
                           .filter((r) => r.status === "pending" || r.status === "assigned")
                           .map((r) => r.time ?? "");
                         setTakenSlots(taken.filter(Boolean));
-                        if (taken.includes(time)) setTime("14:20");
+                        if (taken.includes(time)) setTime("12:00");
                       } catch {
                         setTakenSlots([]);
                       }
