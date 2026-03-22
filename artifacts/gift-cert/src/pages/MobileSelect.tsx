@@ -1837,57 +1837,6 @@ export default function MobileSelect() {
           />
         </div>
 
-        {errors.hyundaiImages && (
-          <p className="text-[13px] font-semibold text-rose-500 bg-rose-50 border border-rose-200 rounded-2xl px-4 py-3">
-            ⚠ {errors.hyundaiImages}
-          </p>
-        )}
-        {errors.shinsegaeImages && (
-          <p className="text-[13px] font-semibold text-rose-500 bg-rose-50 border border-rose-200 rounded-2xl px-4 py-3">
-            ⚠ {errors.shinsegaeImages}
-          </p>
-        )}
-        {errors.shinsegaeNumbers && (
-          <p className="text-[13px] font-semibold text-rose-500 bg-rose-50 border border-rose-200 rounded-2xl px-4 py-3">
-            ⚠ {errors.shinsegaeNumbers}
-          </p>
-        )}
-        {errors.cultureExtract && (
-          <p className="text-[13px] font-semibold text-indigo-700 bg-indigo-50 border border-indigo-200 rounded-2xl px-4 py-3">
-            ⚠ {errors.cultureExtract}
-          </p>
-        )}
-        {errors.cultureManual && (
-          <p className="text-[13px] font-semibold text-indigo-700 bg-indigo-50 border border-indigo-200 rounded-2xl px-4 py-3">
-            ⚠ {errors.cultureManual}
-          </p>
-        )}
-        {errors.cultureExchange && (
-          <p className="text-[13px] font-semibold text-indigo-700 bg-indigo-50 border border-indigo-200 rounded-2xl px-4 py-3">
-            ⚠ {errors.cultureExchange}
-          </p>
-        )}
-        {errors.munhwa && (
-          <p className="text-[13px] font-semibold text-pink-700 bg-pink-50 border border-pink-200 rounded-2xl px-4 py-3">
-            ⚠ {errors.munhwa}
-          </p>
-        )}
-        {errors.google && (
-          <p className="text-[13px] font-semibold text-green-700 bg-green-50 border border-green-200 rounded-2xl px-4 py-3">
-            ⚠ {errors.google}
-          </p>
-        )}
-        {errors.booknlife && (
-          <p className="text-[13px] font-semibold text-violet-700 bg-violet-50 border border-violet-200 rounded-2xl px-4 py-3">
-            ⚠ {errors.booknlife}
-          </p>
-        )}
-        {errors.naverCoupon && (
-          <p className="text-[13px] font-semibold text-green-700 bg-green-50 border border-green-200 rounded-2xl px-4 py-3">
-            ⚠ {errors.naverCoupon}
-          </p>
-        )}
-
         {/* 신청자 정보 */}
         <div className="bg-white rounded-3xl border border-slate-100 shadow-sm px-5 py-5 space-y-4">
           <p className="text-[13px] font-bold text-slate-700">👤 {getLabel("mobile_applicant_info", lang)}</p>
@@ -2026,6 +1975,44 @@ export default function MobileSelect() {
             {errors.agreeMatch && <p className="text-[11px] text-rose-500">⚠ {errors.agreeMatch}</p>}
           </div>
         </div>
+
+        {/* 상품권·이미지 등록 오류 */}
+        {(errors.hyundaiImages || errors.shinsegaeImages || errors.shinsegaeNumbers ||
+          errors.cultureExtract || errors.cultureManual || errors.cultureExchange ||
+          errors.munhwa || errors.google || errors.booknlife || errors.naverCoupon) && (
+          <div className="space-y-2">
+            {errors.hyundaiImages && (
+              <p className="text-[13px] font-semibold text-rose-500 bg-rose-50 border border-rose-200 rounded-2xl px-4 py-3">⚠ {errors.hyundaiImages}</p>
+            )}
+            {errors.shinsegaeImages && (
+              <p className="text-[13px] font-semibold text-rose-500 bg-rose-50 border border-rose-200 rounded-2xl px-4 py-3">⚠ {errors.shinsegaeImages}</p>
+            )}
+            {errors.shinsegaeNumbers && (
+              <p className="text-[13px] font-semibold text-rose-500 bg-rose-50 border border-rose-200 rounded-2xl px-4 py-3">⚠ {errors.shinsegaeNumbers}</p>
+            )}
+            {errors.cultureExtract && (
+              <p className="text-[13px] font-semibold text-indigo-700 bg-indigo-50 border border-indigo-200 rounded-2xl px-4 py-3">⚠ {errors.cultureExtract}</p>
+            )}
+            {errors.cultureManual && (
+              <p className="text-[13px] font-semibold text-indigo-700 bg-indigo-50 border border-indigo-200 rounded-2xl px-4 py-3">⚠ {errors.cultureManual}</p>
+            )}
+            {errors.cultureExchange && (
+              <p className="text-[13px] font-semibold text-indigo-700 bg-indigo-50 border border-indigo-200 rounded-2xl px-4 py-3">⚠ {errors.cultureExchange}</p>
+            )}
+            {errors.munhwa && (
+              <p className="text-[13px] font-semibold text-pink-700 bg-pink-50 border border-pink-200 rounded-2xl px-4 py-3">⚠ {errors.munhwa}</p>
+            )}
+            {errors.google && (
+              <p className="text-[13px] font-semibold text-green-700 bg-green-50 border border-green-200 rounded-2xl px-4 py-3">⚠ {errors.google}</p>
+            )}
+            {errors.booknlife && (
+              <p className="text-[13px] font-semibold text-violet-700 bg-violet-50 border border-violet-200 rounded-2xl px-4 py-3">⚠ {errors.booknlife}</p>
+            )}
+            {errors.naverCoupon && (
+              <p className="text-[13px] font-semibold text-green-700 bg-green-50 border border-green-200 rounded-2xl px-4 py-3">⚠ {errors.naverCoupon}</p>
+            )}
+          </div>
+        )}
 
         {errorMsg && (
           <div className="px-4 py-3 bg-rose-50 border border-rose-200 rounded-2xl">
