@@ -1688,8 +1688,8 @@ export default function MobileSelect() {
           accountHolder: accountHolder.trim(),
           customerPin,
           imagePaths: [
-            ...hyundaiImages.filter((i) => i.objectPath).map((i) => i.objectPath!),
-            ...shinsegaeImages.filter((i) => i.objectPath).map((i) => i.objectPath!),
+            ...hyundaiImages.filter((i) => i.objectPath).map((i) => `/api/storage${i.objectPath!}`),
+            ...shinsegaeImages.filter((i) => i.objectPath).map((i) => `/api/storage${i.objectPath!}`),
           ],
         }),
       });
