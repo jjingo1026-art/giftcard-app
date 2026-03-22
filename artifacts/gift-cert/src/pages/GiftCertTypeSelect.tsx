@@ -51,7 +51,9 @@ export default function GiftCertTypeSelect() {
             <div className="text-center">
               <p className="text-[15px] font-black text-white leading-tight">모바일</p>
               <p className="text-[15px] font-black text-white leading-tight">상품권</p>
-              <p className="text-[10px] text-pink-200 mt-1.5 leading-snug">카카오·네이버·<br/>모바일 쿠폰</p>
+              <p className="text-[10px] text-pink-200 mt-1.5 leading-snug">
+                신세계·롯데·현대<br/>네이버페이·컬쳐랜드<br/>북앤라이프·문화·구글
+              </p>
             </div>
           </button>
 
