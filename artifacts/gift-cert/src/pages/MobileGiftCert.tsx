@@ -4,7 +4,7 @@ const MOBILE_RATES = [
   { label: "현대모바일", sub: "H포인트 상품권 제외", icon: "🏬", color: "#0ea5e9", rate: 95 },
   { label: "네이버페이 포인트", icon: "💚", color: "#03C75A", rate: 95 },
   { label: "컬쳐랜드", subs: ["상품권", "교환권"], icon: "📚", color: "#6366f1", rate: 90 },
-  { label: "북앤라이프", icon: "📖", color: "#8b5cf6", rate: 90 },
+  { label: "북앤라이프", subs: ["상품권", "교환권"], icon: "📖", color: "#8b5cf6", rate: 90 },
   { label: "문화상품권(18핀)", icon: "🎫", color: "#ec4899", rate: 90 },
   { label: "구글기프트카드", sub: "카카오톡 구매", icon: "🎮", color: "#4ade80", rate: 90 },
 ];
