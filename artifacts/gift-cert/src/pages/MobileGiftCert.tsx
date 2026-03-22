@@ -3,7 +3,7 @@ const MOBILE_RATES = [
   { label: "롯데모바일", subs: ["23으로 시작하는 교환권", "앱선물하기"], icon: "🧡", color: "#f97316", rate: 95 },
   { label: "현대모바일", sub: "H포인트 상품권 제외", icon: "🏬", color: "#0ea5e9", rate: 95 },
   { label: "네이버페이 포인트", subs: ["쿠폰", "선물하기"], icon: "💚", color: "#03C75A", rate: 95 },
-  { label: "컬쳐랜드", subs: ["상품권", "교환권"], icon: "📚", color: "#6366f1", rate: 90 },
+  { label: "컬쳐랜드", subs: ["상품권", "교환권", "캐시 선물하기"], icon: "📚", color: "#6366f1", rate: 90 },
   { label: "북앤라이프", subs: ["상품권", "교환권"], icon: "📖", color: "#8b5cf6", rate: 90 },
   { label: "문화상품권(18핀)", icon: "🎫", color: "#ec4899", rate: 90 },
   { label: "구글 카카오톡 교환권", sub: "카카오톡 구매 숫자 12자리", icon: "🎮", color: "#4ade80", rate: 90 },

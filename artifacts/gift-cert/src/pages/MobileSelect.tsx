@@ -7,6 +7,7 @@ const MOBILE_TYPES = [
   { label: "네이버페이 포인트", icon: "💚", color: "#03C75A", rate: 95 },
   { label: "컬쳐랜드 상품권", icon: "📚", color: "#6366f1", rate: 90 },
   { label: "컬쳐랜드 교환권", icon: "📚", color: "#6366f1", rate: 90 },
+  { label: "컬쳐랜드 캐시 선물하기", icon: "🎁", color: "#6366f1", rate: 90 },
   { label: "북앤라이프 도서문화상품권", icon: "📖", color: "#8b5cf6", rate: 90 },
   { label: "북앤라이프 교환권", icon: "📖", color: "#8b5cf6", rate: 90 },
   { label: "문화상품권(18핀)", icon: "🎫", color: "#ec4899", rate: 90 },
@@ -1004,6 +1005,29 @@ function MobileVoucherItems({
       {/* 네이버페이 선물하기 안내 */}
       {items.some((it) => it.type === "네이버페이 포인트" && it.checkedSubs.includes("선물하기")) && (
         <NaverGiftInfo />
+      )}
+
+      {/* 컬쳐랜드 캐시 선물하기 안내 */}
+      {items.some((it) => it.type === "컬쳐랜드 캐시 선물하기") && (
+        <div className="rounded-2xl border-2 border-indigo-200 bg-indigo-50 p-4 space-y-2.5">
+          <div className="flex items-center gap-2">
+            <span className="text-[16px]">🎁</span>
+            <p className="text-[13px] font-bold text-indigo-700">컬쳐랜드 캐시 선물하기 안내</p>
+          </div>
+          <div className="flex items-center gap-3 px-3 py-3 bg-white rounded-xl border border-indigo-100">
+            <div className="w-9 h-9 rounded-xl bg-indigo-100 flex items-center justify-center flex-shrink-0 text-[18px]">📲</div>
+            <div>
+              <p className="text-[13px] font-black text-indigo-700 tracking-wide">010-7190-9534</p>
+              <p className="text-[12px] text-indigo-500 mt-0.5">위 번호로 캐시 선물하기를 보내주세요</p>
+            </div>
+          </div>
+          <div className="flex items-start gap-2 px-3 py-2.5 bg-pink-50 rounded-xl border border-pink-100">
+            <span className="text-[14px] flex-shrink-0 mt-0.5">💬</span>
+            <p className="text-[12px] text-pink-700 leading-relaxed font-medium">
+              하단 판매신청을 하시면 <span className="font-black">관리자와 채팅</span>이 가능합니다.
+            </p>
+          </div>
+        </div>
       )}
 
       {/* 컬쳐랜드 상품권 수동입력 (16자리) */}
