@@ -421,6 +421,12 @@ export default function AdminChat() {
               </button>
             )}
             <button
+              onClick={() => sendQuick("확인중입니다 잠시만 기다려 주세요")}
+              className="flex-1 min-w-0 px-3 py-2 rounded-xl bg-sky-50 border border-sky-200 text-sky-700 text-[12px] font-bold hover:bg-sky-100 active:scale-[0.97] transition-all whitespace-nowrap"
+            >
+              ⏳ 잠시대기
+            </button>
+            <button
               onClick={() => sendQuick("일부 상품권에 문제가 있습니다")}
               className="flex-1 min-w-0 px-3 py-2 rounded-xl bg-amber-50 border border-amber-200 text-amber-700 text-[12px] font-bold hover:bg-amber-100 active:scale-[0.97] transition-all whitespace-nowrap"
             >
