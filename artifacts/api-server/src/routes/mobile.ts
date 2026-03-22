@@ -62,11 +62,39 @@ router.post("/mobile/extract-voucher", async (req: Request, res: Response) => {
 다른 설명은 필요 없습니다.`;
   }
 
-  try {
-    let response;
+  // ── 정규식 기반 1차 추출 (텍스트 입력 시 우선 적용) ─────────────────────
+  function regexExtract(src: string, type: string): string[] {
+    const found = new Set<string>();
 
+    if (type === "상품권" || type === "both") {
+      // XXXX-XXXX-XXXX-XXXX (16자리 하이픈 포함) — 컬쳐랜드 상품권 표준 형식
+      const withDash = src.matchAll(/\b(\d{4}-\d{4}-\d{4}-\d{4})\b/g);
+      for (const m of withDash) found.add(m[1]);
+
+      // 하이픈 없는 16자리 (연속 숫자)
+      const bare16 = src.matchAll(/\b(\d{16})\b/g);
+      for (const m of bare16) found.add(m[1]);
+    }
+
+    if (type === "교환권" || type === "both") {
+      // 12~13자리 숫자 (하이픈 없음) — 교환권
+      const gwon = src.matchAll(/\b(\d{12,13})\b/g);
+      for (const m of gwon) found.add(m[1]);
+    }
+
+    return [...found];
+  }
+
+  try {
+    // 텍스트 입력 → 정규식으로 먼저 시도
     if (text) {
-      response = await openai.chat.completions.create({
+      const regexNumbers = regexExtract(text as string, voucherType);
+      if (regexNumbers.length > 0) {
+        res.json({ numbers: regexNumbers });
+        return;
+      }
+      // 정규식으로 못 찾으면 AI fallback
+      const response = await openai.chat.completions.create({
         model: "gpt-4o",
         max_completion_tokens: 512,
         messages: [
@@ -76,30 +104,42 @@ router.post("/mobile/extract-voucher", async (req: Request, res: Response) => {
           },
         ],
       });
-    } else {
-      response = await openai.chat.completions.create({
-        model: "gpt-4o",
-        max_completion_tokens: 512,
-        messages: [
-          {
-            role: "user",
-            content: [
-              {
-                type: "image_url",
-                image_url: {
-                  url: `data:${mimeType};base64,${imageBase64}`,
-                  detail: "high",
-                },
-              },
-              {
-                type: "text",
-                text: prompt,
-              },
-            ],
-          },
-        ],
-      });
+      const content = response.choices[0]?.message?.content ?? "";
+      let numbers: string[] = [];
+      try {
+        const jsonMatch = content.match(/\{[\s\S]*\}/);
+        if (jsonMatch) {
+          const parsed = JSON.parse(jsonMatch[0]);
+          numbers = Array.isArray(parsed.numbers) ? parsed.numbers : [];
+        }
+      } catch { numbers = []; }
+      res.json({ numbers });
+      return;
     }
+
+    // 이미지 입력 → AI Vision
+    const response = await openai.chat.completions.create({
+      model: "gpt-4o",
+      max_completion_tokens: 512,
+      messages: [
+        {
+          role: "user",
+          content: [
+            {
+              type: "image_url",
+              image_url: {
+                url: `data:${mimeType};base64,${imageBase64}`,
+                detail: "high",
+              },
+            },
+            {
+              type: "text",
+              text: prompt,
+            },
+          ],
+        },
+      ],
+    });
 
     const content = response.choices[0]?.message?.content ?? "";
     let numbers: string[] = [];
