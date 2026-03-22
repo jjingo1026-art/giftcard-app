@@ -140,14 +140,34 @@ export default function StaffDetail() {
               <p className="text-white font-bold text-[15px] truncate">💬 채팅 · 예약 #{reservationId}</p>
               <p className="text-indigo-200 text-[11px]">담당자: {staffName}</p>
             </div>
-            <button
-              onClick={() => setShowLangPicker((v) => !v)}
-              className="flex-shrink-0 flex items-center gap-1 px-2.5 py-1.5 rounded-xl bg-white/20 hover:bg-white/30 transition-colors text-white text-[12px] font-semibold"
-              title="언어 선택"
-            >
-              <span>{LANGUAGES.find((l) => l.code === userLang)?.flag}</span>
-              <span className="hidden sm:inline">{LANGUAGES.find((l) => l.code === userLang)?.label}</span>
-            </button>
+            <div className="relative flex-shrink-0">
+              <button
+                onClick={() => setShowLangPicker((v) => !v)}
+                className="flex items-center gap-1 px-2.5 py-1.5 rounded-xl bg-white/20 hover:bg-white/30 transition-colors text-white text-[12px] font-semibold"
+                title="언어 선택"
+              >
+                <span>{LANGUAGES.find((l) => l.code === userLang)?.flag}</span>
+                <span className="hidden sm:inline">{LANGUAGES.find((l) => l.code === userLang)?.label}</span>
+              </button>
+              {showLangPicker && (
+                <div className="absolute right-0 top-full mt-1 z-50 bg-white border border-slate-200 rounded-2xl shadow-lg px-3 py-2">
+                  <div className="flex flex-col gap-1.5 max-h-52 overflow-y-auto scrollbar-none w-fit">
+                    {LANGUAGES.map((l) => (
+                      <button
+                        key={l.code}
+                        onClick={() => changeLang(l.code)}
+                        className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-semibold border transition-all
+                          ${userLang === l.code
+                            ? "bg-indigo-500 text-white border-indigo-500"
+                            : "bg-white text-slate-600 border-slate-200 hover:border-indigo-300"}`}
+                      >
+                        <span>{l.flag}</span> {l.label}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
             <button
               onClick={goBack}
               className="w-8 h-8 flex items-center justify-center rounded-xl bg-white/20 hover:bg-white/30 transition-colors flex-shrink-0"
@@ -157,25 +177,6 @@ export default function StaffDetail() {
               </svg>
             </button>
           </div>
-          {/* 언어 선택 패널 */}
-          {showLangPicker && (
-            <div className="px-4 pb-3 border-t border-indigo-400/30">
-              <div className="flex flex-col gap-1.5 pt-2 max-h-52 overflow-y-auto scrollbar-none w-fit">
-                {LANGUAGES.map((l) => (
-                  <button
-                    key={l.code}
-                    onClick={() => changeLang(l.code)}
-                    className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-semibold border transition-all
-                      ${userLang === l.code
-                        ? "bg-white text-indigo-600 border-white"
-                        : "bg-white/10 text-indigo-100 border-white/20 hover:bg-white/20"}`}
-                  >
-                    <span>{l.flag}</span> {l.label}
-                  </button>
-                ))}
-              </div>
-            </div>
-          )}
         </div>
 
         {/* 메시지 영역 */}

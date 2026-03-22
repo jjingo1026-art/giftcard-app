@@ -246,14 +246,34 @@ export default function AdminChat() {
           </div>
 
           {/* 언어 선택 버튼 */}
-          <button
-            onClick={() => setShowLangPicker((v) => !v)}
-            className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl bg-slate-100 text-[12px] font-semibold text-slate-600 hover:bg-slate-200 transition-colors flex-shrink-0"
-          >
-            <span className="text-[14px]">{currentLang?.flag}</span>
-            <span className="hidden sm:inline">{currentLang?.label}</span>
-            <svg width="9" height="9" viewBox="0 0 12 12" fill="none"><path d="M2 4l4 4 4-4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/></svg>
-          </button>
+          <div className="relative flex-shrink-0">
+            <button
+              onClick={() => setShowLangPicker((v) => !v)}
+              className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl bg-slate-100 text-[12px] font-semibold text-slate-600 hover:bg-slate-200 transition-colors"
+            >
+              <span className="text-[14px]">{currentLang?.flag}</span>
+              <span className="hidden sm:inline">{currentLang?.label}</span>
+              <svg width="9" height="9" viewBox="0 0 12 12" fill="none"><path d="M2 4l4 4 4-4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/></svg>
+            </button>
+            {showLangPicker && (
+              <div className="absolute right-0 top-full mt-1 z-50 bg-white border border-slate-200 rounded-2xl shadow-lg px-3 py-2">
+                <div className="flex flex-col gap-1.5 max-h-52 overflow-y-auto scrollbar-none w-fit">
+                  {LANGUAGES.map((l) => (
+                    <button
+                      key={l.code}
+                      onClick={() => changeLang(l.code)}
+                      className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[11px] font-semibold border transition-all
+                        ${userLang === l.code
+                          ? "bg-indigo-500 text-white border-indigo-500"
+                          : "bg-white text-slate-500 border-slate-200 hover:border-indigo-300"}`}
+                    >
+                      <span>{l.flag}</span> {l.label}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
 
           <button
             onClick={() => { location.href = `/admin/detail.html?id=${reservationId}`; }}
@@ -262,26 +282,6 @@ export default function AdminChat() {
             예약 상세 →
           </button>
         </div>
-
-        {/* 언어 선택 패널 */}
-        {showLangPicker && (
-          <div className="border-t border-slate-100 bg-white px-4 py-2">
-            <div className="flex flex-col gap-1.5 max-h-52 overflow-y-auto scrollbar-none w-fit">
-              {LANGUAGES.map((l) => (
-                <button
-                  key={l.code}
-                  onClick={() => changeLang(l.code)}
-                  className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[11px] font-semibold border transition-all
-                    ${userLang === l.code
-                      ? "bg-indigo-500 text-white border-indigo-500"
-                      : "bg-white text-slate-500 border-slate-200 hover:border-indigo-300"}`}
-                >
-                  <span>{l.flag}</span> {l.label}
-                </button>
-              ))}
-            </div>
-          </div>
-        )}
       </header>
 
       <div className="max-w-2xl mx-auto w-full px-4 py-4 flex flex-col flex-1" style={{ minHeight: 0 }}>
