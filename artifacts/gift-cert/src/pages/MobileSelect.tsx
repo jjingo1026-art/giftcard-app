@@ -1483,6 +1483,12 @@ export default function MobileSelect() {
       const uploadedCount = hyundaiImages.filter((img) => img.objectPath !== null).length;
       if (uploadedCount === 0) errs.hyundaiImages = "현대모바일 상품권은 이미지를 1개 이상 등록해야 합니다.";
     }
+    // 신세계모바일 바코드업로드: 이미지 1개 이상 필수
+    const hasShinsegaeBarcode = items.some((it) => it.type === "신세계모바일" && it.checkedSubs.includes("바코드업로드"));
+    if (hasShinsegaeBarcode) {
+      const uploadedCount = shinsegaeImages.filter((img) => img.objectPath !== null).length;
+      if (uploadedCount === 0) errs.shinsegaeImages = "신세계모바일 바코드업로드 선택 시 이미지를 1개 이상 등록해야 합니다.";
+    }
     setErrors(errs);
     return Object.keys(errs).length === 0;
   }
@@ -1697,6 +1703,11 @@ export default function MobileSelect() {
         {errors.hyundaiImages && (
           <p className="text-[13px] font-semibold text-rose-500 bg-rose-50 border border-rose-200 rounded-2xl px-4 py-3">
             ⚠ {errors.hyundaiImages}
+          </p>
+        )}
+        {errors.shinsegaeImages && (
+          <p className="text-[13px] font-semibold text-rose-500 bg-rose-50 border border-rose-200 rounded-2xl px-4 py-3">
+            ⚠ {errors.shinsegaeImages}
           </p>
         )}
 
