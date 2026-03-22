@@ -1,4 +1,6 @@
 import { useState, useRef, useEffect } from "react";
+import { getLabel } from "../lib/uiTranslations";
+import LangPicker, { useLang } from "../components/LangPicker";
 
 const base = import.meta.env.BASE_URL.replace(/\/$/, "");
 
@@ -1175,6 +1177,7 @@ export default function MobileSelect() {
   const agreed = params.get("agreed") === "1";
   const initialType = params.get("type") ?? MOBILE_TYPES[0].label;
 
+  const [lang, setLang] = useLang();
   const [items, setItems] = useState<MobileItem[]>([{ type: initialType, amount: "", checkedSubs: [], voucherNumber: "" }]);
   const [itemErrors, setItemErrors] = useState<string[]>([""]);
   const [hyundaiImages, setHyundaiImages] = useState<HyundaiImage[]>([]);
@@ -1586,10 +1589,11 @@ export default function MobileSelect() {
               <path d="M19 12H5M12 19l-7-7 7-7"/>
             </svg>
           </button>
-          <div>
-            <h1 className="text-[16px] font-bold text-slate-800">모바일상품권 판매 신청</h1>
+          <div className="flex-1 min-w-0">
+            <h1 className="text-[16px] font-bold text-slate-800">{getLabel("mobile_form_title", lang)}</h1>
             <p className="text-[11px] text-slate-400 mt-0.5">Mobile Gift Certificate</p>
           </div>
+          <LangPicker lang={lang} onChange={setLang} accentColor="#ec4899" />
         </div>
       </header>
 
@@ -1643,10 +1647,10 @@ export default function MobileSelect() {
 
         {/* 신청자 정보 */}
         <div className="bg-white rounded-3xl border border-slate-100 shadow-sm px-5 py-5 space-y-4">
-          <p className="text-[13px] font-bold text-slate-700">👤 신청자 정보</p>
+          <p className="text-[13px] font-bold text-slate-700">👤 {getLabel("mobile_applicant_info", lang)}</p>
 
           <div className="space-y-1.5">
-            <label className="text-[12px] font-semibold text-slate-500">이름 <span className="text-rose-400">*</span></label>
+            <label className="text-[12px] font-semibold text-slate-500">{getLabel("mobile_name", lang)} <span className="text-rose-400">*</span></label>
             <input
               type="text"
               value={name}
@@ -1658,7 +1662,7 @@ export default function MobileSelect() {
           </div>
 
           <div className="space-y-1.5">
-            <label className="text-[12px] font-semibold text-slate-500">연락처 <span className="text-rose-400">*</span></label>
+            <label className="text-[12px] font-semibold text-slate-500">{getLabel("mobile_phone", lang)} <span className="text-rose-400">*</span></label>
             <input
               type="tel"
               value={phone}
@@ -1672,10 +1676,10 @@ export default function MobileSelect() {
 
         {/* 입금 계좌 */}
         <div className="bg-white rounded-3xl border border-slate-100 shadow-sm px-5 py-5 space-y-4">
-          <p className="text-[13px] font-bold text-slate-700">🏦 입금받을 계좌</p>
+          <p className="text-[13px] font-bold text-slate-700">🏦 {getLabel("mobile_bank", lang)}</p>
 
           <div className="space-y-1.5">
-            <label className="text-[12px] font-semibold text-slate-500">은행 <span className="text-rose-400">*</span></label>
+            <label className="text-[12px] font-semibold text-slate-500">{getLabel("mobile_bank", lang)} <span className="text-rose-400">*</span></label>
             <select
               value={bankName}
               onChange={(e) => setBankName(e.target.value)}
@@ -1688,7 +1692,7 @@ export default function MobileSelect() {
           </div>
 
           <div className="space-y-1.5">
-            <label className="text-[12px] font-semibold text-slate-500">계좌번호 <span className="text-rose-400">*</span></label>
+            <label className="text-[12px] font-semibold text-slate-500">{getLabel("mobile_account_num", lang)} <span className="text-rose-400">*</span></label>
             <input
               type="text"
               inputMode="numeric"
@@ -1701,7 +1705,7 @@ export default function MobileSelect() {
           </div>
 
           <div className="space-y-1.5">
-            <label className="text-[12px] font-semibold text-slate-500">예금주명 <span className="text-rose-400">*</span></label>
+            <label className="text-[12px] font-semibold text-slate-500">{getLabel("mobile_account_holder", lang)} <span className="text-rose-400">*</span></label>
             <input
               type="text"
               value={accountHolder}

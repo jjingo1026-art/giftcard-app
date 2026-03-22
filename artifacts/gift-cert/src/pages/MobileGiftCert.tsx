@@ -1,4 +1,6 @@
 import { useState, useEffect } from "react";
+import LangPicker, { useLang } from "@/components/LangPicker";
+import { getLabel } from "@/lib/uiTranslations";
 
 const MOBILE_RATES = [
   { label: "신세계모바일", sub: "이마트교환권", icon: "🛒", color: "#e11d48", rate: 95 },
@@ -14,6 +16,7 @@ const MOBILE_RATES = [
 const base = import.meta.env.BASE_URL.replace(/\/$/, "");
 
 export default function MobileGiftCert() {
+  const [lang, setLang] = useLang();
   const [rates, setRates] = useState<Record<string, number>>({});
 
   useEffect(() => {
@@ -43,10 +46,11 @@ export default function MobileGiftCert() {
               <path d="M19 12H5M12 19l-7-7 7-7"/>
             </svg>
           </button>
-          <div>
-            <h1 className="text-[16px] font-bold text-slate-800">모바일상품권 시세</h1>
+          <div className="flex-1 min-w-0">
+            <h1 className="text-[16px] font-bold text-slate-800">{getLabel("mobile_title", lang)}</h1>
             <p className="text-[11px] text-slate-400 mt-0.5">Mobile Gift Certificate Rates</p>
           </div>
+          <LangPicker lang={lang} onChange={setLang} accentColor="#ec4899" />
         </div>
       </header>
 
@@ -91,8 +95,8 @@ export default function MobileGiftCert() {
           className="w-full py-3.5 rounded-2xl text-white transition-all active:scale-[0.98] flex flex-col items-center justify-center gap-0.5 shadow-sm"
           style={{ background: "linear-gradient(135deg, #ec4899 0%, #f43f5e 100%)" }}
         >
-          <span className="text-[15px] font-bold flex items-center gap-2">📋 판매신청 확인</span>
-          <span className="text-[11px] font-medium opacity-85">신청하신 전화번호로 판매신청한 내역을 확인할 수 있습니다</span>
+          <span className="text-[15px] font-bold flex items-center gap-2">📋 {getLabel("mobile_confirm_btn", lang)}</span>
+          <span className="text-[11px] font-medium opacity-85">{lang === "ko" ? "신청하신 전화번호로 판매신청한 내역을 확인할 수 있습니다" : getLabel("mobile_check_title", lang)}</span>
         </button>
 
         <a

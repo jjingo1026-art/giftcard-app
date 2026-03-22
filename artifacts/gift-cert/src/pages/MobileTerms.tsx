@@ -1,4 +1,6 @@
 import { useState, useEffect } from "react";
+import LangPicker, { useLang } from "@/components/LangPicker";
+import { getLabel } from "@/lib/uiTranslations";
 
 const base = import.meta.env.BASE_URL.replace(/\/$/, "");
 
@@ -42,6 +44,7 @@ const SECTIONS = [
 export default function MobileTerms() {
   const params = new URLSearchParams(location.search);
   const type = params.get("type") ?? "";
+  const [lang, setLang] = useLang();
   const [activeTab, setActiveTab] = useState(0);
   const [customTerms, setCustomTerms] = useState("");
   const [customGuide, setCustomGuide] = useState("");
@@ -70,7 +73,8 @@ export default function MobileTerms() {
               <path d="M19 12H5M12 19l-7-7 7-7"/>
             </svg>
           </button>
-          <h1 className="text-[16px] font-bold text-slate-800">이용약관</h1>
+          <h1 className="text-[16px] font-bold text-slate-800 flex-1">{getLabel("mobile_terms_title", lang)}</h1>
+          <LangPicker lang={lang} onChange={setLang} accentColor="#ec4899" />
         </div>
       </header>
 
@@ -86,7 +90,7 @@ export default function MobileTerms() {
                   : "text-slate-400 hover:text-slate-600 hover:bg-slate-50"
               }`}
             >
-              {s.icon} {s.title}
+              {s.icon} {s.id === "terms" ? getLabel("mobile_terms_title", lang).split("및")[0].trim() : s.id === "guide" ? getLabel("mobile_guide_tab", lang) : s.title}
             </button>
           ))}
         </div>
@@ -134,7 +138,7 @@ export default function MobileTerms() {
           className="w-full py-4 rounded-2xl text-white text-[15px] font-bold transition-all active:scale-[0.98] shadow-sm"
           style={{ background: "linear-gradient(135deg, #ec4899 0%, #f43f5e 100%)" }}
         >
-          확인했습니다
+          {getLabel("mobile_terms_agree", lang)}
         </button>
       </div>
     </div>

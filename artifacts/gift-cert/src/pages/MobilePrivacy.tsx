@@ -1,9 +1,12 @@
 import { useState, useEffect } from "react";
+import LangPicker, { useLang } from "@/components/LangPicker";
+import { getLabel } from "@/lib/uiTranslations";
 const base = import.meta.env.BASE_URL.replace(/\/$/, "");
 
 export default function MobilePrivacy() {
   const params = new URLSearchParams(location.search);
   const type = params.get("type") ?? "";
+  const [lang, setLang] = useLang();
   const [customPrivacy, setCustomPrivacy] = useState("");
 
   useEffect(() => {
@@ -27,7 +30,8 @@ export default function MobilePrivacy() {
               <path d="M19 12H5M12 19l-7-7 7-7"/>
             </svg>
           </button>
-          <h1 className="text-[16px] font-bold text-slate-800">개인정보 수집 및 이용 동의</h1>
+          <h1 className="text-[16px] font-bold text-slate-800 flex-1">{getLabel("mobile_privacy_title", lang)}</h1>
+          <LangPicker lang={lang} onChange={setLang} accentColor="#ec4899" />
         </div>
       </header>
 
@@ -103,14 +107,14 @@ export default function MobilePrivacy() {
           className="w-full py-4 rounded-2xl text-white text-[15px] font-bold transition-all active:scale-[0.98] shadow-sm"
           style={{ background: "linear-gradient(135deg, #ec4899 0%, #f43f5e 100%)" }}
         >
-          이용약관 및 개인정보 수집에 동의합니다. (필수)
+          {getLabel("mobile_privacy_agree", lang)}
         </button>
 
         <button
           onClick={() => { window.open(`/mobile/terms?type=${encodeURIComponent(type)}`, "_blank"); }}
           className="w-full py-3.5 rounded-2xl text-[14px] font-semibold text-slate-500 bg-white border border-slate-200 transition-all active:scale-[0.98] shadow-sm hover:bg-slate-50"
         >
-          약관 보기
+          {getLabel("mobile_view_terms", lang)}
         </button>
       </div>
     </div>

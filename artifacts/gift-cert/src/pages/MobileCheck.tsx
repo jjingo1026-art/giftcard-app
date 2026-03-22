@@ -1,4 +1,6 @@
 import { useState } from "react";
+import LangPicker, { useLang } from "@/components/LangPicker";
+import { getLabel } from "@/lib/uiTranslations";
 
 interface ReservationItem { type: string; amount: number; rate: number; payment: number; }
 interface StaffInfo { id: number; name: string; phone: string; }
@@ -32,6 +34,7 @@ const STATUS_MAP: Record<string, { label: string; color: string; bg: string }> =
 };
 
 export default function MobileCheck() {
+  const [lang, setLang] = useLang();
   const [phone, setPhone] = useState("");
   const [pin, setPin] = useState("");
   const [loading, setLoading] = useState(false);
@@ -125,10 +128,11 @@ export default function MobileCheck() {
               <path d="M19 12H5M12 19l-7-7 7-7"/>
             </svg>
           </button>
-          <div>
-            <h1 className="text-[16px] font-bold text-slate-800">모바일상품권 판매신청 확인</h1>
+          <div className="flex-1 min-w-0">
+            <h1 className="text-[16px] font-bold text-slate-800">{getLabel("mobile_check_title", lang)}</h1>
             <p className="text-[11px] text-slate-400 mt-0.5">전화번호로 신청 현황 조회</p>
           </div>
+          <LangPicker lang={lang} onChange={setLang} accentColor="#ec4899" />
         </div>
       </header>
 
@@ -164,7 +168,7 @@ export default function MobileCheck() {
             className="w-full py-4 rounded-2xl text-white text-[15px] font-bold transition-all active:scale-[0.98] disabled:opacity-60"
             style={{ background: "linear-gradient(135deg, #ec4899 0%, #f43f5e 100%)" }}
           >
-            {loading ? "조회 중..." : "🔍 신청 내역 조회"}
+            {loading ? "조회 중..." : `🔍 ${getLabel("mobile_check_btn", lang)}`}
           </button>
 
           {error && <p className="text-[13px] text-rose-500 font-medium text-center">{error}</p>}
@@ -177,7 +181,7 @@ export default function MobileCheck() {
             <div className="px-5 pt-5 pb-3 border-b border-slate-50 flex items-center justify-between">
               <p className="text-[14px] font-bold text-slate-800">신청 #{reservation.id}</p>
               <span className="px-3 py-1 rounded-full text-[12px] font-bold" style={{ color: st.color, backgroundColor: st.bg }}>
-                {st.label}
+                {getLabel(`mobile_status_${reservation.status}`, lang)}
               </span>
             </div>
 
@@ -260,7 +264,7 @@ export default function MobileCheck() {
                   style={{ background: "linear-gradient(135deg,#7c3aed,#6d28d9)" }}
                 >
                   <span>💬</span>
-                  담당자와 채팅하기
+                  {getLabel("mobile_chat_btn", lang)}
                 </button>
               )}
 
@@ -273,7 +277,7 @@ export default function MobileCheck() {
                     disabled={cancelling}
                     className="w-full py-3 rounded-2xl border-2 border-rose-200 text-rose-500 text-[14px] font-bold hover:bg-rose-50 transition-all active:scale-[0.98] disabled:opacity-60"
                   >
-                    {cancelling ? "취소 중..." : "신청 취소"}
+                    {cancelling ? "취소 중..." : getLabel("mobile_cancel_btn", lang)}
                   </button>
                 </div>
               )}
