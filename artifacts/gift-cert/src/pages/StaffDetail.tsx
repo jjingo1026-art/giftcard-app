@@ -160,7 +160,7 @@ export default function StaffDetail() {
           {/* 언어 선택 패널 */}
           {showLangPicker && (
             <div className="px-4 pb-3 border-t border-indigo-400/30">
-              <div className="flex flex-col gap-1.5 pt-2 max-h-52 overflow-y-auto scrollbar-none">
+              <div className="flex flex-col gap-1.5 pt-2 max-h-52 overflow-y-auto scrollbar-none w-fit">
                 {LANGUAGES.map((l) => (
                   <button
                     key={l.code}

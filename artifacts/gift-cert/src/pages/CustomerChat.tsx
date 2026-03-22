@@ -147,7 +147,7 @@ export default function CustomerChat() {
         {/* 언어 선택 패널 */}
         {showLangPicker && (
           <div className="border-t border-slate-100 bg-white px-4 py-2">
-            <div className="flex flex-col gap-1.5 max-h-52 overflow-y-auto scrollbar-none">
+            <div className="flex flex-col gap-1.5 max-h-52 overflow-y-auto scrollbar-none w-fit">
               {LANGUAGES.map((l) => (
                 <button
                   key={l.code}
