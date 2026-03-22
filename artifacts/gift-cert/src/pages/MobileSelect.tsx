@@ -988,7 +988,7 @@ function MobileVoucherItems({
           <div className="flex items-center gap-3 px-3 py-3 bg-white rounded-xl border border-orange-100">
             <div className="w-9 h-9 rounded-xl bg-orange-100 flex items-center justify-center flex-shrink-0 text-[18px]">📲</div>
             <div>
-              <p className="text-[13px] font-black text-orange-700 tracking-wide">010-7486-8001</p>
+              <p className="text-[13px] font-black text-orange-700 tracking-wide">010-7190-9534</p>
               <p className="text-[12px] text-orange-600 mt-0.5">위 번호로 선물하기를 보내주세요</p>
             </div>
           </div>
