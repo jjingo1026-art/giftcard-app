@@ -135,18 +135,31 @@ router.post("/", async (req, res) => {
 
   const normalizedPhone = normalizePhone(body.phone);
 
+  // 종류별 중복 신청 체크: 모바일은 모바일끼리, 지류/긴급은 지류/긴급끼리만 비교
+  const isMobile = body.kind === "mobile";
+  const activeStatusFilter = ["pending", "assigned"];
+  const duplicateConditions = isMobile
+    ? and(
+        eq(reservationsTable.phone, normalizedPhone),
+        eq(reservationsTable.kind, "mobile"),
+        inArray(reservationsTable.status, activeStatusFilter)
+      )
+    : and(
+        eq(reservationsTable.phone, normalizedPhone),
+        inArray(reservationsTable.kind, ["reservation", "urgent"]),
+        inArray(reservationsTable.status, activeStatusFilter)
+      );
+
   const exists = await db
     .select()
     .from(reservationsTable)
-    .where(
-      and(
-        eq(reservationsTable.phone, normalizedPhone),
-        inArray(reservationsTable.status, ["pending", "assigned"])
-      )
-    );
+    .where(duplicateConditions);
 
   if (exists.length > 0) {
-    res.status(400).json({ error: "현재 진행중인 예약이 있습니다.\n예약을 취소하시거나 거래가 완료되어야 예약신청이 가능합니다." });
+    const msg = isMobile
+      ? "현재 접수 처리중인 판매신청이 있습니다.\n처리가 완료되어야 재신청이 가능합니다."
+      : "현재 진행중인 예약이 있습니다.\n예약을 취소하시거나 거래가 완료되어야 예약신청이 가능합니다.";
+    res.status(400).json({ error: msg });
     return;
   }
 
