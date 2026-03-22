@@ -37,42 +37,38 @@ export default function GiftCertTypeSelect() {
         <p className="text-[13px] text-slate-400 mb-8">판매하실 상품권 종류를 선택해 주세요</p>
 
         {/* 선택 버튼 */}
-        <div className="w-full max-w-sm space-y-3">
+        <div className="w-full max-w-sm grid grid-cols-2 gap-3">
 
-          {/* 지류상품권 버튼 */}
-          <button
-            onClick={() => navigate("/rates")}
-            className="w-full rounded-2xl px-6 py-5 text-left flex items-center gap-4 transition-all active:scale-[0.98] shadow-md hover:shadow-lg"
-            style={{ background: "linear-gradient(135deg,#6366f1,#818cf8)" }}
-          >
-            <div className="w-12 h-12 rounded-xl bg-white/20 flex items-center justify-center text-[26px] shrink-0">
-              🎟️
-            </div>
-            <div className="flex-1">
-              <p className="text-[16px] font-black text-white">지류상품권</p>
-              <p className="text-[12px] text-indigo-200 mt-0.5">백화점·마트·주유권 등 실물 상품권</p>
-            </div>
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ opacity: 0.7 }}>
-              <path d="M9 18l6-6-6-6"/>
-            </svg>
-          </button>
-
-          {/* 모바일상품권 버튼 */}
+          {/* 모바일상품권 버튼 (왼쪽) */}
           <button
             onClick={() => navigate("/mobile")}
-            className="w-full rounded-2xl px-6 py-5 text-left flex items-center gap-4 transition-all active:scale-[0.98] shadow-md hover:shadow-lg"
+            className="rounded-2xl px-4 py-6 flex flex-col items-center gap-3 transition-all active:scale-[0.97] shadow-md hover:shadow-lg"
             style={{ background: "linear-gradient(135deg,#ec4899,#f43f5e)" }}
           >
-            <div className="w-12 h-12 rounded-xl bg-white/20 flex items-center justify-center text-[26px] shrink-0">
+            <div className="w-14 h-14 rounded-2xl bg-white/20 flex items-center justify-center text-[32px]">
               📱
             </div>
-            <div className="flex-1">
-              <p className="text-[16px] font-black text-white">모바일상품권</p>
-              <p className="text-[12px] text-pink-200 mt-0.5">카카오·네이버·문화상품권 등 모바일 쿠폰</p>
+            <div className="text-center">
+              <p className="text-[15px] font-black text-white leading-tight">모바일</p>
+              <p className="text-[15px] font-black text-white leading-tight">상품권</p>
+              <p className="text-[10px] text-pink-200 mt-1.5 leading-snug">카카오·네이버·<br/>모바일 쿠폰</p>
             </div>
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ opacity: 0.7 }}>
-              <path d="M9 18l6-6-6-6"/>
-            </svg>
+          </button>
+
+          {/* 지류상품권 버튼 (오른쪽) */}
+          <button
+            onClick={() => navigate("/rates")}
+            className="rounded-2xl px-4 py-6 flex flex-col items-center gap-3 transition-all active:scale-[0.97] shadow-md hover:shadow-lg"
+            style={{ background: "linear-gradient(135deg,#6366f1,#818cf8)" }}
+          >
+            <div className="w-14 h-14 rounded-2xl bg-white/20 flex items-center justify-center text-[32px]">
+              🎟️
+            </div>
+            <div className="text-center">
+              <p className="text-[15px] font-black text-white leading-tight">지류</p>
+              <p className="text-[15px] font-black text-white leading-tight">상품권</p>
+              <p className="text-[10px] text-indigo-200 mt-1.5 leading-snug">백화점·마트·<br/>실물 상품권</p>
+            </div>
           </button>
         </div>
 
