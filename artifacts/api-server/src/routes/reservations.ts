@@ -246,7 +246,7 @@ router.post("/", async (req, res) => {
     lines.push(`━━━━━━━━━━━━━━`);
 
     for (const item of body.items as (typeof body.items[0] & { note?: string })[]) {
-      const ratePct = (item.rate / 100).toFixed(0);
+      const ratePct = item.rate;
       lines.push(`💳 ${item.type}`);
       lines.push(`   액면가 ${fmt(item.amount)}  →  입금 ${fmt(item.payment)} (${ratePct}%)`);
       if (item.note) {
