@@ -189,13 +189,13 @@ export default function Terms() {
         </div>
       </div>
 
-      <div className="max-w-md mx-auto px-4 py-5 pb-10 space-y-3">
+      <div className="max-w-md mx-auto px-4 py-3 pb-6 space-y-3">
         <div className="bg-white rounded-3xl border border-slate-100 shadow-sm overflow-hidden">
-          <div className="px-5 pt-5 pb-3 border-b border-slate-100 flex items-center gap-2">
+          <div className="px-5 pt-4 pb-2 border-b border-slate-100 flex items-center gap-2">
             <span className="text-[20px]">{section.icon}</span>
             <h2 className="text-[15px] font-bold text-slate-800">{section.title}</h2>
           </div>
-          <div className="px-5 py-5 space-y-5">
+          <div className="px-5 py-3 space-y-3">
             {customTexts[section.id] ? (
               customTexts[section.id].split("\n").filter(Boolean).map((line, i) => (
                 <p key={i} className="text-[13.5px] text-slate-600 leading-relaxed">{line}</p>

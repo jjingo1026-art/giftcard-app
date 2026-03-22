@@ -35,7 +35,7 @@ export default function MobilePrivacy() {
         </div>
       </header>
 
-      <div className="max-w-md mx-auto px-4 py-5 pb-10 space-y-4">
+      <div className="max-w-md mx-auto px-4 py-3 pb-6 space-y-3">
         {type && (
           <div className="flex items-center gap-2 px-4 py-2.5 bg-pink-50 rounded-2xl border border-pink-100">
             <span className="text-[14px]">📱</span>
@@ -44,17 +44,17 @@ export default function MobilePrivacy() {
         )}
 
         <div className="bg-white rounded-3xl border border-slate-100 shadow-sm overflow-hidden">
-          <div className="px-5 pt-5 pb-3 border-b border-slate-100">
+          <div className="px-5 pt-4 pb-2 border-b border-slate-100">
             <div className="flex items-center gap-2">
               <span className="text-[18px]">🔒</span>
               <h2 className="text-[15px] font-bold text-slate-800">개인정보 수집 및 이용 동의 <span className="text-rose-400 text-[12px] font-semibold">(필수)</span></h2>
             </div>
-            <p className="text-[13px] text-slate-500 mt-2 leading-relaxed">
+            <p className="text-[13px] text-slate-500 mt-1 leading-relaxed">
               회사는 원활한 예약 및 상품권 매입 서비스 제공을 위해 아래와 같이 개인정보를 수집·이용합니다.
             </p>
           </div>
 
-          <div className="px-5 py-5 space-y-5">
+          <div className="px-5 py-3 space-y-3">
             {customPrivacy ? (
               <p className="text-[13.5px] text-slate-600 leading-relaxed whitespace-pre-line">{customPrivacy}</p>
             ) : (
