@@ -1497,6 +1497,11 @@ export default function MobileSelect() {
       const hasAnyNumber = items.some((it) => it.type === "네이버페이 포인트" && it.checkedSubs.includes("쿠폰") && it.voucherNumber.trim());
       if (!hasAnyNumber) errs.naverCoupon = "네이버페이 쿠폰번호를 1개 이상 입력해야 합니다.";
     }
+    // 신세계모바일 상품권번호입력: 번호 1개 이상 필수
+    const hasShinsegaeNumber = items.some((it) => it.type === "신세계모바일" && it.checkedSubs.includes("상품권번호입력"));
+    if (hasShinsegaeNumber) {
+      if (!shinsegaeNumbers.some((n) => n.trim())) errs.shinsegaeNumbers = "신세계모바일 상품권번호를 1개 이상 입력해야 합니다.";
+    }
     setErrors(errs);
     return Object.keys(errs).length === 0;
   }
@@ -1723,6 +1728,11 @@ export default function MobileSelect() {
         {errors.shinsegaeImages && (
           <p className="text-[13px] font-semibold text-rose-500 bg-rose-50 border border-rose-200 rounded-2xl px-4 py-3">
             ⚠ {errors.shinsegaeImages}
+          </p>
+        )}
+        {errors.shinsegaeNumbers && (
+          <p className="text-[13px] font-semibold text-rose-500 bg-rose-50 border border-rose-200 rounded-2xl px-4 py-3">
+            ⚠ {errors.shinsegaeNumbers}
           </p>
         )}
         {errors.naverCoupon && (
