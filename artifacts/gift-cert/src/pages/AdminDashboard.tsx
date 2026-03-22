@@ -95,7 +95,7 @@ export default function AdminDashboard() {
 
   useEffect(() => {
     setLoading(true);
-    adminFetch("/api/admin/reservations")
+    adminFetch("/api/admin/reservations?limit=500")
       .then((r) => r.json())
       .then((data) => { setAllEntries(data); setEntries(data); })
       .catch(() => setError("데이터를 불러올 수 없습니다."))
@@ -145,8 +145,8 @@ export default function AdminDashboard() {
         if (prev.some((r) => r.id === reservation.id)) return prev;
         return [reservation, ...prev];
       });
-      // 캘린더 즉시 반영
-      if (reservation.date) {
+      // 캘린더 즉시 반영 — 지류(reservation/urgent)만, 모바일 제외
+      if (reservation.date && reservation.kind !== "mobile") {
         setCalendarData((prev) => {
           const exists = prev.find((c) => c.date === reservation.date);
           if (exists) {
@@ -192,20 +192,11 @@ export default function AdminDashboard() {
       setAllEntries((prev) => prev.map((r) => r.id === reservation.id ? { ...r, ...reservation } : r));
       setEntries((prev) => prev.map((r) => r.id === reservation.id ? { ...r, ...reservation } : r));
 
-      // 캘린더: 해당 날짜의 unassigned -1, assigned +1
-      if (reservation.date) {
-        setCalendarData((prev) =>
-          prev.map((c) =>
-            c.date === reservation.date
-              ? {
-                  ...c,
-                  unassigned: Math.max(0, c.unassigned - 1),
-                  assigned: c.assigned + 1,
-                }
-              : c
-          )
-        );
-      }
+      // 캘린더 최신 데이터로 갱신 (다른 탭/사용자의 배정도 반영)
+      adminFetch("/api/admin/reservations/calendar")
+        .then((r) => r.json())
+        .then(setCalendarData)
+        .catch(() => {});
     });
 
     socket.on("chatAlert", (msg: { reservationId: number; senderName: string; message: string; time: string; sender: string }) => {
@@ -257,11 +248,24 @@ export default function AdminDashboard() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ staffId }),
       });
+
+      // 예약 목록 즉시 반영
       setAllEntries((prev) => prev.map((r) =>
         r.id === reservationId
           ? { ...r, status: "assigned", assignedStaffId: staffId, assignedTo: staffList.find((s) => s.id === staffId)?.name }
           : r
       ));
+      setEntries((prev) => prev.map((r) =>
+        r.id === reservationId
+          ? { ...r, status: "assigned", assignedStaffId: staffId, assignedTo: staffList.find((s) => s.id === staffId)?.name }
+          : r
+      ));
+
+      // 캘린더 최신 데이터로 즉시 갱신
+      adminFetch("/api/admin/reservations/calendar")
+        .then((r) => r.json())
+        .then(setCalendarData)
+        .catch(() => {});
     } finally {
       setAssigning(null);
     }
@@ -410,15 +414,24 @@ export default function AdminDashboard() {
           </div>
           <div className="flex items-center gap-2">
             <SoundBell role="admin" />
+            {/* 모바일 대시보드 이동 버튼 */}
+            <button
+              onClick={() => { window.location.href = "/admin/mobile"; }}
+              className="text-[12px] font-bold text-violet-600 hover:text-violet-800 px-3 py-1.5 rounded-xl bg-violet-50 hover:bg-violet-100 transition-all flex items-center gap-1 border border-violet-200"
+              title="모바일상품권 관리"
+            >
+              <span>📱</span> 모바일
+            </button>
             {/* 채팅 목록 버튼 */}
             <button
               onClick={() => { window.location.href = "/admin/chats"; }}
-              className="relative text-[12px] text-indigo-500 hover:text-indigo-700 font-semibold transition-colors px-3 py-1.5 rounded-xl hover:bg-indigo-50"
+              className="relative flex items-center gap-1.5 text-[13px] text-indigo-600 hover:text-indigo-800 font-bold transition-colors px-4 py-2 rounded-xl hover:bg-indigo-50 border border-indigo-200 bg-indigo-50/60"
               title="채팅 전체 목록"
             >
-              💬
+              <span className="text-[16px]">💬</span>
+              <span>채팅</span>
               {chatInbox.reduce((s, c) => s + c.unreadCount, 0) > 0 && (
-                <span className="absolute -top-1 -right-1 min-w-[18px] h-[18px] rounded-full bg-rose-500 text-white text-[10px] font-black flex items-center justify-center px-1 leading-none">
+                <span className="absolute -top-1.5 -right-1.5 min-w-[20px] h-[20px] rounded-full bg-rose-500 text-white text-[10px] font-black flex items-center justify-center px-1 leading-none">
                   {chatInbox.reduce((s, c) => s + c.unreadCount, 0)}
                 </span>
               )}
@@ -934,7 +947,13 @@ export default function AdminDashboard() {
             height={680}
           />
           {dateFilter && (() => {
-            const dayEntries   = allEntries.filter((r) => r.date === dateFilter);
+            // 캘린더 집계와 동일 조건: 지류(reservation/urgent)만, 취소·노쇼 제외
+            const dayEntries = allEntries.filter((r) =>
+              r.date === dateFilter &&
+              (r.kind === "reservation" || r.kind === "urgent") &&
+              r.status !== "cancelled" &&
+              r.status !== "no_show"
+            );
             const dayUnassigned = [...dayEntries.filter((r) => !r.assignedStaffId)]
               .sort((a, b) => (a.time ?? "").localeCompare(b.time ?? ""));
             const dateTotal          = dayEntries.length;
