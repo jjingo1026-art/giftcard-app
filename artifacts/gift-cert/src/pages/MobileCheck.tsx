@@ -157,7 +157,7 @@ export default function MobileCheck() {
               value={pin}
               onChange={(e) => setPin(e.target.value.replace(/[^0-9]/g, "").slice(0, 4))}
               onKeyDown={(e) => e.key === "Enter" && check()}
-              placeholder="PIN (설정 시 입력, 선택)"
+              placeholder="비밀번호 입력"
               className="w-full border border-slate-200 rounded-2xl px-4 py-3.5 text-[15px] focus:outline-none focus:ring-2 focus:ring-pink-300"
             />
           </div>
