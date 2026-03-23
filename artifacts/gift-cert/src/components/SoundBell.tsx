@@ -2,7 +2,7 @@ import { useState, useRef, useEffect } from "react";
 import {
   getSoundEnabled, setSoundEnabled,
   getSoundType, setSoundType,
-  playSound, SOUND_OPTIONS,
+  playSound, unlockAudioContext, SOUND_OPTIONS,
   type SoundType,
 } from "@/lib/notificationSound";
 
@@ -25,7 +25,13 @@ export default function SoundBell({ role, className = "" }: Props) {
     return () => document.removeEventListener("mousedown", handleClick);
   }, []);
 
+  function handleBellClick() {
+    unlockAudioContext(); // 모바일: 버튼 클릭 시 AudioContext 잠금 해제
+    setOpen((v) => !v);
+  }
+
   function toggleEnabled() {
+    unlockAudioContext();
     const next = !enabled;
     setEnabled(next);
     setSoundEnabled(role, next);
@@ -33,6 +39,7 @@ export default function SoundBell({ role, className = "" }: Props) {
   }
 
   function selectType(t: SoundType) {
+    unlockAudioContext();
     setType(t);
     setSoundType(role, t);
     playSound(t);
@@ -41,7 +48,7 @@ export default function SoundBell({ role, className = "" }: Props) {
   return (
     <div ref={ref} className={`relative ${className}`}>
       <button
-        onClick={() => setOpen((v) => !v)}
+        onClick={handleBellClick}
         title={enabled ? "알림 소리 설정" : "알림 소리 꺼짐"}
         className="w-9 h-9 flex items-center justify-center rounded-xl hover:bg-slate-100 transition-colors flex-shrink-0"
       >

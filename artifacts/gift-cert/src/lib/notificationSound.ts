@@ -34,53 +34,120 @@ export function setSoundType(role: "customer" | "admin" | "staff", type: SoundTy
   localStorage.setItem(SOUND_TYPE_KEY_PREFIX + role, type);
 }
 
-// 단일 AudioContext 공유 — 모바일에서 매번 새로 생성하면 suspended 상태가 됨
+// ── 단일 AudioContext 관리 ──────────────────────────────────────────────────
 let _ctx: AudioContext | null = null;
+let _keepAliveNode: AudioBufferSourceNode | null = null;
+let _unlocked = false;
+let _pendingSound: SoundType | null = null;  // 재생 대기 중인 소리
 
 function getCtx(): AudioContext {
   if (!_ctx || _ctx.state === "closed") {
     _ctx = new (window.AudioContext || (window as any).webkitAudioContext)();
+    _keepAliveNode = null;
   }
   return _ctx;
 }
 
-// 모바일에서 사용자 제스처(터치/클릭) 시 AudioContext를 미리 잠금 해제
-// 앱 최초 로드 시 한 번 호출해두면 이후 WebSocket 알림음도 정상 작동
-export function unlockAudioContext() {
+// 무음 루프 — AudioContext가 suspended로 전환되지 않도록 유지
+function startKeepAlive(ctx: AudioContext) {
+  if (_keepAliveNode) return;
   try {
-    const ctx = getCtx();
-    if (ctx.state === "suspended") {
-      ctx.resume().catch(() => {});
-    }
-    // 0.001초 무음 재생 — iOS Safari의 오디오 잠금을 완전히 해제
-    const buf = ctx.createBuffer(1, 1, 22050);
+    const buf = ctx.createBuffer(1, 1, ctx.sampleRate);
     const src = ctx.createBufferSource();
     src.buffer = buf;
-    src.connect(ctx.destination);
+    src.loop = true;
+    const gain = ctx.createGain();
+    gain.gain.value = 0; // 완전 무음
+    src.connect(gain);
+    gain.connect(ctx.destination);
     src.start(0);
+    _keepAliveNode = src;
   } catch { /* 무시 */ }
 }
 
-// 앱 전체에 터치/클릭 이벤트 연결 (최초 1회만)
-let _unlockAttached = false;
-export function attachAudioUnlock() {
-  if (_unlockAttached) return;
-  _unlockAttached = true;
-  const handler = () => {
-    unlockAudioContext();
-    document.removeEventListener("touchstart", handler, true);
-    document.removeEventListener("mousedown", handler, true);
-  };
-  document.addEventListener("touchstart", handler, true);
-  document.addEventListener("mousedown", handler, true);
+// 사용자 터치 시 AudioContext 잠금 해제 + 무음 루프 시작
+export function unlockAudioContext() {
+  try {
+    const ctx = getCtx();
+    const doUnlock = () => {
+      // 무음 1프레임 재생으로 iOS 잠금 해제
+      const buf = ctx.createBuffer(1, 1, ctx.sampleRate);
+      const src = ctx.createBufferSource();
+      src.buffer = buf;
+      src.connect(ctx.destination);
+      src.start(0);
+
+      if (ctx.state === "suspended") {
+        ctx.resume().then(() => {
+          startKeepAlive(ctx);
+          _unlocked = true;
+          // 대기 중이던 소리 재생
+          if (_pendingSound) {
+            const s = _pendingSound;
+            _pendingSound = null;
+            playSound(s);
+          }
+        }).catch(() => {});
+      } else {
+        startKeepAlive(ctx);
+        _unlocked = true;
+        if (_pendingSound) {
+          const s = _pendingSound;
+          _pendingSound = null;
+          playSound(s);
+        }
+      }
+    };
+    doUnlock();
+  } catch { /* 무시 */ }
 }
 
+// 화면이 다시 보일 때 AudioContext 재개 (앱 전환 후 복귀 시)
+function attachVisibilityResume() {
+  document.addEventListener("visibilitychange", () => {
+    if (document.visibilityState !== "visible" || !_ctx) return;
+    if (_ctx.state === "suspended") {
+      _ctx.resume().then(() => {
+        startKeepAlive(_ctx!);
+        if (_pendingSound) {
+          const s = _pendingSound;
+          _pendingSound = null;
+          playSound(s);
+        }
+      }).catch(() => {});
+    }
+  });
+}
+
+// 앱 최초 로드 시 호출: 첫 터치/클릭에서 잠금 해제 + visibility 핸들러 등록
+let _attached = false;
+export function attachAudioUnlock() {
+  if (_attached) return;
+  _attached = true;
+
+  attachVisibilityResume();
+
+  const handler = () => {
+    unlockAudioContext();
+    // 잠금 해제 후에도 계속 리스닝 — 앱 복귀 시 재unlock 필요
+  };
+  document.addEventListener("touchstart", handler, { capture: true, passive: true });
+  document.addEventListener("mousedown", handler, { capture: true });
+}
+
+// ── 소리 재생 ──────────────────────────────────────────────────────────────
 async function playWithCtx(fn: (ctx: AudioContext) => void) {
   try {
     const ctx = getCtx();
     if (ctx.state === "suspended") {
-      await ctx.resume();
+      // 재개 시도 — 성공 시 재생, 실패 시 대기열에 저장
+      try {
+        await ctx.resume();
+      } catch {
+        return; // 재생 불가 (pending은 호출자가 설정)
+      }
     }
+    if (ctx.state !== "running") return;
     fn(ctx);
   } catch { /* 무시 */ }
 }
@@ -167,6 +234,11 @@ function playAlert() {
 
 export function playSound(type: SoundType) {
   try {
+    // context가 running 상태가 아니면 대기열에 저장
+    if (!_ctx || _ctx.state !== "running") {
+      _pendingSound = type;
+      return;
+    }
     switch (type) {
       case "ding":     playDing(); break;
       case "dingdong": playDingDong(); break;
@@ -180,6 +252,12 @@ export function playSound(type: SoundType) {
 export function playNotificationSound(role?: "customer" | "admin" | "staff") {
   try {
     const type = role ? getSoundType(role) : "ding";
-    playSound(type);
+    // context 상태와 무관하게 항상 대기열 설정 후 재생 시도
+    _pendingSound = type;
+    if (_ctx && _ctx.state === "running") {
+      _pendingSound = null;
+      playSound(type);
+    }
+    // 아니면 다음 터치 시 또는 visibility 복귀 시 자동 재생
   } catch { /* 무시 */ }
 }
