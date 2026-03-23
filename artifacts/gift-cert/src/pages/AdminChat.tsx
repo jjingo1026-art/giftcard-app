@@ -5,25 +5,67 @@ import { getAdminToken } from "./AdminLogin";
 import { useImageUpload } from "@/hooks/useImageUpload";
 import { LANGUAGES, getTranslated, getSavedLang, saveLang } from "@/lib/languages";
 
+function showSaveToast(msg: string) {
+  const existing = document.getElementById("__save_toast__");
+  if (existing) existing.remove();
+  const el = document.createElement("div");
+  el.id = "__save_toast__";
+  el.innerHTML = msg;
+  el.style.cssText = [
+    "position:fixed", "bottom:90px", "left:50%", "transform:translateX(-50%)",
+    "background:#1e293b", "color:#fff", "padding:14px 18px", "border-radius:14px",
+    "font-size:13px", "line-height:1.6", "z-index:99999", "max-width:88vw",
+    "text-align:center", "box-shadow:0 6px 24px rgba(0,0,0,0.35)",
+    "word-break:keep-all", "white-space:pre-wrap",
+  ].join(";");
+  document.body.appendChild(el);
+  setTimeout(() => el.remove(), 5500);
+}
+
 async function downloadImage(url: string) {
   try {
     const resp = await fetch(url);
     const blob = await resp.blob();
     const ext = (blob.type.split("/")[1] || "jpg").replace("jpeg", "jpg");
-    const today = new Date().toISOString().slice(0, 10); // 2026-03-22
+    const today = new Date().toISOString().slice(0, 10);
     const filename = `우리동네상품권이미지_${today}_${Date.now()}.${ext}`;
 
-    // 모바일: Web Share API로 갤러리 저장 유도
-    const isMobile = /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
-    if (isMobile && navigator.canShare) {
+    const isIOS = /iPhone|iPad|iPod/i.test(navigator.userAgent);
+    const isAndroid = /Android/i.test(navigator.userAgent);
+
+    // 모바일: Web Share API 우선 시도
+    if ((isIOS || isAndroid) && navigator.canShare) {
       const file = new File([blob], filename, { type: blob.type });
       if (navigator.canShare({ files: [file] })) {
         await navigator.share({ files: [file], title: "우리동네상품권 이미지" });
+        if (isIOS) {
+          showSaveToast("📱 공유 메뉴에서\n'이미지 저장' 또는 '파일에 저장'을\n선택하시면 사진 앱에 저장됩니다.");
+        } else {
+          showSaveToast("📱 공유 메뉴에서 '갤러리에 저장' 또는\n'파일에 저장'을 선택해주세요.");
+        }
         return;
       }
     }
 
-    // PC / 공유 불가: 날짜 포함 파일명으로 다운로드
+    // Android 직접 다운로드
+    if (isAndroid) {
+      const a = document.createElement("a");
+      a.href = URL.createObjectURL(blob);
+      a.download = filename;
+      a.click();
+      URL.revokeObjectURL(a.href);
+      showSaveToast("💾 저장 완료!\n파일 앱 → Downloads 폴더에서\n확인하세요.");
+      return;
+    }
+
+    // iOS: 새 탭에서 열어 길게 누르기 안내
+    if (isIOS) {
+      window.open(url, "_blank");
+      showSaveToast("📱 열린 이미지를 길게 누른 후\n'이미지 저장'을 선택하시면\n사진 앱에 저장됩니다.");
+      return;
+    }
+
+    // PC
     const a = document.createElement("a");
     a.href = URL.createObjectURL(blob);
     a.download = filename;
@@ -31,6 +73,7 @@ async function downloadImage(url: string) {
     URL.revokeObjectURL(a.href);
   } catch {
     window.open(url, "_blank");
+    showSaveToast("📱 열린 이미지를 길게 누른 후\n'이미지 저장'을 선택해주세요.");
   }
 }
 
