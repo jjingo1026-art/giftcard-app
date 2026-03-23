@@ -1308,11 +1308,14 @@ function MobileVoucherItems({
                 <input
                   type="text"
                   inputMode="text"
-                  autoCapitalize="characters"
+                  autoCapitalize="off"
                   autoCorrect="off"
                   autoComplete="off"
                   value={it.voucherNumber}
-                  onChange={(e) => onVoucherNumberChange(idx, e.target.value.replace(/[^0-9A-Za-z\-]/g, "").toUpperCase().slice(0, 30))}
+                  onChange={(e) => {
+                    const v = e.target.value.toUpperCase().replace(/[^0-9A-Z\-]/g, "").slice(0, 30);
+                    onVoucherNumberChange(idx, v);
+                  }}
                   placeholder="쿠폰번호 입력 (숫자·영문)"
                   className="w-full px-4 py-3 rounded-xl border-2 border-green-200 bg-white text-[14px] font-mono tracking-wider outline-none focus:border-green-400 focus:ring-2 focus:ring-green-100 transition-all placeholder:text-slate-300"
                 />
