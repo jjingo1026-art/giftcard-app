@@ -1028,6 +1028,12 @@ function SubmissionCard({ entry }: { entry: ReservationEntry | UrgentEntry }) {
         ))}
       </div>
 
+      {/* ── 채팅 안내 문구 ── */}
+      <div className="px-5 pb-4 pt-2">
+        <p className="text-[11px] text-slate-400 text-center leading-relaxed">
+          💬 매입담당자가 지정되면 <span className="font-semibold text-slate-500">예약확인</span>에서 담당자와 채팅이 가능합니다
+        </p>
+      </div>
 
       {/* ── 직원 선택 모달 ── */}
       {showModal && (
