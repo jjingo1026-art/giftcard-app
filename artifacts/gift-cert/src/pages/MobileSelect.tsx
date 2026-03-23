@@ -347,11 +347,11 @@ function GoogleManualInput({
             <input
               type="text"
               inputMode="text"
-              autoCapitalize="off"
+              autoCapitalize="characters"
               autoCorrect="off"
               autoComplete="off"
               value={num}
-              onChange={(e) => onChange(idx, e.target.value.replace(/[^0-9A-Za-z\-]/g, ""))}
+              onChange={(e) => onChange(idx, e.target.value.replace(/[^0-9A-Za-z\-]/g, "").toUpperCase())}
               placeholder={`상품권번호 ${idx + 1} (숫자·영문)`}
               className="flex-1 px-4 py-3 rounded-xl border-2 border-green-200 bg-white text-[14px] font-mono tracking-wider outline-none focus:border-green-400 focus:ring-2 focus:ring-green-100 transition-all placeholder:text-slate-300"
             />
