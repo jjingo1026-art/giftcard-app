@@ -232,7 +232,10 @@ export default function ReservationCheck() {
   function EditSection() {
     if (!canModify) return null;
     if (tooLateToEdit) return (
-      <p className="text-[12px] text-slate-400 text-center py-2">예약 1시간 전까지만 취소할 수 있습니다.</p>
+      <div className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 flex items-center gap-2">
+        <span className="text-[16px]">⏰</span>
+        <p className="text-[13px] font-semibold text-amber-700">예약 1시간 전까지만 취소할 수 있습니다.</p>
+      </div>
     );
     if (editMode) return (
       <form onSubmit={submitEdit} className="bg-white rounded-2xl border border-indigo-100 shadow-sm overflow-hidden">
