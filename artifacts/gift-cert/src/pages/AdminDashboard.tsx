@@ -408,12 +408,26 @@ export default function AdminDashboard() {
 
       <header className="bg-white border-b border-slate-100 sticky top-0 z-40 shadow-sm">
         <div className="max-w-2xl mx-auto px-4 pt-3 pb-2.5">
-          {/* 1행: 제목 + 스피커 */}
-          <div className="flex items-center justify-between mb-2.5">
-            <div>
+          {/* 1행: 제목 + 설정버튼들 + 스피커 */}
+          <div className="flex items-center gap-2 mb-2.5">
+            <div className="flex-1 min-w-0">
               <h1 className="text-[16px] font-black text-slate-800">관리자 대시보드</h1>
               {allEntries.length > 0 && <p className="text-[11px] text-slate-400 mt-0.5">총 {allEntries.length}건</p>}
             </div>
+            <button
+              onClick={() => { window.location.href = "/admin/site-settings.html"; }}
+              className="flex items-center gap-1 text-[11px] font-bold text-slate-600 hover:text-slate-800 px-2 py-1.5 rounded-xl bg-slate-50 hover:bg-slate-100 border border-slate-200 transition-all flex-shrink-0"
+              title="사이트 설정"
+            >
+              🖊️ 사이트설정
+            </button>
+            <button
+              onClick={() => { window.location.href = "/admin/settings.html"; }}
+              className="flex items-center gap-1 text-[11px] font-bold text-slate-600 hover:text-slate-800 px-2 py-1.5 rounded-xl bg-slate-50 hover:bg-slate-100 border border-slate-200 transition-all flex-shrink-0"
+              title="계정 설정"
+            >
+              ⚙️ 계정설정
+            </button>
             <SoundBell role="admin" />
           </div>
           {/* 2행: 버튼들 */}
@@ -461,22 +475,6 @@ export default function AdminDashboard() {
                 className="flex-1 flex items-center justify-center gap-1 text-[11px] font-bold text-indigo-500 hover:text-indigo-700 px-1.5 py-1.5 rounded-xl bg-indigo-50 hover:bg-indigo-100 border border-indigo-200 transition-all"
               >
                 👨‍🔧 담당자별
-              </button>
-              {/* 사이트설정 */}
-              <button
-                onClick={() => { window.location.href = "/admin/site-settings.html"; }}
-                className="flex-1 flex items-center justify-center gap-1 text-[11px] font-bold text-slate-600 hover:text-slate-800 px-1.5 py-1.5 rounded-xl bg-slate-50 hover:bg-slate-100 border border-slate-200 transition-all"
-                title="사이트 설정"
-              >
-                🖊️ 사이트설정
-              </button>
-              {/* 계정설정 */}
-              <button
-                onClick={() => { window.location.href = "/admin/settings.html"; }}
-                className="flex-1 flex items-center justify-center gap-1 text-[11px] font-bold text-slate-600 hover:text-slate-800 px-1.5 py-1.5 rounded-xl bg-slate-50 hover:bg-slate-100 border border-slate-200 transition-all"
-                title="계정 설정"
-              >
-                ⚙️ 계정설정
               </button>
               {/* 로그아웃 */}
               <button
