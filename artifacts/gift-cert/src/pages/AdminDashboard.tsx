@@ -417,7 +417,7 @@ export default function AdminDashboard() {
             {/* 모바일 대시보드 이동 버튼 */}
             <button
               onClick={() => { window.location.href = "/admin/mobile"; }}
-              className="text-[12px] font-bold text-violet-600 hover:text-violet-800 px-3 py-1.5 rounded-xl bg-violet-50 hover:bg-violet-100 transition-all flex items-center gap-1 border border-violet-200"
+              className="text-[12px] font-bold text-violet-600 hover:text-violet-800 px-3 py-1.5 rounded-xl bg-violet-50 hover:bg-violet-100 transition-all flex items-center gap-1.5 border border-violet-200"
               title="모바일상품권 관리"
             >
               <span>📱</span> 모바일
@@ -425,10 +425,10 @@ export default function AdminDashboard() {
             {/* 채팅 목록 버튼 */}
             <button
               onClick={() => { window.location.href = "/admin/chats"; }}
-              className="relative flex items-center gap-1.5 text-[13px] text-indigo-600 hover:text-indigo-800 font-bold transition-colors px-4 py-2 rounded-xl hover:bg-indigo-50 border border-indigo-200 bg-indigo-50/60"
+              className="relative flex items-center gap-1.5 text-[12px] text-indigo-600 hover:text-indigo-800 font-bold transition-all px-3 py-1.5 rounded-xl hover:bg-indigo-100 border border-indigo-200 bg-indigo-50"
               title="채팅 전체 목록"
             >
-              <span className="text-[16px]">💬</span>
+              <span>💬</span>
               <span>채팅</span>
               {chatInbox.reduce((s, c) => s + c.unreadCount, 0) > 0 && (
                 <span className="absolute -top-1.5 -right-1.5 min-w-[20px] h-[20px] rounded-full bg-rose-500 text-white text-[10px] font-black flex items-center justify-center px-1 leading-none">
