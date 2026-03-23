@@ -814,6 +814,30 @@ function HomePage({ onGoUrgent, initialType = DEFAULT_TYPE, onTypeChange, rateGr
               </div>
             </div>
 
+            {(() => {
+              const missing: string[] = [];
+              if (!name.trim()) missing.push("성명");
+              if (!phone.trim()) missing.push("연락처");
+              if (!date) missing.push("날짜");
+              else if (date < new Date().toISOString().split("T")[0]) missing.push("날짜(지난 날짜 불가)");
+              if (!time || !isValidTime(time)) missing.push("시간");
+              if (!locationMain.trim()) missing.push("거래 장소");
+              if (!bankName) missing.push("은행");
+              if (!accountNumber.trim()) missing.push("계좌번호");
+              if (!accountHolder.trim()) missing.push("예금주");
+              if (!agreeMatch) missing.push("신청자·예금주 동일 확인");
+              if (items.some((it) => (parseFloat(it.amount) || 0) <= 0)) missing.push("상품권 금액");
+              if (customerPin && (!/^\d{4}$/.test(customerPin) || customerPin !== customerPinConfirm)) missing.push("비밀번호 확인");
+              if (missing.length === 0) return null;
+              return (
+                <div className="rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 space-y-1">
+                  <p className="text-[12px] font-bold text-amber-700">⚠ 아래 항목을 입력해야 신청이 완료됩니다</p>
+                  <ul className="text-[12px] text-amber-600 space-y-0.5">
+                    {missing.map((m) => <li key={m}>• {m}</li>)}
+                  </ul>
+                </div>
+              );
+            })()}
             <p className="text-[12px] text-slate-400 text-center">입력하신 정보는 예약 및 거래 진행 목적으로만 사용됩니다.</p>
             <button type="submit" className="w-full py-4 rounded-2xl text-white text-[15px] font-bold transition-all duration-150 active:scale-95" style={{ background: "linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%)" }}>
               {getLabel("reservation_submit", userLang)}
@@ -1294,6 +1318,27 @@ function UrgentPage({ onBack, initialType = DEFAULT_TYPE }: { onBack: () => void
               </div>
             </div>
 
+            {(() => {
+              const missing: string[] = [];
+              if (!name.trim()) missing.push("성명");
+              if (!phone.trim()) missing.push("연락처");
+              if (!locationMain.trim()) missing.push("거래 장소");
+              if (!bankName) missing.push("은행");
+              if (!accountNumber.trim()) missing.push("계좌번호");
+              if (!accountHolder.trim()) missing.push("예금주");
+              if (!agreeMatch) missing.push("신청자·예금주 동일 확인");
+              if (items.some((it) => (parseFloat(it.amount) || 0) <= 0)) missing.push("상품권 금액");
+              if (customerPin && (!/^\d{4}$/.test(customerPin) || customerPin !== customerPinConfirm)) missing.push("비밀번호 확인");
+              if (missing.length === 0) return null;
+              return (
+                <div className="rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 space-y-1">
+                  <p className="text-[12px] font-bold text-amber-700">⚠ 아래 항목을 입력해야 신청이 완료됩니다</p>
+                  <ul className="text-[12px] text-amber-600 space-y-0.5">
+                    {missing.map((m) => <li key={m}>• {m}</li>)}
+                  </ul>
+                </div>
+              );
+            })()}
             <p className="text-[12px] text-slate-400 text-center">입력하신 정보는 예약 및 거래 진행 목적으로만 사용됩니다.</p>
             <button type="submit" className="w-full py-4 rounded-2xl text-white text-[15px] font-bold transition-all duration-150 active:scale-95 flex items-center justify-center gap-2" style={{ background: "linear-gradient(135deg, #f43f5e 0%, #e11d48 100%)" }}>
               <span>🚨</span> {getLabel("urgent_sell_submit", urgentLang)}

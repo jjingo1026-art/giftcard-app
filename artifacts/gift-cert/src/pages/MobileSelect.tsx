@@ -2297,6 +2297,27 @@ export default function MobileSelect() {
           </div>
         )}
 
+        {(() => {
+          const missing: string[] = [];
+          if (!name.trim() || !/^[가-힣a-zA-Z\s]+$/.test(name.trim())) missing.push("성명");
+          if (!/^010-\d{4}-\d{4}$/.test(phone)) missing.push("연락처(010-XXXX-XXXX)");
+          if (items.some((it) => !parseAmt(it.amount))) missing.push("상품권 금액");
+          if (!bankName) missing.push("은행");
+          if (!accountNumber.trim()) missing.push("계좌번호");
+          if (!accountHolder.trim() || !/^[가-힣a-zA-Z\s]+$/.test(accountHolder.trim())) missing.push("예금주");
+          if (customerPin.length !== 4) missing.push("조회 비밀번호(4자리)");
+          else if (customerPinConfirm.length !== 4 || customerPin !== customerPinConfirm) missing.push("비밀번호 확인");
+          if (!agreeMatch) missing.push("신청자·예금주 동일 확인");
+          if (missing.length === 0) return null;
+          return (
+            <div className="rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 space-y-1">
+              <p className="text-[12px] font-bold text-amber-700">⚠ 아래 항목을 입력해야 신청이 완료됩니다</p>
+              <ul className="text-[12px] text-amber-600 space-y-0.5">
+                {missing.map((m) => <li key={m}>• {m}</li>)}
+              </ul>
+            </div>
+          );
+        })()}
         <p className="text-[12px] text-slate-400 text-center">입력하신 정보는 예약 및 거래 진행 목적으로만 사용됩니다.</p>
         <button
           type="submit"
