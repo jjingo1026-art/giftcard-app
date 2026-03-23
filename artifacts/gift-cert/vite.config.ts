@@ -65,6 +65,29 @@ export default defineConfig({
             purpose: "maskable",
           },
         ],
+        shortcuts: [
+          {
+            name: "관리자 로그인",
+            short_name: "관리자",
+            description: "관리자 전용 로그인 페이지",
+            url: "/admin/login",
+            icons: [{ src: "pwa-192x192.png", sizes: "192x192" }],
+          },
+          {
+            name: "매입담당자 로그인",
+            short_name: "담당자",
+            description: "매입담당자 전용 로그인 페이지",
+            url: "/staff/login",
+            icons: [{ src: "pwa-192x192.png", sizes: "192x192" }],
+          },
+          {
+            name: "관리자 대시보드",
+            short_name: "대시보드",
+            description: "관리자 대시보드",
+            url: "/admin/dashboard",
+            icons: [{ src: "pwa-192x192.png", sizes: "192x192" }],
+          },
+        ],
       },
       workbox: {
         globPatterns: ["**/*.{js,css,html,ico,png,svg,woff2}"],
