@@ -307,7 +307,6 @@ export default function MobileCheck() {
                   className="w-full py-3.5 rounded-2xl text-white text-[14px] font-bold transition-all active:scale-[0.98] flex items-center justify-center gap-2 shadow-sm"
                   style={{ background: "linear-gradient(135deg,#7c3aed,#6d28d9)" }}
                 >
-                  <span>💬</span>
                   {getLabel("mobile_chat_btn", lang)}
                 </button>
               )}
