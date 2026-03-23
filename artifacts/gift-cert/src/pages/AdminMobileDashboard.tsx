@@ -333,17 +333,17 @@ export default function AdminMobileDashboard() {
       {/* 헤더 */}
       <header className="bg-white border-b border-violet-100 sticky top-0 z-40 shadow-sm">
         <div className="max-w-2xl mx-auto px-4 pt-3 pb-2.5">
-          {/* 1행: 제목 */}
+          {/* 1행: 제목 + 스피커 */}
           <div className="flex items-center gap-2.5 mb-2.5">
             <span className="text-[20px]">📱</span>
-            <div>
+            <div className="flex-1">
               <h1 className="text-[16px] font-black text-slate-800">모바일상품권 관리</h1>
               <p className="text-[11px] text-slate-400 mt-0.5">총 {entries.length}건</p>
             </div>
+            <SoundBell role="admin" />
           </div>
           {/* 2행: 버튼들 */}
           <div className="flex items-center gap-1.5">
-            <SoundBell role="admin" />
             <div className="flex-1 flex items-center gap-1.5">
               {/* 채팅 */}
               <button
