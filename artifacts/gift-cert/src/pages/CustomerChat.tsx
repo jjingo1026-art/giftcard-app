@@ -5,6 +5,33 @@ import { LANGUAGES, getTranslated, getSavedLang, saveLang } from "@/lib/language
 import { getSoundEnabled, playNotificationSound } from "@/lib/notificationSound";
 import SoundBell from "@/components/SoundBell";
 
+async function downloadImage(url: string) {
+  try {
+    const resp = await fetch(url);
+    const blob = await resp.blob();
+    const ext = (blob.type.split("/")[1] || "jpg").replace("jpeg", "jpg");
+    const today = new Date().toISOString().slice(0, 10);
+    const filename = `우리동네상품권이미지_${today}_${Date.now()}.${ext}`;
+
+    const isMobile = /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
+    if (isMobile && navigator.canShare) {
+      const file = new File([blob], filename, { type: blob.type });
+      if (navigator.canShare({ files: [file] })) {
+        await navigator.share({ files: [file], title: "우리동네상품권 이미지" });
+        return;
+      }
+    }
+
+    const a = document.createElement("a");
+    a.href = URL.createObjectURL(blob);
+    a.download = filename;
+    a.click();
+    URL.revokeObjectURL(a.href);
+  } catch {
+    window.open(url, "_blank");
+  }
+}
+
 interface Message {
   id: number;
   sender: string;
@@ -197,15 +224,26 @@ export default function CustomerChat() {
                         className="w-[60px] h-[60px] rounded-xl object-cover cursor-pointer border border-slate-200 flex-shrink-0"
                         onClick={() => window.open(imgUrl, "_blank")}
                       />
-                      <button
-                        onClick={() => window.open(imgUrl, "_blank")}
-                        className="flex items-center gap-1 px-2 py-1 rounded-lg bg-white text-slate-600 text-[10px] font-bold border border-slate-200 hover:bg-slate-100 active:scale-95 transition-all"
-                      >
-                        <svg width="10" height="10" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-                          <path d="M10 2v12m0 0l-4-4m4 4l4-4M3 17h14"/>
-                        </svg>
-                        보기
-                      </button>
+                      <div className="flex flex-col gap-1">
+                        <button
+                          onClick={() => window.open(imgUrl, "_blank")}
+                          className="flex items-center gap-1 px-2 py-1 rounded-lg bg-white text-slate-600 text-[10px] font-bold border border-slate-200 hover:bg-slate-100 active:scale-95 transition-all"
+                        >
+                          <svg width="10" height="10" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+                            <path d="M3 3h14v14H3z"/>
+                          </svg>
+                          보기
+                        </button>
+                        <button
+                          onClick={() => downloadImage(imgUrl)}
+                          className="flex items-center gap-1 px-2 py-1 rounded-lg bg-blue-50 text-blue-600 text-[10px] font-bold border border-blue-200 hover:bg-blue-100 active:scale-95 transition-all"
+                        >
+                          <svg width="10" height="10" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+                            <path d="M4 14v3h12v-3M10 3v9m0 0l-3-3m3 3l3-3"/>
+                          </svg>
+                          저장
+                        </button>
+                      </div>
                     </div>
                   ) : (
                     <>
