@@ -332,46 +332,53 @@ export default function AdminMobileDashboard() {
 
       {/* 헤더 */}
       <header className="bg-white border-b border-violet-100 sticky top-0 z-40 shadow-sm">
-        <div className="max-w-2xl mx-auto px-4 py-3.5 flex items-center justify-between">
-          <div className="flex items-center gap-2.5">
+        <div className="max-w-2xl mx-auto px-4 pt-3 pb-2.5">
+          {/* 1행: 제목 */}
+          <div className="flex items-center gap-2.5 mb-2.5">
             <span className="text-[20px]">📱</span>
             <div>
-              <h1 className="text-[16px] font-bold text-slate-800">모바일상품권 관리</h1>
+              <h1 className="text-[16px] font-black text-slate-800">모바일상품권 관리</h1>
               <p className="text-[11px] text-slate-400 mt-0.5">총 {entries.length}건</p>
             </div>
           </div>
+          {/* 2행: 버튼들 */}
           <div className="flex items-center gap-1.5">
             <SoundBell role="admin" />
-            {/* 채팅 전체 목록 버튼 */}
-            <button
-              onClick={() => { window.location.href = "/admin/chats"; }}
-              className="relative flex items-center gap-1.5 text-[12px] text-indigo-600 hover:text-indigo-800 font-bold transition-all px-3 py-1.5 rounded-xl hover:bg-indigo-100 border border-indigo-200 bg-indigo-50"
-              title="채팅 전체 목록"
-            >
-              <span>💬</span>
-              <span>채팅</span>
-              {totalUnread > 0 && (
-                <span className="absolute -top-1.5 -right-1.5 min-w-[20px] h-[20px] rounded-full bg-rose-500 text-white text-[10px] font-black flex items-center justify-center px-1 leading-none">
-                  {totalUnread}
-                </span>
-              )}
-            </button>
-            <button
-              onClick={() => navigate("/admin/dashboard")}
-              className="text-[12px] font-bold text-slate-600 hover:text-slate-800 px-3 py-1.5 rounded-xl bg-slate-100 hover:bg-slate-200 transition-all flex items-center gap-1.5"
-            >
-              <span>📄</span> 지류
-            </button>
-            <button
-              onClick={() => setViewMode((m) => m === "settings" ? "list" : "settings")}
-              className={`text-[12px] font-bold transition-all px-3 py-1.5 rounded-xl flex items-center gap-1.5
-                ${viewMode === "settings" ? "bg-violet-100 text-violet-700 border border-violet-200" : "text-slate-600 hover:text-slate-800 bg-slate-100 hover:bg-slate-200"}`}
-              title="모바일 설정"
-            >⚙️ 설정</button>
-            <button
-              onClick={() => { clearAdminToken(); navigate("/admin/login"); }}
-              className="text-[12px] text-slate-400 hover:text-rose-500 font-semibold transition-colors px-3 py-1.5 rounded-xl hover:bg-rose-50"
-            >로그아웃</button>
+            <div className="flex-1 flex items-center gap-1.5">
+              {/* 채팅 */}
+              <button
+                onClick={() => { window.location.href = "/admin/chats"; }}
+                className="relative flex-1 flex items-center justify-center gap-1 text-[12px] text-indigo-600 font-bold transition-all px-2 py-1.5 rounded-xl bg-indigo-50 hover:bg-indigo-100 border border-indigo-200"
+                title="채팅 전체 목록"
+              >
+                <span>💬</span>
+                <span>채팅</span>
+                {totalUnread > 0 && (
+                  <span className="absolute -top-1.5 -right-1 min-w-[18px] h-[18px] rounded-full bg-rose-500 text-white text-[9px] font-black flex items-center justify-center px-1 leading-none">
+                    {totalUnread}
+                  </span>
+                )}
+              </button>
+              {/* 지류 */}
+              <button
+                onClick={() => navigate("/admin/dashboard")}
+                className="flex-1 flex items-center justify-center gap-1 text-[12px] font-bold text-slate-600 hover:text-slate-800 px-2 py-1.5 rounded-xl bg-slate-100 hover:bg-slate-200 transition-all"
+              >
+                <span>📄</span> 지류
+              </button>
+              {/* 설정 */}
+              <button
+                onClick={() => setViewMode((m) => m === "settings" ? "list" : "settings")}
+                className={`flex-1 flex items-center justify-center gap-1 text-[12px] font-bold transition-all px-2 py-1.5 rounded-xl
+                  ${viewMode === "settings" ? "bg-violet-100 text-violet-700 border border-violet-200" : "text-slate-600 bg-slate-100 hover:bg-slate-200"}`}
+                title="모바일 설정"
+              >⚙️ 설정</button>
+              {/* 로그아웃 */}
+              <button
+                onClick={() => { clearAdminToken(); navigate("/admin/login"); }}
+                className="flex-1 flex items-center justify-center gap-1 text-[12px] text-slate-500 hover:text-rose-500 font-semibold transition-colors px-2 py-1.5 rounded-xl hover:bg-rose-50"
+              >🚪 로그아웃</button>
+            </div>
           </div>
         </div>
       </header>
