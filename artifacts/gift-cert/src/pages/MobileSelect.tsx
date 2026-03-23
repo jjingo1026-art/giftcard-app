@@ -935,6 +935,8 @@ function MobileVoucherItems({
   mobileSettings,
   isCultureFlow,
   onCultureTypeChange,
+  isBooknlifeFlow,
+  onBooknlifeTypeChange,
   onAdd,
   onRemove,
 }: {
@@ -980,6 +982,8 @@ function MobileVoucherItems({
   mobileSettings: { lottePhone: string; naverUserId: string; culturePhone: string };
   isCultureFlow: boolean;
   onCultureTypeChange: (type: string) => void;
+  isBooknlifeFlow: boolean;
+  onBooknlifeTypeChange: (type: string) => void;
   onAdd: () => void;
   onRemove: (idx: number) => void;
 }) {
@@ -997,11 +1001,43 @@ function MobileVoucherItems({
   ];
   const activeCultureType = items.find((it) => it.type.startsWith("컬쳐랜드"))?.type ?? "컬쳐랜드 상품권";
 
+  const BOOKNLIFE_TYPES = [
+    { label: "북앤라이프 도서문화상품권", short: "도서문화상품권" },
+    { label: "북앤라이프 교환권", short: "교환권" },
+  ];
+  const activeBooknlifeType = items.find((it) => it.type.startsWith("북앤라이프"))?.type ?? "북앤라이프 도서문화상품권";
+
   return (
     <div className="space-y-2">
       <label className="block text-[13px] font-semibold text-slate-500 tracking-wide uppercase">
         상품권 종류 &amp; 금액 <span className="text-rose-400 normal-case tracking-normal">*</span>
       </label>
+
+      {/* 북앤라이프 서브 타입 선택 */}
+      {isBooknlifeFlow && (
+        <div className="rounded-2xl border-2 border-violet-200 bg-violet-50 p-3 space-y-2">
+          <p className="text-[12px] font-bold text-violet-600">📖 북앤라이프 도서문화상품권·교환권 중 선택하세요</p>
+          <div className="flex gap-2">
+            {BOOKNLIFE_TYPES.map((bt) => {
+              const isActive = activeBooknlifeType === bt.label;
+              return (
+                <button
+                  key={bt.label}
+                  type="button"
+                  onClick={() => onBooknlifeTypeChange(bt.label)}
+                  className={`flex-1 py-2.5 rounded-xl text-[13px] font-bold transition-all active:scale-95
+                    ${isActive
+                      ? "bg-violet-600 text-white shadow-sm"
+                      : "bg-white text-violet-600 border-2 border-violet-200 hover:bg-violet-100"
+                    }`}
+                >
+                  {bt.short}
+                </button>
+              );
+            })}
+          </div>
+        </div>
+      )}
 
       {/* 컬쳐랜드 서브 타입 선택 */}
       {isCultureFlow && (
@@ -1423,6 +1459,7 @@ export default function MobileSelect() {
   const [errorMsg, setErrorMsg] = useState("");
   const [mobileSettings, setMobileSettings] = useState({ lottePhone: "010-7190-9534", naverUserId: "jjingo1026", culturePhone: "" });
   const isCultureFlow = initialType.startsWith("컬쳐랜드");
+  const isBooknlifeFlow = initialType.startsWith("북앤라이프");
 
   useEffect(() => {
     fetch(`${base}/api/site-settings`)
@@ -1453,6 +1490,12 @@ export default function MobileSelect() {
   function handleCultureTypeChange(type: string) {
     setItems((prev) => prev.map((it) =>
       it.type.startsWith("컬쳐랜드") ? { ...it, type, checkedSubs: [], voucherNumber: "" } : it
+    ));
+  }
+
+  function handleBooknlifeTypeChange(type: string) {
+    setItems((prev) => prev.map((it) =>
+      it.type.startsWith("북앤라이프") ? { ...it, type, checkedSubs: [], voucherNumber: "" } : it
     ));
   }
 
@@ -1984,6 +2027,8 @@ export default function MobileSelect() {
             mobileSettings={mobileSettings}
             isCultureFlow={isCultureFlow}
             onCultureTypeChange={handleCultureTypeChange}
+            isBooknlifeFlow={isBooknlifeFlow}
+            onBooknlifeTypeChange={handleBooknlifeTypeChange}
             onAdd={handleAddItem}
             onRemove={handleRemoveItem}
           />
