@@ -1,0 +1,21 @@
+<svg width="512" height="512" viewBox="0 0 512 512" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <rect width="512" height="512" rx="100" fill="#FF3C00"/>
+  <!-- 상품권 카드 모양 -->
+  <rect x="80" y="160" width="352" height="220" rx="24" fill="white" fill-opacity="0.95"/>
+  <!-- 카드 상단 띠 -->
+  <rect x="80" y="160" width="352" height="60" rx="24" fill="#FF3C00"/>
+  <rect x="80" y="195" width="352" height="25" fill="#FF3C00"/>
+  <!-- 별 아이콘 / 상품권 별표 -->
+  <circle cx="256" cy="190" r="16" fill="white" fill-opacity="0.9"/>
+  <!-- 줄 장식 -->
+  <rect x="110" y="255" width="200" height="12" rx="6" fill="#FF3C00" fill-opacity="0.2"/>
+  <rect x="110" y="280" width="140" height="12" rx="6" fill="#FF3C00" fill-opacity="0.15"/>
+  <!-- 금액 표시 영역 -->
+  <rect x="300" y="248" width="112" height="56" rx="12" fill="#FF3C00" fill-opacity="0.1"/>
+  <rect x="316" y="262" width="80" height="10" rx="5" fill="#FF3C00" fill-opacity="0.3"/>
+  <rect x="316" y="280" width="60" height="10" rx="5" fill="#FF3C00" fill-opacity="0.2"/>
+  <!-- 리본 장식 -->
+  <circle cx="256" cy="160" r="20" fill="#FFD700"/>
+  <rect x="248" y="140" width="16" height="40" rx="8" fill="#FFD700"/>
+  <rect x="236" y="148" width="40" height="16" rx="8" fill="#FFD700"/>
+</svg>
