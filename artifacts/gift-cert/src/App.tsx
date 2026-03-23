@@ -1094,7 +1094,6 @@ function UrgentPage({ onBack, initialType = DEFAULT_TYPE }: { onBack: () => void
   const [fieldErrors, setFieldErrors] = useState<{ name?: string; phone?: string; locationMain?: string; bankName?: string; accountNumber?: string; accountHolder?: string; agreeMatch?: string; pin?: string }>({});
   const [itemErrors, setItemErrors] = useState<string[]>([""]);
   const [agreeMatch, setAgreeMatch] = useState(false);
-  const [termsAgreed, setTermsAgreed] = useState(false);
   const [submissions, setSubmissions] = useState<UrgentEntry[]>([]);
   const [toast, setToast] = useState(false);
   const [errorMsg, setErrorMsg] = useState("");
@@ -1122,7 +1121,6 @@ function UrgentPage({ onBack, initialType = DEFAULT_TYPE }: { onBack: () => void
     if (!accountNumber.trim()) fe.accountNumber = "계좌번호를 입력해주세요";
     if (!accountHolder.trim()) fe.accountHolder = "예금주를 입력해주세요";
     if (!agreeMatch) fe.agreeMatch = "신청자와 예금주 동일 여부를 확인해주세요";
-    if (!termsAgreed) (fe as Record<string, string>).termsAgreed = "이용약관에 동의해주세요";
     if (customerPin && !/^\d{4}$/.test(customerPin)) fe.pin = "비밀번호는 숫자 4자리여야 합니다";
     else if (customerPin && customerPin !== customerPinConfirm) fe.pin = "비밀번호가 일치하지 않습니다";
     setFieldErrors(fe);
@@ -1371,7 +1369,6 @@ function UrgentPage({ onBack, initialType = DEFAULT_TYPE }: { onBack: () => void
               if (!accountNumber.trim()) missing.push("계좌번호");
               if (!accountHolder.trim()) missing.push("예금주");
               if (!agreeMatch) missing.push("신청자·예금주 동일 확인");
-              if (!termsAgreed) missing.push("이용약관 동의");
               if (items.some((it) => (parseFloat(it.amount) || 0) <= 0)) missing.push("상품권 금액");
               if (customerPin && (!/^\d{4}$/.test(customerPin) || customerPin !== customerPinConfirm)) missing.push("비밀번호 확인");
               if (missing.length === 0) return null;
@@ -1384,18 +1381,6 @@ function UrgentPage({ onBack, initialType = DEFAULT_TYPE }: { onBack: () => void
                 </div>
               );
             })()}
-
-            {/* 이용약관 동의 */}
-            <button
-              type="button"
-              onClick={() => setTermsAgreed(v => !v)}
-              className={`w-full flex items-center gap-3 px-4 py-3 rounded-2xl border transition-colors ${termsAgreed ? "border-emerald-300 bg-emerald-50" : "border-slate-200 bg-white"}`}
-            >
-              <span className={`w-5 h-5 rounded-md border-2 flex items-center justify-center flex-shrink-0 transition-colors ${termsAgreed ? "bg-emerald-500 border-emerald-500" : "border-slate-300"}`}>
-                {termsAgreed && <span className="text-white text-[11px] font-bold">✓</span>}
-              </span>
-              <span className={`text-[13px] font-semibold ${termsAgreed ? "text-emerald-700" : "text-slate-700"}`}>이용약관에 동의합니다 <span className="text-rose-400">(필수)</span></span>
-            </button>
 
             <p className="text-[12px] text-slate-400 text-center">입력하신 정보는 예약 및 거래 진행 목적으로만 사용됩니다.</p>
             <button type="submit" className="w-full py-4 rounded-2xl text-white text-[15px] font-bold transition-all duration-150 active:scale-95 flex items-center justify-center gap-2" style={{ background: "linear-gradient(135deg, #f43f5e 0%, #e11d48 100%)" }}>
