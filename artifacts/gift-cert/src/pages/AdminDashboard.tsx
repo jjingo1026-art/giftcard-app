@@ -408,16 +408,16 @@ export default function AdminDashboard() {
 
       <header className="bg-white border-b border-slate-100 sticky top-0 z-40 shadow-sm">
         <div className="max-w-2xl mx-auto px-4 pt-3 pb-2.5">
-          {/* 1행: 제목 */}
+          {/* 1행: 제목 + 스피커 */}
           <div className="flex items-center justify-between mb-2.5">
             <div>
               <h1 className="text-[16px] font-black text-slate-800">관리자 대시보드</h1>
               {allEntries.length > 0 && <p className="text-[11px] text-slate-400 mt-0.5">총 {allEntries.length}건</p>}
             </div>
+            <SoundBell role="admin" />
           </div>
           {/* 2행: 버튼들 */}
           <div className="flex items-center gap-1.5">
-            <SoundBell role="admin" />
             <div className="flex-1 flex items-center gap-1">
               {/* 모바일 */}
               <button
