@@ -337,7 +337,7 @@ export default function StaffCard() {
                   </span>
                 )}
               </div>
-              <span className="text-[10px] font-bold text-indigo-500">채팅하기</span>
+              <span className="text-[10px] font-bold text-indigo-500">채팅</span>
             </button>
           )}
         </div>
