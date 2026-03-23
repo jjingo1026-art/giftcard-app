@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Link } from "wouter";
 import { getNextId, saveEntry, formatDateKo, formatPhoneInput } from "@/lib/store";
 import { LANGUAGES, getSavedLang, saveLang } from "@/lib/languages";
@@ -375,6 +375,7 @@ function HomePage({ onGoUrgent, initialType = DEFAULT_TYPE, onTypeChange, rateGr
   const [agreedPrivacy] = useState(() => new URLSearchParams(window.location.search).get("agreed") === "1");
   const [showForm, setShowForm] = useState(() => new URLSearchParams(window.location.search).get("agreed") === "1");
   const [userLang, setUserLang] = useState(() => getSavedLang());
+  const submissionsRef = useRef<HTMLDivElement>(null);
   const [langPickerOpen, setLangPickerOpen] = useState(false);
   const [customerPin, setCustomerPin] = useState("");
   const [customerPinConfirm, setCustomerPinConfirm] = useState("");
@@ -445,6 +446,7 @@ function HomePage({ onGoUrgent, initialType = DEFAULT_TYPE, onTypeChange, rateGr
     setName(""); setPhone(""); setDate(""); setTime(""); setLocationMain(""); setLocationDetail(""); setAccountNumber(""); setAccountHolder("");
     setItems([{ type: DEFAULT_TYPE, amount: "", isGift: false }]); setItemErrors([""]);
     setToast(true); setTimeout(() => setToast(false), 3000);
+    setTimeout(() => submissionsRef.current?.scrollIntoView({ behavior: "smooth", block: "start" }), 150);
   }
 
   return (
@@ -847,6 +849,7 @@ function HomePage({ onGoUrgent, initialType = DEFAULT_TYPE, onTypeChange, rateGr
         ))}
 
         {/* Submissions */}
+        <div ref={submissionsRef} />
         {submissions.length > 0 && (
           <div className="space-y-3">
             <div className="flex items-center gap-2 px-1 pt-1">
@@ -1065,6 +1068,7 @@ function UrgentPage({ onBack, initialType = DEFAULT_TYPE }: { onBack: () => void
   const [customerPin, setCustomerPin] = useState("");
   const [customerPinConfirm, setCustomerPinConfirm] = useState("");
   const urgentLang = getSavedLang();
+  const submissionsRef = useRef<HTMLDivElement>(null);
 
   function addItem() { setItems((p) => [...p, { type: DEFAULT_TYPE, amount: "", isGift: false }]); setItemErrors((p) => [...p, ""]); }
   function removeItem(idx: number) { setItems((p) => p.filter((_, i) => i !== idx)); setItemErrors((p) => p.filter((_, i) => i !== idx)); }
@@ -1128,6 +1132,7 @@ function UrgentPage({ onBack, initialType = DEFAULT_TYPE }: { onBack: () => void
     setName(""); setPhone(""); setLocationMain(""); setLocationDetail(""); setAccountNumber(""); setAccountHolder("");
     setItems([{ type: DEFAULT_TYPE, amount: "", isGift: false }]); setItemErrors([""]); setAgreeMatch(false);
     setToast(true); setTimeout(() => setToast(false), 3000);
+    setTimeout(() => submissionsRef.current?.scrollIntoView({ behavior: "smooth", block: "start" }), 150);
   }
 
   return (
@@ -1346,6 +1351,7 @@ function UrgentPage({ onBack, initialType = DEFAULT_TYPE }: { onBack: () => void
           </form>
         </div>
 
+        <div ref={submissionsRef} />
         {submissions.length > 0 && (
           <div className="space-y-3">
             <div className="flex items-center gap-2 px-1 pt-1">
