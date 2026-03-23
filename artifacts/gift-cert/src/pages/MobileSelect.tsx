@@ -1010,24 +1010,43 @@ function MobileVoucherItems({
                 {items.filter((i) => i.type === "롯데모바일" && i.checkedSubs.includes("23으로 시작하는 교환권")).length > 1 && (
                   <p className="text-[11px] font-semibold text-orange-600">항목 {idx + 1}</p>
                 )}
-                <div className="relative">
-                  <input
-                    type="text"
-                    inputMode="numeric"
-                    value={it.voucherNumber}
-                    onChange={(e) => onVoucherNumberChange(idx, e.target.value.replace(/[^0-9]/g, "").slice(0, 16))}
-                    placeholder="교환권 번호 16자리 입력"
-                    maxLength={16}
-                    className={`w-full px-4 py-3 rounded-xl border-2 bg-white text-[14px] font-mono tracking-wider outline-none transition-all placeholder:text-slate-300
-                      ${it.voucherNumber.length > 0 && it.voucherNumber.length !== 16
-                        ? "border-amber-400 focus:border-amber-500 focus:ring-2 focus:ring-amber-100"
-                        : "border-orange-200 focus:border-orange-400 focus:ring-2 focus:ring-orange-100"}`}
-                  />
-                  <span className={`absolute right-3 top-1/2 -translate-y-1/2 text-[11px] font-bold tabular-nums
-                    ${it.voucherNumber.length === 16 ? "text-orange-500" : it.voucherNumber.length > 0 ? "text-amber-500" : "text-slate-300"}`}>
-                    {it.voucherNumber.length}/16
-                  </span>
+                {/* "23" 고정 접두사 + 나머지 14자리 입력 */}
+                <div className={`flex items-center rounded-xl border-2 bg-white overflow-hidden transition-all
+                  ${it.voucherNumber.length > 0 && it.voucherNumber.length !== 16
+                    ? "border-amber-400"
+                    : it.voucherNumber.length === 16
+                    ? "border-orange-400"
+                    : "border-orange-200"}`}>
+                  {/* 고정 "23" 접두사 */}
+                  <div className="flex items-center justify-center px-3 py-3 bg-orange-100 border-r-2 border-orange-200 flex-shrink-0 select-none">
+                    <span className="text-[15px] font-black font-mono text-orange-600 tracking-wider">23</span>
+                  </div>
+                  {/* 나머지 14자리 입력 */}
+                  <div className="flex-1 relative">
+                    <input
+                      type="text"
+                      inputMode="numeric"
+                      value={it.voucherNumber.startsWith("23") ? it.voucherNumber.slice(2) : it.voucherNumber}
+                      onChange={(e) => {
+                        const suffix = e.target.value.replace(/[^0-9]/g, "").slice(0, 14);
+                        onVoucherNumberChange(idx, "23" + suffix);
+                      }}
+                      placeholder="나머지 14자리 입력"
+                      maxLength={14}
+                      className="w-full px-3 py-3 pr-14 text-[14px] font-mono tracking-wider outline-none bg-transparent placeholder:text-slate-300"
+                    />
+                    <span className={`absolute right-3 top-1/2 -translate-y-1/2 text-[11px] font-bold tabular-nums
+                      ${it.voucherNumber.length === 16 ? "text-orange-500" : it.voucherNumber.length > 0 ? "text-amber-500" : "text-slate-300"}`}>
+                      {it.voucherNumber.length}/16
+                    </span>
+                  </div>
                 </div>
+                {/* 전체 번호 미리보기 */}
+                {it.voucherNumber.length > 2 && (
+                  <p className="text-[11px] text-orange-600 font-semibold font-mono px-1">
+                    입력된 번호: <span className="text-orange-700">{it.voucherNumber}</span>
+                  </p>
+                )}
               </div>
             ) : null
           )}
