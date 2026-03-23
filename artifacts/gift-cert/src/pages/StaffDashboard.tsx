@@ -30,6 +30,7 @@ interface Reservation {
   accountNumber: string;
   accountHolder: string;
   createdAt?: string;
+  completedAt?: string;
 }
 
 type Tab = "today" | "upcoming" | "completed";
@@ -305,6 +306,7 @@ export default function StaffDashboard() {
 
   const todayList = entries
     .filter((r) => {
+      if (r.status === "completed") return false;
       if (r.kind === "urgent") {
         const createdDate = r.createdAt ? r.createdAt.slice(0, 10) : null;
         return createdDate === TODAY;
@@ -318,8 +320,23 @@ export default function StaffDashboard() {
     .sort((a, b) => (a.time ?? "").localeCompare(b.time ?? ""));
 
   const completedList = entries
-    .filter((r) => r.status === "completed" && r.date && r.date >= fromDate && r.date <= toDate)
-    .sort((a, b) => ((a.date ?? "") + (a.time ?? "")).localeCompare((b.date ?? "") + (b.time ?? "")));
+    .filter((r) => {
+      if (r.status !== "completed") return false;
+      if (r.kind === "urgent") {
+        const completedDate = r.completedAt ? r.completedAt.slice(0, 10) : (r.createdAt ? r.createdAt.slice(0, 10) : null);
+        return completedDate !== null && completedDate >= fromDate && completedDate <= toDate;
+      }
+      return r.date ? r.date >= fromDate && r.date <= toDate : false;
+    })
+    .sort((a, b) => {
+      const aKey = a.kind === "urgent"
+        ? (a.completedAt ?? a.createdAt ?? "")
+        : (a.date ?? "") + (a.time ?? "");
+      const bKey = b.kind === "urgent"
+        ? (b.completedAt ?? b.createdAt ?? "")
+        : (b.date ?? "") + (b.time ?? "");
+      return aKey.localeCompare(bKey);
+    });
 
   const TABS: { key: Tab; label: string; emoji: string }[] = [
     { key: "today",     label: "오늘배정",   emoji: "📍" },
