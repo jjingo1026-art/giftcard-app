@@ -117,7 +117,10 @@ function NaverGiftInfo({ naverId = "jjingo1026" }: { naverId?: string }) {
         </button>
       </div>
 
-      <p className="text-[12px] text-green-700 font-semibold px-1">이쪽으로 보내주세요</p>
+      <div className="px-1 space-y-0.5">
+        <p className="text-[12px] text-green-700 font-semibold">이쪽으로 보내주세요</p>
+        <p className="text-[12px] text-green-600 font-semibold">선물하기 보내시고 판매신청을 완료해주세요</p>
+      </div>
 
       <div className="flex items-start gap-2 px-3 py-2.5 bg-pink-50 rounded-xl border border-pink-100">
         <span className="text-[14px] flex-shrink-0 mt-0.5">💬</span>
