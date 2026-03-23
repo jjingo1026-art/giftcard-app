@@ -456,14 +456,9 @@ export default function ReservationCheck() {
                 disabled={cancelling || tooLateToEdit}
                 className={`w-full py-3 rounded-xl border text-[14px] font-semibold transition-colors active:scale-95 disabled:opacity-60 ${tooLateToEdit ? "border-slate-200 bg-slate-50 text-slate-400 cursor-not-allowed" : "border-rose-200 text-rose-500 hover:bg-rose-50"}`}
               >
-                {cancelling ? "취소 처리 중…" : tooLateToEdit
-                  ? <span className="flex flex-col items-center gap-0.5 leading-snug">
-                      <span>⏰ 예약 1시간 전까지만 취소할 수 있습니다</span>
-                      <span className="text-[12px] font-normal">{getLabel("cancel_reservation", lang)}</span>
-                    </span>
-                  : getLabel("cancel_reservation", lang)
-                }
+                {cancelling ? "취소 처리 중…" : getLabel("cancel_reservation", lang)}
               </button>
+              <p className="mt-1.5 text-center text-[12px] text-slate-400">⏰ 예약취소는 1시간 전까지만 가능합니다</p>
             </div>
 
           </div>
@@ -547,14 +542,9 @@ export default function ReservationCheck() {
                 disabled={cancelling || tooLateToEdit}
                 className={`w-full py-3 rounded-xl border text-[14px] font-semibold transition-colors active:scale-95 disabled:opacity-60 ${tooLateToEdit ? "border-slate-200 bg-slate-50 text-slate-400 cursor-not-allowed" : "border-rose-200 text-rose-500 hover:bg-rose-50"}`}
               >
-                {cancelling ? "취소 처리 중…" : tooLateToEdit
-                  ? <span className="flex flex-col items-center gap-0.5 leading-snug">
-                      <span>⏰ 예약 1시간 전까지만 취소할 수 있습니다</span>
-                      <span className="text-[12px] font-normal">{getLabel("cancel_reservation", lang)}</span>
-                    </span>
-                  : getLabel("cancel_reservation", lang)
-                }
+                {cancelling ? "취소 처리 중…" : getLabel("cancel_reservation", lang)}
               </button>
+              <p className="mt-1.5 text-center text-[12px] text-slate-400">⏰ 예약취소는 1시간 전까지만 가능합니다</p>
             </div>
 
           </>
