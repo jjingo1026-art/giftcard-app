@@ -21,243 +21,187 @@ export function getSoundEnabled(role: "customer" | "admin" | "staff"): boolean {
   const val = localStorage.getItem(SOUND_KEY_PREFIX + role);
   return val === null ? true : val === "true";
 }
-
 export function setSoundEnabled(role: "customer" | "admin" | "staff", enabled: boolean) {
   localStorage.setItem(SOUND_KEY_PREFIX + role, String(enabled));
 }
-
 export function getSoundType(role: "customer" | "admin" | "staff"): SoundType {
   return (localStorage.getItem(SOUND_TYPE_KEY_PREFIX + role) as SoundType) || "ding";
 }
-
 export function setSoundType(role: "customer" | "admin" | "staff", type: SoundType) {
   localStorage.setItem(SOUND_TYPE_KEY_PREFIX + role, type);
 }
 
-// ── 단일 AudioContext 관리 ──────────────────────────────────────────────────
-let _ctx: AudioContext | null = null;
-let _keepAliveNode: AudioBufferSourceNode | null = null;
-let _unlocked = false;
-let _pendingSound: SoundType | null = null;  // 재생 대기 중인 소리
-
-function getCtx(): AudioContext {
-  if (!_ctx || _ctx.state === "closed") {
-    _ctx = new (window.AudioContext || (window as any).webkitAudioContext)();
-    _keepAliveNode = null;
+// ── AudioBuffer → WAV 변환 ─────────────────────────────────────────────────
+function audioBufferToWav(buf: AudioBuffer): ArrayBuffer {
+  const d = buf.getChannelData(0);
+  const n = d.length;
+  const ab = new ArrayBuffer(44 + n * 2);
+  const v = new DataView(ab);
+  const s = (o: number, t: string) => { for (let i = 0; i < t.length; i++) v.setUint8(o + i, t.charCodeAt(i)); };
+  s(0, "RIFF"); v.setUint32(4, 36 + n * 2, true); s(8, "WAVE");
+  s(12, "fmt "); v.setUint32(16, 16, true); v.setUint16(20, 1, true);
+  v.setUint16(22, 1, true); v.setUint32(24, buf.sampleRate, true);
+  v.setUint32(28, buf.sampleRate * 2, true); v.setUint16(32, 2, true);
+  v.setUint16(34, 16, true); s(36, "data"); v.setUint32(40, n * 2, true);
+  for (let i = 0; i < n; i++) {
+    const x = Math.max(-1, Math.min(1, d[i]));
+    v.setInt16(44 + i * 2, x < 0 ? x * 0x8000 : x * 0x7FFF, true);
   }
-  return _ctx;
+  return ab;
 }
 
-// 무음 루프 — AudioContext가 suspended로 전환되지 않도록 유지
-function startKeepAlive(ctx: AudioContext) {
-  if (_keepAliveNode) return;
-  try {
-    const buf = ctx.createBuffer(1, 1, ctx.sampleRate);
-    const src = ctx.createBufferSource();
-    src.buffer = buf;
-    src.loop = true;
-    const gain = ctx.createGain();
-    gain.gain.value = 0; // 완전 무음
-    src.connect(gain);
-    gain.connect(ctx.destination);
-    src.start(0);
-    _keepAliveNode = src;
-  } catch { /* 무시 */ }
+// ── OfflineAudioContext로 소리 렌더링 (사용자 제스처 불필요) ──────────────
+const SR = 22050;
+const DURATIONS: Record<SoundType, number> = {
+  ding: 0.65, dingdong: 0.75, pop: 0.2, chime: 1.1, alert: 0.68,
+};
+
+function buildSound(ctx: OfflineAudioContext, type: SoundType) {
+  if (type === "ding") {
+    const osc = ctx.createOscillator(), g = ctx.createGain();
+    osc.connect(g); g.connect(ctx.destination); osc.type = "sine";
+    osc.frequency.setValueAtTime(880, 0); osc.frequency.exponentialRampToValueAtTime(660, 0.15);
+    g.gain.setValueAtTime(0.5, 0); g.gain.exponentialRampToValueAtTime(0.001, 0.55);
+    osc.start(0); osc.stop(0.6);
+  } else if (type === "dingdong") {
+    [[784, 0, 0.35], [523, 0.35, 0.35]].forEach(([f, t, d]) => {
+      const osc = ctx.createOscillator(), g = ctx.createGain();
+      osc.connect(g); g.connect(ctx.destination); osc.type = "sine";
+      osc.frequency.setValueAtTime(f, t); g.gain.setValueAtTime(0.4, t);
+      g.gain.exponentialRampToValueAtTime(0.001, t + d); osc.start(t); osc.stop(t + d);
+    });
+  } else if (type === "pop") {
+    const osc = ctx.createOscillator(), g = ctx.createGain();
+    osc.connect(g); g.connect(ctx.destination); osc.type = "sine";
+    osc.frequency.setValueAtTime(1200, 0); osc.frequency.exponentialRampToValueAtTime(400, 0.08);
+    g.gain.setValueAtTime(0.6, 0); g.gain.exponentialRampToValueAtTime(0.001, 0.14);
+    osc.start(0); osc.stop(0.15);
+  } else if (type === "chime") {
+    [523, 659, 784, 1047].forEach((f, i) => {
+      const osc = ctx.createOscillator(), g = ctx.createGain();
+      osc.connect(g); g.connect(ctx.destination); osc.type = "sine";
+      const t = i * 0.18;
+      osc.frequency.setValueAtTime(f, t); g.gain.setValueAtTime(0.35, t);
+      g.gain.exponentialRampToValueAtTime(0.001, t + 0.5); osc.start(t); osc.stop(t + 0.5);
+    });
+  } else if (type === "alert") {
+    [0, 0.22, 0.44].forEach((t) => {
+      const osc = ctx.createOscillator(), g = ctx.createGain();
+      osc.connect(g); g.connect(ctx.destination); osc.type = "square";
+      osc.frequency.setValueAtTime(880, t); g.gain.setValueAtTime(0.25, t);
+      g.gain.exponentialRampToValueAtTime(0.001, t + 0.18); osc.start(t); osc.stop(t + 0.18);
+    });
+  }
 }
 
-// 사용자 터치 시 AudioContext 잠금 해제 + 무음 루프 시작
-export function unlockAudioContext() {
-  try {
-    const ctx = getCtx();
-    const doUnlock = () => {
-      // 무음 1프레임 재생으로 iOS 잠금 해제
-      const buf = ctx.createBuffer(1, 1, ctx.sampleRate);
-      const src = ctx.createBufferSource();
-      src.buffer = buf;
-      src.connect(ctx.destination);
-      src.start(0);
+// ── 모듈 로드 시 즉시 렌더링 시작 (사용자 제스처 대기 전에 완료) ──────────
+const _blobUrls = new Map<SoundType, string>();
+const _renderP = new Map<SoundType, Promise<void>>();
 
-      if (ctx.state === "suspended") {
-        ctx.resume().then(() => {
-          startKeepAlive(ctx);
-          _unlocked = true;
-          // 대기 중이던 소리 재생
-          if (_pendingSound) {
-            const s = _pendingSound;
-            _pendingSound = null;
-            playSound(s);
-          }
-        }).catch(() => {});
-      } else {
-        startKeepAlive(ctx);
-        _unlocked = true;
-        if (_pendingSound) {
-          const s = _pendingSound;
-          _pendingSound = null;
-          playSound(s);
-        }
-      }
-    };
-    doUnlock();
-  } catch { /* 무시 */ }
+function startRender(type: SoundType): Promise<void> {
+  if (_renderP.has(type)) return _renderP.get(type)!;
+  const p = (async () => {
+    try {
+      const dur = DURATIONS[type];
+      const oac = new OfflineAudioContext(1, Math.ceil(SR * dur), SR);
+      buildSound(oac, type);
+      const buf = await oac.startRendering();
+      const wav = audioBufferToWav(buf);
+      const url = URL.createObjectURL(new Blob([wav], { type: "audio/wav" }));
+      _blobUrls.set(type, url);
+    } catch { /* 무시 */ }
+  })();
+  _renderP.set(type, p);
+  return p;
 }
 
-// 화면이 다시 보일 때 AudioContext 재개 (앱 전환 후 복귀 시)
-function attachVisibilityResume() {
-  document.addEventListener("visibilitychange", () => {
-    if (document.visibilityState !== "visible" || !_ctx) return;
-    if (_ctx.state === "suspended") {
-      _ctx.resume().then(() => {
-        startKeepAlive(_ctx!);
-        if (_pendingSound) {
-          const s = _pendingSound;
-          _pendingSound = null;
-          playSound(s);
-        }
-      }).catch(() => {});
-    }
-  });
+// 모든 소리 즉시 렌더링 시작
+for (const opt of SOUND_OPTIONS) startRender(opt.id);
+
+// ── HTMLAudioElement 풀 ──────────────────────────────────────────────────────
+const _pool = new Map<SoundType, HTMLAudioElement[]>();
+let _primed = false;
+
+// 사용자 제스처 시 호출: 이미 렌더링된 BlobURL로 audio 엘리먼트를 잠금 해제
+function tryPrime() {
+  if (_primed) return;
+  let anyPrimed = false;
+  for (const type of SOUND_OPTIONS.map(o => o.id)) {
+    const url = _blobUrls.get(type);
+    if (!url) continue; // 아직 렌더링 중이면 건너뜀
+    if (_pool.has(type) && _pool.get(type)!.length > 0) continue; // 이미 프라임됨
+    try {
+      const el = new Audio(url);
+      el.volume = 0.001;
+      el.play().then(() => { el.pause(); el.currentTime = 0; el.volume = 1; }).catch(() => {});
+      if (!_pool.has(type)) _pool.set(type, []);
+      _pool.get(type)!.push(el);
+      anyPrimed = true;
+    } catch { /* 무시 */ }
+  }
+  // 모든 소리가 프라임됐으면 완료 표시
+  if (_pool.size === SOUND_OPTIONS.length && SOUND_OPTIONS.every(o => (_pool.get(o.id)?.length ?? 0) > 0)) {
+    _primed = true;
+  } else if (anyPrimed) {
+    // 일부만 프라임됨 — 렌더링 완료 후 재시도
+    Promise.all([...SOUND_OPTIONS.map(o => _renderP.get(o.id)!)]).then(() => tryPrime()).catch(() => {});
+  }
 }
 
-// 앱 최초 로드 시 호출: 첫 터치/클릭에서 잠금 해제 + visibility 핸들러 등록
+function getPoolEl(type: SoundType): HTMLAudioElement | null {
+  const pool = _pool.get(type) ?? [];
+  for (const el of pool) { if (el.paused || el.ended) return el; }
+  return null;
+}
+
+// ── 공개 API ───────────────────────────────────────────────────────────────
 let _attached = false;
+
 export function attachAudioUnlock() {
   if (_attached) return;
   _attached = true;
-
-  attachVisibilityResume();
-
-  const handler = () => {
-    unlockAudioContext();
-    // 잠금 해제 후에도 계속 리스닝 — 앱 복귀 시 재unlock 필요
-  };
+  const handler = () => unlockAudioContext();
   document.addEventListener("touchstart", handler, { capture: true, passive: true });
   document.addEventListener("mousedown", handler, { capture: true });
 }
 
-// ── 소리 재생 ──────────────────────────────────────────────────────────────
-async function playWithCtx(fn: (ctx: AudioContext) => void) {
-  try {
-    const ctx = getCtx();
-    if (ctx.state === "suspended") {
-      // 재개 시도 — 성공 시 재생, 실패 시 대기열에 저장
-      try {
-        await ctx.resume();
-      } catch {
-        return; // 재생 불가 (pending은 호출자가 설정)
-      }
-    }
-    if (ctx.state !== "running") return;
-    fn(ctx);
-  } catch { /* 무시 */ }
-}
-
-function playDing() {
-  playWithCtx((ctx) => {
-    const osc = ctx.createOscillator();
-    const gain = ctx.createGain();
-    osc.connect(gain); gain.connect(ctx.destination);
-    osc.type = "sine";
-    osc.frequency.setValueAtTime(880, ctx.currentTime);
-    osc.frequency.exponentialRampToValueAtTime(660, ctx.currentTime + 0.15);
-    gain.gain.setValueAtTime(0.35, ctx.currentTime);
-    gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.5);
-    osc.start(); osc.stop(ctx.currentTime + 0.5);
-  });
-}
-
-function playDingDong() {
-  playWithCtx((ctx) => {
-    [
-      { freq: 784, start: 0,    dur: 0.35 },
-      { freq: 523, start: 0.35, dur: 0.45 },
-    ].forEach(({ freq, start, dur }) => {
-      const osc = ctx.createOscillator();
-      const gain = ctx.createGain();
-      osc.connect(gain); gain.connect(ctx.destination);
-      osc.type = "sine";
-      osc.frequency.setValueAtTime(freq, ctx.currentTime + start);
-      gain.gain.setValueAtTime(0.3, ctx.currentTime + start);
-      gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + start + dur);
-      osc.start(ctx.currentTime + start);
-      osc.stop(ctx.currentTime + start + dur);
-    });
-  });
-}
-
-function playPop() {
-  playWithCtx((ctx) => {
-    const osc = ctx.createOscillator();
-    const gain = ctx.createGain();
-    osc.connect(gain); gain.connect(ctx.destination);
-    osc.type = "sine";
-    osc.frequency.setValueAtTime(1200, ctx.currentTime);
-    osc.frequency.exponentialRampToValueAtTime(400, ctx.currentTime + 0.08);
-    gain.gain.setValueAtTime(0.4, ctx.currentTime);
-    gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.12);
-    osc.start(); osc.stop(ctx.currentTime + 0.12);
-  });
-}
-
-function playChime() {
-  playWithCtx((ctx) => {
-    const notes = [523, 659, 784, 1047];
-    notes.forEach((freq, i) => {
-      const osc = ctx.createOscillator();
-      const gain = ctx.createGain();
-      osc.connect(gain); gain.connect(ctx.destination);
-      osc.type = "sine";
-      const t = ctx.currentTime + i * 0.18;
-      osc.frequency.setValueAtTime(freq, t);
-      gain.gain.setValueAtTime(0.25, t);
-      gain.gain.exponentialRampToValueAtTime(0.001, t + 0.5);
-      osc.start(t); osc.stop(t + 0.5);
-    });
-  });
-}
-
-function playAlert() {
-  playWithCtx((ctx) => {
-    [0, 0.22, 0.44].forEach((offset) => {
-      const osc = ctx.createOscillator();
-      const gain = ctx.createGain();
-      osc.connect(gain); gain.connect(ctx.destination);
-      osc.type = "square";
-      osc.frequency.setValueAtTime(880, ctx.currentTime + offset);
-      gain.gain.setValueAtTime(0.18, ctx.currentTime + offset);
-      gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + offset + 0.18);
-      osc.start(ctx.currentTime + offset);
-      osc.stop(ctx.currentTime + offset + 0.18);
-    });
-  });
+export function unlockAudioContext() {
+  tryPrime();
 }
 
 export function playSound(type: SoundType) {
-  try {
-    // context가 running 상태가 아니면 대기열에 저장
-    if (!_ctx || _ctx.state !== "running") {
-      _pendingSound = type;
-      return;
-    }
-    switch (type) {
-      case "ding":     playDing(); break;
-      case "dingdong": playDingDong(); break;
-      case "pop":      playPop(); break;
-      case "chime":    playChime(); break;
-      case "alert":    playAlert(); break;
-    }
-  } catch { /* 무시 */ }
+  // 이미 프라임된 엘리먼트 사용
+  let el = getPoolEl(type);
+  if (el) {
+    el.currentTime = 0; el.volume = 1;
+    el.play().catch(() => {});
+    return;
+  }
+
+  // 프라임된 엘리먼트 없음 — BlobURL 있으면 새 엘리먼트 생성
+  const url = _blobUrls.get(type);
+  if (url) {
+    const newEl = new Audio(url);
+    newEl.volume = 1;
+    newEl.play().catch(() => {});
+    if (!_pool.has(type)) _pool.set(type, []);
+    _pool.get(type)!.push(newEl);
+    return;
+  }
+
+  // BlobURL도 없음 — 렌더링 완료 대기 후 재생
+  startRender(type).then(() => {
+    const readyUrl = _blobUrls.get(type);
+    if (!readyUrl) return;
+    const newEl = new Audio(readyUrl);
+    newEl.volume = 1;
+    newEl.play().catch(() => {});
+    if (!_pool.has(type)) _pool.set(type, []);
+    _pool.get(type)!.push(newEl);
+  }).catch(() => {});
 }
 
 export function playNotificationSound(role?: "customer" | "admin" | "staff") {
-  try {
-    const type = role ? getSoundType(role) : "ding";
-    // context 상태와 무관하게 항상 대기열 설정 후 재생 시도
-    _pendingSound = type;
-    if (_ctx && _ctx.state === "running") {
-      _pendingSound = null;
-      playSound(type);
-    }
-    // 아니면 다음 터치 시 또는 visibility 복귀 시 자동 재생
-  } catch { /* 무시 */ }
+  const type = role ? getSoundType(role) : "ding";
+  playSound(type);
 }

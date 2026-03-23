@@ -109,9 +109,11 @@ export default function AdminChat() {
   const [reservationKind, setReservationKind] = useState<string | null>(null);
   const [reservationStatus, setReservationStatus] = useState<string | null>(null);
   const [copyToast, setCopyToast] = useState<string | null>(null);
+  const [newMsgFlash, setNewMsgFlash] = useState(false);
   const chatBoxRef = useRef<HTMLDivElement>(null);
   const socketRef = useRef<Socket | null>(null);
   const lastSoundRef = useRef<number>(0); // 중복 알림음 방지
+  const flashTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const copyText = useCallback((text: string) => {
     navigator.clipboard.writeText(text).then(() => {
@@ -175,11 +177,16 @@ export default function AdminChat() {
       socket.emit("markRead", { reservationId: Number(reservationId), readerRole: "admin" });
     });
 
-    // 관리자 알림음 재생 (중복 방지 500ms 디바운스)
+    // 관리자 알림음 + 시각적 플래시 (중복 방지 500ms 디바운스)
     const playAdminSound = () => {
       const now = Date.now();
       if (now - lastSoundRef.current < 500) return;
       lastSoundRef.current = now;
+      // 시각적 표시 (항상 작동)
+      setNewMsgFlash(true);
+      if (flashTimerRef.current) clearTimeout(flashTimerRef.current);
+      flashTimerRef.current = setTimeout(() => setNewMsgFlash(false), 2500);
+      // 소리 알림
       if (getSoundEnabled("admin")) playNotificationSound("admin");
     };
 
@@ -340,7 +347,12 @@ export default function AdminChat() {
             )}
           </div>
 
-          <SoundBell role="admin" />
+          <div className="relative flex-shrink-0">
+            <SoundBell role="admin" />
+            {newMsgFlash && (
+              <span className="absolute top-0.5 right-0.5 w-2.5 h-2.5 rounded-full bg-rose-500 animate-ping" />
+            )}
+          </div>
 
           <button
             onClick={() => { location.href = `/admin/detail.html?id=${reservationId}`; }}
