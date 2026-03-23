@@ -1080,6 +1080,15 @@ router.post("/reservations/:id/assign", requireAuth, async (req, res) => {
   const [updatedRow] = await db.select().from(reservationsTable).where(eq(reservationsTable.id, id));
   if (updatedRow) broadcast("staffAssigned", { staffId: member.id, reservation: updatedRow });
 
+  // 고객 예약확인 페이지 실시간 업데이트
+  emitToRoom(id, "reservationUpdated", {
+    reservationId: id,
+    status: "assigned",
+    assignedTo: member.name,
+    staffId: member.id,
+    staffPhone: member.phone,
+  });
+
   res.json({ success: true });
 });
 
@@ -1114,6 +1123,15 @@ router.patch("/reservations/:id/assign", requireAuth, requireAdmin, async (req, 
     // 담당자 페이지 실시간 업데이트
     const [updatedRow] = await db.select().from(reservationsTable).where(eq(reservationsTable.id, id));
     if (updatedRow) broadcast("staffAssigned", { staffId: member.id, reservation: updatedRow });
+
+    // 고객 예약확인 페이지 실시간 업데이트
+    emitToRoom(id, "reservationUpdated", {
+      reservationId: id,
+      status: "assigned",
+      assignedTo: member.name,
+      staffId: member.id,
+      staffPhone: member.phone,
+    });
 
     res.json({ success: true, assignedTo: member.name, assignedStaffId: member.id });
   } catch (err) {

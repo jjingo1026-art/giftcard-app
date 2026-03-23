@@ -1,5 +1,6 @@
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useLocation } from "wouter";
+import { io, type Socket } from "socket.io-client";
 import { formatPhone, formatDateKo, formatPhoneInput } from "@/lib/store";
 import { LANGUAGES, getSavedLang, saveLang } from "@/lib/languages";
 import { getLabel } from "@/lib/uiTranslations";
@@ -54,6 +55,29 @@ export default function ReservationCheck() {
   const [cancelling, setCancelling] = useState(false);
   const [cancelError, setCancelError] = useState("");
   const [cancelSuccess, setCancelSuccess] = useState(false);
+
+  // 소켓 실시간 업데이트
+  const socketRef = useRef<Socket | null>(null);
+
+  useEffect(() => {
+    if (!reservation || reservation.status === "cancelled" || reservation.status === "completed") return;
+
+    const socket = io({ transports: ["websocket", "polling"] });
+    socketRef.current = socket;
+
+    socket.emit("joinRoom", reservation.id);
+
+    socket.on("reservationUpdated", (data: { reservationId: number; status: string; assignedTo: string; staffId: number; staffPhone: string }) => {
+      if (data.reservationId !== reservation.id) return;
+      setReservation(prev => prev ? { ...prev, status: data.status, assignedTo: data.assignedTo } : prev);
+      setStaffInfo({ id: data.staffId, name: data.assignedTo, phone: data.staffPhone });
+    });
+
+    return () => {
+      socket.disconnect();
+      socketRef.current = null;
+    };
+  }, [reservation?.id]);
 
   // 수정
   const [editMode, setEditMode] = useState(false);
