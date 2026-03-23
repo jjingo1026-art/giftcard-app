@@ -612,21 +612,13 @@ export default function StaffCard() {
             <div className="flex-shrink-0 bg-white border-t border-slate-100 px-3 pt-2 pb-0">
               <div className="flex flex-wrap gap-1.5 pb-1 items-center">
                 {phrases.map((phrase, idx) => (
-                  <div key={idx} className="flex items-center gap-0.5 flex-shrink-0">
-                    <button
-                      onClick={() => sendChatMessage(phrase)}
-                      className="px-3 py-1.5 rounded-l-full bg-indigo-50 text-indigo-600 text-[12px] font-semibold border border-indigo-100 hover:bg-indigo-100 active:scale-95 transition-all whitespace-nowrap"
-                    >
-                      {phrase}
-                    </button>
-                    <button
-                      onClick={() => deletePhrase(idx)}
-                      className="px-1.5 py-1.5 rounded-r-full bg-rose-50 text-rose-400 text-[11px] border border-rose-100 hover:bg-rose-100 active:scale-95 transition-all leading-none"
-                      title="삭제"
-                    >
-                      ×
-                    </button>
-                  </div>
+                  <button
+                    key={idx}
+                    onClick={() => sendChatMessage(phrase)}
+                    className="flex-shrink-0 px-3 py-1.5 rounded-full bg-indigo-50 text-indigo-600 text-[12px] font-semibold border border-indigo-100 hover:bg-indigo-100 active:scale-95 transition-all whitespace-nowrap"
+                  >
+                    {phrase}
+                  </button>
                 ))}
                 {/* 추가 버튼 */}
                 <button
