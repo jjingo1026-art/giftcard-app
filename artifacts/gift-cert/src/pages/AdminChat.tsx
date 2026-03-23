@@ -111,6 +111,7 @@ export default function AdminChat() {
   const [copyToast, setCopyToast] = useState<string | null>(null);
   const chatBoxRef = useRef<HTMLDivElement>(null);
   const socketRef = useRef<Socket | null>(null);
+  const lastSoundRef = useRef<number>(0); // 중복 알림음 방지
 
   const copyText = useCallback((text: string) => {
     navigator.clipboard.writeText(text).then(() => {
@@ -174,10 +175,17 @@ export default function AdminChat() {
       socket.emit("markRead", { reservationId: Number(reservationId), readerRole: "admin" });
     });
 
+    // 관리자 알림음 재생 (중복 방지 500ms 디바운스)
+    const playAdminSound = () => {
+      const now = Date.now();
+      if (now - lastSoundRef.current < 500) return;
+      lastSoundRef.current = now;
+      if (getSoundEnabled("admin")) playNotificationSound("admin");
+    };
+
     socket.on("newMessage", (newMsg: Message) => {
-      // 알림음은 상태 업데이터 밖에서 호출 (React 내부 제약 우회)
-      if (newMsg.sender !== "admin" && getSoundEnabled("admin")) {
-        playNotificationSound("admin");
+      if (newMsg.sender !== "admin") {
+        playAdminSound();
       }
 
       setMessages((prev) => {
@@ -189,6 +197,13 @@ export default function AdminChat() {
         }
         return next;
       });
+    });
+
+    // chatAlert: 전체 브로드캐스트로 알림음 보조 재생 (newMessage 실패 대비)
+    socket.on("chatAlert", (msg: { reservationId: number; sender: string }) => {
+      if (msg.reservationId === Number(reservationId)) {
+        playAdminSound();
+      }
     });
 
     socket.on("messagesRead", ({ readerRole }: { readerRole: string }) => {

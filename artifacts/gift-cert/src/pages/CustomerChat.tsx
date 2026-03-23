@@ -135,13 +135,17 @@ export default function CustomerChat() {
     });
 
     socket.on("newMessage", (newMsg: Message) => {
+      // 알림음은 상태 업데이터 밖에서 호출
+      if (newMsg.sender !== "customer") {
+        if (getSoundEnabled("customer")) playNotificationSound("customer");
+      }
+
       setChatMessages((prev) => {
         if (prev.some((m) => m.id === newMsg.id)) return prev;
         const next = [...prev, newMsg];
         scrollToBottom();
         if (newMsg.sender !== "customer") {
           socket.emit("markRead", { reservationId: Number(reservationId), readerRole: "customer" });
-          if (getSoundEnabled("customer")) playNotificationSound("customer");
         }
         return next;
       });

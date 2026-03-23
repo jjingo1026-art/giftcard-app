@@ -76,10 +76,12 @@ export default function SoundBell({ role, className = "" }: Props) {
           {/* 소리 종류 목록 */}
           <div className="py-1">
             {SOUND_OPTIONS.map((opt) => (
-              <button
+              <div
                 key={opt.id}
                 onClick={() => selectType(opt.id)}
-                className={`w-full flex items-center gap-3 px-4 py-2.5 text-left transition-colors hover:bg-slate-50 ${
+                role="option"
+                aria-selected={type === opt.id}
+                className={`w-full flex items-center gap-3 px-4 py-2.5 text-left transition-colors cursor-pointer hover:bg-slate-50 ${
                   type === opt.id ? "bg-indigo-50" : ""
                 }`}
               >
@@ -99,7 +101,7 @@ export default function SoundBell({ role, className = "" }: Props) {
                 >
                   <svg width="12" height="12" viewBox="0 0 24 24" fill="#6366f1"><polygon points="5 3 19 12 5 21 5 3"/></svg>
                 </button>
-              </button>
+              </div>
             ))}
           </div>
         </div>
