@@ -39,7 +39,11 @@ import MobileCheck from "./pages/MobileCheck";
 import MobileBusinessInfo from "./pages/MobileBusinessInfo";
 import AdminMobileDashboard from "./pages/AdminMobileDashboard";
 import AdminMobileRevenue from "./pages/AdminMobileRevenue";
+import { attachAudioUnlock } from "./lib/notificationSound";
 import "./index.css";
+
+// 모바일에서 첫 터치 시 AudioContext 잠금 해제 — 이후 알림음 정상 작동
+attachAudioUnlock();
 
 const base = import.meta.env.BASE_URL.replace(/\/$/, "");
 
