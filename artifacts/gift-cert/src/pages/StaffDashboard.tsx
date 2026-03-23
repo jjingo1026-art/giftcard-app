@@ -349,21 +349,35 @@ export default function StaffDashboard() {
             <button
               key={r.id}
               onClick={() => goToCard(r.id)}
-              className={`w-full text-left bg-white rounded-2xl border shadow-sm px-4 py-3.5 flex items-center gap-3 hover:border-indigo-300 hover:shadow-md transition-all active:scale-[0.99] ${
-                r.isUrgent ? "border-rose-200" : "border-slate-100"
+              className={`w-full text-left rounded-2xl border shadow-sm px-4 py-3.5 flex items-center gap-3 hover:shadow-md transition-all active:scale-[0.99] ${
+                r.kind === "urgent"
+                  ? "bg-rose-50 border-rose-300 hover:border-rose-400"
+                  : "bg-white border-slate-100 hover:border-indigo-300"
               }`}
             >
-              {r.isUrgent && <div className="w-1.5 h-1.5 rounded-full bg-rose-500 flex-shrink-0" />}
+              {/* 긴급 좌측 강조 바 */}
+              {r.kind === "urgent" && (
+                <div className="flex-shrink-0 w-1 self-stretch rounded-full bg-rose-500" />
+              )}
               <div className="flex-shrink-0 w-12 text-center">
-                <p className="text-[13px] font-black text-indigo-600">{r.time ?? "--:--"}</p>
+                {r.kind === "urgent" ? (
+                  <p className="text-[11px] font-black text-rose-500 leading-tight">🚨<br/>긴급</p>
+                ) : (
+                  <p className="text-[13px] font-black text-indigo-600">{r.time ?? "--:--"}</p>
+                )}
               </div>
-              <div className="w-px h-8 bg-slate-100 flex-shrink-0" />
+              <div className={`w-px h-8 flex-shrink-0 ${r.kind === "urgent" ? "bg-rose-200" : "bg-slate-100"}`} />
               <div className="flex-1 min-w-0">
-                <p className="text-[14px] font-bold text-slate-800 truncate">{r.name || r.phone}</p>
+                <div className="flex items-center gap-1.5 flex-wrap">
+                  <p className="text-[14px] font-bold text-slate-800 truncate">{r.name || r.phone}</p>
+                  {r.kind === "urgent" && (
+                    <span className="flex-shrink-0 text-[10px] font-black text-white bg-rose-500 px-2 py-0.5 rounded-full">긴급판매</span>
+                  )}
+                </div>
                 <p className="text-[12px] text-slate-400 truncate mt-0.5">📍 {r.location}</p>
               </div>
               <div className="flex-shrink-0 text-right">
-                <p className="text-[13px] font-black text-slate-700">
+                <p className={`text-[13px] font-black ${r.kind === "urgent" ? "text-rose-600" : "text-slate-700"}`}>
                   {face > 0 ? `${face.toLocaleString()}원` : "-"}
                 </p>
                 <span className={`inline-block text-[10px] font-bold px-2 py-0.5 rounded-full mt-1 ${sl.cls}`}>
