@@ -79,9 +79,11 @@ export default function SoundBell({ role, className = "" }: Props) {
               <div
                 key={opt.id}
                 onClick={() => selectType(opt.id)}
-                role="option"
-                aria-selected={type === opt.id}
-                className={`w-full flex items-center gap-3 px-4 py-2.5 text-left transition-colors cursor-pointer hover:bg-slate-50 ${
+                onTouchEnd={(e) => { e.preventDefault(); selectType(opt.id); }}
+                role="button"
+                tabIndex={0}
+                onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") selectType(opt.id); }}
+                className={`w-full flex items-center gap-3 px-4 py-2.5 text-left transition-colors cursor-pointer hover:bg-slate-50 select-none ${
                   type === opt.id ? "bg-indigo-50" : ""
                 }`}
               >
@@ -96,6 +98,7 @@ export default function SoundBell({ role, className = "" }: Props) {
                 )}
                 <button
                   onClick={(e) => { e.stopPropagation(); playSound(opt.id); }}
+                  onTouchEnd={(e) => { e.stopPropagation(); }}
                   className="w-7 h-7 rounded-lg bg-slate-100 hover:bg-indigo-100 flex items-center justify-center transition-colors flex-shrink-0"
                   title="미리 듣기"
                 >

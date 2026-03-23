@@ -17,6 +17,7 @@ export const SOUND_OPTIONS: SoundOption[] = [
   { id: "alert",    label: "경보",  emoji: "🚨" },
 ];
 
+// ── 설정 ───────────────────────────────────────────────────────────────────
 export function getSoundEnabled(role: "customer" | "admin" | "staff"): boolean {
   const val = localStorage.getItem(SOUND_KEY_PREFIX + role);
   return val === null ? true : val === "true";
@@ -30,6 +31,20 @@ export function getSoundType(role: "customer" | "admin" | "staff"): SoundType {
 export function setSoundType(role: "customer" | "admin" | "staff", type: SoundType) {
   localStorage.setItem(SOUND_TYPE_KEY_PREFIX + role, type);
 }
+
+// ── 무음 WAV 생성 (모바일 오디오 잠금 해제용) ──────────────────────────────
+function makeSilentWav(): ArrayBuffer {
+  const buf = new ArrayBuffer(46);
+  const v = new DataView(buf);
+  const s = (o: number, t: string) => { for (let i = 0; i < t.length; i++) v.setUint8(o + i, t.charCodeAt(i)); };
+  s(0, "RIFF"); v.setUint32(4, 38, true); s(8, "WAVE");
+  s(12, "fmt "); v.setUint32(16, 16, true); v.setUint16(20, 1, true);
+  v.setUint16(22, 1, true); v.setUint32(24, 8000, true);
+  v.setUint32(28, 16000, true); v.setUint16(32, 2, true);
+  v.setUint16(34, 16, true); s(36, "data"); v.setUint32(40, 2, true);
+  return buf; // 마지막 2바이트는 0 (무음)
+}
+const _silentUrl = URL.createObjectURL(new Blob([makeSilentWav()], { type: "audio/wav" }));
 
 // ── AudioBuffer → WAV 변환 ─────────────────────────────────────────────────
 function audioBufferToWav(buf: AudioBuffer): ArrayBuffer {
@@ -50,7 +65,7 @@ function audioBufferToWav(buf: AudioBuffer): ArrayBuffer {
   return ab;
 }
 
-// ── OfflineAudioContext로 소리 렌더링 (사용자 제스처 불필요) ──────────────
+// ── OfflineAudioContext로 소리 렌더링 ──────────────────────────────────────
 const SR = 22050;
 const DURATIONS: Record<SoundType, number> = {
   ding: 0.65, dingdong: 0.75, pop: 0.2, chime: 1.1, alert: 0.68,
@@ -58,100 +73,100 @@ const DURATIONS: Record<SoundType, number> = {
 
 function buildSound(ctx: OfflineAudioContext, type: SoundType) {
   if (type === "ding") {
-    const osc = ctx.createOscillator(), g = ctx.createGain();
-    osc.connect(g); g.connect(ctx.destination); osc.type = "sine";
-    osc.frequency.setValueAtTime(880, 0); osc.frequency.exponentialRampToValueAtTime(660, 0.15);
+    const o = ctx.createOscillator(), g = ctx.createGain();
+    o.connect(g); g.connect(ctx.destination); o.type = "sine";
+    o.frequency.setValueAtTime(880, 0); o.frequency.exponentialRampToValueAtTime(660, 0.15);
     g.gain.setValueAtTime(0.5, 0); g.gain.exponentialRampToValueAtTime(0.001, 0.55);
-    osc.start(0); osc.stop(0.6);
+    o.start(0); o.stop(0.6);
   } else if (type === "dingdong") {
     [[784, 0, 0.35], [523, 0.35, 0.35]].forEach(([f, t, d]) => {
-      const osc = ctx.createOscillator(), g = ctx.createGain();
-      osc.connect(g); g.connect(ctx.destination); osc.type = "sine";
-      osc.frequency.setValueAtTime(f, t); g.gain.setValueAtTime(0.4, t);
-      g.gain.exponentialRampToValueAtTime(0.001, t + d); osc.start(t); osc.stop(t + d);
+      const o = ctx.createOscillator(), g = ctx.createGain();
+      o.connect(g); g.connect(ctx.destination); o.type = "sine";
+      o.frequency.setValueAtTime(f, t); g.gain.setValueAtTime(0.4, t);
+      g.gain.exponentialRampToValueAtTime(0.001, t + d); o.start(t); o.stop(t + d);
     });
   } else if (type === "pop") {
-    const osc = ctx.createOscillator(), g = ctx.createGain();
-    osc.connect(g); g.connect(ctx.destination); osc.type = "sine";
-    osc.frequency.setValueAtTime(1200, 0); osc.frequency.exponentialRampToValueAtTime(400, 0.08);
+    const o = ctx.createOscillator(), g = ctx.createGain();
+    o.connect(g); g.connect(ctx.destination); o.type = "sine";
+    o.frequency.setValueAtTime(1200, 0); o.frequency.exponentialRampToValueAtTime(400, 0.08);
     g.gain.setValueAtTime(0.6, 0); g.gain.exponentialRampToValueAtTime(0.001, 0.14);
-    osc.start(0); osc.stop(0.15);
+    o.start(0); o.stop(0.15);
   } else if (type === "chime") {
     [523, 659, 784, 1047].forEach((f, i) => {
-      const osc = ctx.createOscillator(), g = ctx.createGain();
-      osc.connect(g); g.connect(ctx.destination); osc.type = "sine";
+      const o = ctx.createOscillator(), g = ctx.createGain();
+      o.connect(g); g.connect(ctx.destination); o.type = "sine";
       const t = i * 0.18;
-      osc.frequency.setValueAtTime(f, t); g.gain.setValueAtTime(0.35, t);
-      g.gain.exponentialRampToValueAtTime(0.001, t + 0.5); osc.start(t); osc.stop(t + 0.5);
+      o.frequency.setValueAtTime(f, t); g.gain.setValueAtTime(0.35, t);
+      g.gain.exponentialRampToValueAtTime(0.001, t + 0.5); o.start(t); o.stop(t + 0.5);
     });
   } else if (type === "alert") {
     [0, 0.22, 0.44].forEach((t) => {
-      const osc = ctx.createOscillator(), g = ctx.createGain();
-      osc.connect(g); g.connect(ctx.destination); osc.type = "square";
-      osc.frequency.setValueAtTime(880, t); g.gain.setValueAtTime(0.25, t);
-      g.gain.exponentialRampToValueAtTime(0.001, t + 0.18); osc.start(t); osc.stop(t + 0.18);
+      const o = ctx.createOscillator(), g = ctx.createGain();
+      o.connect(g); g.connect(ctx.destination); o.type = "square";
+      o.frequency.setValueAtTime(880, t); g.gain.setValueAtTime(0.25, t);
+      g.gain.exponentialRampToValueAtTime(0.001, t + 0.18); o.start(t); o.stop(t + 0.18);
     });
   }
 }
 
-// ── 모듈 로드 시 즉시 렌더링 시작 (사용자 제스처 대기 전에 완료) ──────────
 const _blobUrls = new Map<SoundType, string>();
 const _renderP = new Map<SoundType, Promise<void>>();
 
 function startRender(type: SoundType): Promise<void> {
   if (_renderP.has(type)) return _renderP.get(type)!;
   const p = (async () => {
-    try {
-      const dur = DURATIONS[type];
-      const oac = new OfflineAudioContext(1, Math.ceil(SR * dur), SR);
-      buildSound(oac, type);
-      const buf = await oac.startRendering();
-      const wav = audioBufferToWav(buf);
-      const url = URL.createObjectURL(new Blob([wav], { type: "audio/wav" }));
-      _blobUrls.set(type, url);
-    } catch { /* 무시 */ }
-  })();
-  _renderP.set(type, p);
-  return p;
+    const oac = new OfflineAudioContext(1, Math.ceil(SR * DURATIONS[type]), SR);
+    buildSound(oac, type);
+    const buf = await oac.startRendering();
+    const wav = audioBufferToWav(buf);
+    _blobUrls.set(type, URL.createObjectURL(new Blob([wav], { type: "audio/wav" })));
+  })().catch(() => {});
+  _renderP.set(type, p as Promise<void>);
+  return p as Promise<void>;
 }
 
-// 모든 소리 즉시 렌더링 시작
+// 모듈 로드 시 모든 소리 렌더링 시작 (사용자 제스처 불필요)
 for (const opt of SOUND_OPTIONS) startRender(opt.id);
 
-// ── HTMLAudioElement 풀 ──────────────────────────────────────────────────────
+// ── 오디오 풀 (타입별 최대 3개 엘리먼트 재사용) ───────────────────────────
 const _pool = new Map<SoundType, HTMLAudioElement[]>();
-let _primed = false;
-
-// 사용자 제스처 시 호출: 이미 렌더링된 BlobURL로 audio 엘리먼트를 잠금 해제
-function tryPrime() {
-  if (_primed) return;
-  let anyPrimed = false;
-  for (const type of SOUND_OPTIONS.map(o => o.id)) {
-    const url = _blobUrls.get(type);
-    if (!url) continue; // 아직 렌더링 중이면 건너뜀
-    if (_pool.has(type) && _pool.get(type)!.length > 0) continue; // 이미 프라임됨
-    try {
-      const el = new Audio(url);
-      el.volume = 0.001;
-      el.play().then(() => { el.pause(); el.currentTime = 0; el.volume = 1; }).catch(() => {});
-      if (!_pool.has(type)) _pool.set(type, []);
-      _pool.get(type)!.push(el);
-      anyPrimed = true;
-    } catch { /* 무시 */ }
-  }
-  // 모든 소리가 프라임됐으면 완료 표시
-  if (_pool.size === SOUND_OPTIONS.length && SOUND_OPTIONS.every(o => (_pool.get(o.id)?.length ?? 0) > 0)) {
-    _primed = true;
-  } else if (anyPrimed) {
-    // 일부만 프라임됨 — 렌더링 완료 후 재시도
-    Promise.all([...SOUND_OPTIONS.map(o => _renderP.get(o.id)!)]).then(() => tryPrime()).catch(() => {});
-  }
-}
 
 function getPoolEl(type: SoundType): HTMLAudioElement | null {
   const pool = _pool.get(type) ?? [];
   for (const el of pool) { if (el.paused || el.ended) return el; }
   return null;
+}
+
+function addToPool(type: SoundType, el: HTMLAudioElement) {
+  if (!_pool.has(type)) _pool.set(type, []);
+  const pool = _pool.get(type)!;
+  if (pool.length < 3) pool.push(el);
+}
+
+// ── iOS/Android 잠금 해제 ──────────────────────────────────────────────────
+// 무음 WAV 1회 재생으로 도메인 전체 오디오 잠금 해제 (iOS 13+, Android Chrome)
+let _unlocked = false;
+
+function tryUnlock() {
+  if (_unlocked) return;
+  const el = new Audio(_silentUrl);
+  el.volume = 0.001;
+  const p = el.play();
+  if (p !== undefined) {
+    p.then(() => { _unlocked = true; el.pause(); }).catch(() => {});
+  } else {
+    _unlocked = true;
+  }
+}
+
+// 페이지 복귀 시 재잠금 해제 (화면 복귀 후에도 소리 유지)
+function attachVisibilityResume() {
+  document.addEventListener("visibilitychange", () => {
+    if (document.visibilityState === "visible") {
+      _unlocked = false; // 강제 재잠금 해제 시도
+      tryUnlock();
+    }
+  });
 }
 
 // ── 공개 API ───────────────────────────────────────────────────────────────
@@ -160,45 +175,41 @@ let _attached = false;
 export function attachAudioUnlock() {
   if (_attached) return;
   _attached = true;
+  attachVisibilityResume();
   const handler = () => unlockAudioContext();
   document.addEventListener("touchstart", handler, { capture: true, passive: true });
   document.addEventListener("mousedown", handler, { capture: true });
 }
 
 export function unlockAudioContext() {
-  tryPrime();
+  tryUnlock();
 }
 
 export function playSound(type: SoundType) {
-  // 이미 프라임된 엘리먼트 사용
-  let el = getPoolEl(type);
-  if (el) {
-    el.currentTime = 0; el.volume = 1;
+  const url = _blobUrls.get(type);
+
+  if (url) {
+    // URL 준비됨 — 풀에서 엘리먼트 재사용 또는 새로 생성
+    let el = getPoolEl(type);
+    if (!el) {
+      el = new Audio(url);
+      addToPool(type, el);
+    }
+    el.currentTime = 0;
+    el.volume = 1;
     el.play().catch(() => {});
     return;
   }
 
-  // 프라임된 엘리먼트 없음 — BlobURL 있으면 새 엘리먼트 생성
-  const url = _blobUrls.get(type);
-  if (url) {
-    const newEl = new Audio(url);
-    newEl.volume = 1;
-    newEl.play().catch(() => {});
-    if (!_pool.has(type)) _pool.set(type, []);
-    _pool.get(type)!.push(newEl);
-    return;
-  }
-
-  // BlobURL도 없음 — 렌더링 완료 대기 후 재생
+  // URL 아직 렌더링 중 — 완료 후 재생
   startRender(type).then(() => {
     const readyUrl = _blobUrls.get(type);
     if (!readyUrl) return;
-    const newEl = new Audio(readyUrl);
-    newEl.volume = 1;
-    newEl.play().catch(() => {});
-    if (!_pool.has(type)) _pool.set(type, []);
-    _pool.get(type)!.push(newEl);
-  }).catch(() => {});
+    let el = getPoolEl(type);
+    if (!el) { el = new Audio(readyUrl); addToPool(type, el); }
+    el.currentTime = 0; el.volume = 1;
+    el.play().catch(() => {});
+  });
 }
 
 export function playNotificationSound(role?: "customer" | "admin" | "staff") {
