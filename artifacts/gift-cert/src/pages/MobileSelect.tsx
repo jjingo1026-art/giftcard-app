@@ -389,12 +389,14 @@ function BooknlifeManualInput({
   onAdd,
   onRemove,
   label = "상품권번호 입력",
+  isExchange = false,
 }: {
   numbers: string[];
   onChange: (idx: number, val: string) => void;
   onAdd: () => void;
   onRemove: (idx: number) => void;
   label?: string;
+  isExchange?: boolean;
 }) {
   return (
     <div className="rounded-2xl border-2 border-violet-200 bg-violet-50 p-4 space-y-3">
@@ -410,17 +412,23 @@ function BooknlifeManualInput({
             <div className="relative flex-1">
               <input
                 type="text"
-                inputMode="numeric"
+                inputMode={isExchange ? "text" : "numeric"}
                 value={num}
-                onChange={(e) => onChange(idx, e.target.value.replace(/\D/g, "").slice(0, 20))}
-                placeholder={`상품권번호 ${idx + 1} (20자리)`}
-                className={`w-full px-4 py-3 pr-14 rounded-xl border-2 bg-white text-[14px] font-mono tracking-wider outline-none transition-all placeholder:text-slate-300
-                  ${num.length === 20 ? "border-violet-400 focus:border-violet-500 focus:ring-2 focus:ring-violet-100" : num.length > 0 ? "border-amber-300 focus:border-amber-400 focus:ring-2 focus:ring-amber-100" : "border-violet-200 focus:border-violet-400 focus:ring-2 focus:ring-violet-100"}`}
+                onChange={(e) =>
+                  isExchange
+                    ? onChange(idx, e.target.value)
+                    : onChange(idx, e.target.value.replace(/\D/g, "").slice(0, 20))
+                }
+                placeholder={isExchange ? `교환권번호 ${idx + 1}` : `상품권번호 ${idx + 1} (20자리)`}
+                className={`w-full px-4 py-3 ${isExchange ? "" : "pr-14"} rounded-xl border-2 bg-white text-[14px] font-mono tracking-wider outline-none transition-all placeholder:text-slate-300
+                  ${!isExchange && num.length === 20 ? "border-violet-400 focus:border-violet-500 focus:ring-2 focus:ring-violet-100" : num.length > 0 ? "border-violet-400 focus:border-violet-500 focus:ring-2 focus:ring-violet-100" : "border-violet-200 focus:border-violet-400 focus:ring-2 focus:ring-violet-100"}`}
               />
-              <span className={`absolute right-3 top-1/2 -translate-y-1/2 text-[11px] font-bold tabular-nums
-                ${num.length === 20 ? "text-violet-500" : num.length > 0 ? "text-amber-500" : "text-slate-300"}`}>
-                {num.length}/20
-              </span>
+              {!isExchange && (
+                <span className={`absolute right-3 top-1/2 -translate-y-1/2 text-[11px] font-bold tabular-nums
+                  ${num.length === 20 ? "text-violet-500" : num.length > 0 ? "text-amber-500" : "text-slate-300"}`}>
+                  {num.length}/20
+                </span>
+              )}
             </div>
             {idx === 0 ? (
               <button
@@ -1405,6 +1413,7 @@ function MobileVoucherItems({
             onAdd={onBooknlifeNumberAdd}
             onRemove={onBooknlifeNumberRemove}
             label={inputLabel}
+            isExchange={hasGwon}
           />
         );
       })()}
