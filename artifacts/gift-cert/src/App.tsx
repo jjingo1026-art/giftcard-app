@@ -466,7 +466,7 @@ function HomePage({ onGoUrgent, initialType = DEFAULT_TYPE, onTypeChange, rateGr
           </button>
           <div className="flex-1 flex items-center gap-2 min-w-0">
             <div className="flex-1 min-w-0">
-              <h1 className="text-[17px] font-bold text-slate-800">우리동네상품권 예약</h1>
+              <h1 className="text-[17px] font-bold text-slate-800">우리동네상품권 판매예약</h1>
               <p className="text-[11px] text-slate-400 mt-0.5 font-medium tracking-wide">GIFT CERTIFICATE RESERVATION</p>
             </div>
             {/* 언어 선택 버튼 */}
