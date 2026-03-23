@@ -35,9 +35,29 @@ const chatReadLimiter = rateLimit({
   legacyHeaders: false,
 });
 
+// 고객 예약 조회: IP당 1분 30회 (전화번호 열거 방지)
+const customerLookupLimiter = rateLimit({
+  windowMs: 60 * 1000,
+  max: 30,
+  message: { success: false, error: "요청이 너무 많습니다. 잠시 후 다시 시도해주세요." },
+  standardHeaders: true,
+  legacyHeaders: false,
+});
+
+// 예약 신청: IP당 10분에 10회 (스팸 방지)
+const reservationCreateLimiter = rateLimit({
+  windowMs: 10 * 60 * 1000,
+  max: 10,
+  message: { error: "요청이 너무 많습니다. 잠시 후 다시 시도해주세요." },
+  standardHeaders: true,
+  legacyHeaders: false,
+});
+
 app.use("/api/admin/login", loginLimiter);
 app.use("/api/admin/staff/login", loginLimiter);
 app.use("/api/admin/chat", chatReadLimiter);
+app.use("/api/admin/customer/reservation", customerLookupLimiter);
+app.use("/api/reservations", reservationCreateLimiter);
 
 app.use("/api", router);
 

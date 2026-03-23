@@ -1485,6 +1485,7 @@ router.get("/customer/reservation", async (req, res) => {
     return;
   }
 
+  // PIN 검증: customerPin이 설정된 경우 반드시 일치해야 함
   if (result.customerPin) {
     if (!pin || pin !== result.customerPin) {
       res.json({ success: false, error: "비밀번호가 일치하지 않습니다." });
@@ -1496,9 +1497,22 @@ router.get("/customer/reservation", async (req, res) => {
     ? await db.select().from(staffTable).where(eq(staffTable.id, result.assignedStaffId))
     : [];
 
+  // PIN이 설정되지 않은 예약(오래된 데이터 등)은 계좌번호 마스킹 처리
+  const safeReservation = result.customerPin
+    ? result
+    : {
+        ...result,
+        accountNumber: result.accountNumber
+          ? "*".repeat(Math.max(0, result.accountNumber.length - 4)) + result.accountNumber.slice(-4)
+          : null,
+        accountHolder: result.accountHolder
+          ? result.accountHolder[0] + "*".repeat(Math.max(0, result.accountHolder.length - 1))
+          : null,
+      };
+
   res.json({
     success: true,
-    reservation: result,
+    reservation: safeReservation,
     staff: assignedStaff
       ? { id: assignedStaff.id, name: assignedStaff.name, phone: assignedStaff.phone }
       : null,
