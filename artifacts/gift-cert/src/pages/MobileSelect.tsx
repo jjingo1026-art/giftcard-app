@@ -1097,6 +1097,7 @@ function MobileVoucherItems({
             <div>
               <p className="text-[13px] font-black text-orange-700 tracking-wide">{mobileSettings.lottePhone}</p>
               <p className="text-[12px] text-orange-600 mt-0.5">위 번호로 선물하기를 보내주세요</p>
+              <p className="text-[12px] text-orange-500 font-semibold mt-1">선물보내기를 하시고 판매신청을 완료해주세요</p>
             </div>
           </div>
           <div className="flex items-start gap-2 px-3 py-2.5 bg-pink-50 rounded-xl border border-pink-100">
