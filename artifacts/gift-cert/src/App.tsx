@@ -62,7 +62,7 @@ const isValidTime = (time: string) => {
 
 const TIME_OPTIONS: string[] = (() => {
   const opts: string[] = [];
-  for (let h = 9; h <= 18; h++) {
+  for (let h = 0; h <= 23; h++) {
     for (let m = 0; m < 60; m += 10) {
       opts.push(`${String(h).padStart(2, "0")}:${String(m).padStart(2, "0")}`);
     }
@@ -676,18 +676,13 @@ function HomePage({ onGoUrgent, initialType = DEFAULT_TYPE, onTypeChange, rateGr
                     const nowHHMM = `${String(now.getHours()).padStart(2, "0")}:${String(now.getMinutes()).padStart(2, "0")}`;
                     const localDateStr = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,"0")}-${String(now.getDate()).padStart(2,"0")}`;
                     const isToday = date === localDateStr;
-                    const visible = TIME_OPTIONS.filter((t) => {
-                      if (isToday && t <= nowHHMM) return false;
-                      return true;
-                    });
-                    if (visible.length === 0 && isToday) {
-                      return <option value="" disabled>오늘 예약 가능한 시간이 없습니다</option>;
-                    }
-                    return visible.map((t) => {
+                    return TIME_OPTIONS.map((t) => {
+                      const isPast = isToday && t <= nowHHMM;
                       const taken = takenSlots.includes(t);
+                      const disabled = isPast || taken;
                       return (
-                        <option key={t} value={t} disabled={taken}>
-                          {taken ? `❌ ${t}` : `⭕ ${t}`}
+                        <option key={t} value={t} disabled={disabled}>
+                          {taken ? `❌ ${t}` : isPast ? `🔒 ${t}` : `⭕ ${t}`}
                         </option>
                       );
                     });
