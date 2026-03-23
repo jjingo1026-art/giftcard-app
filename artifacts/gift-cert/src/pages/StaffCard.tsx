@@ -79,6 +79,12 @@ export default function StaffCard() {
   const [defectDetail, setDefectDetail] = useState("");
   const [sendingDefect, setSendingDefect] = useState(false);
 
+  /* 자주 쓰는 문구 */
+  const [phrases, setPhrases] = useState<string[]>([]);
+  const [showAddPhrase, setShowAddPhrase] = useState(false);
+  const [newPhrase, setNewPhrase] = useState("");
+  const [savingPhrase, setSavingPhrase] = useState(false);
+
   /* 채팅 창 상태 */
   const [chatOpen, setChatOpen] = useState(false);
   const [chatMessages, setChatMessages] = useState<Message[]>([]);
@@ -108,6 +114,11 @@ export default function StaffCard() {
         setR(found ?? null);
       })
       .finally(() => setLoading(false));
+
+    staffFetch("/api/staff/quick-phrases")
+      .then((res) => res.json())
+      .then((data: string[]) => { if (Array.isArray(data)) setPhrases(data); })
+      .catch(() => {});
 
     fetch(`/api/admin/chat/${id}`)
       .then((res) => res.json())
@@ -179,6 +190,35 @@ export default function StaffCard() {
 
   async function sendChatMessage(message: string) {
     sendChatViaSocket(message);
+  }
+
+  async function savePhrasesToServer(list: string[]) {
+    setSavingPhrase(true);
+    try {
+      await staffFetch("/api/staff/quick-phrases", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ phrases: list }),
+      });
+    } finally {
+      setSavingPhrase(false);
+    }
+  }
+
+  function addPhrase() {
+    const trimmed = newPhrase.trim();
+    if (!trimmed) return;
+    const updated = [...phrases, trimmed];
+    setPhrases(updated);
+    savePhrasesToServer(updated);
+    setNewPhrase("");
+    setShowAddPhrase(false);
+  }
+
+  function deletePhrase(idx: number) {
+    const updated = phrases.filter((_, i) => i !== idx);
+    setPhrases(updated);
+    savePhrasesToServer(updated);
   }
 
   function sendMsg() {
@@ -569,25 +609,62 @@ export default function StaffCard() {
             </div>
 
             {/* 자주 쓰는 문구 */}
-            <div className="flex-shrink-0 bg-white border-t border-slate-100 px-3 pt-2.5 pb-0">
-              <div className="flex flex-wrap gap-1.5 pb-1">
-                {[
-                  "안녕하세요",
-                  "가는중 입니다 약속장소에서 뵙겠습니다",
-                  "잠시후 약속시간에 뵙겠습니다",
-                  "확인부탁드립니다",
-                  "도착했습니다",
-                ].map((phrase) => (
-                  <button
-                    key={phrase}
-                    onClick={() => sendChatMessage(phrase)}
-                    className="flex-shrink-0 px-3 py-1.5 rounded-full bg-indigo-50 text-indigo-600 text-[12px] font-semibold border border-indigo-100 hover:bg-indigo-100 active:scale-95 transition-all whitespace-nowrap"
-                  >
-                    {phrase}
-                  </button>
+            <div className="flex-shrink-0 bg-white border-t border-slate-100 px-3 pt-2 pb-0">
+              <div className="flex flex-wrap gap-1.5 pb-1 items-center">
+                {phrases.map((phrase, idx) => (
+                  <div key={idx} className="flex items-center gap-0.5 flex-shrink-0">
+                    <button
+                      onClick={() => sendChatMessage(phrase)}
+                      className="px-3 py-1.5 rounded-l-full bg-indigo-50 text-indigo-600 text-[12px] font-semibold border border-indigo-100 hover:bg-indigo-100 active:scale-95 transition-all whitespace-nowrap"
+                    >
+                      {phrase}
+                    </button>
+                    <button
+                      onClick={() => deletePhrase(idx)}
+                      className="px-1.5 py-1.5 rounded-r-full bg-rose-50 text-rose-400 text-[11px] border border-rose-100 hover:bg-rose-100 active:scale-95 transition-all leading-none"
+                      title="삭제"
+                    >
+                      ×
+                    </button>
+                  </div>
                 ))}
+                {/* 추가 버튼 */}
+                <button
+                  onClick={() => setShowAddPhrase(true)}
+                  className="flex-shrink-0 w-7 h-7 rounded-full bg-slate-100 text-slate-500 text-[16px] font-bold flex items-center justify-center hover:bg-slate-200 active:scale-95 transition-all"
+                  title="문구 추가"
+                >
+                  +
+                </button>
               </div>
             </div>
+
+            {/* 문구 추가 입력창 */}
+            {showAddPhrase && (
+              <div className="flex-shrink-0 bg-indigo-50 border-t border-indigo-100 px-3 py-2 flex gap-2 items-center">
+                <input
+                  autoFocus
+                  value={newPhrase}
+                  onChange={(e) => setNewPhrase(e.target.value)}
+                  onKeyDown={(e) => { if (e.key === "Enter") addPhrase(); if (e.key === "Escape") { setShowAddPhrase(false); setNewPhrase(""); } }}
+                  placeholder="추가할 문구 입력 후 저장"
+                  className="flex-1 px-3 py-2 rounded-xl border border-indigo-200 bg-white text-[13px] outline-none focus:border-indigo-400"
+                />
+                <button
+                  onClick={addPhrase}
+                  disabled={!newPhrase.trim() || savingPhrase}
+                  className="px-3 py-2 rounded-xl bg-indigo-500 text-white text-[12px] font-bold hover:bg-indigo-600 transition-colors disabled:opacity-50"
+                >
+                  저장
+                </button>
+                <button
+                  onClick={() => { setShowAddPhrase(false); setNewPhrase(""); }}
+                  className="px-3 py-2 rounded-xl bg-slate-200 text-slate-600 text-[12px] font-bold hover:bg-slate-300 transition-colors"
+                >
+                  취소
+                </button>
+              </div>
+            )}
 
             {/* 입력 영역 */}
             <div className="flex-shrink-0 bg-white px-4 py-3">
