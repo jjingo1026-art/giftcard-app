@@ -29,6 +29,7 @@ interface Reservation {
   bankName: string;
   accountNumber: string;
   accountHolder: string;
+  createdAt?: string;
 }
 
 type Tab = "today" | "upcoming" | "completed";
@@ -303,7 +304,13 @@ export default function StaffDashboard() {
   });
 
   const todayList = entries
-    .filter((r) => r.date === TODAY)
+    .filter((r) => {
+      if (r.kind === "urgent") {
+        const createdDate = r.createdAt ? r.createdAt.slice(0, 10) : null;
+        return createdDate === TODAY;
+      }
+      return r.date === TODAY;
+    })
     .sort((a, b) => (a.time ?? "").localeCompare(b.time ?? ""));
 
   const upcomingList = entries
