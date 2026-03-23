@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { Link } from "wouter";
-import { getNextId, saveEntry, formatDateKo } from "@/lib/store";
+import { getNextId, saveEntry, formatDateKo, formatPhoneInput } from "@/lib/store";
 import { LANGUAGES, getSavedLang, saveLang } from "@/lib/languages";
 import { getLabel } from "@/lib/uiTranslations";
 
@@ -617,7 +617,7 @@ function HomePage({ onGoUrgent, initialType = DEFAULT_TYPE, onTypeChange, rateGr
               <input type="text" value={name} onChange={(e) => { setName(e.target.value.replace(/[^가-힣a-zA-Z\s]/g, "")); setFieldErrors((p) => ({ ...p, name: "" })); }} placeholder="홍길동" className={inputCls(!!fieldErrors.name)} />
             </Field>
             <Field label="연락처" required error={fieldErrors.phone}>
-              <input type="tel" value={phone} onChange={(e) => { setPhone(e.target.value); setFieldErrors((p) => ({ ...p, phone: "" })); }} placeholder="010-0000-0000" className={inputCls(!!fieldErrors.phone)} />
+              <input type="tel" value={phone} onChange={(e) => { setPhone(formatPhoneInput(e.target.value)); setFieldErrors((p) => ({ ...p, phone: "" })); }} placeholder="010-0000-0000" className={inputCls(!!fieldErrors.phone)} />
             </Field>
             <div className="grid grid-cols-2 gap-3">
               <Field label="예약 날짜" required error={fieldErrors.date}>
@@ -1132,7 +1132,7 @@ function UrgentPage({ onBack, initialType = DEFAULT_TYPE }: { onBack: () => void
               <input type="text" value={name} onChange={(e) => { setName(e.target.value.replace(/[^가-힣a-zA-Z\s]/g, "")); setFieldErrors((p) => ({ ...p, name: "" })); }} placeholder="홍길동" className={inputCls(!!fieldErrors.name, "rose")} />
             </Field>
             <Field label="판매자 전화번호" required error={fieldErrors.phone}>
-              <input type="tel" value={phone} onChange={(e) => { setPhone(e.target.value); setFieldErrors((p) => ({ ...p, phone: "" })); }} placeholder="010-0000-0000" className={inputCls(!!fieldErrors.phone, "rose")} />
+              <input type="tel" value={phone} onChange={(e) => { setPhone(formatPhoneInput(e.target.value)); setFieldErrors((p) => ({ ...p, phone: "" })); }} placeholder="010-0000-0000" className={inputCls(!!fieldErrors.phone, "rose")} />
             </Field>
             <Field label="거래 장소" required error={fieldErrors.locationMain}>
               <LocationSearchInput

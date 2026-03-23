@@ -1,6 +1,13 @@
 export const formatPhone = (phone: string) =>
   phone.replace(/(\d{3})(\d{4})(\d{4})/, "$1-$2-$3");
 
+export function formatPhoneInput(value: string): string {
+  const digits = value.replace(/\D/g, "").slice(0, 11);
+  if (digits.length <= 3) return digits;
+  if (digits.length <= 7) return `${digits.slice(0, 3)}-${digits.slice(3)}`;
+  return `${digits.slice(0, 3)}-${digits.slice(3, 7)}-${digits.slice(7)}`;
+}
+
 export function formatDateKo(dateStr?: string | null, includeTime?: string | null): string {
   if (!dateStr) return "";
   const [, m, d] = dateStr.split("-");

@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useLocation } from "wouter";
-import { formatPhone, formatDateKo } from "@/lib/store";
+import { formatPhone, formatDateKo, formatPhoneInput } from "@/lib/store";
 import { LANGUAGES, getSavedLang, saveLang } from "@/lib/languages";
 import { getLabel } from "@/lib/uiTranslations";
 
@@ -498,7 +498,7 @@ export default function ReservationCheck() {
             <input
               type="tel"
               value={phone}
-              onChange={(e) => setPhone(e.target.value)}
+              onChange={(e) => setPhone(formatPhoneInput(e.target.value))}
               onKeyDown={(e) => e.key === "Enter" && check()}
               placeholder="010-0000-0000"
               className="w-full px-4 py-3 rounded-xl border border-slate-200 text-[14px] text-slate-700 outline-none focus:border-indigo-400 bg-slate-50"
