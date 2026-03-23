@@ -937,6 +937,8 @@ function MobileVoucherItems({
   onCultureTypeChange,
   isBooknlifeFlow,
   onBooknlifeTypeChange,
+  booknlifeExchangePlatform,
+  onBooknlifeExchangePlatformChange,
   onAdd,
   onRemove,
 }: {
@@ -984,6 +986,8 @@ function MobileVoucherItems({
   onCultureTypeChange: (type: string) => void;
   isBooknlifeFlow: boolean;
   onBooknlifeTypeChange: (type: string) => void;
+  booknlifeExchangePlatform: string;
+  onBooknlifeExchangePlatformChange: (p: string) => void;
   onAdd: () => void;
   onRemove: (idx: number) => void;
 }) {
@@ -1036,6 +1040,32 @@ function MobileVoucherItems({
               );
             })}
           </div>
+
+          {/* 교환권 플랫폼 선택 (2×2 그리드) */}
+          {activeBooknlifeType === "북앤라이프 교환권" && (
+            <div className="pt-1 space-y-1.5">
+              <p className="text-[11px] font-bold text-violet-500">교환권 종류를 선택하세요</p>
+              <div className="grid grid-cols-2 gap-1.5">
+                {["카카오톡", "inumber", "giftshow", "gifticon"].map((pl) => {
+                  const isActive = booknlifeExchangePlatform === pl;
+                  return (
+                    <button
+                      key={pl}
+                      type="button"
+                      onClick={() => onBooknlifeExchangePlatformChange(pl)}
+                      className={`py-2 rounded-xl text-[12px] font-bold transition-all active:scale-95
+                        ${isActive
+                          ? "bg-violet-500 text-white shadow-sm"
+                          : "bg-white text-violet-500 border border-violet-200 hover:bg-violet-50"
+                        }`}
+                    >
+                      {pl}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+          )}
         </div>
       )}
 
@@ -1440,6 +1470,7 @@ export default function MobileSelect() {
   const [shinsegaeImages, setShinsegaeImages] = useState<HyundaiImage[]>([]);
   const [shinsegaeNumbers, setShinsegaeNumbers] = useState<string[]>([""]);
   const [booknlifeNumbers, setBooknlifeNumbers] = useState<string[]>([""]);
+  const [booknlifeExchangePlatform, setBooknlifeExchangePlatform] = useState("카카오톡");
   const [munhwaNumbers, setMunhwaNumbers] = useState<string[]>([""]);
   const [googleNumbers, setGoogleNumbers] = useState<string[]>([""]);
   const [cultureImages, setCultureImages] = useState<CultureImage[]>([]);
@@ -1861,7 +1892,10 @@ export default function MobileSelect() {
                   ? shinsegaeNumbers.filter(Boolean).map((n) => `번호: ${n}`)
                   : []),
                 ...(it.type.startsWith("북앤라이프")
-                  ? booknlifeNumbers.filter(Boolean).map((n) => `번호: ${n}`)
+                  ? [
+                      ...(it.type === "북앤라이프 교환권" ? [`플랫폼: ${booknlifeExchangePlatform}`] : []),
+                      ...booknlifeNumbers.filter(Boolean).map((n) => `번호: ${n}`),
+                    ]
                   : []),
                 ...(it.type === "문화상품권(18핀)"
                   ? munhwaNumbers.filter(Boolean).map((n) => `번호: ${n}`)
@@ -2029,6 +2063,8 @@ export default function MobileSelect() {
             onCultureTypeChange={handleCultureTypeChange}
             isBooknlifeFlow={isBooknlifeFlow}
             onBooknlifeTypeChange={handleBooknlifeTypeChange}
+            booknlifeExchangePlatform={booknlifeExchangePlatform}
+            onBooknlifeExchangePlatformChange={setBooknlifeExchangePlatform}
             onAdd={handleAddItem}
             onRemove={handleRemoveItem}
           />
