@@ -450,6 +450,10 @@ router.post("/reservations/:id/complete", requireStaffAuth, async (req, res) => 
     .set({ status: "completed", completedAt: new Date() })
     .where(eq(reservationsTable.id, id));
 
+  // 관리자 대시보드 실시간 업데이트
+  const [updatedRow] = await db.select().from(reservationsTable).where(eq(reservationsTable.id, id));
+  if (updatedRow) broadcast("reservationUpdated", updatedRow);
+
   res.json({ success: true });
 });
 
