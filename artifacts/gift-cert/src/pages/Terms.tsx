@@ -231,7 +231,7 @@ export default function Terms() {
             className="w-full py-4 rounded-2xl text-white text-[15px] font-bold transition-all active:scale-[0.98] shadow-sm"
             style={{ background: "linear-gradient(135deg, #6366f1 0%, #4f46e5 100%)" }}
           >
-            이용약관에 동의 합니다
+            이용약관에 동의합니다 (필수)
           </button>
         )}
       </div>
