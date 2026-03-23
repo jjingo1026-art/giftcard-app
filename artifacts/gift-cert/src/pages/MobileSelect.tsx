@@ -1045,7 +1045,7 @@ function MobileVoucherItems({
           {activeBooknlifeType === "북앤라이프 교환권" && (
             <div className="pt-1 space-y-1.5">
               <p className="text-[11px] font-bold text-violet-500">교환권 종류를 선택하세요</p>
-              <div className="grid grid-cols-2 gap-1.5">
+              <div className="grid grid-cols-4 gap-1">
                 {["카카오톡", "inumber", "giftshow", "gifticon"].map((pl) => {
                   const isActive = booknlifeExchangePlatform === pl;
                   return (
@@ -1053,7 +1053,7 @@ function MobileVoucherItems({
                       key={pl}
                       type="button"
                       onClick={() => onBooknlifeExchangePlatformChange(pl)}
-                      className={`py-2 rounded-xl text-[12px] font-bold transition-all active:scale-95
+                      className={`py-1 px-1 rounded-lg text-[10px] font-bold transition-all active:scale-95
                         ${isActive
                           ? "bg-violet-500 text-white shadow-sm"
                           : "bg-white text-violet-500 border border-violet-200 hover:bg-violet-50"
