@@ -345,10 +345,10 @@ export default function AdminMobileDashboard() {
             {/* 채팅 전체 목록 버튼 */}
             <button
               onClick={() => { window.location.href = "/admin/chats"; }}
-              className="relative flex items-center gap-1.5 text-[13px] text-indigo-600 hover:text-indigo-800 font-bold transition-colors px-4 py-2 rounded-xl hover:bg-indigo-50 border border-indigo-200 bg-indigo-50/60"
+              className="relative flex items-center gap-1.5 text-[12px] text-indigo-600 hover:text-indigo-800 font-bold transition-all px-3 py-1.5 rounded-xl hover:bg-indigo-100 border border-indigo-200 bg-indigo-50"
               title="채팅 전체 목록"
             >
-              <span className="text-[16px]">💬</span>
+              <span>💬</span>
               <span>채팅</span>
               {totalUnread > 0 && (
                 <span className="absolute -top-1.5 -right-1.5 min-w-[20px] h-[20px] rounded-full bg-rose-500 text-white text-[10px] font-black flex items-center justify-center px-1 leading-none">
@@ -358,16 +358,16 @@ export default function AdminMobileDashboard() {
             </button>
             <button
               onClick={() => navigate("/admin/dashboard")}
-              className="text-[12px] font-bold text-slate-600 hover:text-slate-800 px-3 py-1.5 rounded-xl bg-slate-100 hover:bg-slate-200 transition-all flex items-center gap-1"
+              className="text-[12px] font-bold text-slate-600 hover:text-slate-800 px-3 py-1.5 rounded-xl bg-slate-100 hover:bg-slate-200 transition-all flex items-center gap-1.5"
             >
               <span>📄</span> 지류
             </button>
             <button
               onClick={() => setViewMode((m) => m === "settings" ? "list" : "settings")}
-              className={`text-[12px] font-semibold transition-colors px-2 py-1.5 rounded-xl
-                ${viewMode === "settings" ? "bg-violet-100 text-violet-700" : "text-slate-400 hover:text-slate-700 hover:bg-slate-100"}`}
+              className={`text-[12px] font-bold transition-all px-3 py-1.5 rounded-xl flex items-center gap-1.5
+                ${viewMode === "settings" ? "bg-violet-100 text-violet-700 border border-violet-200" : "text-slate-600 hover:text-slate-800 bg-slate-100 hover:bg-slate-200"}`}
               title="모바일 설정"
-            >⚙️</button>
+            >⚙️ 설정</button>
             <button
               onClick={() => { clearAdminToken(); navigate("/admin/login"); }}
               className="text-[12px] text-slate-400 hover:text-rose-500 font-semibold transition-colors px-3 py-1.5 rounded-xl hover:bg-rose-50"
