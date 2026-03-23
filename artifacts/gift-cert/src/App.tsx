@@ -799,10 +799,18 @@ function HomePage({ onGoUrgent, initialType = DEFAULT_TYPE, onTypeChange, rateGr
                     onChange={(e) => { setCustomerPinConfirm(e.target.value.replace(/\D/g, "").slice(0, 4)); setFieldErrors((p) => ({ ...p, pin: "" })); }}
                     placeholder="비밀번호 확인"
                     className={`w-full px-3 py-2.5 rounded-xl border text-[14px] text-slate-800 outline-none transition-all bg-white placeholder:text-slate-300 tracking-[0.3em]
-                      ${fieldErrors.pin ? "border-rose-300 focus:border-rose-400 focus:ring-2 focus:ring-rose-100" : "border-slate-200 focus:border-indigo-400 focus:ring-2 focus:ring-indigo-50"}`}
+                      ${fieldErrors.pin
+                        ? "border-rose-300 focus:border-rose-400 focus:ring-2 focus:ring-rose-100"
+                        : customerPinConfirm.length === 4 && customerPin === customerPinConfirm
+                        ? "border-green-400 focus:border-green-500 focus:ring-2 focus:ring-green-100"
+                        : "border-slate-200 focus:border-indigo-400 focus:ring-2 focus:ring-indigo-50"}`}
                   />
                 )}
-                {fieldErrors.pin && <p className="text-[11px] text-rose-500">⚠ {fieldErrors.pin}</p>}
+                {fieldErrors.pin
+                  ? <p className="text-[11px] text-rose-500">⚠ {fieldErrors.pin}</p>
+                  : customerPinConfirm.length === 4 && customerPin === customerPinConfirm
+                  ? <p className="text-[11px] text-green-600 font-semibold">✓ 비밀번호가 일치합니다</p>
+                  : null}
               </div>
             </div>
 
@@ -1271,10 +1279,18 @@ function UrgentPage({ onBack, initialType = DEFAULT_TYPE }: { onBack: () => void
                     onChange={(e) => { setCustomerPinConfirm(e.target.value.replace(/\D/g, "").slice(0, 4)); setFieldErrors((p) => ({ ...p, pin: "" })); }}
                     placeholder="비밀번호 확인"
                     className={`w-full px-3 py-2.5 rounded-xl border text-[14px] text-slate-800 outline-none transition-all bg-white placeholder:text-slate-300 tracking-[0.3em]
-                      ${fieldErrors.pin ? "border-rose-300 focus:border-rose-400 focus:ring-2 focus:ring-rose-100" : "border-slate-200 focus:border-rose-400 focus:ring-2 focus:ring-rose-50"}`}
+                      ${fieldErrors.pin
+                        ? "border-rose-300 focus:border-rose-400 focus:ring-2 focus:ring-rose-100"
+                        : customerPinConfirm.length === 4 && customerPin === customerPinConfirm
+                        ? "border-green-400 focus:border-green-500 focus:ring-2 focus:ring-green-100"
+                        : "border-slate-200 focus:border-rose-400 focus:ring-2 focus:ring-rose-50"}`}
                   />
                 )}
-                {fieldErrors.pin && <p className="text-[11px] text-rose-500">⚠ {fieldErrors.pin}</p>}
+                {fieldErrors.pin
+                  ? <p className="text-[11px] text-rose-500">⚠ {fieldErrors.pin}</p>
+                  : customerPinConfirm.length === 4 && customerPin === customerPinConfirm
+                  ? <p className="text-[11px] text-green-600 font-semibold">✓ 비밀번호가 일치합니다</p>
+                  : null}
               </div>
             </div>
 
