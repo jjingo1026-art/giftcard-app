@@ -231,12 +231,7 @@ export default function ReservationCheck() {
   // 수정 버튼 + 폼 (재사용)
   function EditSection() {
     if (!canModify) return null;
-    if (tooLateToEdit) return (
-      <div className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 flex items-center gap-2">
-        <span className="text-[16px]">⏰</span>
-        <p className="text-[13px] font-semibold text-amber-700">예약 1시간 전까지만 취소할 수 있습니다.</p>
-      </div>
-    );
+    if (tooLateToEdit) return null;
     if (editMode) return (
       <form onSubmit={submitEdit} className="bg-white rounded-2xl border border-indigo-100 shadow-sm overflow-hidden">
         <div className="px-5 py-4 border-b border-slate-50 flex items-center justify-between">
@@ -661,11 +656,17 @@ export default function ReservationCheck() {
             <div>
               {cancelError && <p className="text-[12px] text-rose-500 mb-2">{cancelError}</p>}
               <button
-                onClick={cancelReservation}
-                disabled={cancelling}
-                className="w-full py-3 rounded-xl border border-rose-200 text-rose-500 text-[14px] font-semibold hover:bg-rose-50 transition-colors active:scale-95 disabled:opacity-40"
+                onClick={tooLateToEdit ? undefined : cancelReservation}
+                disabled={cancelling || tooLateToEdit}
+                className={`w-full py-3 rounded-xl border text-[14px] font-semibold transition-colors active:scale-95 disabled:opacity-50 ${tooLateToEdit ? "border-slate-200 text-slate-400 cursor-not-allowed" : "border-rose-200 text-rose-500 hover:bg-rose-50"}`}
               >
-                {cancelling ? "취소 처리 중…" : getLabel("cancel_reservation", lang)}
+                {cancelling ? "취소 처리 중…" : tooLateToEdit
+                  ? <span className="flex flex-col items-center gap-0.5">
+                      <span>{getLabel("cancel_reservation", lang)}</span>
+                      <span className="text-[11px] font-normal opacity-70">⏰ 예약 1시간 전까지만 취소할 수 있습니다</span>
+                    </span>
+                  : getLabel("cancel_reservation", lang)
+                }
               </button>
             </div>
 
@@ -748,11 +749,17 @@ export default function ReservationCheck() {
             <div>
               {cancelError && <p className="text-[12px] text-rose-500 mb-2">{cancelError}</p>}
               <button
-                onClick={cancelReservation}
-                disabled={cancelling}
-                className="w-full py-3 rounded-xl border border-rose-200 text-rose-500 text-[14px] font-semibold hover:bg-rose-50 transition-colors active:scale-95 disabled:opacity-40"
+                onClick={tooLateToEdit ? undefined : cancelReservation}
+                disabled={cancelling || tooLateToEdit}
+                className={`w-full py-3 rounded-xl border text-[14px] font-semibold transition-colors active:scale-95 disabled:opacity-50 ${tooLateToEdit ? "border-slate-200 text-slate-400 cursor-not-allowed" : "border-rose-200 text-rose-500 hover:bg-rose-50"}`}
               >
-                {cancelling ? "취소 처리 중…" : getLabel("cancel_reservation", lang)}
+                {cancelling ? "취소 처리 중…" : tooLateToEdit
+                  ? <span className="flex flex-col items-center gap-0.5">
+                      <span>{getLabel("cancel_reservation", lang)}</span>
+                      <span className="text-[11px] font-normal opacity-70">⏰ 예약 1시간 전까지만 취소할 수 있습니다</span>
+                    </span>
+                  : getLabel("cancel_reservation", lang)
+                }
               </button>
             </div>
 
