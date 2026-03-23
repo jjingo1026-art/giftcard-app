@@ -395,13 +395,13 @@ function HomePage({ onGoUrgent, initialType = DEFAULT_TYPE, onTypeChange, rateGr
     if (!name.trim()) fe.name = "이름을 입력해주세요";
     else if (!/^[가-힣a-zA-Z\s]+$/.test(name.trim())) fe.name = "이름은 한글 또는 영문만 입력 가능합니다";
     if (!phone.trim()) fe.phone = "연락처를 입력해주세요";
-    const todayStr = new Date().toISOString().split("T")[0];
     const now = new Date();
+    const localDateStr = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,"0")}-${String(now.getDate()).padStart(2,"0")}`;
     const nowHHMM = `${String(now.getHours()).padStart(2, "0")}:${String(now.getMinutes()).padStart(2, "0")}`;
     if (!date) fe.date = "날짜 선택";
-    else if (date < todayStr) fe.date = "지난 날짜는 선택할 수 없습니다";
+    else if (date < localDateStr) fe.date = "지난 날짜는 선택할 수 없습니다";
     if (!time || !isValidTime(time)) fe.time = "시간을 선택해주세요";
-    else if (date === todayStr && time <= nowHHMM) fe.time = "이미 지나간 시간은 선택할 수 없습니다";
+    else if (date === localDateStr && time <= nowHHMM) fe.time = "이미 지나간 시간은 선택할 수 없습니다";
     if (!locationMain.trim()) fe.locationMain = "거래 장소를 입력해주세요";
     if (!bankName) fe.bankName = "은행을 선택해주세요";
     if (!accountNumber.trim()) fe.accountNumber = "계좌번호를 입력해주세요";
@@ -633,13 +633,13 @@ function HomePage({ onGoUrgent, initialType = DEFAULT_TYPE, onTypeChange, rateGr
                 <input
                   type="date"
                   value={date}
-                  min={new Date().toISOString().split("T")[0]}
+                  min={(() => { const d = new Date(); return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}-${String(d.getDate()).padStart(2,"0")}`; })()}
                   onChange={async (e) => {
                     const d = e.target.value;
                     setDate(d);
                     setFieldErrors((p) => ({ ...p, date: "", time: "" }));
-                    const todayStr = new Date().toISOString().split("T")[0];
                     const now = new Date();
+                    const localDateStr = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,"0")}-${String(now.getDate()).padStart(2,"0")}`;
                     const nowHHMM = `${String(now.getHours()).padStart(2, "0")}:${String(now.getMinutes()).padStart(2, "0")}`;
                     if (d) {
                       try {
@@ -650,7 +650,7 @@ function HomePage({ onGoUrgent, initialType = DEFAULT_TYPE, onTypeChange, rateGr
                           .map((r) => r.time ?? "");
                         setTakenSlots(taken.filter(Boolean));
                         if (taken.includes(time)) setTime("");
-                        if (d === todayStr && time && time <= nowHHMM) setTime("");
+                        if (d === localDateStr && time && time <= nowHHMM) setTime("");
                       } catch {
                         setTakenSlots([]);
                       }
@@ -671,19 +671,27 @@ function HomePage({ onGoUrgent, initialType = DEFAULT_TYPE, onTypeChange, rateGr
                   style={{ backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 20 20'%3E%3Cpath fill='%236366f1' d='M5 8l5 5 5-5z'/%3E%3C/svg%3E")`, backgroundRepeat: "no-repeat", backgroundPosition: "right 12px center" }}
                 >
                   <option value="">시간 선택</option>
-                  {TIME_OPTIONS.map((t) => {
+                  {(() => {
                     const now = new Date();
                     const nowHHMM = `${String(now.getHours()).padStart(2, "0")}:${String(now.getMinutes()).padStart(2, "0")}`;
-                    const todayStr = now.toISOString().split("T")[0];
-                    const isPast = date === todayStr && t <= nowHHMM;
-                    const taken = takenSlots.includes(t);
-                    const disabled = taken || isPast;
-                    return (
-                      <option key={t} value={t} disabled={disabled}>
-                        {taken ? `❌ ${t}` : isPast ? `🔒 ${t}` : `⭕ ${t}`}
-                      </option>
-                    );
-                  })}
+                    const localDateStr = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,"0")}-${String(now.getDate()).padStart(2,"0")}`;
+                    const isToday = date === localDateStr;
+                    const visible = TIME_OPTIONS.filter((t) => {
+                      if (isToday && t <= nowHHMM) return false;
+                      return true;
+                    });
+                    if (visible.length === 0 && isToday) {
+                      return <option value="" disabled>오늘 예약 가능한 시간이 없습니다</option>;
+                    }
+                    return visible.map((t) => {
+                      const taken = takenSlots.includes(t);
+                      return (
+                        <option key={t} value={t} disabled={taken}>
+                          {taken ? `❌ ${t}` : `⭕ ${t}`}
+                        </option>
+                      );
+                    });
+                  })()}
                 </select>
               </Field>
             </div>
@@ -833,15 +841,15 @@ function HomePage({ onGoUrgent, initialType = DEFAULT_TYPE, onTypeChange, rateGr
 
             {(() => {
               const missing: string[] = [];
-              const _todayStr = new Date().toISOString().split("T")[0];
               const _now = new Date();
+              const _localDateStr = `${_now.getFullYear()}-${String(_now.getMonth()+1).padStart(2,"0")}-${String(_now.getDate()).padStart(2,"0")}`;
               const _nowHHMM = `${String(_now.getHours()).padStart(2, "0")}:${String(_now.getMinutes()).padStart(2, "0")}`;
               if (!name.trim()) missing.push("성명");
               if (!phone.trim()) missing.push("연락처");
               if (!date) missing.push("날짜");
-              else if (date < _todayStr) missing.push("날짜(지난 날짜 불가)");
+              else if (date < _localDateStr) missing.push("날짜(지난 날짜 불가)");
               if (!time || !isValidTime(time)) missing.push("시간");
-              else if (date === _todayStr && time <= _nowHHMM) missing.push("시간(이미 지나간 시간)");
+              else if (date === _localDateStr && time <= _nowHHMM) missing.push("시간(이미 지나간 시간)");
               if (!locationMain.trim()) missing.push("거래 장소");
               if (!bankName) missing.push("은행");
               if (!accountNumber.trim()) missing.push("계좌번호");
