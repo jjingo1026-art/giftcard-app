@@ -873,6 +873,8 @@ function MobileVoucherItems({
   onCultureExchangeAdd,
   onCultureExchangeRemove,
   mobileSettings,
+  isCultureFlow,
+  onCultureTypeChange,
   onAdd,
   onRemove,
 }: {
@@ -916,6 +918,8 @@ function MobileVoucherItems({
   onCultureExchangeAdd: () => void;
   onCultureExchangeRemove: (idx: number) => void;
   mobileSettings: { lottePhone: string; naverUserId: string; culturePhone: string };
+  isCultureFlow: boolean;
+  onCultureTypeChange: (type: string) => void;
   onAdd: () => void;
   onRemove: (idx: number) => void;
 }) {
@@ -926,11 +930,44 @@ function MobileVoucherItems({
     items.reduce((s, it) => s + computeItem(it).payment, 0)
   );
 
+  const CULTURE_TYPES = [
+    { label: "컬쳐랜드 상품권", short: "상품권" },
+    { label: "컬쳐랜드 교환권", short: "교환권" },
+    { label: "컬쳐랜드 캐시 선물하기", short: "캐시 선물하기" },
+  ];
+  const activeCultureType = items.find((it) => it.type.startsWith("컬쳐랜드"))?.type ?? "컬쳐랜드 상품권";
+
   return (
     <div className="space-y-2">
       <label className="block text-[13px] font-semibold text-slate-500 tracking-wide uppercase">
         상품권 종류 &amp; 금액 <span className="text-rose-400 normal-case tracking-normal">*</span>
       </label>
+
+      {/* 컬쳐랜드 서브 타입 선택 */}
+      {isCultureFlow && (
+        <div className="rounded-2xl border-2 border-indigo-200 bg-indigo-50 p-3 space-y-2">
+          <p className="text-[12px] font-bold text-indigo-600">📚 컬쳐랜드 상품권·교환권·캐시선물 중 선택하세요</p>
+          <div className="flex gap-2">
+            {CULTURE_TYPES.map((ct) => {
+              const isActive = activeCultureType === ct.label;
+              return (
+                <button
+                  key={ct.label}
+                  type="button"
+                  onClick={() => onCultureTypeChange(ct.label)}
+                  className={`flex-1 py-2.5 rounded-xl text-[13px] font-bold transition-all active:scale-95
+                    ${isActive
+                      ? "bg-indigo-600 text-white shadow-sm"
+                      : "bg-white text-indigo-600 border-2 border-indigo-200 hover:bg-indigo-100"
+                    }`}
+                >
+                  {ct.short}
+                </button>
+              );
+            })}
+          </div>
+        </div>
+      )}
 
       <div className="space-y-2">
         {items.map((item, idx) => {
@@ -1342,6 +1379,7 @@ export default function MobileSelect() {
   const [done, setDone] = useState<{ id: number; totalPayment: number } | null>(null);
   const [errorMsg, setErrorMsg] = useState("");
   const [mobileSettings, setMobileSettings] = useState({ lottePhone: "010-7190-9534", naverUserId: "jjingo1026", culturePhone: "" });
+  const isCultureFlow = initialType.startsWith("컬쳐랜드");
 
   useEffect(() => {
     fetch(`${base}/api/site-settings`)
@@ -1367,6 +1405,12 @@ export default function MobileSelect() {
       return { ...it, [field]: val, ...(field === "type" ? { checkedSubs: [] } : {}) };
     }));
     setItemErrors((prev) => prev.map((e, i) => i === idx ? "" : e));
+  }
+
+  function handleCultureTypeChange(type: string) {
+    setItems((prev) => prev.map((it) =>
+      it.type.startsWith("컬쳐랜드") ? { ...it, type, checkedSubs: [], voucherNumber: "" } : it
+    ));
   }
 
   function handleToggleSub(idx: number, sub: string) {
@@ -1893,6 +1937,8 @@ export default function MobileSelect() {
             onCultureExchangeAdd={handleCultureExchangeAdd}
             onCultureExchangeRemove={handleCultureExchangeRemove}
             mobileSettings={mobileSettings}
+            isCultureFlow={isCultureFlow}
+            onCultureTypeChange={handleCultureTypeChange}
             onAdd={handleAddItem}
             onRemove={handleRemoveItem}
           />
