@@ -364,7 +364,7 @@ export default function AdminMobileDashboard() {
                 onClick={() => navigate("/admin/dashboard")}
                 className="flex-1 flex items-center justify-center gap-1 text-[12px] font-bold text-slate-600 hover:text-slate-800 px-2 py-1.5 rounded-xl bg-slate-100 hover:bg-slate-200 transition-all"
               >
-                <span>📄</span> 지류
+                <span>📄</span> 지류관리
               </button>
               {/* 설정 */}
               <button
