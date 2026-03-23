@@ -1373,6 +1373,7 @@ export default function MobileSelect() {
   const [accountNumber, setAccountNumber] = useState("");
   const [accountHolder, setAccountHolder] = useState("");
   const [customerPin, setCustomerPin] = useState("");
+  const [customerPinConfirm, setCustomerPinConfirm] = useState("");
   const [agreeMatch, setAgreeMatch] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [submitting, setSubmitting] = useState(false);
@@ -1649,6 +1650,8 @@ export default function MobileSelect() {
     if (!accountNumber.trim()) errs.accountNumber = "계좌번호를 입력해 주세요.";
     if (!/^[가-힣a-zA-Z\s]+$/.test(accountHolder.trim())) errs.accountHolder = "올바른 예금주명을 입력해 주세요.";
     if (customerPin.length !== 4) errs.customerPin = "조회 비밀번호 4자리를 입력해 주세요.";
+    if (customerPinConfirm.length !== 4) errs.customerPinConfirm = "비밀번호 확인을 입력해 주세요.";
+    else if (customerPin !== customerPinConfirm) errs.customerPinConfirm = "비밀번호가 일치하지 않습니다.";
     if (!agreeMatch) errs.agreeMatch = "신청자와 예금주 동일 여부를 확인해주세요.";
     // 현대모바일: 이미지 1개 이상 필수
     const hasHyundai = items.some((it) => it.type === "현대모바일");
@@ -2022,19 +2025,44 @@ export default function MobileSelect() {
               <span className="text-[12px] font-bold text-slate-500 uppercase tracking-wide">조회 비밀번호 설정</span>
               <span className="text-[11px] font-bold text-rose-400">(필수)</span>
             </div>
-            <div className="px-4 pb-4 space-y-2 mt-2">
+            <div className="px-4 pb-4 space-y-3 mt-2">
               <p className="text-[12px] text-slate-400">판매내역 조회 시 사용할 숫자 4자리 비밀번호입니다.</p>
-              <input
-                type="password"
-                inputMode="numeric"
-                maxLength={4}
-                value={customerPin}
-                onChange={(e) => { setCustomerPin(e.target.value.replace(/\D/g, "").slice(0, 4)); setErrors((p) => { const q = { ...p }; delete q.customerPin; return q; }); }}
-                placeholder="숫자 4자리"
-                className={`w-full px-4 py-3 rounded-xl border text-[15px] outline-none transition-all bg-white placeholder:text-slate-300 tracking-[0.4em]
-                  ${errors.customerPin ? "border-rose-300 focus:border-rose-400 focus:ring-2 focus:ring-rose-100" : "border-slate-200 focus:border-pink-400 focus:ring-2 focus:ring-pink-50"}`}
-              />
-              {errors.customerPin && <p className="text-[12px] text-rose-500">⚠ {errors.customerPin}</p>}
+              <div className="space-y-1.5">
+                <label className="text-[12px] font-semibold text-slate-500">비밀번호 설정</label>
+                <input
+                  type="password"
+                  inputMode="numeric"
+                  maxLength={4}
+                  value={customerPin}
+                  onChange={(e) => { setCustomerPin(e.target.value.replace(/\D/g, "").slice(0, 4)); setErrors((p) => { const q = { ...p }; delete q.customerPin; delete q.customerPinConfirm; return q; }); }}
+                  placeholder="숫자 4자리"
+                  className={`w-full px-4 py-3 rounded-xl border text-[15px] outline-none transition-all bg-white placeholder:text-slate-300 tracking-[0.4em]
+                    ${errors.customerPin ? "border-rose-300 focus:border-rose-400 focus:ring-2 focus:ring-rose-100" : "border-slate-200 focus:border-pink-400 focus:ring-2 focus:ring-pink-50"}`}
+                />
+                {errors.customerPin && <p className="text-[12px] text-rose-500">⚠ {errors.customerPin}</p>}
+              </div>
+              <div className="space-y-1.5">
+                <label className="text-[12px] font-semibold text-slate-500">비밀번호 확인</label>
+                <input
+                  type="password"
+                  inputMode="numeric"
+                  maxLength={4}
+                  value={customerPinConfirm}
+                  onChange={(e) => { setCustomerPinConfirm(e.target.value.replace(/\D/g, "").slice(0, 4)); setErrors((p) => { const q = { ...p }; delete q.customerPinConfirm; return q; }); }}
+                  placeholder="숫자 4자리 재입력"
+                  className={`w-full px-4 py-3 rounded-xl border text-[15px] outline-none transition-all bg-white placeholder:text-slate-300 tracking-[0.4em]
+                    ${errors.customerPinConfirm
+                      ? "border-rose-300 focus:border-rose-400 focus:ring-2 focus:ring-rose-100"
+                      : customerPinConfirm.length === 4 && customerPin === customerPinConfirm
+                      ? "border-green-400 focus:border-green-500 focus:ring-2 focus:ring-green-100"
+                      : "border-slate-200 focus:border-pink-400 focus:ring-2 focus:ring-pink-50"}`}
+                />
+                {errors.customerPinConfirm
+                  ? <p className="text-[12px] text-rose-500">⚠ {errors.customerPinConfirm}</p>
+                  : customerPinConfirm.length === 4 && customerPin === customerPinConfirm
+                  ? <p className="text-[12px] text-green-600 font-semibold">✓ 비밀번호가 일치합니다</p>
+                  : null}
+              </div>
             </div>
           </div>
 
