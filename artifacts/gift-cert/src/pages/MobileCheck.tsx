@@ -58,6 +58,7 @@ export default function MobileCheck() {
   useEffect(() => {
     const socket = io({ transports: ["websocket", "polling"] });
     socketRef.current = socket;
+
     socket.on("adminChatAlert", (data: { reservationId: number; senderName: string; message: string }) => {
       const cur = reservationRef.current;
       if (!cur) return;
@@ -66,8 +67,30 @@ export default function MobileCheck() {
       setAdminAlert({ message: data.message });
       setTimeout(() => setAdminAlert(null), 10000);
     });
+
+    // 상태 변경 실시간 반영 (처리완료, 담당자 배정 등)
+    socket.on("reservationUpdated", (data: { id?: number; reservationId?: number; status?: string; assignedTo?: string; staffId?: number; staffPhone?: string }) => {
+      const cur = reservationRef.current;
+      if (!cur) return;
+      const incomingId = data.id ?? data.reservationId;
+      if (incomingId !== cur.id) return;
+      if (data.status) {
+        setReservation(prev => prev ? { ...prev, status: data.status! } : prev);
+      }
+      if (data.assignedTo && data.staffId) {
+        setStaffInfo({ id: data.staffId, name: data.assignedTo, phone: data.staffPhone ?? "" });
+        setReservation(prev => prev ? { ...prev, status: data.status ?? prev.status } : prev);
+      }
+    });
+
     return () => { socket.disconnect(); };
   }, []);
+
+  // 예약 조회 성공 시 소켓 방 참여
+  useEffect(() => {
+    if (!reservation?.id) return;
+    socketRef.current?.emit("joinRoom", reservation.id);
+  }, [reservation?.id]);
 
   function handlePhone(v: string) {
     const d = v.replace(/[^0-9]/g, "").slice(0, 11);
