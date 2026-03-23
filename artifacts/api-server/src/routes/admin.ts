@@ -450,16 +450,6 @@ router.post("/reservations/:id/complete", requireStaffAuth, async (req, res) => 
     .set({ status: "completed", completedAt: new Date() })
     .where(eq(reservationsTable.id, id));
 
-  // 채팅방에 자동 완료 메시지
-  const [member] = await db.select().from(staffTable).where(eq(staffTable.id, staffId));
-  const [autoComplete] = await db.insert(chatsTable).values({
-    reservationId: id,
-    sender: "staff",
-    senderName: member?.name ?? "매입담당자",
-    message: "매입이 완료되었습니다. 감사합니다!",
-  }).returning();
-  emitToRoom(id, "newMessage", { ...autoComplete, time: autoComplete.time.toISOString() });
-
   res.json({ success: true });
 });
 
