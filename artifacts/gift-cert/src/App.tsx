@@ -361,11 +361,11 @@ function HomePage({ onGoUrgent, initialType = DEFAULT_TYPE, onTypeChange, rateGr
   const [takenSlots, setTakenSlots] = useState<string[]>([]);
   const [locationMain, setLocationMain] = useState("");
   const [locationDetail, setLocationDetail] = useState("");
-  const [bankName, setBankName] = useState(KOREAN_BANKS[0]);
+  const [bankName, setBankName] = useState("");
   const [accountNumber, setAccountNumber] = useState("");
   const [accountHolder, setAccountHolder] = useState("");
   const [items, setItems] = useState<VoucherItem[]>([{ type: initialType, amount: "", isGift: false }]);
-  const [fieldErrors, setFieldErrors] = useState<{ name?: string; phone?: string; date?: string; time?: string; locationMain?: string; accountNumber?: string; accountHolder?: string; agreeMatch?: string; pin?: string }>({});
+  const [fieldErrors, setFieldErrors] = useState<{ name?: string; phone?: string; date?: string; time?: string; locationMain?: string; bankName?: string; accountNumber?: string; accountHolder?: string; agreeMatch?: string; pin?: string }>({});
   const [itemErrors, setItemErrors] = useState<string[]>([""]);
   const [agreeMatch, setAgreeMatch] = useState(false);
   const [submissions, setSubmissions] = useState<ReservationEntry[]>([]);
@@ -397,6 +397,7 @@ function HomePage({ onGoUrgent, initialType = DEFAULT_TYPE, onTypeChange, rateGr
     else if (date < new Date().toISOString().split("T")[0]) fe.date = "지난 날짜는 선택할 수 없습니다";
     if (!time || !isValidTime(time)) fe.time = "시간을 선택해주세요";
     if (!locationMain.trim()) fe.locationMain = "거래 장소를 입력해주세요";
+    if (!bankName) fe.bankName = "은행을 선택해주세요";
     if (!accountNumber.trim()) fe.accountNumber = "계좌번호를 입력해주세요";
     if (!accountHolder.trim()) fe.accountHolder = "예금주를 입력해주세요";
     if (!agreeMatch) fe.agreeMatch = "신청자와 예금주 동일 여부를 확인해주세요";
@@ -698,6 +699,7 @@ function HomePage({ onGoUrgent, initialType = DEFAULT_TYPE, onTypeChange, rateGr
                     className="w-full px-3 py-2.5 rounded-xl border border-slate-200 text-[14px] text-slate-800 outline-none transition-all bg-white focus:border-indigo-400 focus:ring-2 focus:ring-indigo-50 appearance-none"
                     style={{ backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 20 20'%3E%3Cpath fill='%236366f1' d='M5 8l5 5 5-5z'/%3E%3C/svg%3E")`, backgroundRepeat: "no-repeat", backgroundPosition: "right 12px center" }}
                   >
+                    <option value="">은행 선택</option>
                     {KOREAN_BANKS.map((b) => <option key={b} value={b}>{b}</option>)}
                   </select>
                 </div>
@@ -1017,11 +1019,11 @@ function UrgentPage({ onBack, initialType = DEFAULT_TYPE }: { onBack: () => void
   const [phone, setPhone] = useState("");
   const [locationMain, setLocationMain] = useState("");
   const [locationDetail, setLocationDetail] = useState("");
-  const [bankName, setBankName] = useState(KOREAN_BANKS[0]);
+  const [bankName, setBankName] = useState("");
   const [accountNumber, setAccountNumber] = useState("");
   const [accountHolder, setAccountHolder] = useState("");
   const [items, setItems] = useState<VoucherItem[]>([{ type: initialType, amount: "", isGift: false }]);
-  const [fieldErrors, setFieldErrors] = useState<{ name?: string; phone?: string; locationMain?: string; accountNumber?: string; accountHolder?: string; agreeMatch?: string; pin?: string }>({});
+  const [fieldErrors, setFieldErrors] = useState<{ name?: string; phone?: string; locationMain?: string; bankName?: string; accountNumber?: string; accountHolder?: string; agreeMatch?: string; pin?: string }>({});
   const [itemErrors, setItemErrors] = useState<string[]>([""]);
   const [agreeMatch, setAgreeMatch] = useState(false);
   const [submissions, setSubmissions] = useState<UrgentEntry[]>([]);
@@ -1046,6 +1048,7 @@ function UrgentPage({ onBack, initialType = DEFAULT_TYPE }: { onBack: () => void
     else if (!/^[가-힣a-zA-Z\s]+$/.test(name.trim())) fe.name = "이름은 한글 또는 영문만 입력 가능합니다";
     if (!phone.trim()) fe.phone = "판매자 전화번호를 입력해주세요";
     if (!locationMain.trim()) fe.locationMain = "거래 장소를 입력해주세요";
+    if (!bankName) fe.bankName = "은행을 선택해주세요";
     if (!accountNumber.trim()) fe.accountNumber = "계좌번호를 입력해주세요";
     if (!accountHolder.trim()) fe.accountHolder = "예금주를 입력해주세요";
     if (!agreeMatch) fe.agreeMatch = "신청자와 예금주 동일 여부를 확인해주세요";
@@ -1164,6 +1167,7 @@ function UrgentPage({ onBack, initialType = DEFAULT_TYPE }: { onBack: () => void
                     className="w-full px-3 py-2.5 rounded-xl border border-slate-200 text-[14px] text-slate-800 outline-none transition-all bg-white focus:border-indigo-400 focus:ring-2 focus:ring-indigo-50 appearance-none"
                     style={{ backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 20 20'%3E%3Cpath fill='%236366f1' d='M5 8l5 5 5-5z'/%3E%3C/svg%3E")`, backgroundRepeat: "no-repeat", backgroundPosition: "right 12px center" }}
                   >
+                    <option value="">은행 선택</option>
                     {KOREAN_BANKS.map((b) => <option key={b} value={b}>{b}</option>)}
                   </select>
                 </div>
