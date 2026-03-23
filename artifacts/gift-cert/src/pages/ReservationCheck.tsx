@@ -224,14 +224,14 @@ export default function ReservationCheck() {
   }
 
   const canModify = reservation && !["cancelled", "completed", "no_show"].includes(reservation.status);
-  const tooLate = canModify && isWithinOneHour();
+  const tooLateToEdit = canModify && isWithinOneHour();
 
   const inputCls = "w-full px-4 py-3 rounded-xl border border-slate-200 bg-slate-50 text-[14px] text-slate-700 outline-none focus:border-indigo-400 focus:bg-white focus:ring-2 focus:ring-indigo-50";
 
   // 수정 버튼 + 폼 (재사용)
   function EditSection() {
     if (!canModify) return null;
-    if (tooLate) return (
+    if (tooLateToEdit) return (
       <p className="text-[12px] text-slate-400 text-center py-2">예약 1시간 전까지만 수정할 수 있습니다.</p>
     );
     if (editMode) return (
@@ -656,19 +656,14 @@ export default function ReservationCheck() {
 
             {/* 취소 버튼 */}
             <div>
-              {tooLate
-                ? <p className="text-[12px] text-rose-400 text-center py-2">예약 1시간 전까지만 취소할 수 있습니다.</p>
-                : <>
-                    {cancelError && <p className="text-[12px] text-rose-500 mb-2">{cancelError}</p>}
-                    <button
-                      onClick={cancelReservation}
-                      disabled={cancelling}
-                      className="w-full py-3 rounded-xl border border-rose-200 text-rose-500 text-[14px] font-semibold hover:bg-rose-50 transition-colors active:scale-95 disabled:opacity-40"
-                    >
-                      {cancelling ? "취소 처리 중…" : getLabel("cancel_reservation", lang)}
-                    </button>
-                  </>
-              }
+              {cancelError && <p className="text-[12px] text-rose-500 mb-2">{cancelError}</p>}
+              <button
+                onClick={cancelReservation}
+                disabled={cancelling}
+                className="w-full py-3 rounded-xl border border-rose-200 text-rose-500 text-[14px] font-semibold hover:bg-rose-50 transition-colors active:scale-95 disabled:opacity-40"
+              >
+                {cancelling ? "취소 처리 중…" : getLabel("cancel_reservation", lang)}
+              </button>
             </div>
 
             {/* 수정 */}
@@ -748,19 +743,14 @@ export default function ReservationCheck() {
 
             {/* 취소 버튼 */}
             <div>
-              {tooLate
-                ? <p className="text-[12px] text-rose-400 text-center py-2">예약 1시간 전까지만 취소할 수 있습니다.</p>
-                : <>
-                    {cancelError && <p className="text-[12px] text-rose-500 mb-2">{cancelError}</p>}
-                    <button
-                      onClick={cancelReservation}
-                      disabled={cancelling}
-                      className="w-full py-3 rounded-xl border border-rose-200 text-rose-500 text-[14px] font-semibold hover:bg-rose-50 transition-colors active:scale-95 disabled:opacity-40"
-                    >
-                      {cancelling ? "취소 처리 중…" : getLabel("cancel_reservation", lang)}
-                    </button>
-                  </>
-              }
+              {cancelError && <p className="text-[12px] text-rose-500 mb-2">{cancelError}</p>}
+              <button
+                onClick={cancelReservation}
+                disabled={cancelling}
+                className="w-full py-3 rounded-xl border border-rose-200 text-rose-500 text-[14px] font-semibold hover:bg-rose-50 transition-colors active:scale-95 disabled:opacity-40"
+              >
+                {cancelling ? "취소 처리 중…" : getLabel("cancel_reservation", lang)}
+              </button>
             </div>
 
             {/* 수정 */}
