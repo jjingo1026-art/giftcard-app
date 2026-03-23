@@ -3,6 +3,7 @@ import { io, Socket } from "socket.io-client";
 import { staffFetch } from "@/lib/authFetch";
 import { useImageUpload } from "@/hooks/useImageUpload";
 import { getTranslated } from "@/lib/languages";
+import { getSoundEnabled, playNotificationSound } from "@/lib/notificationSound";
 
 function showSaveToast(msg: string) {
   const existing = document.getElementById("__save_toast__");
@@ -210,6 +211,7 @@ export default function StaffCard() {
         return [...prev, newMsg];
       });
       if (newMsg.sender !== "staff" && newMsg.sender !== "system") {
+        if (getSoundEnabled("staff")) playNotificationSound("staff");
         setChatOpen((open) => {
           if (open) {
             socket.emit("markRead", { reservationId: Number(id), readerRole: "staff" });

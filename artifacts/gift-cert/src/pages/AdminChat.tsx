@@ -4,6 +4,7 @@ import { io, Socket } from "socket.io-client";
 import { getAdminToken } from "./AdminLogin";
 import { useImageUpload } from "@/hooks/useImageUpload";
 import { LANGUAGES, getTranslated, getSavedLang, saveLang } from "@/lib/languages";
+import { getSoundEnabled, playNotificationSound } from "@/lib/notificationSound";
 
 function showSaveToast(msg: string) {
   const existing = document.getElementById("__save_toast__");
@@ -179,6 +180,7 @@ export default function AdminChat() {
         scrollToBottom();
         if (newMsg.sender !== "admin") {
           socket.emit("markRead", { reservationId: Number(reservationId), readerRole: "admin" });
+          if (getSoundEnabled("admin")) playNotificationSound("admin");
         }
         return next;
       });
