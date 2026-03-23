@@ -4,6 +4,7 @@ import { staffFetch } from "@/lib/authFetch";
 import { useImageUpload } from "@/hooks/useImageUpload";
 import { getTranslated } from "@/lib/languages";
 import { getSoundEnabled, playNotificationSound } from "@/lib/notificationSound";
+import SoundBell from "@/components/SoundBell";
 
 function showSaveToast(msg: string) {
   const existing = document.getElementById("__save_toast__");
@@ -598,6 +599,7 @@ export default function StaffCard() {
                 </p>
                 <p className="text-indigo-200 text-[11px]">{r?.name || r?.phone} · {staffName}</p>
               </div>
+              <SoundBell role="staff" />
               <button
                 onClick={() => setChatOpen(false)}
                 className="w-8 h-8 flex items-center justify-center rounded-xl bg-white/20 hover:bg-white/30 transition-colors flex-shrink-0"

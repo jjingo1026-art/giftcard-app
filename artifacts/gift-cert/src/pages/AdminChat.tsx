@@ -5,6 +5,7 @@ import { getAdminToken } from "./AdminLogin";
 import { useImageUpload } from "@/hooks/useImageUpload";
 import { LANGUAGES, getTranslated, getSavedLang, saveLang } from "@/lib/languages";
 import { getSoundEnabled, playNotificationSound } from "@/lib/notificationSound";
+import SoundBell from "@/components/SoundBell";
 
 function showSaveToast(msg: string) {
   const existing = document.getElementById("__save_toast__");
@@ -323,6 +324,8 @@ export default function AdminChat() {
               </div>
             )}
           </div>
+
+          <SoundBell role="admin" />
 
           <button
             onClick={() => { location.href = `/admin/detail.html?id=${reservationId}`; }}
