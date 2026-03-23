@@ -589,7 +589,7 @@ export default function ReservationCheck() {
                         <span className="text-[13px] text-slate-800 font-semibold">{it.type}{it.isGift ? " 🎁" : ""}</span>
                       </div>
                       <div className="flex justify-between items-center mt-1">
-                        <span className="text-[13px] text-slate-400 font-medium">금액</span>
+                        <span className="text-[13px] text-slate-400 font-medium">입금예정금액</span>
                         <span className="text-[14px] text-indigo-600 font-black">{fmt(it.amount)}</span>
                       </div>
                     </div>
@@ -603,7 +603,7 @@ export default function ReservationCheck() {
                     )}
                     {reservation.amount != null && (
                       <div className="flex justify-between items-center py-2.5 border-b border-slate-50">
-                        <span className="text-[13px] text-slate-400 font-medium">금액</span>
+                        <span className="text-[13px] text-slate-400 font-medium">입금예정금액</span>
                         <span className="text-[14px] text-indigo-600 font-black">{fmt(reservation.amount)}</span>
                       </div>
                     )}
@@ -719,7 +719,7 @@ export default function ReservationCheck() {
                 </div>
               )}
               <div className="flex justify-between items-center py-2.5">
-                <span className="text-[12px] text-slate-400 font-medium flex items-center gap-1.5">💰 금액</span>
+                <span className="text-[12px] text-slate-400 font-medium flex items-center gap-1.5">💰 입금예정금액</span>
                 <span className="text-[15px] text-indigo-600 font-black">{fmt(reservation.amount)}</span>
               </div>
             </div>
