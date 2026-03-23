@@ -346,9 +346,13 @@ function GoogleManualInput({
           <div key={idx} className="flex items-center gap-2">
             <input
               type="text"
+              inputMode="text"
+              autoCapitalize="off"
+              autoCorrect="off"
+              autoComplete="off"
               value={num}
-              onChange={(e) => onChange(idx, e.target.value.slice(0, 50))}
-              placeholder={`상품권번호 ${idx + 1}`}
+              onChange={(e) => onChange(idx, e.target.value.replace(/[^0-9A-Za-z\-]/g, ""))}
+              placeholder={`상품권번호 ${idx + 1} (숫자·영문)`}
               className="flex-1 px-4 py-3 rounded-xl border-2 border-green-200 bg-white text-[14px] font-mono tracking-wider outline-none focus:border-green-400 focus:ring-2 focus:ring-green-100 transition-all placeholder:text-slate-300"
             />
             {idx === 0 ? (
