@@ -189,6 +189,66 @@ function LotteCopyCard({ lottePhone }: { lottePhone: string }) {
   );
 }
 
+function CultureCashCopyCard({ phone }: { phone: string }) {
+  const [copied, setCopied] = useState(false);
+
+  function handleCopy() {
+    navigator.clipboard.writeText(phone).then(() => {
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    });
+  }
+
+  return (
+    <div className="rounded-2xl border-2 border-indigo-200 bg-indigo-50 p-4 space-y-2.5">
+      <div className="flex items-center gap-2">
+        <span className="text-[16px]">🎁</span>
+        <p className="text-[13px] font-bold text-indigo-700">컬쳐랜드 캐시 선물하기 안내</p>
+      </div>
+
+      <div className="flex items-center gap-3 px-3 py-3 bg-white rounded-xl border border-indigo-100">
+        <div className="w-9 h-9 rounded-xl bg-indigo-100 flex items-center justify-center flex-shrink-0 text-[18px]">📲</div>
+        <div className="flex-1 min-w-0">
+          <div className="flex items-center gap-2">
+            <p className="text-[13px] font-black text-indigo-700 tracking-wide">{phone}</p>
+            <button
+              type="button"
+              onClick={handleCopy}
+              className={`flex-shrink-0 flex items-center gap-1 px-2 py-1 rounded-lg text-[11px] font-bold transition-all active:scale-95
+                ${copied ? "bg-indigo-500 text-white" : "bg-indigo-100 text-indigo-600 hover:bg-indigo-200"}`}
+            >
+              {copied ? (
+                <>
+                  <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M20 6L9 17l-5-5"/>
+                  </svg>
+                  복사됨
+                </>
+              ) : (
+                <>
+                  <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/>
+                  </svg>
+                  복사
+                </>
+              )}
+            </button>
+          </div>
+          <p className="text-[12px] text-indigo-600 mt-0.5">위 번호로 캐시 선물하기를 보내주세요</p>
+          <p className="text-[12px] text-indigo-500 font-semibold mt-1">선물보내기를 하시고 판매신청을 완료해주세요</p>
+        </div>
+      </div>
+
+      <div className="flex items-start gap-2 px-3 py-2.5 bg-pink-50 rounded-xl border border-pink-100">
+        <span className="text-[14px] flex-shrink-0 mt-0.5">💬</span>
+        <p className="text-[12px] text-pink-700 leading-relaxed font-medium">
+          하단 판매신청을 하시면 <span className="font-black">관리자와 채팅</span>이 가능합니다.
+        </p>
+      </div>
+    </div>
+  );
+}
+
 function MunhwaManualInput({
   numbers,
   onChange,
@@ -1194,25 +1254,7 @@ function MobileVoucherItems({
 
       {/* 컬쳐랜드 캐시 선물하기 안내 */}
       {items.some((it) => it.type === "컬쳐랜드 캐시 선물하기") && (
-        <div className="rounded-2xl border-2 border-indigo-200 bg-indigo-50 p-4 space-y-2.5">
-          <div className="flex items-center gap-2">
-            <span className="text-[16px]">🎁</span>
-            <p className="text-[13px] font-bold text-indigo-700">컬쳐랜드 캐시 선물하기 안내</p>
-          </div>
-          <div className="flex items-center gap-3 px-3 py-3 bg-white rounded-xl border border-indigo-100">
-            <div className="w-9 h-9 rounded-xl bg-indigo-100 flex items-center justify-center flex-shrink-0 text-[18px]">📲</div>
-            <div>
-              <p className="text-[13px] font-black text-indigo-700 tracking-wide">{mobileSettings.culturePhone || mobileSettings.lottePhone}</p>
-              <p className="text-[12px] text-indigo-500 mt-0.5">위 번호로 캐시 선물하기를 보내주세요</p>
-            </div>
-          </div>
-          <div className="flex items-start gap-2 px-3 py-2.5 bg-pink-50 rounded-xl border border-pink-100">
-            <span className="text-[14px] flex-shrink-0 mt-0.5">💬</span>
-            <p className="text-[12px] text-pink-700 leading-relaxed font-medium">
-              하단 판매신청을 하시면 <span className="font-black">관리자와 채팅</span>이 가능합니다.
-            </p>
-          </div>
-        </div>
+        <CultureCashCopyCard phone={mobileSettings.culturePhone || mobileSettings.lottePhone} />
       )}
 
       {/* 컬쳐랜드 상품권 수동입력 (16자리) */}
