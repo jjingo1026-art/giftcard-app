@@ -362,7 +362,7 @@ export default function StaffCard() {
   }
 
   const isActive = r ? !["completed", "cancelled", "no_show"].includes(r.status) : false;
-  const items: { type: string; amount: number; payment: number }[] =
+  const items: { type: string; amount: number; payment: number; isGift?: boolean }[] =
     r && Array.isArray(r.items) && r.items.length > 0
       ? r.items
       : r?.giftcardType
@@ -473,7 +473,12 @@ export default function StaffCard() {
                 </div>
                 {items.map((it, i) => (
                   <div key={i} className="grid grid-cols-3 border-b border-slate-50">
-                    <p className="text-[13px] text-slate-700 px-4 py-2.5">{it.type}</p>
+                    <div className="flex items-center gap-1.5 px-4 py-2.5">
+                      <p className="text-[13px] text-slate-700">{it.type}</p>
+                      {it.isGift && (
+                        <span className="text-[10px] bg-violet-100 text-violet-600 font-bold px-1.5 py-0.5 rounded-full whitespace-nowrap">증정</span>
+                      )}
+                    </div>
                     <p className="text-[13px] font-bold text-slate-700 px-2 py-2.5 text-right">{Number(it.amount).toLocaleString()}</p>
                     <p className="text-[13px] font-bold text-indigo-600 px-4 py-2.5 text-right">{Number(it.payment).toLocaleString()}</p>
                   </div>

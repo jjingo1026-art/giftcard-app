@@ -423,8 +423,12 @@ export default function AdminChat() {
               });
             };
 
-            // 매입담당자 입금요청 메시지: sender가 staff라도 계좌번호 포함 시 renderSystemText 적용
-            const hasAccountLine = !isImg && (displayText.includes("계좌번호:") || displayText.includes("입금계좌:"));
+            // 계좌번호 또는 상품권 번호 포함 시 sender에 무관하게 복사버튼 렌더링 적용
+            const hasAccountLine = !isImg && (
+              displayText.includes("계좌번호:") ||
+              displayText.includes("입금계좌:") ||
+              /번호:\s*\S/.test(displayText)
+            );
 
             return (
               <div key={m.id} className={`flex flex-col ${isMine ? "items-end" : "items-start"}`}>
