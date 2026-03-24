@@ -62,7 +62,7 @@ export default function ReservationCheck() {
   useEffect(() => {
     if (!reservation || reservation.status === "cancelled" || reservation.status === "completed") return;
 
-    const socket = io({ transports: ["websocket", "polling"] });
+    const socket = io({ path: "/api/socket.io", transports: ["websocket", "polling"] });
     socketRef.current = socket;
 
     socket.emit("joinRoom", reservation.id);

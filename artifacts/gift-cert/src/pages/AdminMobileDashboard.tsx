@@ -207,7 +207,7 @@ export default function AdminMobileDashboard() {
   }, []);
 
   useEffect(() => {
-    const socket = io({ transports: ["websocket", "polling"] });
+    const socket = io({ path: "/api/socket.io", transports: ["websocket", "polling"] });
     socket.on("newReservation", (r: MobileReservation) => {
       if (r.kind !== "mobile") return;
       if (getSoundEnabled("admin")) playNotificationSound("admin");

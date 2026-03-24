@@ -279,7 +279,7 @@ export default function StaffDashboard() {
   /* ── Socket.IO: 실시간 배정 알림 ── */
   useEffect(() => {
     if (!myStaffId) return;
-    const socket = io({ transports: ["websocket", "polling"] });
+    const socket = io({ path: "/api/socket.io", transports: ["websocket", "polling"] });
 
     socket.on("staffAssigned", ({ staffId, reservation }: { staffId: number; reservation: Reservation }) => {
       if (staffId !== myStaffId) return;

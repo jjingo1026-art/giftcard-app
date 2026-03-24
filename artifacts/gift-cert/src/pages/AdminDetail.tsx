@@ -108,7 +108,7 @@ export default function AdminDetail() {
     load();
     loadChat();
 
-    const socket = io({ transports: ["websocket", "polling"] });
+    const socket = io({ path: "/api/socket.io", transports: ["websocket", "polling"] });
     socketRef.current = socket;
 
     socket.on("connect", () => {

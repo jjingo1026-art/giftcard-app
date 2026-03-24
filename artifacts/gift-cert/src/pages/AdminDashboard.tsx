@@ -133,7 +133,7 @@ export default function AdminDashboard() {
   }, []);
 
   useEffect(() => {
-    const socket = io({ transports: ["websocket", "polling"] });
+    const socket = io({ path: "/api/socket.io", transports: ["websocket", "polling"] });
 
     socket.on("newReservation", (reservation: Reservation) => {
       if (getSoundEnabled("admin")) playNotificationSound("admin");
