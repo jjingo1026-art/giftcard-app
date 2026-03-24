@@ -45,6 +45,19 @@ async function seedStaff() {
 }
 seedStaff().catch(console.error);
 
+async function seedAdminAccounts() {
+  const ADMIN_USERS = ["admin1", "admin2", "admin3", "admin4", "admin5"];
+  const DEFAULT_PASSWORD = "Admin1234!";
+  for (const username of ADMIN_USERS) {
+    const existing = await db.select().from(adminAccountsTable).where(eq(adminAccountsTable.username, username)).limit(1);
+    if (existing.length === 0) {
+      const passwordHash = await bcrypt.hash(DEFAULT_PASSWORD, 10);
+      await db.insert(adminAccountsTable).values({ username, passwordHash });
+    }
+  }
+}
+seedAdminAccounts().catch(console.error);
+
 function extractBearer(req: any): string {
   const auth = req.headers.authorization ?? "";
   return auth.startsWith("Bearer ") ? auth.slice(7) : "";
