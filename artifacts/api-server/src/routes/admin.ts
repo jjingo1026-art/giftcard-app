@@ -80,6 +80,7 @@ function requireAuth(req: any, res: any, next: any) {
   try {
     const payload = verifyAccessToken(token);
     if (payload.role !== "admin") throw new Error();
+    req.adminId = payload.id;
     next();
   } catch {
     res.status(401).json({ error: "인증이 필요합니다." });
@@ -161,11 +162,6 @@ router.patch("/credentials", requireAuth, async (req, res) => {
     res.status(400).json({ error: "현재 비밀번호를 입력해주세요." });
     return;
   }
-  const creds = await getAdminCredentials();
-  if (currentPassword !== creds.adminPassword) {
-    res.status(401).json({ error: "현재 비밀번호가 올바르지 않습니다." });
-    return;
-  }
   if (!newId && !newPassword) {
     res.status(400).json({ error: "변경할 아이디 또는 비밀번호를 입력해주세요." });
     return;
@@ -174,9 +170,34 @@ router.patch("/credentials", requireAuth, async (req, res) => {
     res.status(400).json({ error: "비밀번호는 8자리 이상이어야 합니다." });
     return;
   }
+
+  const currentAdminId: string = (req as any).adminId ?? "";
+
+  // admin_accounts 테이블에 있는 계정(admin1~5 등) 처리
+  const accountRow = await db.select().from(adminAccountsTable).where(eq(adminAccountsTable.username, currentAdminId)).limit(1);
+  if (accountRow.length > 0) {
+    const valid = await bcrypt.compare(currentPassword, accountRow[0].passwordHash);
+    if (!valid) {
+      res.status(401).json({ error: "현재 비밀번호가 올바르지 않습니다." });
+      return;
+    }
+    const newUsername = newId?.trim() || currentAdminId;
+    const newHash = newPassword ? await bcrypt.hash(newPassword, 10) : accountRow[0].passwordHash;
+    await db.update(adminAccountsTable)
+      .set({ username: newUsername, passwordHash: newHash })
+      .where(eq(adminAccountsTable.id, accountRow[0].id));
+    res.json({ success: true });
+    return;
+  }
+
+  // 메인 관리자(admin_settings) 처리
+  const creds = await getAdminCredentials();
+  if (currentPassword !== creds.adminPassword) {
+    res.status(401).json({ error: "현재 비밀번호가 올바르지 않습니다." });
+    return;
+  }
   const updatedId = newId?.trim() || creds.adminId;
   const updatedPassword = newPassword || creds.adminPassword;
-
   const rows = await db.select().from(adminSettingsTable).limit(1);
   if (rows.length > 0) {
     await db.update(adminSettingsTable)
