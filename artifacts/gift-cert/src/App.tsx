@@ -104,10 +104,10 @@ function formatKRW(n: number) { return n.toLocaleString("ko-KR") + "원"; }
 // baseDeduct: extra deduction applied on top (e.g. 0.01 for urgent)
 function computeItem(item: VoucherItem, baseDeduct: number): { amountNum: number; rate: number; payment: number } {
   const amountNum = parseFloat(item.amount) || 0;
-  const rate = Math.max(0, (RATES[item.type] ?? 0) - baseDeduct);
-  // 증정용: 액면가에서 직접 1% 차감 후 요율 적용
-  const effectiveAmount = item.isGift ? Math.floor(amountNum * 0.99) : amountNum;
-  return { amountNum, rate, payment: Math.floor(effectiveAmount * rate) };
+  // 증정용: (액면가 × 요율) - (액면가 × 증정용요율 1%) = 액면가 × (요율 - 0.01)
+  const giftDeduct = item.isGift ? 0.01 : 0;
+  const rate = Math.max(0, (RATES[item.type] ?? 0) - baseDeduct - giftDeduct);
+  return { amountNum, rate, payment: Math.floor(amountNum * rate) };
 }
 
 // ─── SHARED UI ────────────────────────────────────────────────────────────────
