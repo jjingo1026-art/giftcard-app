@@ -1,5 +1,6 @@
 import { useLocation } from "wouter";
 import { useEffect, useState, useRef } from "react";
+import PWAInstallButton from "@/components/PWAInstallButton";
 
 const TWENTY_MINUTES = 20 * 60 * 1000;
 
@@ -94,6 +95,11 @@ export default function GiftCertTypeSelect() {
 
         {/* 구분선 */}
         <div className="w-12 h-0.5 rounded-full bg-slate-200 my-6" />
+
+        {/* 앱 설치 버튼 */}
+        <div className="mb-6">
+          <PWAInstallButton />
+        </div>
 
         {/* 선택 안내 */}
         <p className="text-[18px] font-bold text-slate-700 mb-2">어떤 상품권 판매를 원하시나요?</p>
