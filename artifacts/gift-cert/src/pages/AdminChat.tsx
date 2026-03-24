@@ -407,9 +407,9 @@ export default function AdminChat() {
                     </div>
                   );
                 }
-                // 입금계좌 — "🏦 입금계좌: 은행명 계좌번호 (예금주)"
+                // 계좌번호 — "입금계좌:" 또는 "계좌번호:" 포함 라인
                 // 계좌번호: 8자리 이상 연속 숫자(하이픈 포함)로 추출
-                if (line.includes("입금계좌:")) {
+                if (line.includes("입금계좌:") || line.includes("계좌번호:")) {
                   const acctNumMatch = line.match(/(\d[\d\-]{7,})/);
                   const acctNum = acctNumMatch ? acctNumMatch[1].replace(/-/g, "") : "";
                   return (
@@ -422,6 +422,9 @@ export default function AdminChat() {
                 return <p key={i} className="text-[13px] leading-snug">{line}</p>;
               });
             };
+
+            // 매입담당자 입금요청 메시지: sender가 staff라도 계좌번호 포함 시 renderSystemText 적용
+            const hasAccountLine = !isImg && (displayText.includes("계좌번호:") || displayText.includes("입금계좌:"));
 
             return (
               <div key={m.id} className={`flex flex-col ${isMine ? "items-end" : "items-start"}`}>
@@ -467,7 +470,7 @@ export default function AdminChat() {
                         </button>
                       </div>
                     </div>
-                  ) : isSystem ? (
+                  ) : isSystem || hasAccountLine ? (
                     <>
                       {renderSystemText(displayText)}
                       {isTranslated && (

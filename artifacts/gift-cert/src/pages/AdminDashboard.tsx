@@ -147,7 +147,35 @@ export default function AdminDashboard() {
         if (prev.some((r) => r.id === reservation.id)) return prev;
         return [reservation, ...prev];
       });
-      // 캘린더 서버에서 최신 집계 재조회 (정확도 보장)
+      // 캘린더 즉시 로컬 반영 (비모바일만)
+      if (reservation.date && reservation.kind !== "mobile") {
+        setCalendarData((prev) => {
+          const exists = prev.find((c) => c.date === reservation.date);
+          if (exists) {
+            return prev.map((c) =>
+              c.date === reservation.date
+                ? {
+                    ...c,
+                    total: c.total + 1,
+                    unassigned: c.unassigned + 1,
+                    urgent: reservation.isUrgent ? c.urgent + 1 : c.urgent,
+                  }
+                : c
+            );
+          }
+          return [
+            ...prev,
+            {
+              date: reservation.date!,
+              total: 1,
+              unassigned: 1,
+              assigned: 0,
+              urgent: reservation.isUrgent ? 1 : 0,
+            },
+          ];
+        });
+      }
+      // 서버 재조회로 정확도 보정
       adminFetch("/api/admin/reservations/calendar")
         .then((r) => r.json())
         .then(setCalendarData)
