@@ -285,13 +285,19 @@ export default function StaffDashboard() {
       if (staffId !== myStaffId) return;
       if (getSoundEnabled("staff")) playNotificationSound("staff");
 
-      // 예약 목록에 추가 (중복 방지)
+      // 소켓 데이터로 즉시 반영 (중복 방지)
       setEntries((prev) => {
         if (prev.some((r) => r.id === reservation.id)) {
           return prev.map((r) => r.id === reservation.id ? { ...r, ...reservation } : r);
         }
         return [reservation, ...prev];
       });
+
+      // 서버에서 최신 목록 재조회 (정확도 보장)
+      staffFetch("/api/admin/staff/my-reservations")
+        .then((r) => r.json())
+        .then((data) => { if (Array.isArray(data)) setEntries(data); })
+        .catch(() => {});
 
       // 알림 토스트 표시
       if (alertTimerRef.current) clearTimeout(alertTimerRef.current);

@@ -83,6 +83,8 @@ export default function AdminDashboard() {
   const [cancelledQuery, setCancelledQuery] = useState("");
   const [newUrgentAlert, setNewUrgentAlert] = useState<Reservation | null>(null);
   const urgentAlertTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const [assignToast, setAssignToast] = useState<{ id: number; ok: boolean; msg: string } | null>(null);
+  const assignToastTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [pendingStaff, setPendingStaff] = useState<{ id: number; name: string; phone: string }[]>([]);
   const [approvingStaff, setApprovingStaff] = useState<number | null>(null);
   const [rejectingStaff, setRejectingStaff] = useState<number | null>(null);
@@ -145,34 +147,11 @@ export default function AdminDashboard() {
         if (prev.some((r) => r.id === reservation.id)) return prev;
         return [reservation, ...prev];
       });
-      // 캘린더 즉시 반영 — 지류(reservation/urgent)만, 모바일 제외
-      if (reservation.date && reservation.kind !== "mobile") {
-        setCalendarData((prev) => {
-          const exists = prev.find((c) => c.date === reservation.date);
-          if (exists) {
-            return prev.map((c) =>
-              c.date === reservation.date
-                ? {
-                    ...c,
-                    total: c.total + 1,
-                    unassigned: c.unassigned + 1,
-                    urgent: reservation.isUrgent ? c.urgent + 1 : c.urgent,
-                  }
-                : c
-            );
-          }
-          return [
-            ...prev,
-            {
-              date: reservation.date!,
-              total: 1,
-              unassigned: 1,
-              assigned: 0,
-              urgent: reservation.isUrgent ? 1 : 0,
-            },
-          ];
-        });
-      }
+      // 캘린더 서버에서 최신 집계 재조회 (정확도 보장)
+      adminFetch("/api/admin/reservations/calendar")
+        .then((r) => r.json())
+        .then(setCalendarData)
+        .catch(() => {});
     });
 
     socket.on("newUrgent", (reservation: Reservation) => {
@@ -238,34 +217,51 @@ export default function AdminDashboard() {
     return () => { socket.disconnect(); };
   }, []);
 
+  function showAssignToast(id: number, ok: boolean, msg: string) {
+    if (assignToastTimerRef.current) clearTimeout(assignToastTimerRef.current);
+    setAssignToast({ id, ok, msg });
+    assignToastTimerRef.current = setTimeout(() => setAssignToast(null), 4000);
+  }
+
   async function assignStaff(reservationId: number) {
     const staffId = selectedStaff[reservationId];
     if (!staffId) return;
     setAssigning(reservationId);
     try {
-      await adminFetch(`/api/admin/reservations/${reservationId}/assign`, {
+      const res = await adminFetch(`/api/admin/reservations/${reservationId}/assign`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ staffId }),
       });
 
+      if (!res.ok) {
+        const errData = await res.json().catch(() => ({}));
+        showAssignToast(reservationId, false, errData.error ?? "배정에 실패했습니다.");
+        return;
+      }
+
+      const staffName = staffList.find((s) => s.id === staffId)?.name ?? "";
       // 예약 목록 즉시 반영
       setAllEntries((prev) => prev.map((r) =>
         r.id === reservationId
-          ? { ...r, status: "assigned", assignedStaffId: staffId, assignedTo: staffList.find((s) => s.id === staffId)?.name }
+          ? { ...r, status: "assigned", assignedStaffId: staffId, assignedTo: staffName }
           : r
       ));
       setEntries((prev) => prev.map((r) =>
         r.id === reservationId
-          ? { ...r, status: "assigned", assignedStaffId: staffId, assignedTo: staffList.find((s) => s.id === staffId)?.name }
+          ? { ...r, status: "assigned", assignedStaffId: staffId, assignedTo: staffName }
           : r
       ));
+
+      showAssignToast(reservationId, true, `${staffName} 담당자 배정 완료`);
 
       // 캘린더 최신 데이터로 즉시 갱신
       adminFetch("/api/admin/reservations/calendar")
         .then((r) => r.json())
         .then(setCalendarData)
         .catch(() => {});
+    } catch {
+      showAssignToast(reservationId, false, "네트워크 오류가 발생했습니다.");
     } finally {
       setAssigning(null);
     }
@@ -1010,6 +1006,12 @@ export default function AdminDashboard() {
                     <p className="text-[13px] font-bold text-slate-500 flex items-center gap-1.5 px-1">
                       🔴 미배정 예약 <span className="text-rose-500">{dayUnassigned.length}건</span>
                     </p>
+                    {/* 배정 토스트 */}
+                    {assignToast && (
+                      <div className={`rounded-xl px-4 py-2.5 text-[13px] font-semibold flex items-center gap-2 ${assignToast.ok ? "bg-emerald-50 text-emerald-700 border border-emerald-200" : "bg-rose-50 text-rose-700 border border-rose-200"}`}>
+                        {assignToast.ok ? "✅" : "❌"} {assignToast.msg}
+                      </div>
+                    )}
                     {dayUnassigned.map((r) => (
                       <div
                         key={r.id}
@@ -1017,8 +1019,11 @@ export default function AdminDashboard() {
                       >
                         <div className="flex items-center justify-between gap-2">
                           <div
-                            onClick={() => { window.location.href = `/admin/detail.html?id=${r.id}`; }}
-                            className="cursor-pointer flex-1 min-w-0"
+                            onClick={() => {
+                              if (assigning === r.id) return; // 배정 중 이동 차단
+                              window.location.href = `/admin/detail.html?id=${r.id}`;
+                            }}
+                            className={`flex-1 min-w-0 ${assigning === r.id ? "cursor-not-allowed opacity-60" : "cursor-pointer"}`}
                           >
                             <p className="text-[14px] font-bold text-slate-800 flex items-center gap-1.5">
                               {r.isUrgent && <span className="text-red-500">🚨</span>}
@@ -1035,6 +1040,7 @@ export default function AdminDashboard() {
                             value={selectedStaff[r.id] ?? ""}
                             onChange={(e) => setSelectedStaff((prev) => ({ ...prev, [r.id]: Number(e.target.value) }))}
                             className="flex-1 text-[13px] border border-slate-200 rounded-xl px-3 py-2 bg-white focus:outline-none focus:ring-2 focus:ring-indigo-300"
+                            disabled={assigning === r.id}
                           >
                             <option value="">담당자 선택</option>
                             {staffList.map((s) => (
