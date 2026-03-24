@@ -1513,7 +1513,7 @@ export default function MobileSelect() {
   const [errorMsg, setErrorMsg] = useState("");
   const [mobileSettings, setMobileSettings] = useState({ lottePhone: "010-7190-9534", naverUserId: "jjingo1026", culturePhone: "" });
   const isCultureFlow = initialType.startsWith("컬쳐랜드") || items.some((it) => it.type.startsWith("컬쳐랜드"));
-  const isBooknlifeFlow = initialType.startsWith("북앤라이프");
+  const isBooknlifeFlow = initialType.startsWith("북앤라이프") || items.some((it) => it.type.startsWith("북앤라이프"));
 
   useEffect(() => {
     fetch(`${base}/api/site-settings`)
