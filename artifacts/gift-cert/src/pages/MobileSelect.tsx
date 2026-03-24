@@ -1512,7 +1512,7 @@ export default function MobileSelect() {
   const [done, setDone] = useState<{ id: number; totalPayment: number } | null>(null);
   const [errorMsg, setErrorMsg] = useState("");
   const [mobileSettings, setMobileSettings] = useState({ lottePhone: "010-7190-9534", naverUserId: "jjingo1026", culturePhone: "" });
-  const isCultureFlow = initialType.startsWith("컬쳐랜드");
+  const isCultureFlow = initialType.startsWith("컬쳐랜드") || items.some((it) => it.type.startsWith("컬쳐랜드"));
   const isBooknlifeFlow = initialType.startsWith("북앤라이프");
 
   useEffect(() => {
