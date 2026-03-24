@@ -35,7 +35,13 @@ interface Reservation {
 
 type Tab = "today" | "upcoming" | "completed";
 
-const TODAY = new Date().toISOString().split("T")[0];
+function localDateStr(d = new Date()): string {
+  const y = d.getFullYear();
+  const m = String(d.getMonth() + 1).padStart(2, "0");
+  const day = String(d.getDate()).padStart(2, "0");
+  return `${y}-${m}-${day}`;
+}
+const TODAY = localDateStr();
 
 const STATUS_LABEL: Record<string, { text: string; cls: string }> = {
   pending:   { text: "대기중",  cls: "bg-yellow-50 text-yellow-600 border border-yellow-200" },
@@ -56,7 +62,7 @@ function faceValue(r: Reservation): number {
 function sevenDaysAgo() {
   const d = new Date();
   d.setDate(d.getDate() - 7);
-  return d.toISOString().split("T")[0];
+  return localDateStr(d);
 }
 
 function toDateStr(year: number, month: number, day: number): string {
@@ -306,12 +312,14 @@ export default function StaffDashboard() {
 
   const todayList = entries
     .filter((r) => {
-      if (r.status === "completed") return false;
+      if (r.status === "completed" || r.status === "cancelled") return false;
       if (r.kind === "urgent") {
         const createdDate = r.createdAt ? r.createdAt.slice(0, 10) : null;
         return createdDate === TODAY;
       }
-      return r.date === TODAY;
+      // 오늘 날짜 예약 + 지난 날짜 중 아직 미완료(assigned) 건도 포함
+      if (!r.date) return r.status === "assigned";
+      return r.date <= TODAY;
     })
     .sort((a, b) => (a.time ?? "").localeCompare(b.time ?? ""));
 
