@@ -1810,6 +1810,16 @@ export default function MobileSelect() {
       const hasAnyNumber = items.some((it) => it.type === "네이버페이 포인트" && it.checkedSubs.includes("쿠폰") && it.voucherNumber.trim());
       if (!hasAnyNumber) errs.naverCoupon = "네이버페이 쿠폰번호를 1개 이상 입력해야 합니다.";
     }
+    // 롯데모바일 23으로 시작하는 교환권: 번호 1개 이상 필수
+    const hasLotte23 = items.some((it) => it.type === "롯데모바일" && it.checkedSubs.includes("23으로 시작하는 교환권"));
+    if (hasLotte23) {
+      const hasAnyLotteNum = items.some((it) =>
+        it.type === "롯데모바일" &&
+        it.checkedSubs.includes("23으로 시작하는 교환권") &&
+        it.voucherNumber.trim()
+      );
+      if (!hasAnyLotteNum) errs.lotte23 = "롯데모바일 23으로 시작하는 교환권 번호를 1개 이상 입력해야 합니다.";
+    }
     // 신세계모바일 상품권번호입력: 번호 1개 이상 필수
     const hasShinsegaeNumber = items.some((it) => it.type === "신세계모바일" && it.checkedSubs.includes("상품권번호입력"));
     if (hasShinsegaeNumber) {
@@ -2256,7 +2266,8 @@ export default function MobileSelect() {
         {/* 상품권·이미지 등록 오류 */}
         {(errors.hyundaiImages || errors.shinsegaeImages || errors.shinsegaeNumbers ||
           errors.cultureExtract || errors.cultureManual || errors.cultureExchange ||
-          errors.munhwa || errors.google || errors.booknlife || errors.naverCoupon) && (
+          errors.munhwa || errors.google || errors.booknlife || errors.naverCoupon ||
+          errors.lotte23) && (
           <div className="space-y-2">
             {errors.hyundaiImages && (
               <p className="text-[13px] font-semibold text-rose-500 bg-rose-50 border border-rose-200 rounded-2xl px-4 py-3">⚠ {errors.hyundaiImages}</p>
@@ -2266,6 +2277,9 @@ export default function MobileSelect() {
             )}
             {errors.shinsegaeNumbers && (
               <p className="text-[13px] font-semibold text-rose-500 bg-rose-50 border border-rose-200 rounded-2xl px-4 py-3">⚠ {errors.shinsegaeNumbers}</p>
+            )}
+            {errors.lotte23 && (
+              <p className="text-[13px] font-semibold text-orange-700 bg-orange-50 border border-orange-200 rounded-2xl px-4 py-3">⚠ {errors.lotte23}</p>
             )}
             {errors.cultureExtract && (
               <p className="text-[13px] font-semibold text-indigo-700 bg-indigo-50 border border-indigo-200 rounded-2xl px-4 py-3">⚠ {errors.cultureExtract}</p>
