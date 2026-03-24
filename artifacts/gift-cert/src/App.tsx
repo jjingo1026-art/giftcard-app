@@ -104,10 +104,15 @@ function formatKRW(n: number) { return n.toLocaleString("ko-KR") + "원"; }
 // baseDeduct: extra deduction applied on top (e.g. 0.01 for urgent)
 function computeItem(item: VoucherItem, baseDeduct: number): { amountNum: number; rate: number; payment: number } {
   const amountNum = parseFloat(item.amount) || 0;
-  // 증정용: (액면가 × 요율) - (액면가 × 증정용요율 1%) = 액면가 × (요율 - 0.01)
+  const baseRateVal = RATES[item.type] ?? 0;
   const giftDeduct = item.isGift ? 0.01 : 0;
-  const rate = Math.max(0, (RATES[item.type] ?? 0) - baseDeduct - giftDeduct);
-  return { amountNum, rate, payment: Math.floor(amountNum * rate) };
+  const rate = Math.max(0, baseRateVal - baseDeduct - giftDeduct);
+  // 부동소수점 오차 방지: (액면가 × 긴급요율) - (액면가 × 증정용 1%) 를 각각 곱한 후 차감
+  // floor(amountNum × 0.93) = 464,999 오류 방지 → floor(amountNum × 0.94 − amountNum × 0.01) = 465,000 정확
+  const urgentRate = Math.max(0, baseRateVal - baseDeduct);
+  const rawPayment = amountNum * urgentRate - (item.isGift ? amountNum * 0.01 : 0);
+  const payment = Math.max(0, Math.floor(rawPayment));
+  return { amountNum, rate, payment };
 }
 
 // ─── SHARED UI ────────────────────────────────────────────────────────────────
