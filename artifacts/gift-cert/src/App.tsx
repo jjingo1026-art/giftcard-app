@@ -714,7 +714,7 @@ function HomePage({ onGoUrgent, initialType = DEFAULT_TYPE, onTypeChange, rateGr
                 placeholder="상세위치 (예 롯데백화점 정문, OO아파트 101동)"
                 className={`${inputCls(false)} mt-2`}
               />
-              <p className="text-[12px] text-slate-400 mt-1.5 flex items-start gap-1"><span className="mt-0.5 flex-shrink-0">ℹ️</span>주정차가 가능한 장소로 입력해 주세요</p>
+              <p className="text-[12px] text-amber-600 font-bold mt-1.5 flex items-start gap-1"><span className="mt-0.5 flex-shrink-0">⚠️</span>주정차가 가능한 장소로 입력해 주세요</p>
             </Field>
             <VoucherItems items={items} errors={itemErrors} onChange={updateItem} onToggleGift={toggleGift} onAdd={addItem} onRemove={removeItem} baseDeduct={0} />
             <div className="rounded-2xl border border-indigo-100 bg-indigo-50/60 overflow-hidden">
@@ -1245,7 +1245,7 @@ function UrgentPage({ onBack, initialType = DEFAULT_TYPE }: { onBack: () => void
                 placeholder="상세위치 (예 롯데백화점 정문, OO아파트 101동)"
                 className={`${inputCls(false, "rose")} mt-2`}
               />
-              <p className="text-[12px] text-slate-400 mt-1.5 flex items-start gap-1"><span className="mt-0.5 flex-shrink-0">ℹ️</span>주정차 가능한 곳으로 입력 바랍니다</p>
+              <p className="text-[12px] text-amber-600 font-bold mt-1.5 flex items-start gap-1"><span className="mt-0.5 flex-shrink-0">⚠️</span>주정차 가능한 곳으로 입력 바랍니다</p>
             </Field>
             <VoucherItems items={items} errors={itemErrors} onChange={updateItem} onToggleGift={toggleGift} onAdd={addItem} onRemove={removeItem} baseDeduct={0.01} />
             <div className="rounded-2xl border border-indigo-100 bg-indigo-50/60 overflow-hidden">
