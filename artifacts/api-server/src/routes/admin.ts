@@ -373,7 +373,7 @@ router.get("/staff-summary", requireAuth, async (_req, res) => {
       name:              s.name,
       preferredLocation: s.preferredLocation ?? null,
       assigned:          Number(rows.find((g) => g.status === "assigned")?.count  ?? 0),
-      completed:         Number(rows.find((g) => g.status === "completed")?.count ?? 0),
+      completed:         Number(rows.find((g) => g.status === "completed")?.count ?? 0) + Number(rows.find((g) => g.status === "no_show")?.count ?? 0),
     };
   });
 
@@ -409,7 +409,7 @@ router.get("/staff-overview", requireAuth, async (_req, res) => {
       phone:             s.phone,
       preferredLocation: s.preferredLocation ?? null,
       assigned:          Number(rows.find((g) => g.status === "assigned")?.count  ?? 0),
-      completed:         Number(rows.find((g) => g.status === "completed")?.count ?? 0),
+      completed:         Number(rows.find((g) => g.status === "completed")?.count ?? 0) + Number(rows.find((g) => g.status === "no_show")?.count ?? 0),
       total:             rows.reduce((sum, g) => sum + Number(g.count), 0),
     };
   });
@@ -424,10 +424,14 @@ router.get("/staff/:staffId/reservations", requireAuth, async (req, res) => {
   const { status } = req.query as { status?: string };
   if (isNaN(staffId)) { res.status(400).json({ error: "잘못된 담당자 ID" }); return; }
 
-  const validStatuses = ["pending", "assigned", "completed", "cancelled"];
+  const validStatuses = ["pending", "assigned", "completed", "no_show", "cancelled"];
   const conditions = [eq(reservationsTable.assignedStaffId, staffId)];
   if (status && validStatuses.includes(status)) {
-    conditions.push(eq(reservationsTable.status, status));
+    if (status === "completed") {
+      conditions.push(inArray(reservationsTable.status, ["completed", "no_show"]));
+    } else {
+      conditions.push(eq(reservationsTable.status, status));
+    }
   }
 
   const rows = await db

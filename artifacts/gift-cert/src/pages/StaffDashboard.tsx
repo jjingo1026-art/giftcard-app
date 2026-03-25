@@ -318,7 +318,7 @@ export default function StaffDashboard() {
 
   const todayList = entries
     .filter((r) => {
-      if (r.status === "completed" || r.status === "cancelled") return false;
+      if (r.status === "completed" || r.status === "cancelled" || r.status === "no_show") return false;
       if (r.kind === "urgent") {
         const createdDate = r.createdAt ? r.createdAt.slice(0, 10) : null;
         return createdDate === TODAY;
@@ -335,7 +335,7 @@ export default function StaffDashboard() {
 
   const completedList = entries
     .filter((r) => {
-      if (r.status !== "completed") return false;
+      if (r.status !== "completed" && r.status !== "no_show") return false;
       if (r.kind === "urgent") {
         const completedDate = r.completedAt ? r.completedAt.slice(0, 10) : (r.createdAt ? r.createdAt.slice(0, 10) : null);
         return completedDate !== null && completedDate >= fromDate && completedDate <= toDate;
