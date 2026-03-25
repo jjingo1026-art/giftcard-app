@@ -54,17 +54,17 @@ export default function StaffLogin() {
           <p className="text-[13px] text-slate-400 mt-1.5">승인된 담당자만 접근할 수 있습니다</p>
         </div>
 
-        <form onSubmit={login} className="bg-white rounded-3xl border border-slate-100 shadow-sm px-6 py-6 space-y-4">
+        <form onSubmit={login} autoComplete="off" className="bg-white rounded-3xl border border-slate-100 shadow-sm px-6 py-6 space-y-4">
           <div className="space-y-1.5">
             <label className="block text-[12px] font-bold text-slate-500 uppercase tracking-wide">전화번호 (아이디)</label>
             <input
               placeholder="010-0000-0000"
-              type="tel"
+              type="text"
+              inputMode="numeric"
               value={phone}
               onChange={(e) => setPhone(formatPhone(e.target.value))}
               className={inputCls}
-              autoComplete="tel"
-              inputMode="numeric"
+              autoComplete="new-password"
             />
           </div>
           <div className="space-y-1.5">
@@ -76,7 +76,7 @@ export default function StaffLogin() {
                 value={pw}
                 onChange={(e) => setPw(e.target.value)}
                 className={inputCls + " pr-12"}
-                autoComplete="current-password"
+                autoComplete="new-password"
               />
               <button
                 type="button"
