@@ -99,9 +99,6 @@ export default function CustomerChat() {
   const [chatMessages, setChatMessages] = useState<Message[]>([]);
   const [msg, setMsg] = useState("");
   const [userLang, setUserLang] = useState(() => getSavedLang());
-  const [showDefectConfirm, setShowDefectConfirm] = useState(false);
-  const [defectDone, setDefectDone] = useState(false);
-  const [defectLoading, setDefectLoading] = useState(false);
   const [showLangPicker, setShowLangPicker] = useState(false);
   const chatBoxRef = useRef<HTMLDivElement>(null);
   const socketRef = useRef<Socket | null>(null);
@@ -224,24 +221,6 @@ export default function CustomerChat() {
     if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); send(); }
   }
 
-  async function handleDefectTerminate() {
-    if (!socketRef.current || defectDone) return;
-    setDefectLoading(true);
-    try {
-      // 채팅에 시스템 메시지 전송
-      socketRef.current.emit("sendMessage", {
-        reservationId: Number(reservationId),
-        sender: "customer",
-        language: "ko",
-        message: "⚠️ [전체 하자 종료] 제출하신 상품권 전체에 하자가 확인되어 거래가 종료됩니다.",
-      });
-      setDefectDone(true);
-      setShowDefectConfirm(false);
-    } finally {
-      setDefectLoading(false);
-    }
-  }
-
   function changeLang(code: string) {
     setUserLang(code);
     saveLang(code);
@@ -264,39 +243,6 @@ export default function CustomerChat() {
   return (
     <div className="min-h-screen bg-slate-50">
       <input ref={imgInputRef} type="file" accept="image/*" className="hidden" onChange={onImgChange} />
-
-      {/* 하자종료 확인 모달 */}
-      {showDefectConfirm && (
-        <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/50 px-4">
-          <div className="bg-white rounded-3xl shadow-2xl w-full max-w-sm overflow-hidden">
-            <div className="bg-rose-50 px-5 pt-6 pb-4 text-center">
-              <div className="text-[40px] mb-2">⚠️</div>
-              <h2 className="text-[17px] font-black text-rose-700">전체 하자 거래 종료</h2>
-              <p className="text-[13px] text-rose-500 mt-1.5 leading-relaxed">
-                제출하신 상품권 전체에 하자가 확인되어<br />
-                <span className="font-bold">거래가 종료됩니다.</span>
-              </p>
-            </div>
-            <div className="px-5 py-4 space-y-2.5">
-              <p className="text-[12px] text-slate-500 text-center">종료 후에는 취소가 불가능합니다. 계속하시겠습니까?</p>
-              <button
-                onClick={handleDefectTerminate}
-                disabled={defectLoading}
-                className="w-full py-3 rounded-2xl bg-rose-500 text-white text-[14px] font-bold active:scale-95 transition-all disabled:opacity-50"
-              >
-                {defectLoading ? "처리 중…" : "확인 — 거래 종료"}
-              </button>
-              <button
-                onClick={() => setShowDefectConfirm(false)}
-                disabled={defectLoading}
-                className="w-full py-3 rounded-2xl bg-slate-100 text-slate-600 text-[14px] font-semibold active:scale-95 transition-all"
-              >
-                취소
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
 
       <header className="bg-white border-b border-slate-100 sticky top-0 z-40 shadow-sm">
         <div className="max-w-2xl mx-auto px-4 py-3 flex items-center gap-3">
@@ -450,23 +396,6 @@ export default function CustomerChat() {
             );
           })}
         </div>
-
-        {/* 하자종료 버튼 (모바일 채팅 전용) */}
-        {fromMobile && (
-          defectDone ? (
-            <div className="flex items-center gap-2 px-4 py-3 rounded-2xl bg-rose-50 border border-rose-200 text-rose-600 text-[13px] font-semibold">
-              <span>⚠️</span>
-              <span>전체 하자로 인해 거래가 종료되었습니다.</span>
-            </div>
-          ) : (
-            <button
-              onClick={() => setShowDefectConfirm(true)}
-              className="w-full py-2.5 rounded-2xl border-2 border-rose-300 text-rose-600 text-[13px] font-bold bg-rose-50 hover:bg-rose-100 active:scale-[0.98] transition-all flex items-center justify-center gap-2"
-            >
-              <span>⚠️</span> 전체 하자로 인한 하자종료
-            </button>
-          )
-        )}
 
         <div className="flex gap-2">
           <button
