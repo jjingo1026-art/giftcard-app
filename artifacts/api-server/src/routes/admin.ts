@@ -601,7 +601,8 @@ router.get("/dashboard", requireAuth, requireAdmin, async (req, res) => {
       .where(
         and(
           eq(reservationsTable.date, todayStr),
-          eq(reservationsTable.status, "completed")
+          eq(reservationsTable.status, "completed"),
+          sql`${reservationsTable.category} IS DISTINCT FROM '하자종료'`
         )
       );
 
@@ -615,7 +616,8 @@ router.get("/dashboard", requireAuth, requireAdmin, async (req, res) => {
         and(
           gte(reservationsTable.date, weekStartStr),
           lte(reservationsTable.date, todayStr),
-          eq(reservationsTable.status, "completed")
+          eq(reservationsTable.status, "completed"),
+          sql`${reservationsTable.category} IS DISTINCT FROM '하자종료'`
         )
       );
 
@@ -632,7 +634,12 @@ router.get("/dashboard", requireAuth, requireAdmin, async (req, res) => {
         count: sql<number>`COUNT(*)`
       })
       .from(reservationsTable)
-      .where(eq(reservationsTable.status, "completed"));
+      .where(
+        and(
+          eq(reservationsTable.status, "completed"),
+          sql`${reservationsTable.category} IS DISTINCT FROM '하자종료'`
+        )
+      );
 
     const totalReservations = totalReservationsResult[0].count;
     const completedReservations = completedReservationsResult[0].count;
@@ -838,7 +845,8 @@ router.get("/reservations/revenue", requireAuth, requireAdmin, async (req, res) 
     .where(
       and(
         eq(reservationsTable.date, date),
-        eq(reservationsTable.status, "completed")
+        eq(reservationsTable.status, "completed"),
+        sql`${reservationsTable.category} IS DISTINCT FROM '하자종료'`
       )
     );
 
@@ -864,7 +872,8 @@ router.get("/reservations/revenue/range", requireAuth, requireAdmin, async (req,
       and(
         gte(reservationsTable.date, startDate),
         lte(reservationsTable.date, endDate),
-        eq(reservationsTable.status, "completed")
+        eq(reservationsTable.status, "completed"),
+        sql`${reservationsTable.category} IS DISTINCT FROM '하자종료'`
       )
     );
 
@@ -887,7 +896,8 @@ router.get("/reservations/revenue/daily", requireAuth, requireAdmin, async (req,
       and(
         gte(reservationsTable.date, startDate!),
         lte(reservationsTable.date, endDate!),
-        eq(reservationsTable.status, "completed")
+        eq(reservationsTable.status, "completed"),
+        sql`${reservationsTable.category} IS DISTINCT FROM '하자종료'`
       )
     )
     .groupBy(reservationsTable.date)
@@ -914,6 +924,7 @@ router.get("/mobile-stats", requireAuth, async (req, res) => {
       eq(reservationsTable.status, "completed"),
       gte(reservationsTable.createdAt, new Date(startTs)),
       lte(reservationsTable.createdAt, new Date(endTs)),
+      sql`${reservationsTable.category} IS DISTINCT FROM '하자종료'`
     );
   };
 
@@ -956,7 +967,8 @@ router.get("/reservations/revenue/today", requireAuth, requireAdmin, async (_req
     .where(
       and(
         eq(reservationsTable.date, today),
-        eq(reservationsTable.status, "completed")
+        eq(reservationsTable.status, "completed"),
+        sql`${reservationsTable.category} IS DISTINCT FROM '하자종료'`
       )
     );
 
