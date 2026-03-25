@@ -535,17 +535,17 @@ function HomePage({ onGoUrgent, initialType = DEFAULT_TYPE, onTypeChange, rateGr
                 <div><h2 className="text-[15px] font-bold text-slate-800">상품권 시세</h2><p className="text-[12px] text-slate-400 mt-0.5">Exchange Rates</p></div>
                 <div className="w-8 h-8 bg-indigo-50 rounded-xl flex items-center justify-center">💳</div>
               </div>
-              <div className="px-4 pb-4 grid grid-cols-3 gap-2">
+              <div className="px-4 pb-4 grid grid-cols-3 gap-2.5">
                 {rateGroups.map((g) => (
                   <div
                     key={g.label}
                     onClick={() => { window.location.href = `/terms.html?type=${encodeURIComponent(g.label)}`; }}
                     className="flex flex-col items-center justify-center px-2 rounded-2xl cursor-pointer active:scale-[0.97] transition-all text-center"
-                    style={{ backgroundColor: g.color + "12", height: "86px" }}
+                    style={{ backgroundColor: g.color + "12", height: "116px" }}
                   >
-                    <span className="text-[11px] font-semibold text-slate-600 leading-snug text-center">{g.display}</span>
-                    <span className="text-[19px] font-black tabular-nums leading-none mt-1" style={{ color: g.color }}>{g.rate}%</span>
-                    <span className="text-[9px] text-slate-400 leading-tight mt-1 min-h-[12px]">{g.sub ?? ""}</span>
+                    <span className="text-[12px] font-semibold text-slate-600 leading-snug text-center">{g.display}</span>
+                    <span className="text-[22px] font-black tabular-nums leading-none mt-1.5" style={{ color: g.color }}>{g.rate}%</span>
+                    <span className="text-[10px] text-slate-400 leading-tight mt-1.5 min-h-[13px]">{g.sub ?? ""}</span>
                   </div>
                 ))}
               </div>
