@@ -110,6 +110,9 @@ export default function AdminChat() {
   const [reservationStatus, setReservationStatus] = useState<string | null>(null);
   const [copyToast, setCopyToast] = useState<string | null>(null);
   const [newMsgFlash, setNewMsgFlash] = useState(false);
+  const [showDefectConfirm, setShowDefectConfirm] = useState(false);
+  const [defectDone, setDefectDone] = useState(false);
+  const [defectLoading, setDefectLoading] = useState(false);
   const chatBoxRef = useRef<HTMLDivElement>(null);
   const socketRef = useRef<Socket | null>(null);
   const lastSoundRef = useRef<number>(0); // 중복 알림음 방지
@@ -265,6 +268,28 @@ export default function AdminChat() {
     }
   }
 
+  async function handleDefectTerminate() {
+    if (defectDone || defectLoading) return;
+    setDefectLoading(true);
+    try {
+      sendQuick("거래가 종료되었습니다.");
+      await fetch(`/api/admin/reservations/${reservationId}/status`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({ status: "completed", category: "하자종료" }),
+      });
+      setReservationStatus("completed");
+      setDefectDone(true);
+      setShowDefectConfirm(false);
+    } catch {
+    } finally {
+      setDefectLoading(false);
+    }
+  }
+
   function changeLang(code: string) {
     setUserLang(code);
     saveLang(code);
@@ -281,6 +306,39 @@ export default function AdminChat() {
 
   return (
     <div className="min-h-screen bg-slate-50 flex flex-col">
+      {/* 하자종료 확인 모달 */}
+      {showDefectConfirm && (
+        <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/50 px-4">
+          <div className="bg-white rounded-3xl shadow-2xl w-full max-w-sm overflow-hidden">
+            <div className="bg-rose-50 px-5 pt-6 pb-4 text-center">
+              <div className="text-[40px] mb-2">⚠️</div>
+              <h2 className="text-[17px] font-black text-rose-700">하자종료 처리</h2>
+              <p className="text-[13px] text-rose-500 mt-1.5 leading-relaxed">
+                채팅에 <span className="font-bold">"거래가 종료되었습니다."</span> 메시지를 전송하고<br />
+                해당 예약을 <span className="font-bold">하자종료</span>로 완료 처리합니다.
+              </p>
+            </div>
+            <div className="px-5 py-4 space-y-2.5">
+              <p className="text-[12px] text-slate-500 text-center">처리 후에는 취소가 불가능합니다. 계속하시겠습니까?</p>
+              <button
+                onClick={handleDefectTerminate}
+                disabled={defectLoading}
+                className="w-full py-3 rounded-2xl bg-rose-500 text-white text-[14px] font-bold active:scale-95 transition-all disabled:opacity-50"
+              >
+                {defectLoading ? "처리 중…" : "확인 — 하자종료 처리"}
+              </button>
+              <button
+                onClick={() => setShowDefectConfirm(false)}
+                disabled={defectLoading}
+                className="w-full py-3 rounded-2xl bg-slate-100 text-slate-600 text-[14px] font-semibold active:scale-95 transition-all"
+              >
+                취소
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* 복사 toast */}
       {copyToast && (
         <div className="fixed bottom-24 left-1/2 -translate-x-1/2 z-50 bg-slate-800 text-white text-[13px] font-bold px-5 py-2.5 rounded-2xl shadow-lg animate-fade-in">
@@ -547,6 +605,19 @@ export default function AdminChat() {
             >
               ❌ 전체하자
             </button>
+            {defectDone ? (
+              <div className="w-full px-3 py-2 rounded-xl bg-slate-100 border border-slate-200 text-slate-500 text-[12px] font-bold text-center">
+                🔴 하자종료됨
+              </div>
+            ) : (
+              <button
+                onClick={() => setShowDefectConfirm(true)}
+                disabled={reservationStatus === "completed"}
+                className="flex-1 min-w-0 px-3 py-2 rounded-xl bg-red-600 border border-red-700 text-white text-[12px] font-bold hover:bg-red-700 active:scale-[0.97] transition-all whitespace-nowrap disabled:opacity-40 disabled:cursor-not-allowed"
+              >
+                🔴 하자종료
+              </button>
+            )}
           </div>
         )}
 

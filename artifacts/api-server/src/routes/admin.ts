@@ -1016,7 +1016,7 @@ router.post("/reservations/:id/status", async (req, res) => {
 
   const id = parseInt(req.params.id);
   if (isNaN(id)) { res.status(400).json({ error: "잘못된 ID" }); return; }
-  const { status } = req.body as { status?: string };
+  const { status, category } = req.body as { status?: string; category?: string };
   const allowed = ["pending", "assigned", "completed", "cancelled", "no_show"];
   if (!status || !allowed.includes(status)) {
     res.status(400).json({ error: "유효하지 않은 상태값입니다.", allowed });
@@ -1028,6 +1028,7 @@ router.post("/reservations/:id/status", async (req, res) => {
       status,
       completedAt: status === "completed" ? new Date() : null,
       cancelledAt: status === "cancelled" ? new Date() : null,
+      ...(category !== undefined ? { category } : {}),
     })
     .where(eq(reservationsTable.id, id));
 
