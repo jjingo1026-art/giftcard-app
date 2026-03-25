@@ -374,7 +374,6 @@ function HomePage({ onGoUrgent, initialType = DEFAULT_TYPE, onTypeChange, rateGr
   const [items, setItems] = useState<VoucherItem[]>([{ type: initialType, amount: "", isGift: false }]);
   const [fieldErrors, setFieldErrors] = useState<{ name?: string; phone?: string; date?: string; time?: string; locationMain?: string; bankName?: string; accountNumber?: string; accountHolder?: string; agreeMatch?: string; pin?: string }>({});
   const [itemErrors, setItemErrors] = useState<string[]>([""]);
-  const [agreeMatch, setAgreeMatch] = useState(false);
   const [submissions, setSubmissions] = useState<ReservationEntry[]>([]);
   const [toast, setToast] = useState(false);
   const [errorMsg, setErrorMsg] = useState("");
@@ -412,7 +411,7 @@ function HomePage({ onGoUrgent, initialType = DEFAULT_TYPE, onTypeChange, rateGr
     if (!bankName) fe.bankName = "은행을 선택해주세요";
     if (!accountNumber.trim()) fe.accountNumber = "계좌번호를 입력해주세요";
     if (!accountHolder.trim()) fe.accountHolder = "예금주를 입력해주세요";
-    if (!agreeMatch) fe.agreeMatch = "신청자와 예금주 동일 여부를 확인해주세요";
+    if (name.trim() && accountHolder.trim() && name.trim() !== accountHolder.trim()) fe.agreeMatch = "성명과 예금주가 일치하지 않습니다";
     if (customerPin && !/^\d{4}$/.test(customerPin)) fe.pin = "비밀번호는 숫자 4자리여야 합니다";
     else if (customerPin && customerPin !== customerPinConfirm) fe.pin = "비밀번호가 일치하지 않습니다";
     setFieldErrors(fe);
@@ -777,31 +776,31 @@ function HomePage({ onGoUrgent, initialType = DEFAULT_TYPE, onTypeChange, rateGr
                   </span>
                 </div>
               </div>
-              <label className="flex items-center gap-3 cursor-pointer group">
-                <div
-                  onClick={() => { setAgreeMatch(v => !v); setFieldErrors(p => { const q = { ...p }; delete q.agreeMatch; return q; }); }}
-                  className={`w-5 h-5 rounded-md border-2 flex items-center justify-center flex-shrink-0 transition-all duration-150
-                    ${agreeMatch
-                      ? "bg-indigo-500 border-indigo-500"
-                      : fieldErrors.agreeMatch
-                        ? "border-rose-400 bg-rose-50"
-                        : "border-slate-300 bg-white group-hover:border-indigo-400"}`}
-                >
-                  {agreeMatch && (
-                    <svg width="11" height="9" viewBox="0 0 11 9" fill="none">
-                      <path d="M1 4l3 3.5L10 1" stroke="white" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
-                    </svg>
-                  )}
+              {/* 자동 일치 여부 표시 */}
+              {name.trim() && accountHolder.trim() ? (
+                name.trim() === accountHolder.trim() ? (
+                  <div className="flex items-center gap-2 px-3 py-2.5 rounded-xl bg-emerald-50 border border-emerald-200">
+                    <div className="w-5 h-5 rounded-full bg-emerald-500 flex items-center justify-center flex-shrink-0">
+                      <svg width="10" height="8" viewBox="0 0 10 8" fill="none"><path d="M1 4l2.5 3L9 1" stroke="white" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/></svg>
+                    </div>
+                    <span className="text-[13px] font-bold text-emerald-700">성명과 예금주가 일치합니다</span>
+                  </div>
+                ) : (
+                  <div className="flex items-center gap-2 px-3 py-2.5 rounded-xl bg-rose-50 border border-rose-200">
+                    <div className="w-5 h-5 rounded-full bg-rose-500 flex items-center justify-center flex-shrink-0">
+                      <svg width="10" height="10" viewBox="0 0 10 10" fill="none"><path d="M2 2l6 6M8 2l-6 6" stroke="white" strokeWidth="1.8" strokeLinecap="round"/></svg>
+                    </div>
+                    <span className="text-[13px] font-bold text-rose-700">성명과 예금주가 일치하지 않습니다</span>
+                  </div>
+                )
+              ) : (
+                <div className="flex items-center gap-2 px-3 py-2.5 rounded-xl bg-slate-50 border border-slate-200">
+                  <div className="w-5 h-5 rounded-full bg-slate-300 flex items-center justify-center flex-shrink-0">
+                    <svg width="10" height="10" viewBox="0 0 10 10" fill="none"><circle cx="5" cy="5" r="1.5" fill="white"/></svg>
+                  </div>
+                  <span className="text-[13px] font-semibold text-slate-400">성명과 예금주를 모두 입력하면 자동 확인됩니다</span>
                 </div>
-                <span
-                  onClick={() => { setAgreeMatch(v => !v); setFieldErrors(p => { const q = { ...p }; delete q.agreeMatch; return q; }); }}
-                  className={`text-[13px] font-semibold select-none ${fieldErrors.agreeMatch ? "text-rose-600" : "text-slate-700"}`}
-                >
-                  신청자와 예금주가 동일합니다
-                  <span className="ml-1.5 text-[11px] font-bold text-rose-400">(필수)</span>
-                </span>
-              </label>
-              {fieldErrors.agreeMatch && <p className="text-[11px] text-rose-500">⚠ {fieldErrors.agreeMatch}</p>}
+              )}
             </div>
 
             {/* 예약 비밀번호 (선택) */}
@@ -862,7 +861,7 @@ function HomePage({ onGoUrgent, initialType = DEFAULT_TYPE, onTypeChange, rateGr
               if (!bankName) missing.push("은행");
               if (!accountNumber.trim()) missing.push("계좌번호");
               if (!accountHolder.trim()) missing.push("예금주");
-              if (!agreeMatch) missing.push("신청자·예금주 동일 확인");
+              if (name.trim() && accountHolder.trim() && name.trim() !== accountHolder.trim()) missing.push("성명·예금주 불일치");
               if (items.some((it) => (parseFloat(it.amount) || 0) <= 0)) missing.push("상품권 금액");
               if (customerPin && (!/^\d{4}$/.test(customerPin) || customerPin !== customerPinConfirm)) missing.push("비밀번호 확인");
               if (missing.length === 0) return null;
@@ -1115,7 +1114,6 @@ function UrgentPage({ onBack, initialType = DEFAULT_TYPE }: { onBack: () => void
   const [items, setItems] = useState<VoucherItem[]>([{ type: initialType, amount: "", isGift: false }]);
   const [fieldErrors, setFieldErrors] = useState<{ name?: string; phone?: string; locationMain?: string; bankName?: string; accountNumber?: string; accountHolder?: string; agreeMatch?: string; pin?: string }>({});
   const [itemErrors, setItemErrors] = useState<string[]>([""]);
-  const [agreeMatch, setAgreeMatch] = useState(false);
   const [submissions, setSubmissions] = useState<UrgentEntry[]>([]);
   const [toast, setToast] = useState(false);
   const [errorMsg, setErrorMsg] = useState("");
@@ -1142,7 +1140,7 @@ function UrgentPage({ onBack, initialType = DEFAULT_TYPE }: { onBack: () => void
     if (!bankName) fe.bankName = "은행을 선택해주세요";
     if (!accountNumber.trim()) fe.accountNumber = "계좌번호를 입력해주세요";
     if (!accountHolder.trim()) fe.accountHolder = "예금주를 입력해주세요";
-    if (!agreeMatch) fe.agreeMatch = "신청자와 예금주 동일 여부를 확인해주세요";
+    if (name.trim() && accountHolder.trim() && name.trim() !== accountHolder.trim()) fe.agreeMatch = "성명과 예금주가 일치하지 않습니다";
     if (customerPin && !/^\d{4}$/.test(customerPin)) fe.pin = "비밀번호는 숫자 4자리여야 합니다";
     else if (customerPin && customerPin !== customerPinConfirm) fe.pin = "비밀번호가 일치하지 않습니다";
     setFieldErrors(fe);
@@ -1185,7 +1183,7 @@ function UrgentPage({ onBack, initialType = DEFAULT_TYPE }: { onBack: () => void
     setSubmissions((p) => [{ id, name, phone, location, items: savedItems, totalPayment, bankName, accountNumber, accountHolder, isUrgent: true }, ...p]);
     saveEntry({ kind: "urgent", id, createdAt: new Date().toISOString(), name, phone, location, items: savedItems, totalPayment, bankName, accountNumber, accountHolder });
     setName(""); setPhone(""); setLocationMain(""); setLocationDetail(""); setAccountNumber(""); setAccountHolder("");
-    setItems([{ type: DEFAULT_TYPE, amount: "", isGift: false }]); setItemErrors([""]); setAgreeMatch(false);
+    setItems([{ type: DEFAULT_TYPE, amount: "", isGift: false }]); setItemErrors([""]);
     setToast(true); setTimeout(() => setToast(false), 3000);
     setTimeout(() => submissionsRef.current?.scrollIntoView({ behavior: "smooth", block: "start" }), 150);
   }
@@ -1313,32 +1311,31 @@ function UrgentPage({ onBack, initialType = DEFAULT_TYPE }: { onBack: () => void
                   </span>
                 </div>
               </div>
-              {/* 체크박스 */}
-              <label className="flex items-center gap-3 cursor-pointer group">
-                <div
-                  onClick={() => { setAgreeMatch(v => !v); setFieldErrors(p => { const q = { ...p }; delete q.agreeMatch; return q; }); }}
-                  className={`w-5 h-5 rounded-md border-2 flex items-center justify-center flex-shrink-0 transition-all duration-150
-                    ${agreeMatch
-                      ? "bg-rose-500 border-rose-500"
-                      : fieldErrors.agreeMatch
-                        ? "border-rose-400 bg-rose-50"
-                        : "border-slate-300 bg-white group-hover:border-rose-400"}`}
-                >
-                  {agreeMatch && (
-                    <svg width="11" height="9" viewBox="0 0 11 9" fill="none">
-                      <path d="M1 4l3 3.5L10 1" stroke="white" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
-                    </svg>
-                  )}
+              {/* 자동 일치 여부 표시 */}
+              {name.trim() && accountHolder.trim() ? (
+                name.trim() === accountHolder.trim() ? (
+                  <div className="flex items-center gap-2 px-3 py-2.5 rounded-xl bg-emerald-50 border border-emerald-200">
+                    <div className="w-5 h-5 rounded-full bg-emerald-500 flex items-center justify-center flex-shrink-0">
+                      <svg width="10" height="8" viewBox="0 0 10 8" fill="none"><path d="M1 4l2.5 3L9 1" stroke="white" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/></svg>
+                    </div>
+                    <span className="text-[13px] font-bold text-emerald-700">성명과 예금주가 일치합니다</span>
+                  </div>
+                ) : (
+                  <div className="flex items-center gap-2 px-3 py-2.5 rounded-xl bg-rose-50 border border-rose-200">
+                    <div className="w-5 h-5 rounded-full bg-rose-500 flex items-center justify-center flex-shrink-0">
+                      <svg width="10" height="10" viewBox="0 0 10 10" fill="none"><path d="M2 2l6 6M8 2l-6 6" stroke="white" strokeWidth="1.8" strokeLinecap="round"/></svg>
+                    </div>
+                    <span className="text-[13px] font-bold text-rose-700">성명과 예금주가 일치하지 않습니다</span>
+                  </div>
+                )
+              ) : (
+                <div className="flex items-center gap-2 px-3 py-2.5 rounded-xl bg-slate-50 border border-slate-200">
+                  <div className="w-5 h-5 rounded-full bg-slate-300 flex items-center justify-center flex-shrink-0">
+                    <svg width="10" height="10" viewBox="0 0 10 10" fill="none"><circle cx="5" cy="5" r="1.5" fill="white"/></svg>
+                  </div>
+                  <span className="text-[13px] font-semibold text-slate-400">성명과 예금주를 모두 입력하면 자동 확인됩니다</span>
                 </div>
-                <span
-                  onClick={() => { setAgreeMatch(v => !v); setFieldErrors(p => { const q = { ...p }; delete q.agreeMatch; return q; }); }}
-                  className={`text-[13px] font-semibold select-none ${fieldErrors.agreeMatch ? "text-rose-600" : "text-slate-700"}`}
-                >
-                  신청자와 예금주가 동일합니다
-                  <span className="ml-1.5 text-[11px] font-bold text-rose-400">(필수)</span>
-                </span>
-              </label>
-              {fieldErrors.agreeMatch && <p className="text-[11px] text-rose-500">⚠ {fieldErrors.agreeMatch}</p>}
+              )}
             </div>
 
             {/* 예약 비밀번호 (선택) */}
@@ -1392,7 +1389,7 @@ function UrgentPage({ onBack, initialType = DEFAULT_TYPE }: { onBack: () => void
               if (!bankName) missing.push("은행");
               if (!accountNumber.trim()) missing.push("계좌번호");
               if (!accountHolder.trim()) missing.push("예금주");
-              if (!agreeMatch) missing.push("신청자·예금주 동일 확인");
+              if (name.trim() && accountHolder.trim() && name.trim() !== accountHolder.trim()) missing.push("성명·예금주 불일치");
               if (items.some((it) => (parseFloat(it.amount) || 0) <= 0)) missing.push("상품권 금액");
               if (customerPin && (!/^\d{4}$/.test(customerPin) || customerPin !== customerPinConfirm)) missing.push("비밀번호 확인");
               if (missing.length === 0) return null;
