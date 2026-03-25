@@ -1603,7 +1603,6 @@ export default function MobileSelect() {
   const [accountHolder, setAccountHolder] = useState("");
   const [customerPin, setCustomerPin] = useState("");
   const [customerPinConfirm, setCustomerPinConfirm] = useState("");
-  const [agreeMatch, setAgreeMatch] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [submitting, setSubmitting] = useState(false);
   const [done, setDone] = useState<{ id: number; totalPayment: number } | null>(null);
@@ -1915,7 +1914,7 @@ export default function MobileSelect() {
     if (customerPin.length !== 4) errs.customerPin = "조회 비밀번호 4자리를 입력해 주세요.";
     if (customerPinConfirm.length !== 4) errs.customerPinConfirm = "비밀번호 확인을 입력해 주세요.";
     else if (customerPin !== customerPinConfirm) errs.customerPinConfirm = "비밀번호가 일치하지 않습니다.";
-    if (!agreeMatch) errs.agreeMatch = "신청자와 예금주 동일 여부를 확인해주세요.";
+    if (name.trim() && accountHolder.trim() && name.trim() !== accountHolder.trim()) errs.agreeMatch = "성명과 예금주가 일치하지 않습니다.";
     // 현대모바일: 이미지 1개 이상 필수
     const hasHyundai = items.some((it) => it.type === "현대모바일");
     if (hasHyundai) {
@@ -2366,31 +2365,31 @@ export default function MobileSelect() {
                 </span>
               </div>
             </div>
-            <label className="flex items-center gap-3 cursor-pointer group">
-              <div
-                onClick={() => { setAgreeMatch(v => !v); setErrors(p => { const q = { ...p }; delete q.agreeMatch; return q; }); }}
-                className={`w-5 h-5 rounded-md border-2 flex items-center justify-center flex-shrink-0 transition-all duration-150
-                  ${agreeMatch
-                    ? "bg-pink-500 border-pink-500"
-                    : errors.agreeMatch
-                      ? "border-rose-400 bg-rose-50"
-                      : "border-slate-300 bg-white group-hover:border-pink-400"}`}
-              >
-                {agreeMatch && (
-                  <svg width="11" height="9" viewBox="0 0 11 9" fill="none">
-                    <path d="M1 4l3 3.5L10 1" stroke="white" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
-                  </svg>
-                )}
+            {/* 자동 일치 여부 표시 */}
+            {name.trim() && accountHolder.trim() ? (
+              name.trim() === accountHolder.trim() ? (
+                <div className="flex items-center gap-2 px-3 py-2.5 rounded-xl bg-emerald-50 border border-emerald-200">
+                  <div className="w-5 h-5 rounded-full bg-emerald-500 flex items-center justify-center flex-shrink-0">
+                    <svg width="10" height="8" viewBox="0 0 10 8" fill="none"><path d="M1 4l2.5 3L9 1" stroke="white" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/></svg>
+                  </div>
+                  <span className="text-[13px] font-bold text-emerald-700">성명과 예금주가 일치합니다</span>
+                </div>
+              ) : (
+                <div className="flex items-center gap-2 px-3 py-2.5 rounded-xl bg-rose-50 border border-rose-200">
+                  <div className="w-5 h-5 rounded-full bg-rose-500 flex items-center justify-center flex-shrink-0">
+                    <svg width="10" height="10" viewBox="0 0 10 10" fill="none"><path d="M2 2l6 6M8 2l-6 6" stroke="white" strokeWidth="1.8" strokeLinecap="round"/></svg>
+                  </div>
+                  <span className="text-[13px] font-bold text-rose-700">성명과 예금주가 일치하지 않습니다</span>
+                </div>
+              )
+            ) : (
+              <div className="flex items-center gap-2 px-3 py-2.5 rounded-xl bg-slate-50 border border-slate-200">
+                <div className="w-5 h-5 rounded-full bg-slate-300 flex items-center justify-center flex-shrink-0">
+                  <svg width="10" height="10" viewBox="0 0 10 10" fill="none"><circle cx="5" cy="5" r="1.5" fill="white"/></svg>
+                </div>
+                <span className="text-[13px] font-semibold text-slate-400">성명과 예금주를 모두 입력하면 자동 확인됩니다</span>
               </div>
-              <span
-                onClick={() => { setAgreeMatch(v => !v); setErrors(p => { const q = { ...p }; delete q.agreeMatch; return q; }); }}
-                className={`text-[13px] font-semibold select-none ${errors.agreeMatch ? "text-rose-600" : "text-slate-700"}`}
-              >
-                신청자와 예금주가 동일합니다
-                <span className="ml-1.5 text-[11px] font-bold text-rose-400">(필수)</span>
-              </span>
-            </label>
-            {errors.agreeMatch && <p className="text-[11px] text-rose-500">⚠ {errors.agreeMatch}</p>}
+            )}
           </div>
         </div>
 
@@ -2452,7 +2451,7 @@ export default function MobileSelect() {
           if (!accountHolder.trim() || !/^[가-힣a-zA-Z\s]+$/.test(accountHolder.trim())) missing.push("예금주");
           if (customerPin.length !== 4) missing.push("조회 비밀번호(4자리)");
           else if (customerPinConfirm.length !== 4 || customerPin !== customerPinConfirm) missing.push("비밀번호 확인");
-          if (!agreeMatch) missing.push("신청자·예금주 동일 확인");
+          if (name.trim() && accountHolder.trim() && name.trim() !== accountHolder.trim()) missing.push("성명·예금주 불일치");
           if (missing.length === 0) return null;
           return (
             <div className="rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 space-y-1">
