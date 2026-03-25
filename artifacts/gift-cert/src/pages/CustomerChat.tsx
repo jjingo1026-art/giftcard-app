@@ -241,10 +241,10 @@ export default function CustomerChat() {
     notifPermission === "default";
 
   return (
-    <div className="min-h-screen bg-slate-50">
+    <div className="h-screen flex flex-col bg-slate-50">
       <input ref={imgInputRef} type="file" accept="image/*" className="hidden" onChange={onImgChange} />
 
-      <header className="bg-white border-b border-slate-100 sticky top-0 z-40 shadow-sm">
+      <header className="flex-shrink-0 bg-white border-b border-slate-100 shadow-sm z-40">
         <div className="max-w-2xl mx-auto px-4 py-3 flex items-center gap-3">
           <button
             onClick={() => { window.location.href = fromMobile ? "/mobile/check" : "/check.html"; }}
@@ -293,7 +293,8 @@ export default function CustomerChat() {
       </header>
 
       {showNotifBanner && (
-        <div className="max-w-2xl mx-auto px-4 pt-3">
+        <div className="flex-shrink-0">
+          <div className="max-w-2xl mx-auto px-4 pt-2 pb-1">
           <div className="flex items-center gap-3 bg-indigo-50 border border-indigo-200 rounded-2xl px-4 py-3">
             <span className="text-[22px]">🔔</span>
             <div className="flex-1 min-w-0">
@@ -314,14 +315,17 @@ export default function CustomerChat() {
               ×
             </button>
           </div>
+          </div>
         </div>
       )}
 
-      <div className="max-w-2xl mx-auto px-4 py-4 space-y-3">
+      <div
+        ref={chatBoxRef}
+        className="flex-1 overflow-y-auto min-h-0"
+      >
+        <div className="max-w-2xl mx-auto px-4 py-4">
         <div
-          ref={chatBoxRef}
-          className="bg-white rounded-2xl border border-slate-100 shadow-sm p-3 space-y-2 overflow-auto"
-          style={{ height: "calc(100vh - 170px)", minHeight: 300 }}
+          className="bg-white rounded-2xl border border-slate-100 shadow-sm p-3 space-y-2"
         >
           {chatMessages.length === 0 && (
             <p className="text-center text-slate-300 text-[13px] mt-16">메시지가 없습니다</p>
@@ -396,29 +400,34 @@ export default function CustomerChat() {
             );
           })}
         </div>
+        </div>
+      </div>
 
-        <div className="flex gap-2">
-          <button
-            onClick={openPicker}
-            disabled={imgUploading}
-            className="w-11 h-11 rounded-2xl bg-slate-100 flex items-center justify-center text-[18px] hover:bg-slate-200 transition-colors active:scale-95 disabled:opacity-50 flex-shrink-0"
-            title="사진 첨부"
-          >
-            {imgUploading ? <span className="text-[11px] text-slate-500 font-bold">…</span> : "📷"}
-          </button>
-          <input
-            value={msg}
-            onChange={(e) => setMsg(e.target.value)}
-            onKeyDown={handleKey}
-            placeholder="메시지 입력"
-            className="flex-1 px-4 py-3 rounded-2xl border border-slate-200 bg-white text-[14px] outline-none focus:border-indigo-400 focus:ring-2 focus:ring-indigo-50"
-          />
-          <button
-            onClick={send}
-            className="px-5 py-3 rounded-2xl bg-indigo-500 text-white text-[14px] font-bold hover:bg-indigo-600 transition-colors active:scale-95 flex-shrink-0"
-          >
-            전송
-          </button>
+      <div className="flex-shrink-0 bg-white border-t border-slate-100">
+        <div className="max-w-2xl mx-auto px-4 py-3">
+          <div className="flex gap-2">
+            <button
+              onClick={openPicker}
+              disabled={imgUploading}
+              className="w-11 h-11 rounded-2xl bg-slate-100 flex items-center justify-center text-[18px] hover:bg-slate-200 transition-colors active:scale-95 disabled:opacity-50 flex-shrink-0"
+              title="사진 첨부"
+            >
+              {imgUploading ? <span className="text-[11px] text-slate-500 font-bold">…</span> : "📷"}
+            </button>
+            <input
+              value={msg}
+              onChange={(e) => setMsg(e.target.value)}
+              onKeyDown={handleKey}
+              placeholder="메시지 입력"
+              className="flex-1 px-4 py-3 rounded-2xl border border-slate-200 bg-white text-[14px] outline-none focus:border-indigo-400 focus:ring-2 focus:ring-indigo-50"
+            />
+            <button
+              onClick={send}
+              className="px-5 py-3 rounded-2xl bg-indigo-500 text-white text-[14px] font-bold hover:bg-indigo-600 transition-colors active:scale-95 flex-shrink-0"
+            >
+              전송
+            </button>
+          </div>
         </div>
       </div>
     </div>
