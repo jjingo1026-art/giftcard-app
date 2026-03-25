@@ -628,16 +628,16 @@ function HomePage({ onGoUrgent, initialType = DEFAULT_TYPE, onTypeChange, rateGr
               <svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M2 2l8 8M10 2l-8 8" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round"/></svg>
             </button>
           </div>
-          <form onSubmit={handleSubmit} className="px-5 pb-5 space-y-4">
+          <form onSubmit={handleSubmit} autoComplete="off" className="px-5 pb-5 space-y-4">
             <Field label="이름" required error={fieldErrors.name}>
-              <input type="text" value={name}
+              <input type="text" value={name} autoComplete="off"
                 onCompositionStart={() => { nameComposing.current = true; }}
                 onCompositionEnd={(e) => { nameComposing.current = false; setName(e.currentTarget.value.replace(/[^가-힣a-zA-Z\s]/g, "")); setFieldErrors((p) => ({ ...p, name: "" })); }}
                 onChange={(e) => { const v = nameComposing.current ? e.target.value : e.target.value.replace(/[^가-힣a-zA-Z\s]/g, ""); setName(v); setFieldErrors((p) => ({ ...p, name: "" })); }}
                 placeholder="홍길동" className={inputCls(!!fieldErrors.name)} />
             </Field>
             <Field label="연락처" required error={fieldErrors.phone}>
-              <input type="tel" value={phone} onChange={(e) => { setPhone(formatPhoneInput(e.target.value)); setFieldErrors((p) => ({ ...p, phone: "" })); }} placeholder="010-0000-0000" className={inputCls(!!fieldErrors.phone)} />
+              <input type="tel" value={phone} autoComplete="off" onChange={(e) => { setPhone(formatPhoneInput(e.target.value)); setFieldErrors((p) => ({ ...p, phone: "" })); }} placeholder="010-0000-0000" className={inputCls(!!fieldErrors.phone)} />
             </Field>
             <div className="grid grid-cols-2 gap-3">
               <Field label="예약 날짜" required error={fieldErrors.date}>
@@ -738,6 +738,7 @@ function HomePage({ onGoUrgent, initialType = DEFAULT_TYPE, onTypeChange, rateGr
                   <input
                     type="text"
                     value={accountNumber}
+                    autoComplete="off"
                     onChange={(e) => { setAccountNumber(e.target.value); setFieldErrors((p) => ({ ...p, accountNumber: "" })); }}
                     placeholder="계좌번호 (예: 123-456-789012)"
                     className={`w-full px-3 py-2.5 rounded-xl border text-[14px] text-slate-800 outline-none transition-all bg-white placeholder:text-slate-300
@@ -749,6 +750,7 @@ function HomePage({ onGoUrgent, initialType = DEFAULT_TYPE, onTypeChange, rateGr
                   <input
                     type="text"
                     value={accountHolder}
+                    autoComplete="off"
                     onChange={(e) => { setAccountHolder(e.target.value); setFieldErrors((p) => ({ ...p, accountHolder: "" })); }}
                     placeholder="예금주"
                     className={`w-full px-3 py-2.5 rounded-xl border text-[14px] text-slate-800 outline-none transition-all bg-white placeholder:text-slate-300
@@ -1220,16 +1222,16 @@ function UrgentPage({ onBack, initialType = DEFAULT_TYPE }: { onBack: () => void
             <div><h2 className="text-[15px] font-bold text-slate-800">{getLabel("sell_request", urgentLang)}</h2><p className="text-[12px] text-slate-400 mt-0.5">Sale Request Form</p></div>
             <div className="w-8 h-8 bg-rose-50 rounded-xl flex items-center justify-center">📋</div>
           </div>
-          <form onSubmit={handleSubmit} className="px-5 pb-5 space-y-4">
+          <form onSubmit={handleSubmit} autoComplete="off" className="px-5 pb-5 space-y-4">
             <Field label="성명" required error={fieldErrors.name}>
-              <input type="text" value={name}
+              <input type="text" value={name} autoComplete="off"
                 onCompositionStart={() => { nameComposing.current = true; }}
                 onCompositionEnd={(e) => { nameComposing.current = false; setName(e.currentTarget.value.replace(/[^가-힣a-zA-Z\s]/g, "")); setFieldErrors((p) => ({ ...p, name: "" })); }}
                 onChange={(e) => { const v = nameComposing.current ? e.target.value : e.target.value.replace(/[^가-힣a-zA-Z\s]/g, ""); setName(v); setFieldErrors((p) => ({ ...p, name: "" })); }}
                 placeholder="홍길동" className={inputCls(!!fieldErrors.name, "rose")} />
             </Field>
             <Field label="판매자 전화번호" required error={fieldErrors.phone}>
-              <input type="tel" value={phone} onChange={(e) => { setPhone(formatPhoneInput(e.target.value)); setFieldErrors((p) => ({ ...p, phone: "" })); }} placeholder="010-0000-0000" className={inputCls(!!fieldErrors.phone, "rose")} />
+              <input type="tel" value={phone} autoComplete="off" onChange={(e) => { setPhone(formatPhoneInput(e.target.value)); setFieldErrors((p) => ({ ...p, phone: "" })); }} placeholder="010-0000-0000" className={inputCls(!!fieldErrors.phone, "rose")} />
             </Field>
             <Field label="거래 장소" required error={fieldErrors.locationMain}>
               <LocationSearchInput
@@ -1269,6 +1271,7 @@ function UrgentPage({ onBack, initialType = DEFAULT_TYPE }: { onBack: () => void
                   <input
                     type="text"
                     value={accountNumber}
+                    autoComplete="off"
                     onChange={(e) => { setAccountNumber(e.target.value); setFieldErrors((p) => ({ ...p, accountNumber: "" })); }}
                     placeholder="계좌번호 (예: 123-456-789012)"
                     className={`w-full px-3 py-2.5 rounded-xl border text-[14px] text-slate-800 outline-none transition-all bg-white placeholder:text-slate-300
@@ -1280,6 +1283,7 @@ function UrgentPage({ onBack, initialType = DEFAULT_TYPE }: { onBack: () => void
                   <input
                     type="text"
                     value={accountHolder}
+                    autoComplete="off"
                     onChange={(e) => { setAccountHolder(e.target.value); setFieldErrors((p) => ({ ...p, accountHolder: "" })); }}
                     placeholder="예금주"
                     className={`w-full px-3 py-2.5 rounded-xl border text-[14px] text-slate-800 outline-none transition-all bg-white placeholder:text-slate-300
