@@ -604,52 +604,58 @@ export default function AdminChat() {
 
         <input ref={imgInputRef} type="file" accept="image/*" className="hidden" onChange={onImgChange} />
 
-        {/* 모바일 빠른 전송 버튼 */}
+        {/* 모바일 빠른 전송 버튼 — 2행 */}
         {reservationKind === "mobile" && (
-          <div className="flex gap-2 mt-3 flex-wrap">
-            {reservationStatus === "completed" ? (
-              <div className="flex-1 min-w-0 px-3 py-2 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-700 text-[12px] font-bold text-center">
-                ✅ 처리 완료됨
-              </div>
-            ) : (
+          <div className="flex flex-col gap-2 mt-3">
+            {/* 1행: 처리완료 · 잠시대기 · 일부하자 */}
+            <div className="flex gap-2">
+              {reservationStatus === "completed" ? (
+                <div className="flex-1 px-3 py-2 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-700 text-[12px] font-bold text-center">
+                  ✅ 처리 완료됨
+                </div>
+              ) : (
+                <button
+                  onClick={handleComplete}
+                  className="flex-1 px-3 py-2 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-700 text-[12px] font-bold hover:bg-emerald-100 active:scale-[0.97] transition-all"
+                >
+                  ✅ 처리완료
+                </button>
+              )}
               <button
-                onClick={handleComplete}
-                className="flex-1 min-w-0 px-3 py-2 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-700 text-[12px] font-bold hover:bg-emerald-100 active:scale-[0.97] transition-all whitespace-nowrap"
+                onClick={() => sendQuick("확인중입니다 잠시만 기다려 주세요")}
+                className="flex-1 px-3 py-2 rounded-xl bg-sky-50 border border-sky-200 text-sky-700 text-[12px] font-bold hover:bg-sky-100 active:scale-[0.97] transition-all"
               >
-                ✅ 처리완료
+                ⏳ 잠시대기
               </button>
-            )}
-            <button
-              onClick={() => sendQuick("확인중입니다 잠시만 기다려 주세요")}
-              className="flex-1 min-w-0 px-3 py-2 rounded-xl bg-sky-50 border border-sky-200 text-sky-700 text-[12px] font-bold hover:bg-sky-100 active:scale-[0.97] transition-all whitespace-nowrap"
-            >
-              ⏳ 잠시대기
-            </button>
-            <button
-              onClick={() => sendQuick("일부 상품권에 문제가 있습니다")}
-              className="flex-1 min-w-0 px-3 py-2 rounded-xl bg-amber-50 border border-amber-200 text-amber-700 text-[12px] font-bold hover:bg-amber-100 active:scale-[0.97] transition-all whitespace-nowrap"
-            >
-              ⚠️ 일부하자
-            </button>
-            <button
-              onClick={() => sendQuick("상품권 번호가 유효하지 않습니다 확인하시고 다시 신청해주세요")}
-              className="flex-1 min-w-0 px-3 py-2 rounded-xl bg-rose-50 border border-rose-200 text-rose-700 text-[12px] font-bold hover:bg-rose-100 active:scale-[0.97] transition-all whitespace-nowrap"
-            >
-              ❌ 전체하자
-            </button>
-            {defectDone ? (
-              <div className="w-full px-3 py-2 rounded-xl bg-slate-100 border border-slate-200 text-slate-500 text-[12px] font-bold text-center">
-                🔴 하자종료됨
-              </div>
-            ) : (
               <button
-                onClick={() => setShowDefectConfirm(true)}
-                disabled={reservationStatus === "completed"}
-                className="flex-1 min-w-0 px-3 py-2 rounded-xl bg-red-600 border border-red-700 text-white text-[12px] font-bold hover:bg-red-700 active:scale-[0.97] transition-all whitespace-nowrap disabled:opacity-40 disabled:cursor-not-allowed"
+                onClick={() => sendQuick("일부 상품권에 문제가 있습니다")}
+                className="flex-1 px-3 py-2 rounded-xl bg-amber-50 border border-amber-200 text-amber-700 text-[12px] font-bold hover:bg-amber-100 active:scale-[0.97] transition-all"
               >
-                🔴 하자종료
+                ⚠️ 일부하자
               </button>
-            )}
+            </div>
+            {/* 2행: 전체하자 · 하자종료 */}
+            <div className="flex gap-2">
+              <button
+                onClick={() => sendQuick("상품권 번호가 유효하지 않습니다 확인하시고 다시 신청해주세요")}
+                className="flex-1 px-3 py-2 rounded-xl bg-rose-50 border border-rose-200 text-rose-700 text-[12px] font-bold hover:bg-rose-100 active:scale-[0.97] transition-all"
+              >
+                ❌ 전체하자
+              </button>
+              {defectDone ? (
+                <div className="flex-1 px-3 py-2 rounded-xl bg-slate-100 border border-slate-200 text-slate-500 text-[12px] font-bold text-center">
+                  🔴 하자종료됨
+                </div>
+              ) : (
+                <button
+                  onClick={() => setShowDefectConfirm(true)}
+                  disabled={reservationStatus === "completed"}
+                  className="flex-1 px-3 py-2 rounded-xl bg-red-600 border border-red-700 text-white text-[12px] font-bold hover:bg-red-700 active:scale-[0.97] transition-all disabled:opacity-40 disabled:cursor-not-allowed"
+                >
+                  🔴 하자종료
+                </button>
+              )}
+            </div>
           </div>
         )}
 
