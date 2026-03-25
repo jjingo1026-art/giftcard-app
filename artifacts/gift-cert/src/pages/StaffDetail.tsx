@@ -27,7 +27,8 @@ export default function StaffDetail() {
 
   const { inputRef: imgInputRef, openPicker, onChange: onImgChange, isUploading: imgUploading } =
     useImageUpload(({ serveUrl }) => {
-      socketRef.current?.emit("sendMessage", {
+      if (!socketRef.current) return;
+      socketRef.current.emit("sendMessage", {
         reservationId: Number(reservationId),
         sender: "staff",
         senderName: staffName,
@@ -35,46 +36,55 @@ export default function StaffDetail() {
       });
     });
 
+  function scrollToBottom() {
+    setTimeout(() => {
+      if (chatBoxRef.current) chatBoxRef.current.scrollTop = chatBoxRef.current.scrollHeight;
+    }, 50);
+  }
+
   useEffect(() => {
     if (!token) { window.location.href = "/staff/login"; return; }
     if (!reservationId) return;
 
     fetch(`/api/admin/chat/${reservationId}`)
       .then((r) => r.json())
-      .then((data: Message[]) => {
-        setChatMessages(data);
-        scrollToBottom();
-      })
+      .then((data: Message[]) => { setChatMessages(data); scrollToBottom(); })
       .catch(() => {});
 
     const socket = io({ path: "/api/socket.io", transports: ["websocket"] });
     socketRef.current = socket;
 
     socket.on("connect", () => {
-      console.log("[StaffDetail] 소켓 연결됨, room 참여:", reservationId);
       socket.emit("joinRoom", Number(reservationId));
       socket.emit("markRead", { reservationId: Number(reservationId), readerRole: "staff" });
-    });
-    socket.on("disconnect", (reason) => {
-      console.log("[StaffDetail] 소켓 연결 끊김:", reason);
     });
 
     socket.on("newMessage", (newMsg: Message) => {
       setChatMessages((prev) => {
+        // 낙관적 업데이트 메시지(음수 id)를 실제 메시지로 교체 — AdminChat과 동일 구조
+        const optIdx = prev.findIndex(
+          (m) => m.id < 0 && m.sender === newMsg.sender && m.message === newMsg.message
+        );
+        if (optIdx !== -1) {
+          const next = [...prev];
+          next[optIdx] = newMsg;
+          scrollToBottom();
+          return next;
+        }
         if (prev.some((m) => m.id === newMsg.id)) return prev;
+        scrollToBottom();
+        if (newMsg.sender !== "staff") {
+          socket.emit("markRead", { reservationId: Number(reservationId), readerRole: "staff" });
+        }
         return [...prev, newMsg];
       });
-      if (newMsg.sender !== "staff") {
-        socket.emit("markRead", { reservationId: Number(reservationId), readerRole: "staff" });
-      }
-      scrollToBottom();
-      // 비한국어 메시지인 경우 번역이 소켓 이벤트로 오지 않을 때를 대비해 DB 폴링
+
+      // 비한국어 메시지: 소켓 이벤트 미수신 대비 DB 폴링 (AdminChat과 동일)
       if (newMsg.language && newMsg.language !== "ko") {
         setTimeout(() => {
           setChatMessages((prev) => {
             const existing = prev.find((m) => m.id === newMsg.id);
             if (!existing || (existing.translatedText && Object.keys(existing.translatedText).length > 1)) return prev;
-            // 아직 번역 미반영 → DB에서 최신 데이터 가져오기
             fetch(`/api/admin/chat/${reservationId}`)
               .then((r) => r.json())
               .then((data: Message[]) => {
@@ -90,11 +100,28 @@ export default function StaffDetail() {
       }
     });
 
+    // AdminChat과 동일: 번역 완료 시 해당 메시지 translatedText 업데이트
     socket.on("messageTranslated", (updated: Message) => {
-      console.log("[StaffDetail] messageTranslated 수신:", updated.id, updated.translatedText);
       setChatMessages((prev) =>
         prev.map((m) => m.id === updated.id ? { ...m, translatedText: updated.translatedText } : m)
       );
+    });
+
+    // AdminChat과 동일: chatAlert 수신 시 강제 newMessage 보완 (누락 대비)
+    socket.on("chatAlert", (alertMsg: { reservationId: number }) => {
+      if (alertMsg.reservationId === Number(reservationId)) {
+        fetch(`/api/admin/chat/${reservationId}`)
+          .then((r) => r.json())
+          .then((data: Message[]) => {
+            setChatMessages((prev) => {
+              const newOnes = data.filter((d) => !prev.some((p) => p.id === d.id));
+              if (newOnes.length === 0) return prev;
+              scrollToBottom();
+              return [...prev, ...newOnes];
+            });
+          })
+          .catch(() => {});
+      }
     });
 
     socket.on("messagesRead", ({ readerRole }: { readerRole: string }) => {
@@ -106,20 +133,31 @@ export default function StaffDetail() {
     return () => { socket.disconnect(); };
   }, []);
 
-  function scrollToBottom() {
-    setTimeout(() => {
-      if (chatBoxRef.current) chatBoxRef.current.scrollTop = chatBoxRef.current.scrollHeight;
-    }, 50);
+  function addOptimisticMsg(text: string) {
+    const tempMsg: Message = {
+      id: -Date.now(),
+      sender: "staff",
+      senderName: staffName,
+      message: text,
+      language: "ko",
+      translatedText: {},
+      time: new Date().toISOString(),
+      read: false,
+    };
+    setChatMessages((prev) => [...prev, tempMsg]);
+    scrollToBottom();
   }
 
   function sendMsg() {
-    if (!msg.trim()) return;
-    socketRef.current?.emit("sendMessage", {
+    const text = msg.trim();
+    if (!text || !socketRef.current) return;
+    addOptimisticMsg(text);
+    socketRef.current.emit("sendMessage", {
       reservationId: Number(reservationId),
       sender: "staff",
       senderName: staffName,
       language: "ko",
-      message: msg,
+      message: text,
     });
     setMsg("");
   }
