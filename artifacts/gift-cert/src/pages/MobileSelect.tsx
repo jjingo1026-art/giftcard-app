@@ -2174,7 +2174,10 @@ export default function MobileSelect() {
         </div>
       </header>
 
-      <form onSubmit={handleSubmit} className="max-w-md mx-auto px-4 py-5 pb-16 space-y-5">
+      <form onSubmit={handleSubmit} autoComplete="off" className="max-w-md mx-auto px-4 py-5 pb-16 space-y-5">
+        {/* 브라우저 자동완성 흡수용 숨김 더미 필드 */}
+        <input type="text" name="fake_id_absorb3" style={{display:"none"}} autoComplete="username" readOnly tabIndex={-1} aria-hidden="true" />
+        <input type="password" name="fake_pw_absorb3" style={{display:"none"}} autoComplete="current-password" readOnly tabIndex={-1} aria-hidden="true" />
 
         {/* 상품권 종류 & 금액 */}
         <div className="bg-white rounded-3xl border border-slate-100 shadow-sm px-5 py-5">
@@ -2242,6 +2245,7 @@ export default function MobileSelect() {
             <input
               type="text"
               value={name}
+              autoComplete="new-password"
               onChange={(e) => setName(e.target.value)}
               placeholder="홍길동"
               className={`w-full border rounded-2xl px-4 py-3.5 text-[15px] focus:outline-none focus:ring-2 focus:ring-pink-300 ${errors.name ? "border-rose-300" : "border-slate-200"}`}
@@ -2254,6 +2258,7 @@ export default function MobileSelect() {
             <input
               type="tel"
               value={phone}
+              autoComplete="new-password"
               onChange={(e) => handlePhone(e.target.value)}
               placeholder="010-0000-0000"
               className={`w-full border rounded-2xl px-4 py-3.5 text-[15px] focus:outline-none focus:ring-2 focus:ring-pink-300 ${errors.phone ? "border-rose-300" : "border-slate-200"}`}
@@ -2319,6 +2324,7 @@ export default function MobileSelect() {
                 type="password"
                 inputMode="numeric"
                 maxLength={4}
+                autoComplete="new-password"
                 value={customerPin}
                 onChange={(e) => { setCustomerPin(e.target.value.replace(/\D/g, "").slice(0, 4)); setErrors((p) => { const q = { ...p }; delete q.customerPin; delete q.customerPinConfirm; return q; }); }}
                 placeholder="숫자 4자리"
@@ -2331,6 +2337,7 @@ export default function MobileSelect() {
                   type="password"
                   inputMode="numeric"
                   maxLength={4}
+                  autoComplete="new-password"
                   value={customerPinConfirm}
                   onChange={(e) => { setCustomerPinConfirm(e.target.value.replace(/\D/g, "").slice(0, 4)); setErrors((p) => { const q = { ...p }; delete q.customerPinConfirm; return q; }); }}
                   placeholder="비밀번호 확인"

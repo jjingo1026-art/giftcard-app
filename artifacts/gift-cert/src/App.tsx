@@ -631,15 +631,18 @@ function HomePage({ onGoUrgent, initialType = DEFAULT_TYPE, onTypeChange, rateGr
             </button>
           </div>
           <form onSubmit={handleSubmit} autoComplete="off" className="px-5 pb-5 space-y-4">
+            {/* 브라우저 자동완성 흡수용 숨김 더미 필드 */}
+            <input type="text" name="fake_id_absorb" style={{display:"none"}} autoComplete="username" readOnly tabIndex={-1} aria-hidden="true" />
+            <input type="password" name="fake_pw_absorb" style={{display:"none"}} autoComplete="current-password" readOnly tabIndex={-1} aria-hidden="true" />
             <Field label="이름" required error={fieldErrors.name}>
-              <input type="text" value={name} autoComplete="off"
+              <input type="text" value={name} autoComplete="new-password"
                 onCompositionStart={() => { nameComposing.current = true; }}
                 onCompositionEnd={(e) => { nameComposing.current = false; setName(e.currentTarget.value.replace(/[^가-힣a-zA-Z\s]/g, "")); setFieldErrors((p) => ({ ...p, name: "" })); }}
                 onChange={(e) => { const v = nameComposing.current ? e.target.value : e.target.value.replace(/[^가-힣a-zA-Z\s]/g, ""); setName(v); setFieldErrors((p) => ({ ...p, name: "" })); }}
                 placeholder="홍길동" className={inputCls(!!fieldErrors.name)} />
             </Field>
             <Field label="연락처" required error={fieldErrors.phone}>
-              <input type="tel" value={phone} autoComplete="off" onChange={(e) => { setPhone(formatPhoneInput(e.target.value)); setFieldErrors((p) => ({ ...p, phone: "" })); }} placeholder="010-0000-0000" className={inputCls(!!fieldErrors.phone)} />
+              <input type="tel" value={phone} autoComplete="new-password" onChange={(e) => { setPhone(formatPhoneInput(e.target.value)); setFieldErrors((p) => ({ ...p, phone: "" })); }} placeholder="010-0000-0000" className={inputCls(!!fieldErrors.phone)} />
             </Field>
             <div className="grid grid-cols-2 gap-3">
               <Field label="예약 날짜" required error={fieldErrors.date}>
@@ -825,6 +828,7 @@ function HomePage({ onGoUrgent, initialType = DEFAULT_TYPE, onTypeChange, rateGr
                   type="password"
                   inputMode="numeric"
                   maxLength={4}
+                  autoComplete="new-password"
                   value={customerPin}
                   onChange={(e) => { setCustomerPin(e.target.value.replace(/\D/g, "").slice(0, 4)); setFieldErrors((p) => ({ ...p, pin: "" })); }}
                   placeholder="숫자 4자리"
@@ -836,6 +840,7 @@ function HomePage({ onGoUrgent, initialType = DEFAULT_TYPE, onTypeChange, rateGr
                     type="password"
                     inputMode="numeric"
                     maxLength={4}
+                    autoComplete="new-password"
                     value={customerPinConfirm}
                     onChange={(e) => { setCustomerPinConfirm(e.target.value.replace(/\D/g, "").slice(0, 4)); setFieldErrors((p) => ({ ...p, pin: "" })); }}
                     placeholder="비밀번호 확인"
@@ -1233,15 +1238,18 @@ function UrgentPage({ onBack, initialType = DEFAULT_TYPE }: { onBack: () => void
             <div className="w-8 h-8 bg-rose-50 rounded-xl flex items-center justify-center">📋</div>
           </div>
           <form onSubmit={handleSubmit} autoComplete="off" className="px-5 pb-5 space-y-4">
+            {/* 브라우저 자동완성 흡수용 숨김 더미 필드 */}
+            <input type="text" name="fake_id_absorb2" style={{display:"none"}} autoComplete="username" readOnly tabIndex={-1} aria-hidden="true" />
+            <input type="password" name="fake_pw_absorb2" style={{display:"none"}} autoComplete="current-password" readOnly tabIndex={-1} aria-hidden="true" />
             <Field label="성명" required error={fieldErrors.name}>
-              <input type="text" value={name} autoComplete="off"
+              <input type="text" value={name} autoComplete="new-password"
                 onCompositionStart={() => { nameComposing.current = true; }}
                 onCompositionEnd={(e) => { nameComposing.current = false; setName(e.currentTarget.value.replace(/[^가-힣a-zA-Z\s]/g, "")); setFieldErrors((p) => ({ ...p, name: "" })); }}
                 onChange={(e) => { const v = nameComposing.current ? e.target.value : e.target.value.replace(/[^가-힣a-zA-Z\s]/g, ""); setName(v); setFieldErrors((p) => ({ ...p, name: "" })); }}
                 placeholder="홍길동" className={inputCls(!!fieldErrors.name, "rose")} />
             </Field>
             <Field label="판매자 전화번호" required error={fieldErrors.phone}>
-              <input type="tel" value={phone} autoComplete="off" onChange={(e) => { setPhone(formatPhoneInput(e.target.value)); setFieldErrors((p) => ({ ...p, phone: "" })); }} placeholder="010-0000-0000" className={inputCls(!!fieldErrors.phone, "rose")} />
+              <input type="tel" value={phone} autoComplete="new-password" onChange={(e) => { setPhone(formatPhoneInput(e.target.value)); setFieldErrors((p) => ({ ...p, phone: "" })); }} placeholder="010-0000-0000" className={inputCls(!!fieldErrors.phone, "rose")} />
             </Field>
             <Field label="거래 장소" required error={fieldErrors.locationMain}>
               <LocationSearchInput
@@ -1363,6 +1371,7 @@ function UrgentPage({ onBack, initialType = DEFAULT_TYPE }: { onBack: () => void
                   type="password"
                   inputMode="numeric"
                   maxLength={4}
+                  autoComplete="new-password"
                   value={customerPin}
                   onChange={(e) => { setCustomerPin(e.target.value.replace(/\D/g, "").slice(0, 4)); setFieldErrors((p) => ({ ...p, pin: "" })); }}
                   placeholder="숫자 4자리"
@@ -1374,6 +1383,7 @@ function UrgentPage({ onBack, initialType = DEFAULT_TYPE }: { onBack: () => void
                     type="password"
                     inputMode="numeric"
                     maxLength={4}
+                    autoComplete="new-password"
                     value={customerPinConfirm}
                     onChange={(e) => { setCustomerPinConfirm(e.target.value.replace(/\D/g, "").slice(0, 4)); setFieldErrors((p) => ({ ...p, pin: "" })); }}
                     placeholder="비밀번호 확인"
