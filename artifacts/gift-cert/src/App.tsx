@@ -527,9 +527,27 @@ function HomePage({ onGoUrgent, initialType = DEFAULT_TYPE, onTypeChange, rateGr
         </div>
       )}
       <div className="max-w-md mx-auto px-4 pt-5 pb-16 space-y-4">
-        {/* 동의 전: 시세 + 예약 확인 + 안내 */}
+        {/* 동의 전: 예약 확인 + 시세 + 안내 */}
         {!agreedPrivacy && (
           <>
+            {/* 예약확인 — 시세 위로 이동, 강조 스타일 */}
+            <a
+              href="/check.html"
+              className="flex items-center justify-between px-5 py-4 rounded-3xl shadow-md active:scale-[0.98] transition-all"
+              style={{ background: "linear-gradient(135deg,#6366f1,#8b5cf6)" }}
+            >
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-2xl bg-white/20 flex items-center justify-center text-[20px]">🔍</div>
+                <div>
+                  <p className="text-[15px] font-black text-white">{getLabel("reservation_check", userLang)}</p>
+                  <p className="text-[12px] text-indigo-200 mt-0.5">전화번호로 예약 현황 조회</p>
+                </div>
+              </div>
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M9 18l6-6-6-6"/>
+              </svg>
+            </a>
+
             <div className="bg-white rounded-3xl shadow-sm border border-slate-100 overflow-hidden">
               <div className="px-5 pt-5 pb-3 flex items-center justify-between">
                 <div><h2 className="text-[15px] font-bold text-slate-800">상품권 시세</h2><p className="text-[12px] text-slate-400 mt-0.5">Exchange Rates</p></div>
@@ -550,22 +568,6 @@ function HomePage({ onGoUrgent, initialType = DEFAULT_TYPE, onTypeChange, rateGr
                 ))}
               </div>
             </div>
-
-            <a
-              href="/check.html"
-              className="flex items-center justify-between px-5 py-4 bg-white rounded-3xl shadow-sm border border-slate-100 active:scale-[0.98] transition-all"
-            >
-              <div className="flex items-center gap-3">
-                <div className="w-9 h-9 rounded-2xl bg-indigo-50 flex items-center justify-center text-[18px]">🔍</div>
-                <div>
-                  <p className="text-[14px] font-bold text-slate-800">{getLabel("reservation_check", userLang)}</p>
-                  <p className="text-[11px] text-slate-400 mt-0.5">전화번호로 예약 현황 조회</p>
-                </div>
-              </div>
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#94a3b8" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M9 18l6-6-6-6"/>
-              </svg>
-            </a>
 
             <Link
               href="/business"
@@ -891,6 +893,18 @@ function HomePage({ onGoUrgent, initialType = DEFAULT_TYPE, onTypeChange, rateGr
             {submissions.map((s) => (
               <SubmissionCard key={s.id} entry={s} />
             ))}
+            {/* 접수 완료 후 예약확인 바로가기 */}
+            <a
+              href="/check.html"
+              className="flex items-center justify-center gap-2.5 w-full py-4 rounded-2xl text-white text-[15px] font-bold shadow-md active:scale-[0.98] transition-all"
+              style={{ background: "linear-gradient(135deg,#6366f1,#8b5cf6)" }}
+            >
+              <span className="text-[18px]">🔍</span>
+              예약 확인 바로가기
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M9 18l6-6-6-6"/>
+              </svg>
+            </a>
           </div>
         )}
 
