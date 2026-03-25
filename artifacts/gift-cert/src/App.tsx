@@ -400,13 +400,16 @@ function HomePage({ onGoUrgent, initialType = DEFAULT_TYPE, onTypeChange, rateGr
     if (!name.trim()) fe.name = "이름을 입력해주세요";
     else if (!/^[가-힣a-zA-Z\s]+$/.test(name.trim())) fe.name = "이름은 한글 또는 영문만 입력 가능합니다";
     if (!phone.trim()) fe.phone = "연락처를 입력해주세요";
-    const now = new Date();
+    const now = new Date(new Date().toLocaleString("en-US", { timeZone: "Asia/Seoul" }));
+    const cutoff = new Date(now.getTime() + 2 * 60 * 60 * 1000);
     const localDateStr = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,"0")}-${String(now.getDate()).padStart(2,"0")}`;
-    const nowHHMM = `${String(now.getHours()).padStart(2, "0")}:${String(now.getMinutes()).padStart(2, "0")}`;
+    const cutoffHHMM = cutoff.toDateString() !== now.toDateString()
+      ? "23:59"
+      : `${String(cutoff.getHours()).padStart(2, "0")}:${String(cutoff.getMinutes()).padStart(2, "0")}`;
     if (!date) fe.date = "날짜 선택";
     else if (date < localDateStr) fe.date = "지난 날짜는 선택할 수 없습니다";
     if (!time || !isValidTime(time)) fe.time = "시간을 선택해주세요";
-    else if (date === localDateStr && time <= nowHHMM) fe.time = "이미 지나간 시간은 선택할 수 없습니다";
+    else if (date === localDateStr && time <= cutoffHHMM) fe.time = "현재 시간 기준 2시간 이내는 예약할 수 없습니다";
     if (!locationMain.trim()) fe.locationMain = "거래 장소를 입력해주세요";
     if (!bankName) fe.bankName = "은행을 선택해주세요";
     if (!accountNumber.trim()) fe.accountNumber = "계좌번호를 입력해주세요";
@@ -643,12 +646,12 @@ function HomePage({ onGoUrgent, initialType = DEFAULT_TYPE, onTypeChange, rateGr
                 <input
                   type="date"
                   value={date}
-                  min={(() => { const d = new Date(); return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}-${String(d.getDate()).padStart(2,"0")}`; })()}
+                  min={(() => { const d = new Date(new Date().toLocaleString("en-US", { timeZone: "Asia/Seoul" })); return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}-${String(d.getDate()).padStart(2,"0")}`; })()}
                   onChange={async (e) => {
                     const d = e.target.value;
                     setDate(d);
                     setFieldErrors((p) => ({ ...p, date: "", time: "" }));
-                    const now = new Date();
+                    const now = new Date(new Date().toLocaleString("en-US", { timeZone: "Asia/Seoul" }));
                     const cutoff = new Date(now.getTime() + 2 * 60 * 60 * 1000);
                     const localDateStr = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,"0")}-${String(now.getDate()).padStart(2,"0")}`;
                     const cutoffHHMM = cutoff.toDateString() !== now.toDateString()
@@ -685,7 +688,7 @@ function HomePage({ onGoUrgent, initialType = DEFAULT_TYPE, onTypeChange, rateGr
                 >
                   <option value="">시간 선택</option>
                   {(() => {
-                    const now = new Date();
+                    const now = new Date(new Date().toLocaleString("en-US", { timeZone: "Asia/Seoul" }));
                     const cutoff = new Date(now.getTime() + 2 * 60 * 60 * 1000);
                     const localDateStr = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,"0")}-${String(now.getDate()).padStart(2,"0")}`;
                     const isToday = date === localDateStr;
@@ -854,15 +857,18 @@ function HomePage({ onGoUrgent, initialType = DEFAULT_TYPE, onTypeChange, rateGr
 
             {(() => {
               const missing: string[] = [];
-              const _now = new Date();
+              const _now = new Date(new Date().toLocaleString("en-US", { timeZone: "Asia/Seoul" }));
+              const _cutoff = new Date(_now.getTime() + 2 * 60 * 60 * 1000);
               const _localDateStr = `${_now.getFullYear()}-${String(_now.getMonth()+1).padStart(2,"0")}-${String(_now.getDate()).padStart(2,"0")}`;
-              const _nowHHMM = `${String(_now.getHours()).padStart(2, "0")}:${String(_now.getMinutes()).padStart(2, "0")}`;
+              const _cutoffHHMM = _cutoff.toDateString() !== _now.toDateString()
+                ? "23:59"
+                : `${String(_cutoff.getHours()).padStart(2, "0")}:${String(_cutoff.getMinutes()).padStart(2, "0")}`;
               if (!name.trim()) missing.push("성명");
               if (!phone.trim()) missing.push("연락처");
               if (!date) missing.push("날짜");
               else if (date < _localDateStr) missing.push("날짜(지난 날짜 불가)");
               if (!time || !isValidTime(time)) missing.push("시간");
-              else if (date === _localDateStr && time <= _nowHHMM) missing.push("시간(이미 지나간 시간)");
+              else if (date === _localDateStr && time <= _cutoffHHMM) missing.push("시간(2시간 이내 예약 불가)");
               if (!locationMain.trim()) missing.push("거래 장소");
               if (!bankName) missing.push("은행");
               if (!accountNumber.trim()) missing.push("계좌번호");
