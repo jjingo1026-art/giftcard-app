@@ -19,23 +19,22 @@ async function translateText(text: string, from: string, to: string): Promise<st
   }
 }
 
-export async function translateAll(text: string, sourceLang = "ko"): Promise<Record<string, string>> {
+export async function translateToKo(text: string, sourceLang: string): Promise<string> {
+  if (sourceLang === "ko") return text;
+  return translateText(text, sourceLang, "ko");
+}
+
+export async function translateAll(text: string, sourceLang = "ko", knownKo?: string): Promise<Record<string, string>> {
   const result: Record<string, string> = {};
+  result[sourceLang] = text;
+  if (sourceLang === "ko") result["ko"] = text;
+  if (knownKo !== undefined) result["ko"] = knownKo;
 
-  if (sourceLang === "ko") {
-    result["ko"] = text;
-  } else {
-    result[sourceLang] = text;
-    result["ko"] = await translateText(text, sourceLang, "ko");
-  }
-
+  const allLangs: string[] = ["ko", ...SUPPORTED_LANGUAGES];
   await Promise.all(
-    SUPPORTED_LANGUAGES.map(async (lang) => {
-      if (lang === sourceLang) {
-        result[lang] = text;
-      } else if (!result[lang]) {
-        result[lang] = await translateText(text, sourceLang, lang);
-      }
+    allLangs.map(async (lang) => {
+      if (result[lang] !== undefined) return;
+      result[lang] = await translateText(text, sourceLang, lang);
     })
   );
 

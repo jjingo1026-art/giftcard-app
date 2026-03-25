@@ -3,7 +3,7 @@ import type { HttpServer } from "http";
 import { db } from "@workspace/db";
 import { chatsTable } from "@workspace/db/schema";
 import { eq, and, ne } from "drizzle-orm";
-import { translateAll } from "./lib/translate";
+import { translateAll, translateToKo } from "./lib/translate";
 import { sendPushToReservation } from "./routes/push";
 
 let _io: Server | null = null;
@@ -73,12 +73,25 @@ export function initSocket(httpServer: HttpServer) {
         }).catch(() => {});
       }
 
-      // 2단계: 번역은 백그라운드에서 처리 후 DB 업데이트 + emit
-      translateAll(trimmed, language).then(async (translatedText) => {
-        await db.update(chatsTable).set({ translatedText }).where(eq(chatsTable.id, inserted.id));
-        const translated = { ...msg, translatedText };
-        io.to("room_" + reservationId).emit("messageTranslated", translated);
-      }).catch(() => {});
+      // 2단계: 번역 백그라운드 처리
+      if (language !== "ko") {
+        // 비한국어 메시지: ko 번역 먼저 emit → 관리자/담당자 즉시 표시
+        translateToKo(trimmed, language).then(async (koText) => {
+          const partial: Record<string, string> = { [language]: trimmed, ko: koText };
+          io.to("room_" + reservationId).emit("messageTranslated", { ...msg, translatedText: partial });
+          // 전체 언어 번역 (ko는 재사용)
+          return translateAll(trimmed, language, koText);
+        }).then(async (translatedText) => {
+          await db.update(chatsTable).set({ translatedText }).where(eq(chatsTable.id, inserted.id));
+          io.to("room_" + reservationId).emit("messageTranslated", { ...msg, translatedText });
+        }).catch(() => {});
+      } else {
+        // 한국어 메시지: 전체 언어 병렬 번역
+        translateAll(trimmed, language).then(async (translatedText) => {
+          await db.update(chatsTable).set({ translatedText }).where(eq(chatsTable.id, inserted.id));
+          io.to("room_" + reservationId).emit("messageTranslated", { ...msg, translatedText });
+        }).catch(() => {});
+      }
     });
 
     // 읽음 처리: 내가 아닌 발신자의 메시지를 read=true 로 업데이트
