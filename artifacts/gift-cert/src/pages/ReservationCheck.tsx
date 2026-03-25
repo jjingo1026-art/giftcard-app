@@ -335,11 +335,15 @@ export default function ReservationCheck() {
       <div className="max-w-lg mx-auto px-4 py-6 space-y-4">
         {/* 검색 박스 */}
         <div className="bg-white rounded-2xl border border-slate-100 shadow-sm px-5 py-5 space-y-3">
+          {/* 브라우저 자동완성 흡수용 숨김 더미 필드 */}
+          <input type="text" name="fake_id_check" style={{display:"none"}} autoComplete="username" readOnly tabIndex={-1} aria-hidden="true" />
+          <input type="password" name="fake_pw_check" style={{display:"none"}} autoComplete="current-password" readOnly tabIndex={-1} aria-hidden="true" />
           <div>
             <label className="block text-[12px] font-bold text-slate-400 uppercase tracking-wide mb-2">전화번호</label>
             <input
               type="tel"
               value={phone}
+              autoComplete="new-password"
               onChange={(e) => setPhone(formatPhoneInput(e.target.value))}
               onKeyDown={(e) => e.key === "Enter" && check()}
               placeholder="010-0000-0000"
@@ -354,6 +358,7 @@ export default function ReservationCheck() {
               type="password"
               inputMode="numeric"
               maxLength={4}
+              autoComplete="new-password"
               value={pin}
               onChange={(e) => setPin(e.target.value.replace(/\D/g, "").slice(0, 4))}
               onKeyDown={(e) => e.key === "Enter" && check()}
