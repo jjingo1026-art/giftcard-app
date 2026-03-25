@@ -15,6 +15,7 @@ interface MobileReservation {
   location: string;
   totalPayment: number;
   status: string;
+  category?: string;
   bankName: string;
   accountNumber: string;
   accountHolder: string;
@@ -687,7 +688,10 @@ export default function AdminMobileDashboard() {
         ) : (
           <div className="space-y-2.5">
             {filtered.map((entry) => {
-              const si = STATUS_INFO[entry.status] ?? STATUS_INFO.pending;
+              const siBase = STATUS_INFO[entry.status] ?? STATUS_INFO.pending;
+              const si = (entry.status === "completed" && entry.category === "하자종료")
+                ? { label: "하자종료", color: "bg-rose-100 text-rose-700 border-rose-200", dot: "bg-rose-500" }
+                : siBase;
               const isExpanded = expandedId === entry.id;
               const isPending = entry.status === "pending" || entry.status === "assigned";
               return (
@@ -837,8 +841,16 @@ export default function AdminMobileDashboard() {
                       )}
                       {!isPending && (
                         <div className={`py-2 rounded-xl text-center text-[12px] font-bold
-                          ${entry.status === "completed" ? "bg-emerald-50 text-emerald-600" : "bg-slate-100 text-slate-500"}`}>
-                          {entry.status === "completed" ? "✅ 처리 완료됨" : "취소된 건"}
+                          ${entry.status === "completed" && entry.category === "하자종료"
+                            ? "bg-rose-50 text-rose-600 border border-rose-200"
+                            : entry.status === "completed"
+                              ? "bg-emerald-50 text-emerald-600"
+                              : "bg-slate-100 text-slate-500"}`}>
+                          {entry.status === "completed" && entry.category === "하자종료"
+                            ? "🔴 하자종료"
+                            : entry.status === "completed"
+                              ? "✅ 처리 완료됨"
+                              : "취소된 건"}
                         </div>
                       )}
                     </div>
