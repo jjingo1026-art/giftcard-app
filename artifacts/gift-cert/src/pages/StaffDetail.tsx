@@ -47,7 +47,7 @@ export default function StaffDetail() {
       })
       .catch(() => {});
 
-    const socket = io({ path: "/api/socket.io", transports: ["websocket", "polling"] });
+    const socket = io({ path: "/api/socket.io", transports: ["websocket"] });
     socketRef.current = socket;
 
     socket.on("connect", () => {
