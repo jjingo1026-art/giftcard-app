@@ -19,6 +19,9 @@ export function initSocket(httpServer: HttpServer) {
   const io = new Server(httpServer, {
     path: "/api/socket.io",
     cors: { origin: "*" },
+    pingInterval: 10000,   // 10초마다 ping (기본 25초)
+    pingTimeout: 5000,     // 5초 내 pong 없으면 재연결 (기본 20초)
+    transports: ["websocket", "polling"], // 폴백 유지 (방화벽 대비)
   });
 
   _io = io;
@@ -35,38 +38,47 @@ export function initSocket(httpServer: HttpServer) {
       if (!reservationId || !sender || !message?.trim()) return;
 
       const trimmed = message.trim();
-      const translatedText = await translateAll(trimmed, language);
+      const displayName = senderName ?? NAME_MAP[sender] ?? sender;
 
+      // 1단계: 번역 없이 즉시 DB 저장 후 실시간 emit
       const [inserted] = await db.insert(chatsTable).values({
         reservationId,
         sender,
-        senderName: senderName ?? NAME_MAP[sender] ?? sender,
+        senderName: displayName,
         message: trimmed,
         language,
-        translatedText,
+        translatedText: {},   // 번역 전 빈 객체
         read: false,
       }).returning();
 
       const msg = { ...inserted, time: inserted.time.toISOString() };
+
+      // 즉시 방 전송 (번역 기다리지 않음)
       io.to("room_" + reservationId).emit("newMessage", msg);
 
-      // 관리자가 아닌 발신자의 메시지는 전체 브로드캐스트 (대시보드 채팅 알림용)
+      // 대시보드 알림용 브로드캐스트
       if (sender !== "admin" && sender !== "system") {
         io.emit("chatAlert", msg);
       }
-      // 관리자 메시지는 고객(판매자)에게 알림 브로드캐스트
       if (sender === "admin") {
-        io.emit("adminChatAlert", { reservationId, senderName: senderName ?? "관리자", message: trimmed });
+        io.emit("adminChatAlert", { reservationId, senderName: displayName, message: trimmed });
       }
 
-      // 관리자·담당자 메시지 → 고객에게 Push 알림
+      // Push 알림 (비동기)
       if (sender === "admin" || sender === "staff") {
         sendPushToReservation(reservationId, {
-          title: `${senderName ?? (sender === "admin" ? "관리자" : "담당자")}님의 메시지`,
+          title: `${displayName}님의 메시지`,
           body: trimmed.length > 80 ? trimmed.slice(0, 80) + "…" : trimmed,
           url: `/chat?id=${reservationId}`,
         }).catch(() => {});
       }
+
+      // 2단계: 번역은 백그라운드에서 처리 후 DB 업데이트 + emit
+      translateAll(trimmed, language).then(async (translatedText) => {
+        await db.update(chatsTable).set({ translatedText }).where(eq(chatsTable.id, inserted.id));
+        const translated = { ...msg, translatedText };
+        io.to("room_" + reservationId).emit("messageTranslated", translated);
+      }).catch(() => {});
     });
 
     // 읽음 처리: 내가 아닌 발신자의 메시지를 read=true 로 업데이트

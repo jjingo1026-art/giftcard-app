@@ -142,7 +142,7 @@ export default function CustomerChat() {
       .then((data) => { setChatMessages(data); scrollToBottom(); })
       .catch(() => {});
 
-    const socket = io({ path: "/api/socket.io", transports: ["websocket", "polling"] });
+    const socket = io({ path: "/api/socket.io", transports: ["websocket"] });
     socketRef.current = socket;
 
     socket.on("connect", () => {
@@ -151,20 +151,35 @@ export default function CustomerChat() {
     });
 
     socket.on("newMessage", (newMsg: Message) => {
-      // 알림음은 상태 업데이터 밖에서 호출
       if (newMsg.sender !== "customer") {
         if (getSoundEnabled("customer")) playNotificationSound("customer");
       }
 
       setChatMessages((prev) => {
+        // 낙관적 업데이트 메시지(음수 id)를 실제 메시지로 교체
+        const optIdx = prev.findIndex(
+          (m) => m.id < 0 && m.sender === newMsg.sender && m.message === newMsg.message
+        );
+        if (optIdx !== -1) {
+          const next = [...prev];
+          next[optIdx] = newMsg;
+          scrollToBottom();
+          return next;
+        }
         if (prev.some((m) => m.id === newMsg.id)) return prev;
-        const next = [...prev, newMsg];
         scrollToBottom();
         if (newMsg.sender !== "customer") {
           socket.emit("markRead", { reservationId: Number(reservationId), readerRole: "customer" });
         }
-        return next;
+        return [...prev, newMsg];
       });
+    });
+
+    // 번역 완료 시 해당 메시지 translatedText 업데이트
+    socket.on("messageTranslated", (updated: Message) => {
+      setChatMessages((prev) =>
+        prev.map((m) => m.id === updated.id ? { ...m, translatedText: updated.translatedText } : m)
+      );
     });
 
     socket.on("messagesRead", ({ readerRole }: { readerRole: string }) => {
@@ -179,12 +194,28 @@ export default function CustomerChat() {
   }, []);
 
   function send() {
-    if (!msg.trim() || !socketRef.current) return;
+    const text = msg.trim();
+    if (!text || !socketRef.current) return;
+
+    // 낙관적 UI: 서버 응답 전 즉시 화면에 표시
+    const tempMsg: Message = {
+      id: -Date.now(),
+      sender: "customer",
+      senderName: "고객",
+      message: text,
+      language: userLang,
+      translatedText: {},
+      time: new Date().toISOString(),
+      read: false,
+    };
+    setChatMessages((prev) => [...prev, tempMsg]);
+    scrollToBottom();
+
     socketRef.current.emit("sendMessage", {
       reservationId: Number(reservationId),
       sender: "customer",
       language: userLang,
-      message: msg,
+      message: text,
     });
     setMsg("");
   }

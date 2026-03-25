@@ -172,7 +172,7 @@ export default function AdminChat() {
       })
       .catch(() => {});
 
-    const socket = io({ path: "/api/socket.io", transports: ["websocket", "polling"] });
+    const socket = io({ path: "/api/socket.io", transports: ["websocket"] });
     socketRef.current = socket;
 
     socket.on("connect", () => {
@@ -185,11 +185,9 @@ export default function AdminChat() {
       const now = Date.now();
       if (now - lastSoundRef.current < 500) return;
       lastSoundRef.current = now;
-      // 시각적 표시 (항상 작동)
       setNewMsgFlash(true);
       if (flashTimerRef.current) clearTimeout(flashTimerRef.current);
       flashTimerRef.current = setTimeout(() => setNewMsgFlash(false), 2500);
-      // 소리 알림
       if (getSoundEnabled("admin")) playNotificationSound("admin");
     };
 
@@ -199,14 +197,30 @@ export default function AdminChat() {
       }
 
       setMessages((prev) => {
+        // 낙관적 업데이트 메시지(음수 id)를 실제 메시지로 교체
+        const optIdx = prev.findIndex(
+          (m) => m.id < 0 && m.sender === newMsg.sender && m.message === newMsg.message
+        );
+        if (optIdx !== -1) {
+          const next = [...prev];
+          next[optIdx] = newMsg;
+          scrollToBottom();
+          return next;
+        }
         if (prev.some((m) => m.id === newMsg.id)) return prev;
-        const next = [...prev, newMsg];
         scrollToBottom();
         if (newMsg.sender !== "admin") {
           socket.emit("markRead", { reservationId: Number(reservationId), readerRole: "admin" });
         }
-        return next;
+        return [...prev, newMsg];
       });
+    });
+
+    // 번역 완료 시 해당 메시지 translatedText 업데이트
+    socket.on("messageTranslated", (updated: Message) => {
+      setMessages((prev) =>
+        prev.map((m) => m.id === updated.id ? { ...m, translatedText: updated.translatedText } : m)
+      );
     });
 
     // chatAlert: 전체 브로드캐스트로 알림음 보조 재생 (newMessage 실패 대비)
@@ -227,19 +241,37 @@ export default function AdminChat() {
     return () => { socket.disconnect(); };
   }, []);
 
+  function addOptimisticMsg(text: string) {
+    const tempMsg: Message = {
+      id: -Date.now(),
+      sender: "admin",
+      senderName: "관리자",
+      message: text,
+      language: "ko",
+      translatedText: {},
+      time: new Date().toISOString(),
+      read: false,
+    };
+    setMessages((prev) => [...prev, tempMsg]);
+    scrollToBottom();
+  }
+
   function send() {
-    if (!msg.trim() || !socketRef.current) return;
+    const text = msg.trim();
+    if (!text || !socketRef.current) return;
+    addOptimisticMsg(text);
     socketRef.current.emit("sendMessage", {
       reservationId: Number(reservationId),
       sender: "admin",
       language: "ko",
-      message: msg,
+      message: text,
     });
     setMsg("");
   }
 
   function sendQuick(text: string) {
     if (!socketRef.current) return;
+    addOptimisticMsg(text);
     socketRef.current.emit("sendMessage", {
       reservationId: Number(reservationId),
       sender: "admin",
