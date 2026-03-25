@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from "react";
 import { io, Socket } from "socket.io-client";
 import { useImageUpload } from "@/hooks/useImageUpload";
-import { LANGUAGES, getTranslated, getSavedLang, saveLang } from "@/lib/languages";
+import { getTranslated } from "@/lib/languages";
 
 interface Message {
   id: number;
@@ -21,8 +21,7 @@ export default function StaffDetail() {
 
   const [chatMessages, setChatMessages] = useState<Message[]>([]);
   const [msg, setMsg] = useState("");
-  const [userLang, setUserLang] = useState(() => getSavedLang());
-  const [showLangPicker, setShowLangPicker] = useState(false);
+  const userLang = "ko";
   const chatBoxRef = useRef<HTMLDivElement>(null);
   const socketRef = useRef<Socket | null>(null);
 
@@ -104,12 +103,6 @@ export default function StaffDetail() {
     if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); sendMsg(); }
   }
 
-  function changeLang(code: string) {
-    setUserLang(code);
-    saveLang(code);
-    setShowLangPicker(false);
-  }
-
   function goBack() {
     const ref = document.referrer;
     if (ref.includes("/staff/chats")) {
@@ -145,34 +138,6 @@ export default function StaffDetail() {
             <div className="flex-1 min-w-0">
               <p className="text-white font-bold text-[15px] truncate">💬 채팅 · 예약 #{reservationId}</p>
               <p className="text-indigo-200 text-[11px]">담당자: {staffName}</p>
-            </div>
-            <div className="relative flex-shrink-0">
-              <button
-                onClick={() => setShowLangPicker((v) => !v)}
-                className="flex items-center gap-1 px-2.5 py-1.5 rounded-xl bg-white/20 hover:bg-white/30 transition-colors text-white text-[12px] font-semibold"
-                title="언어 선택"
-              >
-                <span>{LANGUAGES.find((l) => l.code === userLang)?.flag}</span>
-                <span className="hidden sm:inline">{LANGUAGES.find((l) => l.code === userLang)?.label}</span>
-              </button>
-              {showLangPicker && (
-                <div className="absolute right-0 top-full mt-1 z-50 bg-white border border-slate-200 rounded-2xl shadow-lg px-3 py-2">
-                  <div className="flex flex-col gap-1.5 max-h-52 overflow-y-auto scrollbar-none w-fit">
-                    {LANGUAGES.map((l) => (
-                      <button
-                        key={l.code}
-                        onClick={() => changeLang(l.code)}
-                        className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-semibold border transition-all
-                          ${userLang === l.code
-                            ? "bg-indigo-500 text-white border-indigo-500"
-                            : "bg-white text-slate-600 border-slate-200 hover:border-indigo-300"}`}
-                      >
-                        <span>{l.flag}</span> {l.label}
-                      </button>
-                    ))}
-                  </div>
-                </div>
-              )}
             </div>
             <button
               onClick={goBack}
