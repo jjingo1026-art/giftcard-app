@@ -51,8 +51,12 @@ export default function StaffDetail() {
     socketRef.current = socket;
 
     socket.on("connect", () => {
+      console.log("[StaffDetail] 소켓 연결됨, room 참여:", reservationId);
       socket.emit("joinRoom", Number(reservationId));
       socket.emit("markRead", { reservationId: Number(reservationId), readerRole: "staff" });
+    });
+    socket.on("disconnect", (reason) => {
+      console.log("[StaffDetail] 소켓 연결 끊김:", reason);
     });
 
     socket.on("newMessage", (newMsg: Message) => {
@@ -64,9 +68,30 @@ export default function StaffDetail() {
         socket.emit("markRead", { reservationId: Number(reservationId), readerRole: "staff" });
       }
       scrollToBottom();
+      // 비한국어 메시지인 경우 번역이 소켓 이벤트로 오지 않을 때를 대비해 DB 폴링
+      if (newMsg.language && newMsg.language !== "ko") {
+        setTimeout(() => {
+          setChatMessages((prev) => {
+            const existing = prev.find((m) => m.id === newMsg.id);
+            if (!existing || (existing.translatedText && Object.keys(existing.translatedText).length > 1)) return prev;
+            // 아직 번역 미반영 → DB에서 최신 데이터 가져오기
+            fetch(`/api/admin/chat/${reservationId}`)
+              .then((r) => r.json())
+              .then((data: Message[]) => {
+                const updated = data.find((m) => m.id === newMsg.id);
+                if (updated?.translatedText && Object.keys(updated.translatedText).length > 0) {
+                  setChatMessages((p) => p.map((m) => m.id === updated.id ? { ...m, translatedText: updated.translatedText } : m));
+                }
+              })
+              .catch(() => {});
+            return prev;
+          });
+        }, 9000);
+      }
     });
 
     socket.on("messageTranslated", (updated: Message) => {
+      console.log("[StaffDetail] messageTranslated 수신:", updated.id, updated.translatedText);
       setChatMessages((prev) =>
         prev.map((m) => m.id === updated.id ? { ...m, translatedText: updated.translatedText } : m)
       );
@@ -168,6 +193,8 @@ export default function StaffDetail() {
             const imgUrl = isImg ? m.message.slice(5, -1) : "";
             const displayText = isImg ? "" : getTranslated(m, userLang);
             const isTranslated = !isImg && !!m.translatedText && (m.language ?? "ko") !== userLang && displayText !== m.message;
+            const isPendingTranslation = !isImg && !isMine && !!(m.language && m.language !== "ko") &&
+              (!m.translatedText || Object.keys(m.translatedText).length <= 1);
             return (
               <div key={m.id} className={`flex flex-col ${isMine ? "items-end" : "items-start"}`}>
                 <div className={`max-w-[75%] rounded-2xl text-[14px] shadow-sm overflow-hidden ${
@@ -206,6 +233,9 @@ export default function StaffDetail() {
                         <p className={`text-[10px] mt-1 opacity-60 border-t pt-1 ${isMine ? "border-indigo-400" : "border-slate-200"}`}>
                           원문: {m.message}
                         </p>
+                      )}
+                      {isPendingTranslation && (
+                        <p className="text-[10px] mt-1 text-slate-400 italic">번역 중…</p>
                       )}
                     </>
                   )}

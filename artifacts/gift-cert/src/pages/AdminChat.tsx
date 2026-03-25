@@ -213,6 +213,26 @@ export default function AdminChat() {
         }
         return [...prev, newMsg];
       });
+
+      // 비한국어 메시지: 소켓 이벤트 미수신 대비 DB 폴링
+      if (newMsg.language && newMsg.language !== "ko") {
+        setTimeout(() => {
+          setMessages((prev) => {
+            const existing = prev.find((m) => m.id === newMsg.id);
+            if (!existing || (existing.translatedText && Object.keys(existing.translatedText).length > 1)) return prev;
+            fetch(`/api/admin/chat/${reservationId}`)
+              .then((r) => r.json())
+              .then((data: Message[]) => {
+                const updated = data.find((m) => m.id === newMsg.id);
+                if (updated?.translatedText && Object.keys(updated.translatedText).length > 0) {
+                  setMessages((p) => p.map((m) => m.id === updated.id ? { ...m, translatedText: updated.translatedText } : m));
+                }
+              })
+              .catch(() => {});
+            return prev;
+          });
+        }, 9000);
+      }
     });
 
     // 번역 완료 시 해당 메시지 translatedText 업데이트
@@ -430,6 +450,8 @@ export default function AdminChat() {
             const imgUrl = isImg ? m.message.slice(5, -1) : "";
             const displayText = isImg ? "" : getTranslated(m, userLang);
             const isTranslated = !isImg && !!m.translatedText && (m.language ?? "ko") !== userLang && displayText !== m.message;
+            const isPendingTranslation = !isImg && !isMine && !!(m.language && m.language !== "ko") &&
+              (!m.translatedText || Object.keys(m.translatedText).length <= 1);
 
             // 시스템 메시지: "번호:" / "입금계좌:" 포함 라인 파싱
             const CopyBtn = ({ value, label = "복사" }: { value: string; label?: string }) => (
@@ -539,6 +561,9 @@ export default function AdminChat() {
                         <p className={`text-[10px] mt-1 opacity-60 border-t pt-1 ${isMine ? "border-indigo-400" : "border-slate-200"}`}>
                           원문: {m.message}
                         </p>
+                      )}
+                      {isPendingTranslation && (
+                        <p className="text-[10px] mt-1 text-slate-400 italic">번역 중…</p>
                       )}
                     </>
                   )}

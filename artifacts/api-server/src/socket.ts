@@ -76,21 +76,24 @@ export function initSocket(httpServer: HttpServer) {
       // 2단계: 번역 백그라운드 처리
       if (language !== "ko") {
         // 비한국어 메시지: ko 번역 먼저 emit → 관리자/담당자 즉시 표시
+        console.log(`[번역] id=${inserted.id} lang=${language} 번역 시작`);
         translateToKo(trimmed, language).then(async (koText) => {
+          console.log(`[번역] id=${inserted.id} ko번역 완료: ${koText.slice(0, 30)}`);
           const partial: Record<string, string> = { [language]: trimmed, ko: koText };
           io.to("room_" + reservationId).emit("messageTranslated", { ...msg, translatedText: partial });
           // 전체 언어 번역 (ko는 재사용)
           return translateAll(trimmed, language, koText);
         }).then(async (translatedText) => {
+          console.log(`[번역] id=${inserted.id} 전체번역 완료, room_${reservationId} emit`);
           await db.update(chatsTable).set({ translatedText }).where(eq(chatsTable.id, inserted.id));
           io.to("room_" + reservationId).emit("messageTranslated", { ...msg, translatedText });
-        }).catch(() => {});
+        }).catch((e) => { console.error(`[번역 오류] id=${inserted.id}`, e); });
       } else {
         // 한국어 메시지: 전체 언어 병렬 번역
         translateAll(trimmed, language).then(async (translatedText) => {
           await db.update(chatsTable).set({ translatedText }).where(eq(chatsTable.id, inserted.id));
           io.to("room_" + reservationId).emit("messageTranslated", { ...msg, translatedText });
-        }).catch(() => {});
+        }).catch((e) => { console.error(`[번역 오류-ko] id=${inserted.id}`, e); });
       }
     });
 
