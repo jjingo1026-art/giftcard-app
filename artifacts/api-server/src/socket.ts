@@ -4,6 +4,7 @@ import { db } from "@workspace/db";
 import { chatsTable } from "@workspace/db/schema";
 import { eq, and, ne } from "drizzle-orm";
 import { translateAll } from "./lib/translate";
+import { sendPushToReservation } from "./routes/push";
 
 let _io: Server | null = null;
 
@@ -56,6 +57,15 @@ export function initSocket(httpServer: HttpServer) {
       // 관리자 메시지는 고객(판매자)에게 알림 브로드캐스트
       if (sender === "admin") {
         io.emit("adminChatAlert", { reservationId, senderName: senderName ?? "관리자", message: trimmed });
+      }
+
+      // 관리자·담당자 메시지 → 고객에게 Push 알림
+      if (sender === "admin" || sender === "staff") {
+        sendPushToReservation(reservationId, {
+          title: `${senderName ?? (sender === "admin" ? "관리자" : "담당자")}님의 메시지`,
+          body: trimmed.length > 80 ? trimmed.slice(0, 80) + "…" : trimmed,
+          url: `/chat?id=${reservationId}`,
+        }).catch(() => {});
       }
     });
 

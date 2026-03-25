@@ -3,6 +3,7 @@ import { io, Socket } from "socket.io-client";
 import { useImageUpload } from "@/hooks/useImageUpload";
 import { LANGUAGES, getTranslated, getSavedLang, saveLang } from "@/lib/languages";
 import { getSoundEnabled, playNotificationSound } from "@/lib/notificationSound";
+import { subscribeToPush, clearBadge } from "@/lib/pushNotification";
 import SoundBell from "@/components/SoundBell";
 
 function showSaveToast(msg: string) {
@@ -101,6 +102,10 @@ export default function CustomerChat() {
   const [showLangPicker, setShowLangPicker] = useState(false);
   const chatBoxRef = useRef<HTMLDivElement>(null);
   const socketRef = useRef<Socket | null>(null);
+  const [notifPermission, setNotifPermission] = useState<NotificationPermission | "unsupported">(
+    "Notification" in window ? Notification.permission : "unsupported"
+  );
+  const [notifBannerDismissed, setNotifBannerDismissed] = useState(false);
 
   const { inputRef: imgInputRef, openPicker, onChange: onImgChange, isUploading: imgUploading } = useImageUpload(({ serveUrl }) => {
     if (!socketRef.current) return;
@@ -120,6 +125,14 @@ export default function CustomerChat() {
 
   useEffect(() => {
     if (!reservationId) return;
+
+    // 채팅창 열림: 뱃지 초기화
+    clearBadge();
+
+    // 이미 허용된 경우 자동 구독 (프롬프트 없음)
+    if ("Notification" in window && Notification.permission === "granted") {
+      subscribeToPush(reservationId).catch(() => {});
+    }
 
     fetch(`/api/admin/chat/${reservationId}`)
       .then((r) => r.json())
@@ -185,6 +198,17 @@ export default function CustomerChat() {
 
   const currentLang = LANGUAGES.find((l) => l.code === userLang);
 
+  async function handleEnableNotifications() {
+    const ok = await subscribeToPush(reservationId ?? "");
+    setNotifPermission("Notification" in window ? Notification.permission : "unsupported");
+    if (ok) setNotifBannerDismissed(true);
+  }
+
+  const showNotifBanner =
+    !notifBannerDismissed &&
+    notifPermission !== "unsupported" &&
+    notifPermission === "default";
+
   return (
     <div className="min-h-screen bg-slate-50">
       <input ref={imgInputRef} type="file" accept="image/*" className="hidden" onChange={onImgChange} />
@@ -236,6 +260,31 @@ export default function CustomerChat() {
           </div>
         </div>
       </header>
+
+      {showNotifBanner && (
+        <div className="max-w-2xl mx-auto px-4 pt-3">
+          <div className="flex items-center gap-3 bg-indigo-50 border border-indigo-200 rounded-2xl px-4 py-3">
+            <span className="text-[22px]">🔔</span>
+            <div className="flex-1 min-w-0">
+              <p className="text-[13px] font-bold text-indigo-800">알림을 허용하시면 답변 도착 시 알려드립니다</p>
+              <p className="text-[11px] text-indigo-500 mt-0.5">채팅창을 닫아도 새 메시지를 받을 수 있어요</p>
+            </div>
+            <button
+              onClick={handleEnableNotifications}
+              className="flex-shrink-0 px-3 py-1.5 bg-indigo-600 text-white text-[12px] font-bold rounded-xl active:scale-95 transition-all"
+            >
+              허용
+            </button>
+            <button
+              onClick={() => setNotifBannerDismissed(true)}
+              className="flex-shrink-0 text-indigo-300 hover:text-indigo-500 text-[18px] leading-none"
+              aria-label="닫기"
+            >
+              ×
+            </button>
+          </div>
+        </div>
+      )}
 
       <div className="max-w-2xl mx-auto px-4 py-4 space-y-3">
         <div

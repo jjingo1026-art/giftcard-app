@@ -4,6 +4,7 @@ import { io, type Socket } from "socket.io-client";
 import { formatPhone, formatDateKo, formatPhoneInput } from "@/lib/store";
 import { LANGUAGES, getSavedLang, saveLang } from "@/lib/languages";
 import { getLabel } from "@/lib/uiTranslations";
+import { subscribeToPush } from "@/lib/pushNotification";
 
 interface EditItem { type: string; amount: string; isGift: boolean; }
 
@@ -56,11 +57,28 @@ export default function ReservationCheck() {
   const [cancelError, setCancelError] = useState("");
   const [cancelSuccess, setCancelSuccess] = useState(false);
 
+  // 읽지 않은 채팅 메시지 수
+  const [unreadCount, setUnreadCount] = useState(0);
+
   // 소켓 실시간 업데이트
   const socketRef = useRef<Socket | null>(null);
 
   useEffect(() => {
     if (!reservation || reservation.status === "cancelled" || reservation.status === "completed") return;
+
+    // 미읽음 메시지 수 초기 조회
+    fetch(`/api/admin/chat/${reservation.id}`)
+      .then((r) => r.json())
+      .then((chats: { sender: string; read: boolean }[]) => {
+        const count = chats.filter((c) => c.sender !== "customer" && !c.read).length;
+        setUnreadCount(count);
+      })
+      .catch(() => {});
+
+    // Push 알림 구독 (이미 허용된 경우에만 자동 구독, 새 권한 요청 없음)
+    if ("Notification" in window && Notification.permission === "granted") {
+      subscribeToPush(reservation.id).catch(() => {});
+    }
 
     const socket = io({ path: "/api/socket.io", transports: ["websocket", "polling"] });
     socketRef.current = socket;
@@ -71,6 +89,12 @@ export default function ReservationCheck() {
       if (data.reservationId !== reservation.id) return;
       setReservation(prev => prev ? { ...prev, status: data.status, assignedTo: data.assignedTo } : prev);
       setStaffInfo({ id: data.staffId, name: data.assignedTo, phone: data.staffPhone });
+    });
+
+    socket.on("adminChatAlert", (data: { reservationId: number }) => {
+      if (data.reservationId === reservation.id) {
+        setUnreadCount((prev) => prev + 1);
+      }
     });
 
     return () => {
@@ -477,7 +501,7 @@ export default function ReservationCheck() {
               {cancelError && <p className="text-[12px] text-rose-500 mb-2">{cancelError}</p>}
               <button
                 onClick={tooLateToEdit ? undefined : cancelReservation}
-                disabled={cancelling || tooLateToEdit}
+                disabled={cancelling || !!tooLateToEdit}
                 className={`w-full py-3 rounded-xl border text-[14px] font-semibold transition-colors active:scale-95 disabled:opacity-60 ${tooLateToEdit ? "border-slate-200 bg-slate-50 text-slate-400 cursor-not-allowed" : "border-rose-200 text-rose-500 hover:bg-rose-50"}`}
               >
                 {cancelling ? "취소 처리 중…" : getLabel("cancel_reservation", lang)}
@@ -550,10 +574,15 @@ export default function ReservationCheck() {
                 </div>
                 <a
                   href={`/chat?id=${reservation.id}`}
-                  className="flex items-center justify-center gap-2 w-full py-3.5 rounded-xl text-white text-[14px] font-bold transition-all active:scale-95"
+                  className="relative flex items-center justify-center gap-2 w-full py-3.5 rounded-xl text-white text-[14px] font-bold transition-all active:scale-95"
                   style={{ background: "linear-gradient(135deg,#6366f1,#8b5cf6)" }}
                 >
                   {getLabel("consult", lang)}
+                  {unreadCount > 0 && (
+                    <span className="absolute -top-2 -right-2 min-w-[22px] h-[22px] bg-red-500 text-white text-[11px] font-black rounded-full flex items-center justify-center px-1 shadow-lg animate-bounce">
+                      {unreadCount > 99 ? "99+" : unreadCount}
+                    </span>
+                  )}
                 </a>
               </div>
             )}
@@ -563,7 +592,7 @@ export default function ReservationCheck() {
               {cancelError && <p className="text-[12px] text-rose-500 mb-2">{cancelError}</p>}
               <button
                 onClick={tooLateToEdit ? undefined : cancelReservation}
-                disabled={cancelling || tooLateToEdit}
+                disabled={cancelling || !!tooLateToEdit}
                 className={`w-full py-3 rounded-xl border text-[14px] font-semibold transition-colors active:scale-95 disabled:opacity-60 ${tooLateToEdit ? "border-slate-200 bg-slate-50 text-slate-400 cursor-not-allowed" : "border-rose-200 text-rose-500 hover:bg-rose-50"}`}
               >
                 {cancelling ? "취소 처리 중…" : getLabel("cancel_reservation", lang)}

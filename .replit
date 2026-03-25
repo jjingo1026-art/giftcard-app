@@ -28,3 +28,10 @@ timeoutMs = 20000
 
 [nix]
 channel = "stable-25_05"
+
+[userenv]
+
+[userenv.shared]
+VAPID_PUBLIC_KEY = "BG0JDEOAszVC-SGwNzdqazymzGAQ3VcvdsBvy0QmmIbZkwY198F-z6m6Xcr7fyUbHn2D-bN_Ah50N69T27adaCk"
+VAPID_PRIVATE_KEY = "t9gWlLYBosOQ1LE4EK7d14Hjs9ndK-hvJdV6GK7zh4E"
+VAPID_SUBJECT = "mailto:admin@uridongne-gift.replit.app"
