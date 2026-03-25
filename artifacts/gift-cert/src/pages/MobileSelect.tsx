@@ -2285,6 +2285,7 @@ export default function MobileSelect() {
               type="text"
               inputMode="numeric"
               value={accountNumber}
+              autoComplete="new-password"
               onChange={(e) => setAccountNumber(e.target.value.replace(/[^0-9-]/g, ""))}
               placeholder="01012345678"
               className={`w-full border rounded-2xl px-4 py-3.5 text-[15px] focus:outline-none focus:ring-2 focus:ring-pink-300 ${errors.accountNumber ? "border-rose-300" : "border-slate-200"}`}
@@ -2297,6 +2298,7 @@ export default function MobileSelect() {
             <input
               type="text"
               value={accountHolder}
+              autoComplete="new-password"
               onChange={(e) => setAccountHolder(e.target.value)}
               placeholder="홍길동"
               className={`w-full border rounded-2xl px-4 py-3.5 text-[15px] focus:outline-none focus:ring-2 focus:ring-pink-300 ${errors.accountHolder ? "border-rose-300" : "border-slate-200"}`}

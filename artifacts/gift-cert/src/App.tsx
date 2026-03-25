@@ -746,7 +746,7 @@ function HomePage({ onGoUrgent, initialType = DEFAULT_TYPE, onTypeChange, rateGr
                   <input
                     type="text"
                     value={accountNumber}
-                    autoComplete="off"
+                    autoComplete="new-password"
                     onChange={(e) => { setAccountNumber(e.target.value); setFieldErrors((p) => ({ ...p, accountNumber: "" })); }}
                     placeholder="계좌번호 (예: 123-456-789012)"
                     className={`w-full px-3 py-2.5 rounded-xl border text-[14px] text-slate-800 outline-none transition-all bg-white placeholder:text-slate-300
@@ -758,7 +758,7 @@ function HomePage({ onGoUrgent, initialType = DEFAULT_TYPE, onTypeChange, rateGr
                   <input
                     type="text"
                     value={accountHolder}
-                    autoComplete="off"
+                    autoComplete="new-password"
                     onChange={(e) => { setAccountHolder(e.target.value); setFieldErrors((p) => ({ ...p, accountHolder: "" })); }}
                     placeholder="예금주"
                     className={`w-full px-3 py-2.5 rounded-xl border text-[14px] text-slate-800 outline-none transition-all bg-white placeholder:text-slate-300
@@ -1281,7 +1281,7 @@ function UrgentPage({ onBack, initialType = DEFAULT_TYPE }: { onBack: () => void
                   <input
                     type="text"
                     value={accountNumber}
-                    autoComplete="off"
+                    autoComplete="new-password"
                     onChange={(e) => { setAccountNumber(e.target.value); setFieldErrors((p) => ({ ...p, accountNumber: "" })); }}
                     placeholder="계좌번호 (예: 123-456-789012)"
                     className={`w-full px-3 py-2.5 rounded-xl border text-[14px] text-slate-800 outline-none transition-all bg-white placeholder:text-slate-300
@@ -1293,7 +1293,7 @@ function UrgentPage({ onBack, initialType = DEFAULT_TYPE }: { onBack: () => void
                   <input
                     type="text"
                     value={accountHolder}
-                    autoComplete="off"
+                    autoComplete="new-password"
                     onChange={(e) => { setAccountHolder(e.target.value); setFieldErrors((p) => ({ ...p, accountHolder: "" })); }}
                     placeholder="예금주"
                     className={`w-full px-3 py-2.5 rounded-xl border text-[14px] text-slate-800 outline-none transition-all bg-white placeholder:text-slate-300
