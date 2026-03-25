@@ -649,8 +649,11 @@ function HomePage({ onGoUrgent, initialType = DEFAULT_TYPE, onTypeChange, rateGr
                     setDate(d);
                     setFieldErrors((p) => ({ ...p, date: "", time: "" }));
                     const now = new Date();
+                    const cutoff = new Date(now.getTime() + 2 * 60 * 60 * 1000);
                     const localDateStr = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,"0")}-${String(now.getDate()).padStart(2,"0")}`;
-                    const nowHHMM = `${String(now.getHours()).padStart(2, "0")}:${String(now.getMinutes()).padStart(2, "0")}`;
+                    const cutoffHHMM = cutoff.toDateString() !== now.toDateString()
+                      ? "23:59"
+                      : `${String(cutoff.getHours()).padStart(2, "0")}:${String(cutoff.getMinutes()).padStart(2, "0")}`;
                     if (d) {
                       try {
                         const res = await fetch(`/api/reservations/by-date?date=${d}`);
@@ -660,7 +663,7 @@ function HomePage({ onGoUrgent, initialType = DEFAULT_TYPE, onTypeChange, rateGr
                           .map((r) => r.time ?? "");
                         setTakenSlots(taken.filter(Boolean));
                         if (taken.includes(time)) setTime("");
-                        if (d === localDateStr && time && time <= nowHHMM) setTime("");
+                        if (d === localDateStr && time && time <= cutoffHHMM) setTime("");
                       } catch {
                         setTakenSlots([]);
                       }
@@ -683,11 +686,14 @@ function HomePage({ onGoUrgent, initialType = DEFAULT_TYPE, onTypeChange, rateGr
                   <option value="">시간 선택</option>
                   {(() => {
                     const now = new Date();
-                    const nowHHMM = `${String(now.getHours()).padStart(2, "0")}:${String(now.getMinutes()).padStart(2, "0")}`;
+                    const cutoff = new Date(now.getTime() + 2 * 60 * 60 * 1000);
                     const localDateStr = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,"0")}-${String(now.getDate()).padStart(2,"0")}`;
                     const isToday = date === localDateStr;
+                    const cutoffHHMM = cutoff.toDateString() !== now.toDateString()
+                      ? "23:59"
+                      : `${String(cutoff.getHours()).padStart(2, "0")}:${String(cutoff.getMinutes()).padStart(2, "0")}`;
                     return TIME_OPTIONS.map((t) => {
-                      const isPast = isToday && t <= nowHHMM;
+                      const isPast = isToday && t <= cutoffHHMM;
                       const taken = takenSlots.includes(t);
                       const disabled = isPast || taken;
                       return (
