@@ -70,7 +70,7 @@ export default function AdminNoShow() {
   const fetchUsers = useCallback(async () => {
     setLoading(true);
     try {
-      const res = await adminFetch("/admin/noshow/users");
+      const res = await adminFetch("/api/admin/noshow/users");
       if (res.ok) setUsers(await res.json());
     } finally {
       setLoading(false);
@@ -80,7 +80,7 @@ export default function AdminNoShow() {
   const fetchReservations = useCallback(async () => {
     setLoading(true);
     try {
-      const res = await adminFetch("/admin/noshow/reservations");
+      const res = await adminFetch("/api/admin/noshow/reservations");
       if (res.ok) setReservations(await res.json());
     } finally {
       setLoading(false);
@@ -95,7 +95,7 @@ export default function AdminNoShow() {
   async function doAction(userId: string, action: string, body?: object) {
     setActionLoading(userId + action);
     try {
-      const res = await adminFetch(`/admin/users/${encodeURIComponent(userId)}/${action}`, {
+      const res = await adminFetch(`/api/admin/users/${encodeURIComponent(userId)}/${action}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: body ? JSON.stringify(body) : undefined,

@@ -907,6 +907,87 @@ function HyundaiImageUpload({
   );
 }
 
+function Lotte23ImageUpload({
+  images,
+  onAdd,
+  onRemove,
+}: {
+  images: HyundaiImage[];
+  onAdd: (file: File) => void;
+  onRemove: (id: string) => void;
+}) {
+  const fileRef = useRef<HTMLInputElement>(null);
+
+  function handleFiles(files: FileList | null) {
+    if (!files) return;
+    Array.from(files).forEach((f) => {
+      if (f.type.startsWith("image/")) onAdd(f);
+    });
+  }
+
+  return (
+    <div className="rounded-2xl border-2 border-orange-200 bg-orange-50 p-4 space-y-3">
+      <div className="flex items-center gap-2">
+        <span className="text-[16px]">🖼️</span>
+        <p className="text-[13px] font-bold text-orange-700">바코드 이미지 첨부</p>
+        <span className="text-[11px] bg-orange-100 text-orange-500 font-bold px-2 py-0.5 rounded-full">23교환권</span>
+      </div>
+      <p className="text-[12px] text-orange-600 leading-relaxed">
+        롯데모바일 23으로 시작하는 교환권 바코드 이미지를 첨부해 주세요.
+      </p>
+
+      {images.length > 0 && (
+        <div className="grid grid-cols-3 gap-2">
+          {images.map((img) => (
+            <div key={img.id} className="relative aspect-square rounded-xl overflow-hidden border-2 border-orange-200 bg-white">
+              <img src={img.preview} alt="교환권 이미지" className="w-full h-full object-cover" />
+              {img.uploading && (
+                <div className="absolute inset-0 bg-white/70 flex items-center justify-center">
+                  <div className="w-5 h-5 border-2 border-orange-400 border-t-transparent rounded-full animate-spin" />
+                </div>
+              )}
+              {img.error && (
+                <div className="absolute inset-0 bg-rose-50/90 flex items-center justify-center">
+                  <span className="text-[18px]">⚠️</span>
+                </div>
+              )}
+              {!img.uploading && (
+                <button
+                  type="button"
+                  onClick={() => onRemove(img.id)}
+                  className="absolute top-1 right-1 w-5 h-5 bg-rose-500 text-white rounded-full flex items-center justify-center text-[10px] font-bold"
+                >
+                  ✕
+                </button>
+              )}
+            </div>
+          ))}
+        </div>
+      )}
+
+      <input
+        ref={fileRef}
+        type="file"
+        accept="image/*"
+        multiple
+        className="hidden"
+        onChange={(e) => handleFiles(e.target.files)}
+        onClick={(e) => { (e.target as HTMLInputElement).value = ""; }}
+      />
+      <button
+        type="button"
+        onClick={() => fileRef.current?.click()}
+        className="w-full py-3 rounded-xl border-2 border-dashed border-orange-300 text-orange-500 hover:bg-orange-100 text-[13px] font-bold transition-all active:scale-95 flex items-center justify-center gap-2"
+      >
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+          <rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/>
+        </svg>
+        바코드 이미지 선택
+      </button>
+    </div>
+  );
+}
+
 function MobileVoucherItems({
   items,
   errors,
@@ -916,6 +997,9 @@ function MobileVoucherItems({
   hyundaiImages,
   onAddHyundaiImage,
   onRemoveHyundaiImage,
+  lotte23Images,
+  onAddLotte23Image,
+  onRemoveLotte23Image,
   shinsegaeImages,
   onAddShinsegaeImage,
   onRemoveShinsegaeImage,
@@ -965,6 +1049,9 @@ function MobileVoucherItems({
   hyundaiImages: HyundaiImage[];
   onAddHyundaiImage: (file: File) => void;
   onRemoveHyundaiImage: (id: string) => void;
+  lotte23Images: HyundaiImage[];
+  onAddLotte23Image: (file: File) => void;
+  onRemoveLotte23Image: (id: string) => void;
   shinsegaeImages: HyundaiImage[];
   onAddShinsegaeImage: (file: File) => void;
   onRemoveShinsegaeImage: (id: string) => void;
@@ -1291,6 +1378,15 @@ function MobileVoucherItems({
         </div>
       )}
 
+      {/* 롯데모바일 23교환권 바코드 이미지 업로드 */}
+      {items.some((it) => it.type === "롯데모바일" && it.checkedSubs.includes("23으로 시작하는 교환권")) && (
+        <Lotte23ImageUpload
+          images={lotte23Images}
+          onAdd={onAddLotte23Image}
+          onRemove={onRemoveLotte23Image}
+        />
+      )}
+
       {/* 네이버페이 쿠폰번호 입력 */}
       {items.some((it) => it.type === "네이버페이 포인트" && it.checkedSubs.includes("쿠폰")) && (
         <div className="rounded-2xl border-2 border-green-200 bg-green-50 p-4 space-y-3">
@@ -1490,6 +1586,7 @@ export default function MobileSelect() {
   const [items, setItems] = useState<MobileItem[]>([{ type: initialType, amount: "", checkedSubs: [], voucherNumber: "" }]);
   const [itemErrors, setItemErrors] = useState<string[]>([""]);
   const [hyundaiImages, setHyundaiImages] = useState<HyundaiImage[]>([]);
+  const [lotte23Images, setLotte23Images] = useState<HyundaiImage[]>([]);
   const [shinsegaeImages, setShinsegaeImages] = useState<HyundaiImage[]>([]);
   const [shinsegaeNumbers, setShinsegaeNumbers] = useState<string[]>([""]);
   const [booknlifeNumbers, setBooknlifeNumbers] = useState<string[]>([""]);
@@ -1603,6 +1700,33 @@ export default function MobileSelect() {
     });
   }
 
+  async function handleAddLotte23Image(file: File) {
+    const id = Math.random().toString(36).slice(2);
+    const preview = URL.createObjectURL(file);
+    setLotte23Images((prev) => [...prev, { id, preview, objectPath: null, uploading: true, error: false }]);
+    try {
+      const base = import.meta.env.BASE_URL.replace(/\/$/, "");
+      const res = await fetch(`${base}/api/storage/uploads/request-url`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ name: file.name, size: file.size, contentType: file.type }),
+      });
+      const { uploadURL, objectPath } = await res.json();
+      await fetch(uploadURL, { method: "PUT", body: file, headers: { "Content-Type": file.type } });
+      setLotte23Images((prev) => prev.map((img) => img.id === id ? { ...img, objectPath, uploading: false } : img));
+    } catch {
+      setLotte23Images((prev) => prev.map((img) => img.id === id ? { ...img, uploading: false, error: true } : img));
+    }
+  }
+
+  function handleRemoveLotte23Image(id: string) {
+    setLotte23Images((prev) => {
+      const img = prev.find((i) => i.id === id);
+      if (img) URL.revokeObjectURL(img.preview);
+      return prev.filter((i) => i.id !== id);
+    });
+  }
+
   async function handleAddCultureText(text: string) {
     const id = Math.random().toString(36).slice(2);
     setCultureImages((prev) => [...prev, { id, preview: "", sourceText: text, uploading: true, numbers: [], error: false }]);
@@ -1666,7 +1790,7 @@ export default function MobileSelect() {
   async function handleAddShinsegaeImage(file: File) {
     const id = Math.random().toString(36).slice(2);
     const preview = URL.createObjectURL(file);
-    setShinsegaeImages((prev) => [...prev, { id, preview, uploading: true }]);
+    setShinsegaeImages((prev) => [...prev, { id, preview, objectPath: null, uploading: true, error: false }]);
     try {
       const base = import.meta.env.BASE_URL.replace(/\/$/, "");
       const res = await fetch(`${base}/api/storage/uploads/request-url`, {
@@ -1819,6 +1943,8 @@ export default function MobileSelect() {
         it.voucherNumber.trim()
       );
       if (!hasAnyLotteNum) errs.lotte23 = "롯데모바일 23으로 시작하는 교환권 번호를 1개 이상 입력해야 합니다.";
+      const lotte23UploadedCount = lotte23Images.filter((img) => img.objectPath !== null).length;
+      if (lotte23UploadedCount === 0) errs.lotte23Images = "롯데모바일 23으로 시작하는 교환권 바코드 이미지를 1개 이상 등록해야 합니다.";
     }
     // 신세계모바일 상품권번호입력: 번호 1개 이상 필수
     const hasShinsegaeNumber = items.some((it) => it.type === "신세계모바일" && it.checkedSubs.includes("상품권번호입력"));
@@ -1962,6 +2088,7 @@ export default function MobileSelect() {
           customerPin,
           imagePaths: [
             ...hyundaiImages.filter((i) => i.objectPath).map((i) => `/api/storage${i.objectPath!}`),
+            ...lotte23Images.filter((i) => i.objectPath).map((i) => `/api/storage${i.objectPath!}`),
             ...shinsegaeImages.filter((i) => i.objectPath).map((i) => `/api/storage${i.objectPath!}`),
           ],
         }),
@@ -2060,6 +2187,9 @@ export default function MobileSelect() {
             hyundaiImages={hyundaiImages}
             onAddHyundaiImage={handleAddHyundaiImage}
             onRemoveHyundaiImage={handleRemoveHyundaiImage}
+            lotte23Images={lotte23Images}
+            onAddLotte23Image={handleAddLotte23Image}
+            onRemoveLotte23Image={handleRemoveLotte23Image}
             shinsegaeImages={shinsegaeImages}
             onAddShinsegaeImage={handleAddShinsegaeImage}
             onRemoveShinsegaeImage={handleRemoveShinsegaeImage}
@@ -2267,7 +2397,7 @@ export default function MobileSelect() {
         {(errors.hyundaiImages || errors.shinsegaeImages || errors.shinsegaeNumbers ||
           errors.cultureExtract || errors.cultureManual || errors.cultureExchange ||
           errors.munhwa || errors.google || errors.booknlife || errors.naverCoupon ||
-          errors.lotte23) && (
+          errors.lotte23 || errors.lotte23Images) && (
           <div className="space-y-2">
             {errors.hyundaiImages && (
               <p className="text-[13px] font-semibold text-rose-500 bg-rose-50 border border-rose-200 rounded-2xl px-4 py-3">⚠ {errors.hyundaiImages}</p>
@@ -2280,6 +2410,9 @@ export default function MobileSelect() {
             )}
             {errors.lotte23 && (
               <p className="text-[13px] font-semibold text-orange-700 bg-orange-50 border border-orange-200 rounded-2xl px-4 py-3">⚠ {errors.lotte23}</p>
+            )}
+            {errors.lotte23Images && (
+              <p className="text-[13px] font-semibold text-orange-700 bg-orange-50 border border-orange-200 rounded-2xl px-4 py-3">⚠ {errors.lotte23Images}</p>
             )}
             {errors.cultureExtract && (
               <p className="text-[13px] font-semibold text-indigo-700 bg-indigo-50 border border-indigo-200 rounded-2xl px-4 py-3">⚠ {errors.cultureExtract}</p>
