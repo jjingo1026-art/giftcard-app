@@ -1,24 +1,26 @@
 import { useEffect, useState } from "react";
 
-type Platform = "ios" | "android" | "other";
+type Platform = "ios" | "android" | "desktop" | "other";
 
 function detectPlatform(): Platform {
   const ua = navigator.userAgent;
   if (/iPhone|iPad|iPod/.test(ua)) return "ios";
   if (/Android/.test(ua)) return "android";
+  const isMobile = /Mobi|Tablet/i.test(ua);
+  if (!isMobile) return "desktop";
   return "other";
 }
 
 function isStandalone(): boolean {
   return (
     window.matchMedia("(display-mode: standalone)").matches ||
-    (window.navigator as any).standalone === true
+    (window.navigator as Navigator & { standalone?: boolean }).standalone === true
   );
 }
 
 export default function PWAInstallButton() {
   const [platform, setPlatform] = useState<Platform>("other");
-  const [deferredPrompt, setDeferredPrompt] = useState<any>(null);
+  const [deferredPrompt, setDeferredPrompt] = useState<Event & { prompt: () => void; userChoice: Promise<{ outcome: string }> } | null>(null);
   const [showIOSModal, setShowIOSModal] = useState(false);
   const [installed, setInstalled] = useState(false);
   const [visible, setVisible] = useState(false);
@@ -38,8 +40,8 @@ export default function PWAInstallButton() {
 
     const handler = (e: Event) => {
       e.preventDefault();
-      setDeferredPrompt(e);
-      if (p === "android") setVisible(true);
+      setDeferredPrompt(e as Event & { prompt: () => void; userChoice: Promise<{ outcome: string }> });
+      if (p === "android" || p === "desktop") setVisible(true);
     };
 
     window.addEventListener("beforeinstallprompt", handler);
@@ -68,6 +70,55 @@ export default function PWAInstallButton() {
   };
 
   if (installed || !visible) return null;
+
+  if (platform === "desktop") {
+    return (
+      <>
+        <div className="flex flex-col items-center gap-2">
+          <button
+            onClick={handleInstall}
+            className="flex items-center gap-3 px-7 py-3.5 rounded-2xl text-[15px] font-bold transition-all hover:scale-105 active:scale-95 shadow-lg"
+            style={{
+              background: "linear-gradient(135deg,#6366f1,#8b5cf6)",
+              color: "white",
+              boxShadow: "0 4px 18px rgba(99,102,241,0.4)",
+            }}
+          >
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+              <rect x="2" y="3" width="20" height="14" rx="2"/>
+              <path d="M8 21h8M12 17v4"/>
+              <path d="M12 7v6M9 10l3 3 3-3"/>
+            </svg>
+            앱 설치하기
+          </button>
+          <p className="text-[11px] text-slate-400">PC에 앱으로 설치하면 더 편리합니다</p>
+        </div>
+
+        {showIOSModal && (
+          <div
+            className="fixed inset-0 z-50 flex items-end justify-center"
+            style={{ background: "rgba(0,0,0,0.5)" }}
+            onClick={() => setShowIOSModal(false)}
+          >
+            <div
+              className="w-full max-w-sm rounded-t-3xl pb-10 pt-6 px-6"
+              style={{ background: "white" }}
+              onClick={(e) => e.stopPropagation()}
+            >
+              <div className="w-10 h-1 rounded-full bg-slate-200 mx-auto mb-5" />
+              <button
+                onClick={() => setShowIOSModal(false)}
+                className="w-full mt-7 py-3 rounded-2xl text-[15px] font-bold text-white"
+                style={{ background: "linear-gradient(135deg,#6366f1,#8b5cf6)" }}
+              >
+                확인
+              </button>
+            </div>
+          </div>
+        )}
+      </>
+    );
+  }
 
   return (
     <>
