@@ -1,10 +1,11 @@
 import { Router, type IRouter } from "express";
 import { db } from "@workspace/db";
 import { reservationsTable, chatsTable, staffTable, penaltiesTable, usersTable, adminSettingsTable, adminAccountsTable, siteSettingsTable } from "@workspace/db/schema";
-import { eq, desc, asc, and, sql, gte, lte, inArray, isNull } from "drizzle-orm";
+import { eq, desc, asc, and, sql, gte, lte, inArray, isNull, ne } from "drizzle-orm";
 import bcrypt from "bcrypt";
 import { runPrivacyCleanup } from "../cleanup";
 import { emitToRoom, broadcast } from "../socket";
+import { translateAll } from "../lib/translate";
 import {
   generateAccessToken,
   generateRefreshToken,
@@ -1222,6 +1223,40 @@ router.get("/chat/:reservationId", async (req, res) => {
     .where(eq(chatsTable.reservationId, reservationId))
     .orderBy(asc(chatsTable.time));
   res.json(rows.map((r) => ({ ...r, time: r.time.toISOString() })));
+});
+
+// POST /admin/chat/retranslate/:reservationId — 특정 예약의 모든 비한국어 메시지 재번역
+router.post("/chat/retranslate/:reservationId", requireAuth, async (req, res) => {
+  const reservationId = Number(req.params.reservationId);
+  if (!reservationId) { res.status(400).json({ error: "reservationId 필요" }); return; }
+
+  try {
+    const rows = await db
+      .select()
+      .from(chatsTable)
+      .where(and(eq(chatsTable.reservationId, reservationId), ne(chatsTable.language, "ko")));
+
+    res.json({ queued: rows.length });
+
+    // 비동기로 재번역 (응답 후 백그라운드 처리)
+    (async () => {
+      for (const row of rows) {
+        try {
+          const translatedText = await translateAll(row.message, row.language ?? "ko");
+          await db.update(chatsTable).set({ translatedText }).where(eq(chatsTable.id, row.id));
+          emitToRoom(row.reservationId, "messageTranslated", { ...row, time: row.time.toISOString(), translatedText });
+          console.log(`[재번역] id=${row.id} ok: ko=${translatedText.ko?.slice(0, 20)}`);
+        } catch (e) {
+          console.error(`[재번역] id=${row.id} 실패`, e);
+        }
+        await new Promise((r) => setTimeout(r, 300));
+      }
+      console.log(`[재번역] 예약 ${reservationId} 완료 (${rows.length}개)`);
+    })().catch(() => {});
+  } catch (e) {
+    console.error("[재번역] 오류", e);
+    res.status(500).json({ error: "재번역 실패" });
+  }
 });
 
 router.post("/chat/send", requireAdminOrStaff, async (req, res) => {

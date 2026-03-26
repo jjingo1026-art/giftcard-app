@@ -2,6 +2,7 @@ import { createServer } from "http";
 import app from "./app";
 import { initSocket } from "./socket";
 import { schedulePrivacyCleanup } from "./cleanup";
+import { retranslateBadMessages } from "./retranslate";
 
 const rawPort = process.env["PORT"];
 
@@ -21,4 +22,6 @@ initSocket(httpServer);
 httpServer.listen(port, () => {
   console.log("서버 실행됨");
   schedulePrivacyCleanup();
+  // 오번역 저장된 메시지 자동 재번역 (시작 시 1회)
+  retranslateBadMessages().catch(() => {});
 });

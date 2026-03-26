@@ -112,6 +112,7 @@ export default function AdminChat() {
   const [showDefectConfirm, setShowDefectConfirm] = useState(false);
   const [defectDone, setDefectDone] = useState(false);
   const [defectLoading, setDefectLoading] = useState(false);
+  const [retranslating, setRetranslating] = useState(false);
   const chatBoxRef = useRef<HTMLDivElement>(null);
   const socketRef = useRef<Socket | null>(null);
   const lastSoundRef = useRef<number>(0);
@@ -444,6 +445,25 @@ export default function AdminChat() {
             )}
           </div>
 
+          <button
+            onClick={async () => {
+              if (retranslating) return;
+              setRetranslating(true);
+              try {
+                await fetch(`/api/admin/chat/retranslate/${reservationId}`, {
+                  method: "POST",
+                  headers: { Authorization: `Bearer ${token}` },
+                });
+              } finally {
+                setTimeout(() => setRetranslating(false), 3000);
+              }
+            }}
+            disabled={retranslating}
+            title="이 채팅의 외국어 메시지를 다시 번역합니다"
+            className="text-[11px] text-slate-500 font-medium px-2 py-1.5 rounded-xl hover:bg-slate-100 transition-colors flex-shrink-0 disabled:opacity-40"
+          >
+            {retranslating ? "번역 중…" : "🔄 재번역"}
+          </button>
           <button
             onClick={() => { location.href = `/admin/detail.html?id=${reservationId}`; }}
             className="text-[12px] text-indigo-500 font-semibold px-3 py-1.5 rounded-xl hover:bg-indigo-50 transition-colors flex-shrink-0"
