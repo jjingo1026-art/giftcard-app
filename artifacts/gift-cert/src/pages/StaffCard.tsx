@@ -629,6 +629,8 @@ export default function StaffCard() {
                 const imgUrl = isImg ? m.message.slice(5, -1) : "";
                 const displayText = isImg ? "" : getTranslated(m, "ko");
                 const isTranslated = !isImg && !!m.translatedText && (m.language ?? "ko") !== "ko" && displayText !== m.message;
+                const isPendingTranslation = !isImg && !isMine && !!(m.language && m.language !== "ko") &&
+                  (!m.translatedText || Object.keys(m.translatedText).length <= 1);
                 return (
                   <div key={m.id} className={`flex flex-col ${isMine ? "items-end" : "items-start"}`}>
                     <div className={`max-w-[75%] rounded-2xl text-[14px] shadow-sm overflow-hidden ${
@@ -672,10 +674,17 @@ export default function StaffCard() {
                           </div>
                         </div>
                       ) : (
-                        <p className="whitespace-pre-wrap">{displayText}</p>
-                      )}
-                      {isTranslated && (
-                        <p className={`text-[10px] mt-0.5 ${isMine ? "text-indigo-200" : "text-slate-400"} italic`}>🌐 번역됨</p>
+                        <>
+                          <p className="whitespace-pre-wrap">{displayText}</p>
+                          {isTranslated && (
+                            <p className={`text-[10px] mt-1 opacity-60 border-t pt-1 ${isMine ? "border-indigo-400" : "border-slate-200"}`}>
+                              원문: {m.message}
+                            </p>
+                          )}
+                          {isPendingTranslation && (
+                            <p className="text-[10px] mt-1 text-slate-400 italic">번역 중…</p>
+                          )}
+                        </>
                       )}
                       {!isImg && (
                         <p className={`text-[10px] mt-0.5 ${isMine ? "text-indigo-200" : "text-slate-400"}`}>
