@@ -72,7 +72,7 @@ export default function AdminLogin() {
           <p className="text-slate-400 text-[13px] mt-1">어드민 대시보드 접근</p>
         </div>
 
-        <form onSubmit={handleSubmit} className="bg-white/10 backdrop-blur-md rounded-3xl p-6 space-y-3 border border-white/10">
+        <form onSubmit={handleSubmit} autoComplete="off" className="bg-white/10 backdrop-blur-md rounded-3xl p-6 space-y-3 border border-white/10">
           {/* ID field */}
           <div>
             <label className="block text-[12px] font-semibold text-slate-300 uppercase tracking-wide mb-1.5">
@@ -84,7 +84,7 @@ export default function AdminLogin() {
               onChange={(e) => { setId(e.target.value); setError(""); }}
               placeholder="아이디 입력"
               autoFocus
-              autoComplete="username"
+              autoComplete="off"
               className={inputCls(!!error)}
             />
           </div>
@@ -100,7 +100,7 @@ export default function AdminLogin() {
                 value={pw}
                 onChange={(e) => { setPw(e.target.value); setError(""); }}
                 placeholder="비밀번호 입력"
-                autoComplete="current-password"
+                autoComplete="new-password"
                 className={`${inputCls(!!error)} pr-12`}
               />
               <button

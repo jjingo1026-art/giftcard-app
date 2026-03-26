@@ -225,6 +225,10 @@ export default function StaffCard() {
       scrollToBottom();
     });
 
+    socket.on("messageTranslated", (updated: Message) => {
+      setChatMessages((prev) => prev.map((m) => m.id === updated.id ? { ...m, translatedText: updated.translatedText } : m));
+    });
+
     socket.on("messagesRead", ({ readerRole }: { readerRole: string }) => {
       if (readerRole !== "staff") {
         setChatMessages((prev) => prev.map((m) => m.sender === "staff" ? { ...m, read: true } : m));
