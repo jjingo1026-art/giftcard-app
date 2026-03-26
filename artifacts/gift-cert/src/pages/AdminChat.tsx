@@ -114,8 +114,9 @@ export default function AdminChat() {
   const [defectLoading, setDefectLoading] = useState(false);
   const chatBoxRef = useRef<HTMLDivElement>(null);
   const socketRef = useRef<Socket | null>(null);
-  const lastSoundRef = useRef<number>(0); // 중복 알림음 방지
+  const lastSoundRef = useRef<number>(0);
   const flashTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const hasConnectedRef = useRef(false);
 
   const copyText = useCallback((text: string) => {
     navigator.clipboard.writeText(text).then(() => {
@@ -177,6 +178,24 @@ export default function AdminChat() {
     socket.on("connect", () => {
       socket.emit("joinRoom", Number(reservationId));
       socket.emit("markRead", { reservationId: Number(reservationId), readerRole: "admin" });
+      // 재연결(reconnect) 시 누락된 번역을 DB에서 복구
+      if (hasConnectedRef.current) {
+        fetch(`/api/admin/chat/${reservationId}`)
+          .then((r) => r.json())
+          .then((data: Message[]) => {
+            setMessages((prev) =>
+              prev.map((p) => {
+                const fresh = data.find((d) => d.id === p.id);
+                if (fresh?.translatedText && Object.keys(fresh.translatedText).length > Object.keys(p.translatedText ?? {}).length) {
+                  return { ...p, translatedText: fresh.translatedText };
+                }
+                return p;
+              })
+            );
+          })
+          .catch(() => {});
+      }
+      hasConnectedRef.current = true;
     });
 
     // 관리자 알림음 + 시각적 플래시 (중복 방지 500ms 디바운스)

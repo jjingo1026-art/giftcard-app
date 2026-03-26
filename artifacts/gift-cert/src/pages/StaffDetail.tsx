@@ -24,6 +24,7 @@ export default function StaffDetail() {
   const userLang = "ko";
   const chatBoxRef = useRef<HTMLDivElement>(null);
   const socketRef = useRef<Socket | null>(null);
+  const hasConnectedRef = useRef(false);
 
   const { inputRef: imgInputRef, openPicker, onChange: onImgChange, isUploading: imgUploading } =
     useImageUpload(({ serveUrl }) => {
@@ -57,6 +58,24 @@ export default function StaffDetail() {
     socket.on("connect", () => {
       socket.emit("joinRoom", Number(reservationId));
       socket.emit("markRead", { reservationId: Number(reservationId), readerRole: "staff" });
+      // 재연결(reconnect) 시 누락된 번역을 DB에서 복구
+      if (hasConnectedRef.current) {
+        fetch(`/api/admin/chat/${reservationId}`)
+          .then((r) => r.json())
+          .then((data: Message[]) => {
+            setChatMessages((prev) =>
+              prev.map((p) => {
+                const fresh = data.find((d) => d.id === p.id);
+                if (fresh?.translatedText && Object.keys(fresh.translatedText).length > Object.keys(p.translatedText ?? {}).length) {
+                  return { ...p, translatedText: fresh.translatedText };
+                }
+                return p;
+              })
+            );
+          })
+          .catch(() => {});
+      }
+      hasConnectedRef.current = true;
     });
 
     socket.on("newMessage", (newMsg: Message) => {
