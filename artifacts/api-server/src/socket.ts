@@ -31,6 +31,7 @@ export function initSocket(httpServer: HttpServer) {
 
     socket.on("joinRoom", (reservationId: number) => {
       socket.join("room_" + reservationId);
+      console.log(`[joinRoom] socket=${socket.id} → room_${reservationId}`);
     });
 
     socket.on("sendMessage", async (data: { reservationId: number; sender: string; senderName?: string; message: string; language?: string }) => {
@@ -80,12 +81,15 @@ export function initSocket(httpServer: HttpServer) {
         translateToKo(trimmed, language).then(async (koText) => {
           console.log(`[번역] id=${inserted.id} ko번역 완료: ${koText.slice(0, 30)}`);
           const partial: Record<string, string> = { [language]: trimmed, ko: koText };
+          const room1 = await io.in("room_" + reservationId).fetchSockets();
+          console.log(`[번역] id=${inserted.id} Phase1 emit → room_${reservationId} (멤버: ${room1.length}개)`);
           io.to("room_" + reservationId).emit("messageTranslated", { ...msg, translatedText: partial });
           // 전체 언어 번역 (ko는 재사용)
           return translateAll(trimmed, language, koText);
         }).then(async (translatedText) => {
-          console.log(`[번역] id=${inserted.id} 전체번역 완료, room_${reservationId} emit`);
           await db.update(chatsTable).set({ translatedText }).where(eq(chatsTable.id, inserted.id));
+          const room2 = await io.in("room_" + reservationId).fetchSockets();
+          console.log(`[번역] id=${inserted.id} Phase2 emit → room_${reservationId} (멤버: ${room2.length}개)`);
           io.to("room_" + reservationId).emit("messageTranslated", { ...msg, translatedText });
         }).catch((e) => { console.error(`[번역 오류] id=${inserted.id}`, e); });
       } else {
