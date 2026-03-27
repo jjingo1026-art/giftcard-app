@@ -2246,6 +2246,8 @@ export default function MobileSelect() {
               type="text"
               value={name}
               autoComplete="new-password"
+              lang="ko"
+              spellCheck={false}
               onChange={(e) => setName(e.target.value)}
               placeholder="홍길동"
               className={`w-full border rounded-2xl px-4 py-3.5 text-[15px] focus:outline-none focus:ring-2 focus:ring-pink-300 ${errors.name ? "border-rose-300" : "border-slate-200"}`}
@@ -2304,6 +2306,8 @@ export default function MobileSelect() {
               type="text"
               value={accountHolder}
               autoComplete="new-password"
+              lang="ko"
+              spellCheck={false}
               onChange={(e) => setAccountHolder(e.target.value)}
               placeholder="홍길동"
               className={`w-full border rounded-2xl px-4 py-3.5 text-[15px] focus:outline-none focus:ring-2 focus:ring-pink-300 ${errors.accountHolder ? "border-rose-300" : "border-slate-200"}`}

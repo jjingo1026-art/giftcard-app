@@ -635,7 +635,7 @@ function HomePage({ onGoUrgent, initialType = DEFAULT_TYPE, onTypeChange, rateGr
             <input type="text" name="fake_id_absorb" style={{display:"none"}} autoComplete="username" readOnly tabIndex={-1} aria-hidden="true" />
             <input type="password" name="fake_pw_absorb" style={{display:"none"}} autoComplete="current-password" readOnly tabIndex={-1} aria-hidden="true" />
             <Field label="이름" required error={fieldErrors.name}>
-              <input type="text" value={name} autoComplete="new-password"
+              <input type="text" value={name} autoComplete="new-password" lang="ko" spellCheck={false}
                 onCompositionStart={() => { nameComposing.current = true; }}
                 onCompositionEnd={(e) => { nameComposing.current = false; setName(e.currentTarget.value.replace(/[^가-힣a-zA-Z\s]/g, "")); setFieldErrors((p) => ({ ...p, name: "" })); }}
                 onChange={(e) => { const v = nameComposing.current ? e.target.value : e.target.value.replace(/[^가-힣a-zA-Z\s]/g, ""); setName(v); setFieldErrors((p) => ({ ...p, name: "" })); }}
@@ -762,6 +762,8 @@ function HomePage({ onGoUrgent, initialType = DEFAULT_TYPE, onTypeChange, rateGr
                     type="text"
                     value={accountHolder}
                     autoComplete="new-password"
+                    lang="ko"
+                    spellCheck={false}
                     onChange={(e) => { setAccountHolder(e.target.value); setFieldErrors((p) => ({ ...p, accountHolder: "" })); }}
                     placeholder="예금주"
                     className={`w-full px-3 py-2.5 rounded-xl border text-[14px] text-slate-800 outline-none transition-all bg-white placeholder:text-slate-300
@@ -1242,7 +1244,7 @@ function UrgentPage({ onBack, initialType = DEFAULT_TYPE }: { onBack: () => void
             <input type="text" name="fake_id_absorb2" style={{display:"none"}} autoComplete="username" readOnly tabIndex={-1} aria-hidden="true" />
             <input type="password" name="fake_pw_absorb2" style={{display:"none"}} autoComplete="current-password" readOnly tabIndex={-1} aria-hidden="true" />
             <Field label="성명" required error={fieldErrors.name}>
-              <input type="text" value={name} autoComplete="new-password"
+              <input type="text" value={name} autoComplete="new-password" lang="ko" spellCheck={false}
                 onCompositionStart={() => { nameComposing.current = true; }}
                 onCompositionEnd={(e) => { nameComposing.current = false; setName(e.currentTarget.value.replace(/[^가-힣a-zA-Z\s]/g, "")); setFieldErrors((p) => ({ ...p, name: "" })); }}
                 onChange={(e) => { const v = nameComposing.current ? e.target.value : e.target.value.replace(/[^가-힣a-zA-Z\s]/g, ""); setName(v); setFieldErrors((p) => ({ ...p, name: "" })); }}
@@ -1302,6 +1304,8 @@ function UrgentPage({ onBack, initialType = DEFAULT_TYPE }: { onBack: () => void
                     type="text"
                     value={accountHolder}
                     autoComplete="new-password"
+                    lang="ko"
+                    spellCheck={false}
                     onChange={(e) => { setAccountHolder(e.target.value); setFieldErrors((p) => ({ ...p, accountHolder: "" })); }}
                     placeholder="예금주"
                     className={`w-full px-3 py-2.5 rounded-xl border text-[14px] text-slate-800 outline-none transition-all bg-white placeholder:text-slate-300
