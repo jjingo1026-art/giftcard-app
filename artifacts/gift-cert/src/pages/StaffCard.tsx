@@ -103,6 +103,7 @@ interface Reservation {
 
 interface Message {
   id: number;
+  reservationId?: number;
   sender: string;
   senderName: string;
   message: string;
@@ -110,6 +111,7 @@ interface Message {
   read: boolean;
   language?: string;
   translatedText?: Record<string, string> | null;
+  isInternal?: boolean;
 }
 
 const STATUS_LABEL: Record<string, { text: string; cls: string }> = {
@@ -229,6 +231,21 @@ export default function StaffCard() {
       setChatMessages((prev) => prev.map((m) => m.id === updated.id ? { ...m, translatedText: updated.translatedText } : m));
     });
 
+    // 내부 메시지 (입금요청 등) — 같은 예약 건만 표시
+    socket.on("internalMessage", (newMsg: Message) => {
+      if (newMsg.reservationId !== Number(id)) return;
+      setChatMessages((prev) => {
+        if (prev.some((m) => m.id === newMsg.id)) return prev;
+        return [...prev, newMsg];
+      });
+      scrollToBottom();
+    });
+
+    socket.on("internalMessageTranslated", (updated: Message) => {
+      if (updated.reservationId !== Number(id)) return;
+      setChatMessages((prev) => prev.map((m) => m.id === updated.id ? { ...m, translatedText: updated.translatedText } : m));
+    });
+
     socket.on("messagesRead", ({ readerRole }: { readerRole: string }) => {
       if (readerRole !== "staff") {
         setChatMessages((prev) => prev.map((m) => m.sender === "staff" ? { ...m, read: true } : m));
@@ -254,17 +271,18 @@ export default function StaffCard() {
     }, 50);
   }
 
-  function sendChatViaSocket(message: string) {
+  function sendChatViaSocket(message: string, isInternal = false) {
     socketRef.current?.emit("sendMessage", {
       reservationId: Number(id),
       sender: "staff",
       senderName: staffName,
       message,
+      isInternal,
     });
   }
 
-  async function sendChatMessage(message: string) {
-    sendChatViaSocket(message);
+  async function sendChatMessage(message: string, isInternal = false) {
+    sendChatViaSocket(message, isInternal);
   }
 
   async function savePhrasesToServer(list: string[]) {
@@ -348,7 +366,8 @@ export default function StaffCard() {
         `━━━━━━━━━━━━━━━━━━\n` +
         `💵 입금 금액: ${amount}원\n` +
         `━━━━━━━━━━━━━━━━━━\n` +
-        `판매자 계좌로 위 금액을 입금해 주세요.`
+        `판매자 계좌로 위 금액을 입금해 주세요.`,
+        true  // isInternal — 관리자·담당자에게만 표시
       );
       setPaymentSent(true);
       setTimeout(() => setPaymentSent(false), 3000);
@@ -647,6 +666,9 @@ export default function StaffCard() {
                     }`}>
                       {!isMine && !isImg && (
                         <p className="text-[10px] font-bold mb-0.5 opacity-60">{m.senderName}</p>
+                      )}
+                      {m.isInternal && !isImg && (
+                        <p className="text-[9px] font-bold text-amber-600 bg-amber-50 rounded px-1 py-0.5 mb-1 inline-block">🔒 내부 메시지</p>
                       )}
                       {isImg ? (
                         <div className="flex items-center gap-2 bg-slate-50 border border-slate-200 rounded-2xl px-2.5 py-2 shadow-sm">

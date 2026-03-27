@@ -81,6 +81,7 @@ async function downloadImage(url: string) {
 
 interface Message {
   id: number;
+  reservationId?: number;
   sender: string;
   senderName: string;
   message: string;
@@ -88,6 +89,7 @@ interface Message {
   translatedText?: Record<string, string> | null;
   time: string;
   read: boolean;
+  isInternal?: boolean;
 }
 
 function getReservationId() {
@@ -257,6 +259,23 @@ export default function AdminChat() {
 
     // 번역 완료 시 해당 메시지 translatedText 업데이트
     socket.on("messageTranslated", (updated: Message) => {
+      setMessages((prev) =>
+        prev.map((m) => m.id === updated.id ? { ...m, translatedText: updated.translatedText } : m)
+      );
+    });
+
+    // 내부 메시지 (입금요청 등) — 관리자·담당자에게만 표시
+    socket.on("internalMessage", (newMsg: Message) => {
+      if (newMsg.reservationId !== Number(reservationId)) return;
+      setMessages((prev) => {
+        if (prev.some((m) => m.id === newMsg.id)) return prev;
+        scrollToBottom();
+        return [...prev, newMsg];
+      });
+    });
+
+    socket.on("internalMessageTranslated", (updated: Message) => {
+      if (updated.reservationId !== Number(reservationId)) return;
       setMessages((prev) =>
         prev.map((m) => m.id === updated.id ? { ...m, translatedText: updated.translatedText } : m)
       );
@@ -556,6 +575,9 @@ export default function AdminChat() {
                 }`}>
                   {!isMine && !isImg && (
                     <p className={`text-[10px] font-bold mb-0.5 ${isSystem ? "text-blue-500" : "opacity-60"}`}>{m.senderName}</p>
+                  )}
+                  {m.isInternal && !isImg && (
+                    <p className="text-[9px] font-bold text-amber-600 bg-amber-50 rounded px-1 py-0.5 mb-1 inline-block">🔒 내부 메시지</p>
                   )}
                   {isImg ? (
                     <div className="flex items-center gap-2 bg-slate-50 border border-slate-200 rounded-2xl px-2.5 py-2 shadow-sm">

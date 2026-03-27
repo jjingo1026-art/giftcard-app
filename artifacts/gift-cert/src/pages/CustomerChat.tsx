@@ -83,6 +83,7 @@ interface Message {
   translatedText?: Record<string, string> | null;
   time: string;
   read: boolean;
+  isInternal?: boolean;
 }
 
 function getReservationId() {
@@ -136,7 +137,7 @@ export default function CustomerChat() {
 
     fetch(`/api/admin/chat/${reservationId}`)
       .then((r) => r.json())
-      .then((data) => { setChatMessages(data); scrollToBottom(); })
+      .then((data: Message[]) => { setChatMessages(data.filter((m) => !m.isInternal)); scrollToBottom(); })
       .catch(() => {});
 
     const socket = io({ path: "/api/socket.io", transports: ["websocket"] });

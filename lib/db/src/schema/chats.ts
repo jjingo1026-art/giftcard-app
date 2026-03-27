@@ -10,6 +10,7 @@ export const chatsTable = pgTable("chats", {
   translatedText: jsonb("translated_text").$type<Record<string, string>>(),
   time: timestamp("time").notNull().defaultNow(),
   read: boolean("read").notNull().default(false),
+  isInternal: boolean("is_internal").notNull().default(false),
 });
 
 export type Chat = typeof chatsTable.$inferSelect;
