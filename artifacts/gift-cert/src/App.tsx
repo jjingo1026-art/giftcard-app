@@ -1440,6 +1440,18 @@ function UrgentPage({ onBack, initialType = DEFAULT_TYPE }: { onBack: () => void
               <span className="text-[12px] text-slate-400">최신순</span>
             </div>
             {submissions.map((s) => <SubmissionCard key={s.id} entry={s} />)}
+            {/* 접수 완료 후 예약확인 바로가기 */}
+            <a
+              href="/check.html"
+              className="flex items-center justify-center gap-2.5 w-full py-4 rounded-2xl text-white text-[15px] font-bold shadow-md active:scale-[0.98] transition-all"
+              style={{ background: "linear-gradient(135deg,#f43f5e,#be123c)" }}
+            >
+              <span className="text-[18px]">🔍</span>
+              예약 확인 바로가기
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M9 18l6-6-6-6"/>
+              </svg>
+            </a>
           </div>
         )}
       </div>
