@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from "react";
 import { useLocation, useParams } from "wouter";
 import { io, Socket } from "socket.io-client";
-import { getAdminToken, clearAdminToken, adminFetch } from "./AdminLogin";
+import { getAdminToken, clearAdminToken, adminFetch } from "@/lib/adminAuth";
 import { formatPhone, formatDateKo } from "@/lib/store";
 
 interface ChatMessage {

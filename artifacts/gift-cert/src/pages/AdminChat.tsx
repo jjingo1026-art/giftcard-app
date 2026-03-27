@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import { useLocation } from "wouter";
 import { io, Socket } from "socket.io-client";
-import { getAdminToken } from "./AdminLogin";
+import { getAdminToken } from "@/lib/adminAuth";
 import { useImageUpload } from "@/hooks/useImageUpload";
 import { getTranslated } from "@/lib/languages";
 import { getSoundEnabled, playNotificationSound } from "@/lib/notificationSound";

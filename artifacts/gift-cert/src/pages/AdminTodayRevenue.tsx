@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { getAdminToken, clearAdminToken, adminFetch } from "./AdminLogin";
+import { getAdminToken, clearAdminToken, adminFetch } from "@/lib/adminAuth";
 
 interface ReservationItem {
   type: string;

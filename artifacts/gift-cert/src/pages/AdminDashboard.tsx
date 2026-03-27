@@ -6,7 +6,7 @@ import interactionPlugin from "@fullcalendar/interaction";
 import { io } from "socket.io-client";
 import { getSoundEnabled, playNotificationSound } from "@/lib/notificationSound";
 import SoundBell from "@/components/SoundBell";
-import { getAdminToken, clearAdminToken, adminFetch } from "./AdminLogin";
+import { getAdminToken, clearAdminToken, adminFetch } from "@/lib/adminAuth";
 import { formatDateKo } from "@/lib/store";
 
 interface Reservation {

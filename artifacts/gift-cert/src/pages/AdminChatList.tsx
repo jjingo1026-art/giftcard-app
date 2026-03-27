@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useLocation } from "wouter";
-import { getAdminToken, adminFetch } from "./AdminLogin";
+import { getAdminToken, adminFetch } from "@/lib/adminAuth";
 
 interface ChatListItem {
   reservationId: number;

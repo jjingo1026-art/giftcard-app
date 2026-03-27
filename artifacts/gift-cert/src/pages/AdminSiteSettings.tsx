@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useLocation } from "wouter";
-import { adminFetch } from "./AdminLogin";
+import { adminFetch } from "@/lib/adminAuth";
 
 const API = import.meta.env.BASE_URL.replace(/\/$/, "");
 

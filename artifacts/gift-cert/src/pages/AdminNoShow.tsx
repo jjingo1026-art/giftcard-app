@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from "react";
-import { adminFetch, clearAdminToken } from "./AdminLogin";
+import { adminFetch, clearAdminToken } from "@/lib/adminAuth";
 
 interface NoShowUser {
   id: string;

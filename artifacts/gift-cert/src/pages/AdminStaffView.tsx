@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useLocation } from "wouter";
-import { getAdminToken, adminFetch } from "./AdminLogin";
+import { getAdminToken, adminFetch } from "@/lib/adminAuth";
 import { formatDateKo } from "@/lib/store";
 import { LEVEL1, LEVEL2, getLevel3Options, parseLocations, serializeLocations } from "@/lib/locationData";
 

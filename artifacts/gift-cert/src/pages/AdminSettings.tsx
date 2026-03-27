@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { getAdminToken, clearAdminToken, adminFetch } from "./AdminLogin";
+import { getAdminToken, clearAdminToken, adminFetch } from "@/lib/adminAuth";
 
 function formatKo(date: Date) {
   return `${date.getFullYear()}년 ${date.getMonth() + 1}월 ${date.getDate()}일`;

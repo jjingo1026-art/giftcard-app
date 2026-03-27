@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { getAdminToken, clearAdminToken, adminFetch } from "./AdminLogin";
+import { getAdminToken, clearAdminToken, adminFetch } from "@/lib/adminAuth";
 import { useLocation } from "wouter";
 import { formatPhone } from "@/lib/store";
 

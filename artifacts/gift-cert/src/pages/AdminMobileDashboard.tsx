@@ -3,7 +3,7 @@ import { useLocation } from "wouter";
 import { io } from "socket.io-client";
 import { getSoundEnabled, playNotificationSound } from "@/lib/notificationSound";
 import SoundBell from "@/components/SoundBell";
-import { getAdminToken, clearAdminToken, adminFetch } from "./AdminLogin";
+import { getAdminToken, clearAdminToken, adminFetch } from "@/lib/adminAuth";
 
 interface SavedItem { type: string; amount: number; rate: number; payment: number; isGift: boolean; }
 

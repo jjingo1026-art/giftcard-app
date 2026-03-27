@@ -1,20 +1,6 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useLocation } from "wouter";
-export { adminFetch, staffFetch } from "@/lib/authFetch";
-
-const TOKEN_KEY = "gc_admin_token";
-
-export function getAdminToken(): string | null {
-  return sessionStorage.getItem(TOKEN_KEY);
-}
-
-export function setAdminToken(token: string): void {
-  sessionStorage.setItem(TOKEN_KEY, token);
-}
-
-export function clearAdminToken(): void {
-  sessionStorage.removeItem(TOKEN_KEY);
-}
+import { getAdminToken, setAdminToken } from "@/lib/adminAuth";
 
 export default function AdminLogin() {
   const [, navigate] = useLocation();
@@ -23,11 +9,17 @@ export default function AdminLogin() {
   const [show, setShow] = useState(false);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
+  const [checking, setChecking] = useState(true);
 
-  if (getAdminToken()) {
-    navigate("/admin/dashboard");
-    return null;
-  }
+  useEffect(() => {
+    if (getAdminToken()) {
+      navigate("/admin/dashboard");
+    } else {
+      setChecking(false);
+    }
+  }, []);
+
+  if (checking) return null;
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -83,7 +75,6 @@ export default function AdminLogin() {
               value={id}
               onChange={(e) => { setId(e.target.value); setError(""); }}
               placeholder="아이디 입력"
-              autoFocus
               autoComplete="off"
               className={inputCls(!!error)}
             />
