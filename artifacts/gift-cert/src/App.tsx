@@ -165,6 +165,8 @@ function LocationSearchInput({ value, onChange, error, accent = "indigo" }: { va
         value={value}
         onChange={(e) => onChange(e.target.value)}
         placeholder="주소·역·건물명 검색 또는 직접 입력"
+        lang="ko"
+        spellCheck={false}
         className={`${inputCls(error, accent)} flex-1`}
       />
       <button
@@ -397,8 +399,8 @@ function HomePage({ onGoUrgent, initialType = DEFAULT_TYPE, onTypeChange, rateGr
 
   function validate() {
     const fe: typeof fieldErrors = {};
-    if (!name.trim()) fe.name = "이름을 입력해주세요";
-    else if (!/^[가-힣a-zA-Z\s]+$/.test(name.trim())) fe.name = "이름은 한글 또는 영문만 입력 가능합니다";
+    if (!name.trim()) fe.name = "성명을 입력해주세요";
+    else if (!/^[가-힣a-zA-Z\s]+$/.test(name.trim())) fe.name = "성명은 한글 또는 영문만 입력 가능합니다";
     if (!phone.trim()) fe.phone = "연락처를 입력해주세요";
     const now = new Date(new Date().toLocaleString("en-US", { timeZone: "Asia/Seoul" }));
     const cutoff = new Date(now.getTime() + 2 * 60 * 60 * 1000);
@@ -634,7 +636,7 @@ function HomePage({ onGoUrgent, initialType = DEFAULT_TYPE, onTypeChange, rateGr
             {/* 브라우저 자동완성 흡수용 숨김 더미 필드 */}
             <input type="text" name="fake_id_absorb" style={{display:"none"}} autoComplete="username" readOnly tabIndex={-1} aria-hidden="true" />
             <input type="password" name="fake_pw_absorb" style={{display:"none"}} autoComplete="current-password" readOnly tabIndex={-1} aria-hidden="true" />
-            <Field label="이름" required error={fieldErrors.name}>
+            <Field label="성명" required error={fieldErrors.name}>
               <input type="text" value={name} autoComplete="new-password" lang="ko" spellCheck={false}
                 onCompositionStart={() => { nameComposing.current = true; }}
                 onCompositionEnd={(e) => { nameComposing.current = false; setName(e.currentTarget.value.replace(/[^가-힣a-zA-Z\s]/g, "")); setFieldErrors((p) => ({ ...p, name: "" })); }}
@@ -723,6 +725,8 @@ function HomePage({ onGoUrgent, initialType = DEFAULT_TYPE, onTypeChange, rateGr
                 value={locationDetail}
                 onChange={(e) => setLocationDetail(e.target.value)}
                 placeholder="상세위치 (예 롯데백화점 정문, OO아파트 101동)"
+                lang="ko"
+                spellCheck={false}
                 className={`${inputCls(false)} mt-2`}
               />
               <p className="text-[12px] text-amber-600 font-bold mt-1.5 flex items-start gap-1"><span className="mt-0.5 flex-shrink-0">⚠️</span>주정차가 가능한 장소로 입력해 주세요</p>
@@ -1265,6 +1269,8 @@ function UrgentPage({ onBack, initialType = DEFAULT_TYPE }: { onBack: () => void
                 value={locationDetail}
                 onChange={(e) => setLocationDetail(e.target.value)}
                 placeholder="상세위치 (예 롯데백화점 정문, OO아파트 101동)"
+                lang="ko"
+                spellCheck={false}
                 className={`${inputCls(false, "rose")} mt-2`}
               />
               <p className="text-[12px] text-amber-600 font-bold mt-1.5 flex items-start gap-1"><span className="mt-0.5 flex-shrink-0">⚠️</span>주정차 가능한 곳으로 입력 바랍니다</p>

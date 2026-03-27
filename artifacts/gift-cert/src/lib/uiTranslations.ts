@@ -501,7 +501,7 @@ export const KOREAN_LABELS: Record<string, string> = {
   mobile_privacy_agree: "개인정보 수집 및 이용에 동의합니다. (필수)",
   mobile_view_terms: "약관 보기",
   mobile_form_title: "판매신청",
-  mobile_name: "이름",
+  mobile_name: "성명",
   mobile_phone: "전화번호",
   mobile_bank: "은행",
   mobile_account_num: "계좌번호",
