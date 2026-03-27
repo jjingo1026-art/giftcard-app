@@ -241,6 +241,11 @@ router.post("/", async (req, res) => {
       ? new Date(`${body.date} ${body.time}`).getTime() - Date.now() < 60 * 60 * 1000
       : false;
 
+  // 긴급판매는 date 없이 제출되므로, 캘린더 집계를 위해 오늘 날짜(KST)를 자동 설정
+  const urgentDate = body.kind === "urgent" && !body.date
+    ? new Date(Date.now() + 9 * 60 * 60 * 1000).toISOString().slice(0, 10)
+    : body.date;
+
   const [inserted] = await db
     .insert(reservationsTable)
     .values({
@@ -248,7 +253,7 @@ router.post("/", async (req, res) => {
       isUrgent,
       name: body.name,
       phone: normalizedPhone,
-      date: body.date,
+      date: urgentDate,
       time: body.time,
       location: body.location ?? "",
       items: (body.items ?? []) as any,
