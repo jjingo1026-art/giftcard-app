@@ -138,21 +138,23 @@ const inputCls = (err?: boolean, accent = "indigo") =>
 const LOCATION_OPTIONS = ["부천시 원미구", "부천시 소사구", "부천시 오정구", "인천시 부평구", "인천시 계양구"] as const;
 
 function LocationPicker({ value, onChange, error, accent = "indigo" }: { value: string; onChange: (v: string) => void; error?: boolean; accent?: string }) {
-  const activeClass = accent === "rose"
-    ? "bg-rose-500 text-white border-rose-500"
-    : "bg-indigo-500 text-white border-indigo-500";
-  const inactiveClass = accent === "rose"
-    ? "bg-white text-slate-500 border-slate-200 hover:border-rose-300 hover:text-rose-400"
-    : "bg-white text-slate-500 border-slate-200 hover:border-indigo-300 hover:text-indigo-400";
+  const focusRing = accent === "rose"
+    ? "focus:border-rose-400 focus:ring-2 focus:ring-rose-50"
+    : "focus:border-indigo-400 focus:ring-2 focus:ring-indigo-50";
+  const arrowColor = accent === "rose" ? "%23ef4444" : "%236366f1";
   return (
-    <div className="overflow-y-auto flex flex-col gap-2 max-h-48 scrollbar-none">
-      {LOCATION_OPTIONS.map((opt) => (
-        <button key={opt} type="button" onClick={() => onChange(opt)}
-          className={`flex-shrink-0 px-3.5 py-2 rounded-full text-[12px] font-bold border-2 transition-all whitespace-nowrap active:scale-95 text-left ${value === opt ? activeClass : inactiveClass}`}>
-          {opt}
-        </button>
-      ))}
-    </div>
+    <select
+      value={value}
+      onChange={(e) => onChange(e.target.value)}
+      className={`w-full px-3 py-2.5 rounded-xl border text-[14px] outline-none transition-all bg-white appearance-none pr-8
+        ${error ? "border-rose-300" : "border-slate-200"}
+        ${value ? "text-slate-800" : "text-slate-400"}
+        ${focusRing}`}
+      style={{ backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 20 20'%3E%3Cpath fill='${arrowColor}' d='M5 8l5 5 5-5z'/%3E%3C/svg%3E")`, backgroundRepeat: "no-repeat", backgroundPosition: "right 12px center" }}
+    >
+      <option value="">지역 선택</option>
+      {LOCATION_OPTIONS.map((opt) => <option key={opt} value={opt}>{opt}</option>)}
+    </select>
   );
 }
 
