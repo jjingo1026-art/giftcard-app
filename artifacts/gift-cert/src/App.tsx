@@ -134,54 +134,39 @@ const inputCls = (err?: boolean, accent = "indigo") =>
     : accent === "rose" ? "border-slate-200 bg-slate-50 focus:border-rose-400 focus:bg-white focus:ring-2 focus:ring-rose-50"
     : "border-slate-200 bg-slate-50 focus:border-indigo-400 focus:bg-white focus:ring-2 focus:ring-indigo-50"}`;
 
-declare global {
-  interface Window {
-    daum?: { Postcode: new (opts: { q?: string; oncomplete: (d: { address: string; buildingName: string }) => void }) => { open: () => void } };
-  }
-}
 
-function openDaumPostcode(onSelect: (addr: string) => void, initialQuery?: string) {
-  const opts: Record<string, unknown> = {
-    oncomplete(d: { address: string; buildingName: string }) {
-      onSelect(d.address + (d.buildingName ? ` (${d.buildingName})` : ""));
-    },
-  };
-  if (initialQuery) opts.q = initialQuery;
+const LOCATION_OPTIONS = ["부천시 원미구", "부천시 소사구", "부천시 오정구", "인천시 부평구", "인천시 계양구"] as const;
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const run = () => new (window.daum!.Postcode as any)(opts).open();
-  if (window.daum?.Postcode) { run(); return; }
-  const s = document.createElement("script");
-  s.src = "//t1.daumcdn.net/mapjsapi/bundle/postcode/prod/postcode.v2.js";
-  s.onload = run;
-  document.head.appendChild(s);
-}
-
-function LocationSearchInput({ value, onChange, error, accent = "indigo" }: { value: string; onChange: (v: string) => void; error?: boolean; accent?: string }) {
+function LocationPicker({ value, onChange, error, accent = "indigo" }: { value: string; onChange: (v: string) => void; error?: boolean; accent?: string }) {
+  const isRose = accent === "rose";
   return (
-    <div className="relative flex gap-2">
-      <input
-        type="text"
-        value={value}
-        onChange={(e) => onChange(e.target.value)}
-        placeholder="주소·역·건물명 검색 또는 직접 입력"
-        lang="ko"
-        spellCheck={false}
-        className={`${inputCls(error, accent)} flex-1`}
-      />
-      <button
-        type="button"
-        onClick={() => openDaumPostcode(onChange, value.trim() || undefined)}
-        className={`flex-shrink-0 px-3.5 py-3 rounded-2xl text-[13px] font-bold border-2 transition-all active:scale-95 flex items-center gap-1.5
-          ${accent === "rose"
-            ? "border-rose-200 bg-rose-50 text-rose-400 hover:bg-rose-100 hover:border-rose-300"
-            : "border-indigo-200 bg-indigo-50 text-indigo-400 hover:bg-indigo-100 hover:border-indigo-300"}`}
-      >
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-          <circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/>
-        </svg>
-        검색
-      </button>
+    <div className={`rounded-2xl border overflow-hidden ${error ? "border-rose-300" : isRose ? "border-rose-100" : "border-indigo-100"}`}>
+      {LOCATION_OPTIONS.map((opt, i) => {
+        const selected = value === opt;
+        return (
+          <button
+            key={opt}
+            type="button"
+            onClick={() => onChange(opt)}
+            className={`w-full flex items-center justify-between px-4 py-3 text-left text-[14px] font-semibold transition-colors active:scale-[0.98]
+              ${i > 0 ? (isRose ? "border-t border-rose-100" : "border-t border-indigo-50") : ""}
+              ${selected
+                ? isRose
+                  ? "bg-rose-500 text-white"
+                  : "bg-indigo-500 text-white"
+                : "bg-white text-slate-700 hover:bg-slate-50"
+              }`}
+          >
+            <span>{opt}</span>
+            {selected && (
+              <svg width="16" height="16" viewBox="0 0 20 20" fill="none" className="flex-shrink-0">
+                <circle cx="10" cy="10" r="9" fill="white" fillOpacity="0.25"/>
+                <path d="M5.5 10.5l3 3 6-6" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+              </svg>
+            )}
+          </button>
+        );
+      })}
     </div>
   );
 }
@@ -712,7 +697,7 @@ function HomePage({ onGoUrgent, initialType = DEFAULT_TYPE, onTypeChange, rateGr
               </Field>
             </div>
             <Field label="거래 장소" required error={fieldErrors.locationMain}>
-              <LocationSearchInput
+              <LocationPicker
                 value={locationMain}
                 onChange={(v) => { setLocationMain(v); setFieldErrors((p) => ({ ...p, locationMain: "" })); }}
                 error={!!fieldErrors.locationMain}
@@ -1252,7 +1237,7 @@ function UrgentPage({ onBack, initialType = DEFAULT_TYPE }: { onBack: () => void
               <input type="tel" value={phone} autoComplete="new-password" onChange={(e) => { setPhone(formatPhoneInput(e.target.value)); setFieldErrors((p) => ({ ...p, phone: "" })); }} placeholder="010-0000-0000" className={inputCls(!!fieldErrors.phone, "rose")} />
             </Field>
             <Field label="거래 장소" required error={fieldErrors.locationMain}>
-              <LocationSearchInput
+              <LocationPicker
                 value={locationMain}
                 onChange={(v) => { setLocationMain(v); setFieldErrors((p) => ({ ...p, locationMain: "" })); }}
                 error={!!fieldErrors.locationMain}
