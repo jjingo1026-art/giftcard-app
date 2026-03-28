@@ -138,35 +138,20 @@ const inputCls = (err?: boolean, accent = "indigo") =>
 const LOCATION_OPTIONS = ["부천시 원미구", "부천시 소사구", "부천시 오정구", "인천시 부평구", "인천시 계양구"] as const;
 
 function LocationPicker({ value, onChange, error, accent = "indigo" }: { value: string; onChange: (v: string) => void; error?: boolean; accent?: string }) {
-  const isRose = accent === "rose";
+  const activeClass = accent === "rose"
+    ? "bg-rose-500 text-white border-rose-500"
+    : "bg-indigo-500 text-white border-indigo-500";
+  const inactiveClass = accent === "rose"
+    ? "bg-white text-slate-500 border-slate-200 hover:border-rose-300 hover:text-rose-400"
+    : "bg-white text-slate-500 border-slate-200 hover:border-indigo-300 hover:text-indigo-400";
   return (
-    <div className={`rounded-2xl border overflow-hidden ${error ? "border-rose-300" : isRose ? "border-rose-100" : "border-indigo-100"}`}>
-      {LOCATION_OPTIONS.map((opt, i) => {
-        const selected = value === opt;
-        return (
-          <button
-            key={opt}
-            type="button"
-            onClick={() => onChange(opt)}
-            className={`w-full flex items-center justify-between px-4 py-3 text-left text-[14px] font-semibold transition-colors active:scale-[0.98]
-              ${i > 0 ? (isRose ? "border-t border-rose-100" : "border-t border-indigo-50") : ""}
-              ${selected
-                ? isRose
-                  ? "bg-rose-500 text-white"
-                  : "bg-indigo-500 text-white"
-                : "bg-white text-slate-700 hover:bg-slate-50"
-              }`}
-          >
-            <span>{opt}</span>
-            {selected && (
-              <svg width="16" height="16" viewBox="0 0 20 20" fill="none" className="flex-shrink-0">
-                <circle cx="10" cy="10" r="9" fill="white" fillOpacity="0.25"/>
-                <path d="M5.5 10.5l3 3 6-6" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-              </svg>
-            )}
-          </button>
-        );
-      })}
+    <div className={`overflow-x-auto flex gap-2 pb-1 scrollbar-none -mx-3 px-3 ${error ? "outline outline-1 outline-rose-300 rounded-2xl" : ""}`}>
+      {LOCATION_OPTIONS.map((opt) => (
+        <button key={opt} type="button" onClick={() => onChange(opt)}
+          className={`flex-shrink-0 px-3.5 py-2 rounded-full text-[12px] font-bold border-2 transition-all whitespace-nowrap active:scale-95 ${value === opt ? activeClass : inactiveClass}`}>
+          {opt}
+        </button>
+      ))}
     </div>
   );
 }
