@@ -145,10 +145,10 @@ function LocationPicker({ value, onChange, error, accent = "indigo" }: { value: 
     ? "bg-white text-slate-500 border-slate-200 hover:border-rose-300 hover:text-rose-400"
     : "bg-white text-slate-500 border-slate-200 hover:border-indigo-300 hover:text-indigo-400";
   return (
-    <div className={`overflow-x-auto flex gap-2 pb-1 scrollbar-none -mx-3 px-3 ${error ? "outline outline-1 outline-rose-300 rounded-2xl" : ""}`}>
+    <div className="overflow-y-auto flex flex-col gap-2 max-h-48 scrollbar-none">
       {LOCATION_OPTIONS.map((opt) => (
         <button key={opt} type="button" onClick={() => onChange(opt)}
-          className={`flex-shrink-0 px-3.5 py-2 rounded-full text-[12px] font-bold border-2 transition-all whitespace-nowrap active:scale-95 ${value === opt ? activeClass : inactiveClass}`}>
+          className={`flex-shrink-0 px-3.5 py-2 rounded-full text-[12px] font-bold border-2 transition-all whitespace-nowrap active:scale-95 text-left ${value === opt ? activeClass : inactiveClass}`}>
           {opt}
         </button>
       ))}
