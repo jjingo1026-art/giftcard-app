@@ -33,6 +33,7 @@ const RATE_GROUPS = [
   { label: "지류문화상품권",       display: "지류문화 상품권", rate: 90, color: "#c084fc", sub: "컬쳐·북앤라이프·문화" },
   { label: "온누리상품권",         display: "온누리상품권",   rate: 90, color: "#f59e0b" },
   { label: "주유권",               display: "주유권",         rate: 95, color: "#6366f1", sub: "SK·GS·현대·S-OIL" },
+  { label: "스타벅스e카드교환권",  display: "스타벅스",       rate: 90, color: "#00704A", sub: "e카드 교환권" },
 ];
 
 
@@ -534,11 +535,11 @@ function HomePage({ onGoUrgent, initialType = DEFAULT_TYPE, onTypeChange, rateGr
                     key={g.label}
                     onClick={() => { window.location.href = `/terms.html?type=${encodeURIComponent(g.label)}`; }}
                     className="flex flex-col items-center justify-center px-2 rounded-2xl cursor-pointer active:scale-[0.97] transition-all text-center"
-                    style={{ backgroundColor: g.color + "12", height: "116px" }}
+                    style={{ backgroundColor: g.color + "12", height: "90px" }}
                   >
-                    <span className="text-[12px] font-semibold text-slate-600 leading-snug text-center">{g.display}</span>
-                    <span className="text-[22px] font-black tabular-nums leading-none mt-1.5" style={{ color: g.color }}>{g.rate}%</span>
-                    <span className="text-[10px] text-slate-400 leading-tight mt-1.5 min-h-[13px]">{g.sub ?? ""}</span>
+                    <span className="text-[11px] font-semibold text-slate-600 leading-snug text-center">{g.display}</span>
+                    <span className="text-[19px] font-black tabular-nums leading-none mt-1" style={{ color: g.color }}>{g.rate}%</span>
+                    <span className="text-[9px] text-slate-400 leading-tight mt-1 min-h-[11px]">{g.sub ?? ""}</span>
                   </div>
                 ))}
               </div>

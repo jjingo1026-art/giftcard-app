@@ -16,6 +16,7 @@ const MOBILE_TYPES = [
   { label: "북앤라이프 교환권", icon: "📖", color: "#8b5cf6", rate: 90 },
   { label: "문화상품권(18핀)", icon: "🎫", color: "#ec4899", rate: 90 },
   { label: "구글 카카오톡 교환권", icon: "🎮", color: "#4ade80", rate: 90 },
+  { label: "스타벅스 e카드 교환권", icon: "☕", color: "#00704A", rate: 90 },
 ];
 
 const BANKS = [
@@ -769,6 +770,128 @@ function CultureAutoExtract({
   );
 }
 
+function StarbucksSection({
+  numbers,
+  onChange,
+  onAdd,
+  onRemove,
+  images,
+  onAddImage,
+  onRemoveImage,
+}: {
+  numbers: string[];
+  onChange: (idx: number, val: string) => void;
+  onAdd: () => void;
+  onRemove: (idx: number) => void;
+  images: CultureImage[];
+  onAddImage: (file: File) => void;
+  onRemoveImage: (id: string) => void;
+}) {
+  const fileRef = useRef<HTMLInputElement>(null);
+  return (
+    <div className="rounded-2xl border-2 border-emerald-200 bg-emerald-50 p-4 space-y-3">
+      <div className="flex items-center gap-2">
+        <span className="text-[16px]">☕</span>
+        <p className="text-[13px] font-bold text-emerald-700">교환권번호 입력</p>
+        <span className="text-[11px] bg-emerald-100 text-emerald-600 font-bold px-2 py-0.5 rounded-full">스타벅스 e카드</span>
+      </div>
+
+      {/* 교환권번호 직접 입력 */}
+      <div className="space-y-2">
+        <p className="text-[11px] font-bold text-emerald-600 flex items-center gap-1">✏️ 교환권번호 직접 입력</p>
+        {numbers.map((num, idx) => (
+          <div key={idx} className="flex items-center gap-2">
+            <input
+              type="text"
+              inputMode="numeric"
+              value={num}
+              onChange={(e) => onChange(idx, e.target.value.replace(/[^0-9]/g, "").slice(0, 20))}
+              placeholder={`교환권번호 ${idx + 1}`}
+              className="flex-1 px-4 py-3 rounded-xl border-2 border-emerald-200 bg-white text-[14px] font-mono tracking-wider outline-none focus:border-emerald-400 focus:ring-2 focus:ring-emerald-100 transition-all placeholder:text-slate-300"
+            />
+            {idx === 0 ? (
+              <button type="button" onClick={onAdd} className="w-9 h-9 flex-shrink-0 rounded-xl bg-emerald-100 text-emerald-600 flex items-center justify-center hover:bg-emerald-200 active:scale-95 transition-all">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><path d="M12 5v14M5 12h14"/></svg>
+              </button>
+            ) : (
+              <button type="button" onClick={() => onRemove(idx)} className="w-9 h-9 flex-shrink-0 rounded-xl bg-emerald-100 text-emerald-600 flex items-center justify-center hover:bg-emerald-200 active:scale-95 transition-all">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><path d="M5 12h14"/></svg>
+              </button>
+            )}
+          </div>
+        ))}
+        {numbers.some((n) => n.trim()) && (
+          <div className="px-1 pt-0.5 space-y-0.5">
+            {numbers.filter((n) => n.trim()).map((n, i) => (
+              <p key={i} className="text-[11px] text-emerald-700 font-semibold font-mono">{n}</p>
+            ))}
+          </div>
+        )}
+      </div>
+
+      {/* 바코드 이미지로 번호 자동 추출 */}
+      <div className="space-y-2 border-t border-emerald-100 pt-3">
+        <p className="text-[11px] font-bold text-emerald-600 flex items-center gap-1">📊 바코드 이미지로 번호 추출</p>
+        <button
+          type="button"
+          onClick={() => fileRef.current?.click()}
+          className="w-full flex items-center justify-center gap-2 py-2.5 rounded-xl border-2 border-dashed border-emerald-300 bg-white text-emerald-600 hover:bg-emerald-50 active:scale-95 transition-all text-[13px] font-bold"
+        >
+          <span className="text-[18px]">📊</span> 바코드 이미지 선택
+        </button>
+        <input
+          ref={fileRef}
+          type="file"
+          accept="image/*"
+          className="hidden"
+          onChange={(e) => { const f = e.target.files?.[0]; if (f) onAddImage(f); e.target.value = ""; }}
+        />
+      </div>
+
+      {/* 추출된 이미지/번호 목록 */}
+      {images.length > 0 && (
+        <div className="space-y-2 border-t border-emerald-100 pt-3">
+          {images.map((img) => (
+            <div key={img.id} className="flex gap-3 p-3 bg-white rounded-xl border border-emerald-100">
+              <img src={img.preview} alt="교환권 이미지" className="w-14 h-14 object-cover rounded-lg flex-shrink-0 border border-emerald-100" />
+              <div className="flex-1 min-w-0">
+                {img.uploading ? (
+                  <div className="flex items-center gap-2 h-full">
+                    <div className="w-4 h-4 border-2 border-emerald-400 border-t-transparent rounded-full animate-spin" />
+                    <span className="text-[12px] text-emerald-500 font-medium">번호 추출 중...</span>
+                  </div>
+                ) : img.error ? (
+                  <p className="text-[12px] text-red-500 font-medium">추출 실패. 다시 시도해 주세요.</p>
+                ) : img.numbers.length > 0 ? (
+                  <div className="space-y-1">
+                    <p className="text-[11px] font-bold text-emerald-500">추출된 번호</p>
+                    {img.numbers.map((n, i) => (
+                      <p key={i} className="text-[13px] font-mono font-bold text-emerald-800 bg-emerald-50 px-2 py-1 rounded-lg break-all">{n}</p>
+                    ))}
+                  </div>
+                ) : (
+                  <p className="text-[12px] text-slate-400 font-medium">번호를 찾지 못했습니다.</p>
+                )}
+              </div>
+              <button
+                type="button"
+                onClick={() => onRemoveImage(img.id)}
+                className="flex-shrink-0 w-7 h-7 rounded-full bg-slate-100 flex items-center justify-center text-slate-400 hover:bg-red-100 hover:text-red-500 transition-colors"
+              >
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><path d="M18 6L6 18M6 6l12 12"/></svg>
+              </button>
+            </div>
+          ))}
+        </div>
+      )}
+
+      <p className="text-[11px] text-emerald-600 leading-relaxed">
+        스타벅스 e카드 교환권 바코드 이미지를 첨부하면 번호를 자동으로 추출합니다.
+      </p>
+    </div>
+  );
+}
+
 function ShinsegaeImageUpload({
   images,
   onAdd,
@@ -1019,6 +1142,13 @@ function MobileVoucherItems({
   onGoogleNumberChange,
   onGoogleNumberAdd,
   onGoogleNumberRemove,
+  starbucksNumbers,
+  onStarbucksNumberChange,
+  onStarbucksNumberAdd,
+  onStarbucksNumberRemove,
+  starbucksImages,
+  onAddStarbucksImage,
+  onRemoveStarbucksImage,
   cultureImages,
   onAddCultureImage,
   onAddCultureText,
@@ -1071,6 +1201,13 @@ function MobileVoucherItems({
   onGoogleNumberChange: (idx: number, val: string) => void;
   onGoogleNumberAdd: () => void;
   onGoogleNumberRemove: (idx: number) => void;
+  starbucksNumbers: string[];
+  onStarbucksNumberChange: (idx: number, val: string) => void;
+  onStarbucksNumberAdd: () => void;
+  onStarbucksNumberRemove: (idx: number) => void;
+  starbucksImages: CultureImage[];
+  onAddStarbucksImage: (file: File) => void;
+  onRemoveStarbucksImage: (id: string) => void;
   cultureImages: CultureImage[];
   onAddCultureImage: (file: File, mode: "barcode") => void;
   onAddCultureText: (text: string) => void;
@@ -1548,6 +1685,19 @@ function MobileVoucherItems({
         />
       )}
 
+      {/* 스타벅스 e카드 교환권 입력 + 바코드 추출 */}
+      {items.some((it) => it.type === "스타벅스 e카드 교환권") && (
+        <StarbucksSection
+          numbers={starbucksNumbers}
+          onChange={onStarbucksNumberChange}
+          onAdd={onStarbucksNumberAdd}
+          onRemove={onStarbucksNumberRemove}
+          images={starbucksImages}
+          onAddImage={onAddStarbucksImage}
+          onRemoveImage={onRemoveStarbucksImage}
+        />
+      )}
+
       {/* 현대모바일 이미지 업로드 */}
       {items.some((it) => it.type === "현대모바일") && (
         <HyundaiImageUpload
@@ -1593,6 +1743,8 @@ export default function MobileSelect() {
   const [booknlifeExchangePlatform, setBooknlifeExchangePlatform] = useState("카카오톡");
   const [munhwaNumbers, setMunhwaNumbers] = useState<string[]>([""]);
   const [googleNumbers, setGoogleNumbers] = useState<string[]>([""]);
+  const [starbucksNumbers, setStarbucksNumbers] = useState<string[]>([""]);
+  const [starbucksImages, setStarbucksImages] = useState<CultureImage[]>([]);
   const [cultureImages, setCultureImages] = useState<CultureImage[]>([]);
   const [cultureManualNumbers, setCultureManualNumbers] = useState<string[]>([""]);
   const [cultureExchangeNumbers, setCultureExchangeNumbers] = useState<string[]>([""]);
@@ -1861,6 +2013,50 @@ export default function MobileSelect() {
     setGoogleNumbers((prev) => prev.length > 1 ? prev.filter((_, i) => i !== idx) : prev);
   }
 
+  function handleStarbucksNumberChange(idx: number, val: string) {
+    setStarbucksNumbers((prev) => prev.map((n, i) => i === idx ? val : n));
+  }
+
+  function handleStarbucksNumberAdd() {
+    setStarbucksNumbers((prev) => [...prev, ""]);
+  }
+
+  function handleStarbucksNumberRemove(idx: number) {
+    setStarbucksNumbers((prev) => prev.length > 1 ? prev.filter((_, i) => i !== idx) : prev);
+  }
+
+  async function handleAddStarbucksImage(file: File) {
+    const id = Math.random().toString(36).slice(2);
+    const preview = URL.createObjectURL(file);
+    setStarbucksImages((prev) => [...prev, { id, preview, uploading: true, numbers: [], error: false }]);
+    try {
+      const base64 = await new Promise<string>((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = () => resolve((reader.result as string).split(",")[1]);
+        reader.onerror = reject;
+        reader.readAsDataURL(file);
+      });
+      const b = import.meta.env.BASE_URL.replace(/\/$/, "");
+      const res = await fetch(`${b}/api/mobile/extract-voucher`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ imageBase64: base64, mimeType: file.type, mode: "barcode", voucherType: "스타벅스" }),
+      });
+      const { numbers } = await res.json();
+      setStarbucksImages((prev) => prev.map((img) => img.id === id ? { ...img, uploading: false, numbers: numbers ?? [] } : img));
+    } catch {
+      setStarbucksImages((prev) => prev.map((img) => img.id === id ? { ...img, uploading: false, error: true } : img));
+    }
+  }
+
+  function handleRemoveStarbucksImage(id: string) {
+    setStarbucksImages((prev) => {
+      const img = prev.find((i) => i.id === id);
+      if (img) URL.revokeObjectURL(img.preview);
+      return prev.filter((i) => i.id !== id);
+    });
+  }
+
   function handleCultureManualChange(idx: number, val: string) {
     setCultureManualNumbers((prev) => prev.map((n, i) => i === idx ? val : n));
   }
@@ -1989,6 +2185,15 @@ export default function MobileSelect() {
     if (hasGoogle && !googleNumbers.some((n) => n.trim())) {
       errs.google = "구글 카카오톡 교환권 번호를 1개 이상 입력해야 합니다.";
     }
+    // 스타벅스 e카드 교환권: 번호 또는 이미지 중 하나 이상 필수
+    const hasStarbucks = items.some((it) => it.type === "스타벅스 e카드 교환권");
+    if (hasStarbucks) {
+      const hasStarbucksNum = starbucksNumbers.some((n) => n.trim());
+      const hasStarbucksImg = starbucksImages.some((img) => img.numbers.length > 0);
+      if (!hasStarbucksNum && !hasStarbucksImg) {
+        errs.starbucks = "스타벅스 교환권번호를 입력하거나 바코드 이미지를 업로드해 주세요.";
+      }
+    }
     // 북앤라이프: 번호 1개 이상 필수
     const hasBooknlifeGift = items.some((it) => it.type === "북앤라이프 도서문화상품권");
     const hasBooknlifeGwon = items.some((it) => it.type === "북앤라이프 교환권");
@@ -2019,7 +2224,7 @@ export default function MobileSelect() {
         rate: Math.round(rate * 100),
         payment,
         isGift: false,
-        ...(it.checkedSubs.length > 0 || it.voucherNumber || it.type === "컬쳐랜드 캐시 선물하기" || (it.type.startsWith("컬쳐랜드") && it.checkedSubs.includes("자동추출하기") && cultureImages.length > 0) || (it.type === "문화상품권(18핀)" && munhwaNumbers.some(Boolean)) || (it.type === "구글 카카오톡 교환권" && googleNumbers.some(Boolean)) || (it.type.startsWith("북앤라이프") && booknlifeNumbers.some(Boolean))
+        ...(it.checkedSubs.length > 0 || it.voucherNumber || it.type === "컬쳐랜드 캐시 선물하기" || (it.type.startsWith("컬쳐랜드") && it.checkedSubs.includes("자동추출하기") && cultureImages.length > 0) || (it.type === "문화상품권(18핀)" && munhwaNumbers.some(Boolean)) || (it.type === "구글 카카오톡 교환권" && googleNumbers.some(Boolean)) || (it.type === "스타벅스 e카드 교환권" && (starbucksNumbers.some(Boolean) || starbucksImages.some((img) => img.numbers.length > 0))) || (it.type.startsWith("북앤라이프") && booknlifeNumbers.some(Boolean))
           ? {
               note: [
                 ...it.checkedSubs,
@@ -2061,6 +2266,12 @@ export default function MobileSelect() {
                   : []),
                 ...(it.type === "구글 카카오톡 교환권"
                   ? googleNumbers.filter(Boolean).map((n) => `번호: ${n}`)
+                  : []),
+                ...(it.type === "스타벅스 e카드 교환권"
+                  ? [
+                      ...starbucksNumbers.filter(Boolean).map((n) => `번호: ${n}`),
+                      ...starbucksImages.flatMap((img) => img.numbers).filter(Boolean).map((n) => `번호(이미지추출): ${n}`),
+                    ]
                   : []),
               ].join(" / "),
             }
@@ -2212,6 +2423,13 @@ export default function MobileSelect() {
             onGoogleNumberChange={handleGoogleNumberChange}
             onGoogleNumberAdd={handleGoogleNumberAdd}
             onGoogleNumberRemove={handleGoogleNumberRemove}
+            starbucksNumbers={starbucksNumbers}
+            onStarbucksNumberChange={handleStarbucksNumberChange}
+            onStarbucksNumberAdd={handleStarbucksNumberAdd}
+            onStarbucksNumberRemove={handleStarbucksNumberRemove}
+            starbucksImages={starbucksImages}
+            onAddStarbucksImage={handleAddStarbucksImage}
+            onRemoveStarbucksImage={handleRemoveStarbucksImage}
             cultureImages={cultureImages}
             onAddCultureImage={handleAddCultureImage}
             onAddCultureText={handleAddCultureText}
@@ -2409,7 +2627,7 @@ export default function MobileSelect() {
         {/* 상품권·이미지 등록 오류 */}
         {(errors.hyundaiImages || errors.shinsegaeImages || errors.shinsegaeNumbers ||
           errors.cultureExtract || errors.cultureManual || errors.cultureExchange ||
-          errors.munhwa || errors.google || errors.booknlife || errors.naverCoupon ||
+          errors.munhwa || errors.google || errors.starbucks || errors.booknlife || errors.naverCoupon ||
           errors.lotte23) && (
           <div className="space-y-2">
             {errors.hyundaiImages && (
@@ -2438,6 +2656,9 @@ export default function MobileSelect() {
             )}
             {errors.google && (
               <p className="text-[13px] font-semibold text-green-700 bg-green-50 border border-green-200 rounded-2xl px-4 py-3">⚠ {errors.google}</p>
+            )}
+            {errors.starbucks && (
+              <p className="text-[13px] font-semibold text-emerald-700 bg-emerald-50 border border-emerald-200 rounded-2xl px-4 py-3">⚠ {errors.starbucks}</p>
             )}
             {errors.booknlife && (
               <p className="text-[13px] font-semibold text-violet-700 bg-violet-50 border border-violet-200 rounded-2xl px-4 py-3">⚠ {errors.booknlife}</p>
