@@ -53,6 +53,17 @@ const StaffChatList       = lazy(() => import("./pages/StaffChatList"));
 
 attachAudioUnlock();
 
+// SW 업데이트 시 자동 페이지 리로드 (구버전 CSS/JS 캐시 누락 방지)
+if ("serviceWorker" in navigator) {
+  let reloading = false;
+  navigator.serviceWorker.addEventListener("controllerchange", () => {
+    if (!reloading) {
+      reloading = true;
+      window.location.reload();
+    }
+  });
+}
+
 const base = import.meta.env.BASE_URL.replace(/\/$/, "");
 
 const Fallback = () => (
