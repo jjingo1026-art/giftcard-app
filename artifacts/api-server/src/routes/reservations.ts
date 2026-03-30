@@ -262,7 +262,7 @@ router.post("/", async (req, res) => {
       accountNumber: body.accountNumber ?? "",
       accountHolder: body.accountHolder ?? "",
       giftcardType: body.giftcardType,
-      amount: totalAmount,
+      amount: String(totalAmount),
       category: body.category,
       status: "pending",
       customerPin: body.customerPin ?? null,

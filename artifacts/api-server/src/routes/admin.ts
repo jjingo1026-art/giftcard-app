@@ -1521,14 +1521,14 @@ router.post("/customer/update", async (req, res) => {
       updates.giftcardType = giftcardType || null;
       if (giftcardType && GIFT_RATES[giftcardType]) updates.rate = GIFT_RATES[giftcardType];
     }
-    const baseRate = updates.rate ?? row.rate ?? 0;
+    const baseRate = updates.rate ?? (row as any).rate ?? 0;
     const effectiveRate = isGift !== undefined ? baseRate - (isGift ? 1 : 0) : baseRate;
     if (amount !== undefined && !isNaN(Number(amount))) {
       const amt = Number(amount);
       updates.amount = amt;
       if (effectiveRate) updates.totalPayment = Math.floor(amt * (effectiveRate / 100));
     } else if (isGift !== undefined && row.amount) {
-      if (effectiveRate) updates.totalPayment = Math.floor(row.amount * (effectiveRate / 100));
+      if (effectiveRate) updates.totalPayment = Math.floor(Number(row.amount) * (effectiveRate / 100));
     }
   }
   if (Object.keys(updates).length === 0) {
@@ -1677,7 +1677,7 @@ router.get("/noshow/users", requireAuth, async (_req, res) => {
     for (const r of noshowRows) {
       if (!r.phone) continue;
       if (!noshowMap[r.phone]) noshowMap[r.phone] = [];
-      if (noshowMap[r.phone].length < 5) noshowMap[r.phone].push(r);
+      if (noshowMap[r.phone].length < 5) noshowMap[r.phone].push({ ...r, date: r.date ?? "" });
     }
   }
 
@@ -1711,7 +1711,7 @@ router.get("/noshow/reservations", requireAuth, async (_req, res) => {
       date: r.date,
       giftcardType: r.giftcardType,
       amount: r.amount,
-      type: r.type,
+      kind: r.kind,
       createdAt: r.createdAt,
     }))
   );

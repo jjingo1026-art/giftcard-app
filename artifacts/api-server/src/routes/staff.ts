@@ -104,7 +104,7 @@ router.get("/quick-phrases", requireStaffAuth, async (_req, res) => {
 router.post("/quick-phrases", requireStaffAuth, async (req, res) => {
   try {
     const phrases: string[] = req.body.phrases;
-    if (!Array.isArray(phrases)) return res.status(400).json({ error: "phrases must be array" });
+    if (!Array.isArray(phrases)) { res.status(400).json({ error: "phrases must be array" }); return; }
     await db.insert(siteSettingsTable)
       .values({ key: QUICK_PHRASES_KEY, value: JSON.stringify(phrases) })
       .onConflictDoUpdate({ target: siteSettingsTable.key, set: { value: JSON.stringify(phrases) } });

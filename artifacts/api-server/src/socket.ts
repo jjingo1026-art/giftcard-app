@@ -1,5 +1,5 @@
 import { Server } from "socket.io";
-import type { HttpServer } from "http";
+import type { Server as HttpServer } from "http";
 import { db } from "@workspace/db";
 import { chatsTable } from "@workspace/db/schema";
 import { eq, and, ne } from "drizzle-orm";
