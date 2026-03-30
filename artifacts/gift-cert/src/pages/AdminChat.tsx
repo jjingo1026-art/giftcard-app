@@ -12,7 +12,7 @@ function showSaveToast(msg: string) {
   if (existing) existing.remove();
   const el = document.createElement("div");
   el.id = "__save_toast__";
-  el.innerHTML = msg;
+  el.textContent = msg;
   el.style.cssText = [
     "position:fixed", "bottom:90px", "left:50%", "transform:translateX(-50%)",
     "background:#1e293b", "color:#fff", "padding:14px 18px", "border-radius:14px",

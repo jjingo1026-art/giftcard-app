@@ -1,6 +1,6 @@
 import { db } from "@workspace/db";
 import { reservationsTable, chatsTable } from "@workspace/db/schema";
-import { and, lte, ne, sql } from "drizzle-orm";
+import { and, inArray, lte, ne } from "drizzle-orm";
 
 const SIX_MONTHS_MS = 6 * 30 * 24 * 60 * 60 * 1000;
 const DELETED_MARKER = "(삭제됨)";
@@ -41,7 +41,7 @@ export async function runPrivacyCleanup(): Promise<{ cleaned: number }> {
 
   await db
     .delete(chatsTable)
-    .where(sql`${chatsTable.reservationId} = ANY(${sql.raw(`ARRAY[${ids.join(",")}]::int[]`)})`);
+    .where(inArray(chatsTable.reservationId, ids));
 
   console.log(`[개인정보 자동삭제] ${ids.length}건 처리 완료 (기준일: ${cutoff.toISOString().slice(0, 10)})`);
   return { cleaned: ids.length };
