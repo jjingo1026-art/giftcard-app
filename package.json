@@ -16,5 +16,18 @@
   "dependencies": {
     "@replit/connectors-sdk": "^0.3.0",
     "jimp": "0.22.12"
+  },
+  "pnpm": {
+    "overrides": {
+      "serialize-javascript": ">=7.0.3",
+      "picomatch": ">=4.0.4",
+      "yaml": ">=2.8.3",
+      "socket.io-parser": ">=4.2.6",
+      "path-to-regexp": ">=8.4.0",
+      "esbuild": ">=0.25.0",
+      "brace-expansion": ">=1.1.12",
+      "fast-xml-parser": ">=5.5.7",
+      "@tootallnate/once": ">=3.0.1"
+    }
   }
 }
