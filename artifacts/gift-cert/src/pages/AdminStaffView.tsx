@@ -264,9 +264,6 @@ function LocationEditModal({
 
 export default function AdminStaffView() {
   const [, navigate] = useLocation();
-  const token = getAdminToken();
-  if (!token) { navigate("/admin/login"); return null; }
-
   const [summary, setSummary] = useState<StaffSummary[]>([]);
   const [selectedId, setSelectedId] = useState<number | null>(null);
   const [activeStatus, setActiveStatus] = useState<"assigned" | "completed">("assigned");
@@ -278,7 +275,10 @@ export default function AdminStaffView() {
   const [deleting, setDeleting] = useState(false);
   const [editTarget, setEditTarget] = useState<StaffSummary | null>(null);
 
+  const token = getAdminToken();
+
   useEffect(() => {
+    if (!token) return;
     Promise.all([
       adminFetch("/api/admin/staff-summary").then((r) => r.json()),
       adminFetch("/api/admin/staff").then((r) => r.json()),
@@ -296,7 +296,7 @@ export default function AdminStaffView() {
   }, []);
 
   useEffect(() => {
-    if (!selectedId) return;
+    if (!token || !selectedId) return;
     setLoadingList(true);
     setList([]);
     adminFetch(`/api/admin/staff/${selectedId}/reservations?status=${activeStatus}`)
@@ -305,6 +305,8 @@ export default function AdminStaffView() {
       .catch(() => setError("예약 목록을 불러올 수 없습니다."))
       .finally(() => setLoadingList(false));
   }, [selectedId, activeStatus]);
+
+  if (!token) { navigate("/admin/login"); return null; }
 
   async function deleteStaff() {
     if (!deleteTarget) return;

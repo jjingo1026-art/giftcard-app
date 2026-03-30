@@ -1777,7 +1777,8 @@ export default function MobileSelect() {
   }, []);
 
   if (!agreed) {
-    location.href = `/mobile/terms?type=${encodeURIComponent(initialType)}`;
+    // eslint-disable-next-line react-hooks/immutability
+    window.location.href = `/mobile/terms?type=${encodeURIComponent(initialType)}`;
     return null;
   }
 

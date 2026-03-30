@@ -117,7 +117,6 @@ export default function AdminMobileDashboard() {
   const [noticeText, setNoticeText] = useState("");
 
   const token = getAdminToken();
-  if (!token) { navigate("/admin/login"); return null; }
 
   async function loadStats(withRange?: boolean) {
     setStatsLoading(true);
@@ -199,6 +198,7 @@ export default function AdminMobileDashboard() {
   }
 
   useEffect(() => {
+    if (!token) return;
     loadEntries();
     loadStats();
     loadSettings();
@@ -209,6 +209,7 @@ export default function AdminMobileDashboard() {
   }, []);
 
   useEffect(() => {
+    if (!token) return;
     const socket = io({ path: "/api/socket.io", transports: ["websocket", "polling"] });
     socket.on("newReservation", (r: MobileReservation) => {
       if (r.kind !== "mobile") return;
@@ -239,6 +240,8 @@ export default function AdminMobileDashboard() {
     });
     return () => { socket.disconnect(); };
   }, []);
+
+  if (!token) { navigate("/admin/login"); return null; }
 
   async function loadEntries() {
     setLoading(true);

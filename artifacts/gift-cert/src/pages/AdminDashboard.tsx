@@ -94,9 +94,10 @@ export default function AdminDashboard() {
   const [newChatAlert, setNewChatAlert] = useState<{ reservationId: number; lastSender: string; lastMessage: string } | null>(null);
   const chatAlertTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const token = getAdminToken();
-  if (!token) { navigate("/admin/login"); return null; }
+  const unassignedListRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
+    if (!token) return;
     setLoading(true);
     adminFetch("/api/admin/reservations?limit=500")
       .then((r) => r.json())
@@ -136,6 +137,7 @@ export default function AdminDashboard() {
   }, []);
 
   useEffect(() => {
+    if (!token) return;
     const socket = io({ path: "/api/socket.io", transports: ["websocket", "polling"] });
 
     socket.on("newReservation", (reservation: Reservation) => {
@@ -245,6 +247,8 @@ export default function AdminDashboard() {
 
     return () => { socket.disconnect(); };
   }, []);
+
+  if (!token) { navigate("/admin/login"); return null; }
 
   function showAssignToast(id: number, ok: boolean, msg: string) {
     if (assignToastTimerRef.current) clearTimeout(assignToastTimerRef.current);
@@ -360,8 +364,6 @@ export default function AdminDashboard() {
       setLoading(false);
     }
   }
-
-  const unassignedListRef = useRef<HTMLDivElement>(null);
 
   function selectDate(dateStr: string) {
     setDateFilter(dateStr);

@@ -19,14 +19,16 @@ export default function AdminStaffOverview() {
   const [tab, setTab] = useState<"all" | "region">("all");
 
   const token = getAdminToken();
-  if (!token) { navigate("/admin/login"); return null; }
 
   useEffect(() => {
+    if (!token) return;
     adminFetch("/api/admin/staff-overview")
       .then((r) => r.json())
       .then((data) => { setStaff(data); setLoading(false); })
       .catch(() => setLoading(false));
   }, []);
+
+  if (!token) { navigate("/admin/login"); return null; }
 
   const grouped = staff.reduce<Record<string, StaffMember[]>>((acc, s) => {
     const key = s.preferredLocation?.trim() || "지역 미설정";

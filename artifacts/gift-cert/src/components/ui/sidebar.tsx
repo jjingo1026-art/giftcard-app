@@ -608,7 +608,9 @@ function SidebarMenuSkeleton({
   showIcon?: boolean
 }) {
   // Random width between 50 to 90%.
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   const width = React.useMemo(() => {
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-return
     return `${Math.floor(Math.random() * 40) + 50}%`
   }, [])
 

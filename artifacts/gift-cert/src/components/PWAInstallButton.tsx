@@ -27,6 +27,7 @@ export default function PWAInstallButton() {
 
   useEffect(() => {
     if (isStandalone()) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setInstalled(true);
       return;
     }

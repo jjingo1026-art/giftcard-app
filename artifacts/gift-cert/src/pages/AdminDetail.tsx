@@ -65,7 +65,6 @@ export default function AdminDetail() {
   const socketRef = useRef<Socket | null>(null);
 
   const token = getAdminToken();
-  if (!token) { navigate("/admin/login"); return null; }
 
   function loadChat() {
     fetch(`/api/admin/chat/${resolvedId}`)
@@ -105,6 +104,7 @@ export default function AdminDetail() {
   }
 
   useEffect(() => {
+    if (!token) return;
     load();
     loadChat();
 
@@ -130,6 +130,8 @@ export default function AdminDetail() {
 
     return () => { socket.disconnect(); };
   }, []);
+
+  if (!token) { navigate("/admin/login"); return null; }
 
   async function setStatus(status: string) {
     if (!entry || saving) return;

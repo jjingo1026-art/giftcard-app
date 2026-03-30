@@ -111,21 +111,23 @@ function ChatCard({ item }: { item: ChatListItem }) {
 
 export default function AdminChatList() {
   const [, navigate] = useLocation();
-  const token = getAdminToken();
-  if (!token) { navigate("/admin/login"); return null; }
-
   const [items, setItems] = useState<ChatListItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
   const [activeTab, setActiveTab] = useState<"all" | "mobile" | "paper">("all");
 
+  const token = getAdminToken();
+
   useEffect(() => {
+    if (!token) return;
     adminFetch("/api/admin/chat-list")
       .then((r) => r.json())
       .then((data) => { if (Array.isArray(data)) setItems(data); })
       .catch(() => {})
       .finally(() => setLoading(false));
   }, []);
+
+  if (!token) { navigate("/admin/login"); return null; }
 
   const q = search.trim().toLowerCase();
   const searched = q

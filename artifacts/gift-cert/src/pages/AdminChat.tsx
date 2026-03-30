@@ -138,7 +138,6 @@ export default function AdminChat() {
   }, []);
 
   const token = getAdminToken();
-  if (!token) { navigate("/admin/login"); return null; }
 
   const { inputRef: imgInputRef, openPicker, onChange: onImgChange, isUploading: imgUploading } = useImageUpload(({ serveUrl }) => {
     if (!socketRef.current) return;
@@ -157,7 +156,7 @@ export default function AdminChat() {
   }
 
   useEffect(() => {
-    if (!reservationId) return;
+    if (!token || !reservationId) return;
 
     fetch(`/api/admin/chat/${reservationId}`)
       .then((r) => r.json())
@@ -298,6 +297,8 @@ export default function AdminChat() {
 
     return () => { socket.disconnect(); };
   }, []);
+
+  if (!token) { navigate("/admin/login"); return null; }
 
   function addOptimisticMsg(text: string) {
     const tempMsg: Message = {

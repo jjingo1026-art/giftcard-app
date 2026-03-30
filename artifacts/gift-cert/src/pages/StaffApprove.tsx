@@ -13,7 +13,6 @@ export default function StaffApprove() {
   const [rejecting, setRejecting] = useState<number | null>(null);
 
   const token = getAdminToken();
-  if (!token) { navigate("/admin/login"); return null; }
 
   async function load() {
     setLoading(true);
@@ -22,7 +21,13 @@ export default function StaffApprove() {
     setLoading(false);
   }
 
-  useEffect(() => { load(); }, []);
+  useEffect(() => {
+    if (!token) return;
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    load();
+  }, []);
+
+  if (!token) { navigate("/admin/login"); return null; }
 
   async function approve(id: number) {
     setApproving(id);
