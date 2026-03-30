@@ -494,12 +494,39 @@ export default function ReservationCheck() {
                   <span className="text-[13px] text-slate-800 font-semibold">{formatPhone(reservation.phone)}</span>
                 </div>
               </div>
-              <div className="mx-5 mb-5 rounded-2xl bg-amber-50 border border-amber-100 px-4 py-4 space-y-1.5">
-                <p className="text-[13px] font-bold text-amber-700">현재 상태</p>
-                <p className="text-[13px] text-amber-600 font-medium">매입 담당자 배정 대기중입니다.</p>
-                <p className="text-[12px] text-amber-500 pt-1 leading-relaxed">담당자가 배정되면<br />연락처 확인 및 채팅 이용이 가능합니다.</p>
-              </div>
+              {reservation.kind === "mobile" ? (
+                <div className="mx-5 mb-5 rounded-2xl bg-emerald-50 border border-emerald-100 px-4 py-4 space-y-1.5">
+                  <p className="text-[13px] font-bold text-emerald-700">현재 상태</p>
+                  <p className="text-[13px] text-emerald-600 font-medium">신청이 완료되었습니다.</p>
+                  <p className="text-[12px] text-emerald-500 pt-1 leading-relaxed">담당자가 확인 후 연락드리겠습니다.</p>
+                </div>
+              ) : (
+                <div className="mx-5 mb-5 rounded-2xl bg-amber-50 border border-amber-100 px-4 py-4 space-y-1.5">
+                  <p className="text-[13px] font-bold text-amber-700">현재 상태</p>
+                  <p className="text-[13px] text-amber-600 font-medium">매입 담당자 배정 대기중입니다.</p>
+                  <p className="text-[12px] text-amber-500 pt-1 leading-relaxed">담당자가 배정되면<br />연락처 확인 및 채팅 이용이 가능합니다.</p>
+                </div>
+              )}
             </div>
+
+            {/* 모바일 예약: 채팅 버튼 바로 제공 */}
+            {reservation.kind === "mobile" && (
+              <div className="bg-white rounded-2xl border border-slate-100 shadow-sm px-5 py-4">
+                <a
+                  href={`/chat?id=${reservation.id}&from=mobile`}
+                  className="relative flex items-center justify-center gap-2 w-full py-3.5 rounded-xl text-white text-[14px] font-bold transition-all active:scale-95"
+                  style={{ background: "linear-gradient(135deg,#6366f1,#8b5cf6)" }}
+                >
+                  <span className="text-[18px]">💬</span>
+                  담당자와 채팅하기
+                  {unreadCount > 0 && (
+                    <span className="absolute -top-2 -right-2 min-w-[22px] h-[22px] bg-red-500 text-white text-[11px] font-black rounded-full flex items-center justify-center px-1 shadow-lg animate-bounce">
+                      {unreadCount > 99 ? "99+" : unreadCount}
+                    </span>
+                  )}
+                </a>
+              </div>
+            )}
 
             {/* 취소 버튼 */}
             <div>
