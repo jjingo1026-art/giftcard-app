@@ -91,7 +91,7 @@ export default function AdminDashboard() {
   const [rejectingStaff, setRejectingStaff] = useState<number | null>(null);
   const [chatInbox, setChatInbox] = useState<ChatInboxItem[]>([]);
   const [chatInboxOpen, setChatInboxOpen] = useState(true);
-  const [newChatAlert, setNewChatAlert] = useState<{ reservationId: number; lastSender: string; lastMessage: string } | null>(null);
+  const [newChatAlert, setNewChatAlert] = useState<{ reservationId: number; lastSender: string; lastMessage: string; senderRole: string } | null>(null);
   const chatAlertTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const token = getAdminToken();
   const unassignedListRef = useRef<HTMLDivElement>(null);
@@ -243,7 +243,7 @@ export default function AdminDashboard() {
 
       // 플로팅 알림
       if (chatAlertTimerRef.current) clearTimeout(chatAlertTimerRef.current);
-      setNewChatAlert({ reservationId: msg.reservationId, lastSender: msg.senderName, lastMessage: msg.message });
+      setNewChatAlert({ reservationId: msg.reservationId, lastSender: msg.senderName, lastMessage: msg.message, senderRole: msg.sender });
       chatAlertTimerRef.current = setTimeout(() => setNewChatAlert(null), 6000);
     });
 
@@ -395,12 +395,17 @@ export default function AdminDashboard() {
         {newChatAlert && (
           <div
             onClick={() => { window.location.href = `/admin/chat?id=${newChatAlert.reservationId}`; }}
-            className="bg-indigo-600 text-white rounded-2xl shadow-2xl px-4 py-3.5 flex items-center gap-3 cursor-pointer active:scale-[0.98] transition-transform"
+            className={`text-white rounded-2xl shadow-2xl px-4 py-3.5 flex items-center gap-3 cursor-pointer active:scale-[0.98] transition-transform ${newChatAlert.senderRole === "staff" ? "bg-violet-600" : "bg-indigo-600"}`}
           >
-            <span className="text-2xl flex-shrink-0">💬</span>
+            <span className="text-2xl flex-shrink-0">{newChatAlert.senderRole === "staff" ? "👨‍🔧" : "💬"}</span>
             <div className="flex-1 min-w-0">
-              <p className="text-[13px] font-black leading-tight">{newChatAlert.lastSender}님의 메시지</p>
-              <p className="text-[12px] font-semibold opacity-90 mt-0.5 truncate">{newChatAlert.lastMessage}</p>
+              <div className="flex items-center gap-2 mb-0.5">
+                <p className="text-[13px] font-black leading-tight">{newChatAlert.lastSender}님의 메시지</p>
+                {newChatAlert.senderRole === "staff" && (
+                  <span className="text-[10px] font-bold bg-white/20 px-1.5 py-0.5 rounded-full flex-shrink-0">담당자</span>
+                )}
+              </div>
+              <p className="text-[12px] font-semibold opacity-90 truncate">{newChatAlert.lastMessage}</p>
             </div>
             <button
               onClick={(e) => { e.stopPropagation(); setNewChatAlert(null); }}
@@ -603,16 +608,21 @@ export default function AdminDashboard() {
                   className="flex items-center gap-3 px-4 py-3 cursor-pointer hover:bg-indigo-100/50 active:bg-indigo-100 transition-colors"
                 >
                   {/* 발신자 아이콘 */}
-                  <div className="w-9 h-9 rounded-full bg-indigo-100 border border-indigo-200 flex items-center justify-center text-[15px] flex-shrink-0">
+                  <div className={`w-9 h-9 rounded-full border flex items-center justify-center text-[15px] flex-shrink-0 ${item.lastSenderRole === "staff" ? "bg-violet-100 border-violet-200" : "bg-indigo-100 border-indigo-200"}`}>
                     {item.lastSenderRole === "staff" ? "👨‍🔧" : item.lastSenderRole === "customer" ? "👤" : "💬"}
                   </div>
                   {/* 메시지 내용 */}
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center justify-between gap-1 mb-0.5">
-                      <p className="text-[13px] font-bold text-slate-800 truncate">
-                        {item.name ?? item.phone}
-                        <span className="text-[11px] font-medium text-slate-400 ml-1.5">{item.location}</span>
-                      </p>
+                      <div className="flex items-center gap-1.5 min-w-0">
+                        <p className="text-[13px] font-bold text-slate-800 truncate">
+                          {item.name ?? item.phone}
+                        </p>
+                        {item.lastSenderRole === "staff" && (
+                          <span className="text-[10px] font-bold text-violet-600 bg-violet-100 px-1.5 py-0.5 rounded-full flex-shrink-0">담당자</span>
+                        )}
+                        <span className="text-[11px] font-medium text-slate-400 flex-shrink-0">{item.location}</span>
+                      </div>
                       <span className="text-[10px] text-indigo-400 font-medium flex-shrink-0">
                         {(() => {
                           const diff = Date.now() - new Date(item.lastTime).getTime();
@@ -624,13 +634,13 @@ export default function AdminDashboard() {
                       </span>
                     </div>
                     <p className="text-[12px] text-slate-500 truncate">
-                      <span className="text-indigo-500 font-semibold">{item.lastSender}</span>
+                      <span className={`font-semibold ${item.lastSenderRole === "staff" ? "text-violet-600" : "text-indigo-500"}`}>{item.lastSender}</span>
                       <span className="mx-1">·</span>
                       {item.lastMessage}
                     </p>
                   </div>
                   {/* 미읽은 수 뱃지 */}
-                  <span className="min-w-[22px] h-[22px] rounded-full bg-indigo-500 text-white text-[11px] font-black flex items-center justify-center px-1.5 flex-shrink-0">
+                  <span className={`min-w-[22px] h-[22px] rounded-full text-white text-[11px] font-black flex items-center justify-center px-1.5 flex-shrink-0 ${item.lastSenderRole === "staff" ? "bg-violet-500" : "bg-indigo-500"}`}>
                     {item.unreadCount}
                   </span>
                 </div>

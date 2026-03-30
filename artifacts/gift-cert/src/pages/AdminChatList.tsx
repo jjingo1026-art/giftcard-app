@@ -1,6 +1,8 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useLocation } from "wouter";
 import { getAdminToken, adminFetch } from "@/lib/adminAuth";
+import { io, Socket } from "socket.io-client";
+import { getSoundEnabled, playNotificationSound } from "@/lib/notificationSound";
 
 interface ChatListItem {
   reservationId: number;
@@ -115,6 +117,7 @@ export default function AdminChatList() {
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
   const [activeTab, setActiveTab] = useState<"all" | "mobile" | "paper">("all");
+  const socketRef = useRef<Socket | null>(null);
 
   const token = getAdminToken();
 
@@ -127,6 +130,26 @@ export default function AdminChatList() {
       .then((data) => { if (Array.isArray(data)) setItems(data); })
       .catch(() => {})
       .finally(() => setLoading(false));
+
+    const socket = io({ path: "/api/socket.io", transports: ["websocket", "polling"] });
+    socketRef.current = socket;
+
+    socket.on("chatAlert", (msg: { reservationId: number; senderName: string; message: string; time: string; sender: string; kind?: string }) => {
+      if (getSoundEnabled("admin")) playNotificationSound("admin");
+      setItems((prev) => {
+        const existing = prev.find((c) => c.reservationId === msg.reservationId);
+        if (existing) {
+          return prev.map((c) =>
+            c.reservationId === msg.reservationId
+              ? { ...c, unreadCount: c.unreadCount + 1, lastMessage: msg.message, lastSender: msg.senderName, lastSenderRole: msg.sender, lastTime: msg.time }
+              : c
+          ).sort((a, b) => new Date(b.lastTime).getTime() - new Date(a.lastTime).getTime());
+        }
+        return prev;
+      });
+    });
+
+    return () => { socket.disconnect(); };
   }, []);
 
   if (!token) { navigate("/admin/login"); return null; }
