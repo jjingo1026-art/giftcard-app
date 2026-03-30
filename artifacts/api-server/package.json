@@ -7,6 +7,8 @@
     "dev": "NODE_ENV=development tsx ./src/index.ts",
     "build": "tsx ./build.ts",
     "typecheck": "tsc --noEmit",
+    "lint": "eslint src --ext .ts",
+    "lint:fix": "eslint src --ext .ts --fix",
     "start": "NODE_ENV=production node dist/index.cjs"
   },
   "dependencies": {
@@ -29,11 +31,16 @@
     "web-push": "^3.6.7"
   },
   "devDependencies": {
+    "@eslint/js": "^10.0.1",
     "@types/cookie-parser": "^1.4.10",
     "@types/cors": "^2.8.19",
     "@types/express": "^5.0.6",
     "@types/node": "catalog:",
+    "@typescript-eslint/eslint-plugin": "^8.57.2",
+    "@typescript-eslint/parser": "^8.57.2",
     "esbuild": "^0.27.3",
+    "eslint": "^10.1.0",
+    "globals": "^17.4.0",
     "tsx": "catalog:"
   }
 }
