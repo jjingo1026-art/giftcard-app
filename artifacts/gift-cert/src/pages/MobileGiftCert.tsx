@@ -4,10 +4,10 @@ import { getLabel } from "@/lib/uiTranslations";
 
 const MOBILE_RATES = [
   { label: "신세계모바일", sub: "이마트교환권", icon: "🛒", color: "#e11d48", rate: 95 },
-  { label: "롯데모바일", subs: ["23으로 시작하는 교환권", "앱선물하기"], icon: "🧡", color: "#f97316", rate: 95 },
+  { label: "롯데모바일", subLines: ["23으로 시작하는 교환권", "앱 선물하기"], icon: "🧡", color: "#f97316", rate: 95 },
   { label: "현대모바일", sub: "H포인트 상품권 제외", icon: "🏬", color: "#0ea5e9", rate: 95 },
   { label: "네이버페이 포인트", subs: ["쿠폰", "선물하기"], icon: "💚", color: "#03C75A", rate: 95 },
-  { label: "컬쳐랜드", selectType: "컬쳐랜드 상품권", subs: ["상품권", "교환권", "캐시 선물하기"], icon: "📚", color: "#6366f1", rate: 90 },
+  { label: "컬쳐랜드", selectType: "컬쳐랜드 상품권", subLines: ["상품권 · 교환권", "캐시 선물하기"], icon: "📚", color: "#6366f1", rate: 90 },
   { label: "북앤라이프", selectType: "북앤라이프 도서문화상품권", subs: ["상품권", "교환권"], icon: "📖", color: "#8b5cf6", rate: 90 },
   { label: "문화상품권(18핀)", icon: "🎫", color: "#ec4899", rate: 90 },
   { label: "구글 카카오톡 교환권", selectType: "구글 카카오톡 교환권", sub: "카카오톡 구매 숫자 12자리", icon: "🎮", color: "#4ade80", rate: 90 },
@@ -114,7 +114,13 @@ export default function MobileGiftCert() {
                 <span className="text-[24px] leading-none">{g.icon}</span>
                 <span className="text-[11px] font-bold text-slate-700 leading-snug text-center mt-1.5">{g.label}</span>
                 <span className="text-[22px] font-black tabular-nums leading-none mt-1" style={{ color: g.color }}>{getRate((g as any).selectType ?? g.label, g.rate)}%</span>
-                {"subs" in g && (g as any).subs ? (
+                {"subLines" in g && (g as any).subLines ? (
+                  <span className="text-[9px] font-medium leading-snug mt-1.5 px-1.5 py-0.5 rounded-full flex flex-col items-center gap-0"
+                    style={{ color: g.color, backgroundColor: g.color + "18" }}>
+                    <span>{(g as any).subLines[0]}</span>
+                    <span>{(g as any).subLines[1]}</span>
+                  </span>
+                ) : "subs" in g && (g as any).subs ? (
                   <span className="text-[9px] font-medium leading-snug mt-1.5 px-1.5 py-0.5 rounded-full"
                     style={{ color: g.color, backgroundColor: g.color + "18" }}>
                     {(g as any).subs.join(" · ")}
