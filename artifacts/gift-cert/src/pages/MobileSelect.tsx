@@ -2538,7 +2538,7 @@ export default function MobileSelect() {
           <div className="rounded-2xl border border-slate-200 bg-slate-50/60 overflow-hidden">
             <div className="px-4 pt-3.5 pb-1 flex items-center gap-2">
               <svg width="14" height="14" viewBox="0 0 20 20" fill="none" className="text-slate-400 flex-shrink-0"><rect x="3" y="8" width="14" height="10" rx="2" stroke="currentColor" strokeWidth="1.6"/><path d="M7 8V6a3 3 0 0 1 6 0v2" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round"/></svg>
-              <span className="text-[12px] font-bold text-slate-500 uppercase tracking-wide">조회 비밀번호 설정</span>
+              <span className="text-[12px] font-bold text-slate-500 uppercase tracking-wide">{getLabel("mobile_pin_title", lang)}</span>
               <span className="text-[11px] font-bold text-rose-400">(필수)</span>
             </div>
             <div className="px-4 pb-4 space-y-2.5 mt-2">
@@ -2563,7 +2563,7 @@ export default function MobileSelect() {
                   autoComplete="new-password"
                   value={customerPinConfirm}
                   onChange={(e) => { setCustomerPinConfirm(e.target.value.replace(/\D/g, "").slice(0, 4)); setErrors((p) => { const q = { ...p }; delete q.customerPinConfirm; return q; }); }}
-                  placeholder="비밀번호 확인"
+                  placeholder={getLabel("field_pin_confirm", lang)}
                   className={`w-full px-4 py-3 rounded-xl border text-[15px] outline-none transition-all bg-white placeholder:text-slate-300 tracking-[0.4em]
                     ${errors.customerPinConfirm
                       ? "border-rose-300 focus:border-rose-400 focus:ring-2 focus:ring-rose-100"

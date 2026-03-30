@@ -117,7 +117,7 @@ function computeItem(item: VoucherItem, baseDeduct: number): { amountNum: number
 }
 
 // ─── SHARED UI ────────────────────────────────────────────────────────────────
-function Field({ label, required, error, children }: { label: string; required?: boolean; error?: string; children: React.ReactNode }) {
+function Field({ label, required, error, children }: { label: React.ReactNode; required?: boolean; error?: string; children: React.ReactNode }) {
   return (
     <div className="space-y-1.5">
       <label className="block text-[13px] font-semibold text-slate-500 tracking-wide uppercase">
@@ -608,16 +608,16 @@ function HomePage({ onGoUrgent, initialType = DEFAULT_TYPE, onTypeChange, rateGr
             {/* 브라우저 자동완성 흡수용 숨김 더미 필드 */}
             <input type="text" name="fake_id_absorb" style={{display:"none"}} autoComplete="username" readOnly tabIndex={-1} aria-hidden="true" />
             <input type="password" name="fake_pw_absorb" style={{display:"none"}} autoComplete="current-password" readOnly tabIndex={-1} aria-hidden="true" />
-            <Field label="성명" required error={fieldErrors.name}>
+            <Field label={getLabel("field_name", userLang)} required error={fieldErrors.name}>
               <input type="text" value={name} autoComplete="new-password" lang="ko" spellCheck={false}
                 onChange={(e) => { setName(e.target.value); setFieldErrors((p) => ({ ...p, name: "" })); }}
                 placeholder="홍길동" className={inputCls(!!fieldErrors.name)} />
             </Field>
-            <Field label="연락처" required error={fieldErrors.phone}>
+            <Field label={getLabel("field_phone", userLang)} required error={fieldErrors.phone}>
               <input type="tel" value={phone} autoComplete="new-password" onChange={(e) => { setPhone(formatPhoneInput(e.target.value)); setFieldErrors((p) => ({ ...p, phone: "" })); }} placeholder="010-0000-0000" className={inputCls(!!fieldErrors.phone)} />
             </Field>
             <div className="grid grid-cols-2 gap-3">
-              <Field label="예약 날짜" required error={fieldErrors.date}>
+              <Field label={getLabel("field_date", userLang)} required error={fieldErrors.date}>
                 <input
                   type="date"
                   value={date}
@@ -652,7 +652,7 @@ function HomePage({ onGoUrgent, initialType = DEFAULT_TYPE, onTypeChange, rateGr
                   className={inputCls(!!fieldErrors.date)}
                 />
               </Field>
-              <Field label="예약 시간" required error={fieldErrors.time}>
+              <Field label={getLabel("field_time", userLang)} required error={fieldErrors.time}>
                 <select
                   value={time}
                   onChange={(e) => { setTime(e.target.value); setFieldErrors((p) => ({ ...p, time: "" })); }}
@@ -705,7 +705,7 @@ function HomePage({ onGoUrgent, initialType = DEFAULT_TYPE, onTypeChange, rateGr
             <div className="rounded-2xl border border-indigo-100 bg-indigo-50/60 overflow-hidden">
               <div className="px-4 pt-3.5 pb-1 flex items-center gap-2">
                 <svg width="14" height="14" viewBox="0 0 20 20" fill="none" className="text-indigo-400 flex-shrink-0"><rect x="1" y="5" width="18" height="12" rx="2" stroke="currentColor" strokeWidth="1.6"/><path d="M1 9h18" stroke="currentColor" strokeWidth="1.6"/></svg>
-                <span className="text-[12px] font-bold text-indigo-500 uppercase tracking-wide">입금 계좌 정보</span>
+                <span className="text-[12px] font-bold text-indigo-500 uppercase tracking-wide">{getLabel("field_bank", userLang)}</span>
               </div>
               <div className="px-4 pb-4 space-y-2.5 mt-2">
                 <div>
@@ -795,11 +795,11 @@ function HomePage({ onGoUrgent, initialType = DEFAULT_TYPE, onTypeChange, rateGr
             <div className="rounded-2xl border border-slate-200 bg-slate-50/60 overflow-hidden">
               <div className="px-4 pt-3.5 pb-1 flex items-center gap-2">
                 <svg width="14" height="14" viewBox="0 0 20 20" fill="none" className="text-slate-400 flex-shrink-0"><rect x="3" y="8" width="14" height="10" rx="2" stroke="currentColor" strokeWidth="1.6"/><path d="M7 8V6a3 3 0 0 1 6 0v2" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round"/></svg>
-                <span className="text-[12px] font-bold text-slate-500 uppercase tracking-wide">예약 비밀번호 설정</span>
+                <span className="text-[12px] font-bold text-slate-500 uppercase tracking-wide">{getLabel("field_pin_title", userLang)}</span>
                 <span className="text-[11px] text-slate-400">(선택)</span>
               </div>
               <div className="px-4 pb-4 space-y-2.5 mt-2">
-                <p className="text-[12px] text-slate-400">예약 확인 시 사용할 숫자 4자리 비밀번호를 설정하세요.</p>
+                <p className="text-[12px] text-slate-400">{getLabel("field_pin_desc", userLang)}</p>
                 <input
                   type="password"
                   inputMode="numeric"
@@ -819,7 +819,7 @@ function HomePage({ onGoUrgent, initialType = DEFAULT_TYPE, onTypeChange, rateGr
                     autoComplete="new-password"
                     value={customerPinConfirm}
                     onChange={(e) => { setCustomerPinConfirm(e.target.value.replace(/\D/g, "").slice(0, 4)); setFieldErrors((p) => ({ ...p, pin: "" })); }}
-                    placeholder="비밀번호 확인"
+                    placeholder={getLabel("field_pin_confirm", userLang)}
                     className={`w-full px-3 py-2.5 rounded-xl border text-[14px] text-slate-800 outline-none transition-all bg-white placeholder:text-slate-300 tracking-[0.3em]
                       ${fieldErrors.pin
                         ? "border-rose-300 focus:border-rose-400 focus:ring-2 focus:ring-rose-100"
@@ -1216,12 +1216,12 @@ function UrgentPage({ onBack, initialType = DEFAULT_TYPE }: { onBack: () => void
             {/* 브라우저 자동완성 흡수용 숨김 더미 필드 */}
             <input type="text" name="fake_id_absorb2" style={{display:"none"}} autoComplete="username" readOnly tabIndex={-1} aria-hidden="true" />
             <input type="password" name="fake_pw_absorb2" style={{display:"none"}} autoComplete="current-password" readOnly tabIndex={-1} aria-hidden="true" />
-            <Field label="성명" required error={fieldErrors.name}>
+            <Field label={getLabel("field_name", urgentLang)} required error={fieldErrors.name}>
               <input type="text" value={name} autoComplete="new-password" lang="ko" spellCheck={false}
                 onChange={(e) => { setName(e.target.value); setFieldErrors((p) => ({ ...p, name: "" })); }}
                 placeholder="홍길동" className={inputCls(!!fieldErrors.name, "rose")} />
             </Field>
-            <Field label="판매자 전화번호" required error={fieldErrors.phone}>
+            <Field label={`판매자 ${getLabel("field_phone", urgentLang)}`} required error={fieldErrors.phone}>
               <input type="tel" value={phone} autoComplete="new-password" onChange={(e) => { setPhone(formatPhoneInput(e.target.value)); setFieldErrors((p) => ({ ...p, phone: "" })); }} placeholder="010-0000-0000" className={inputCls(!!fieldErrors.phone, "rose")} />
             </Field>
             <Field label="거래 장소" required error={fieldErrors.locationMain}>
@@ -1246,7 +1246,7 @@ function UrgentPage({ onBack, initialType = DEFAULT_TYPE }: { onBack: () => void
             <div className="rounded-2xl border border-indigo-100 bg-indigo-50/60 overflow-hidden">
               <div className="px-4 pt-3.5 pb-1 flex items-center gap-2">
                 <svg width="14" height="14" viewBox="0 0 20 20" fill="none" className="text-indigo-400 flex-shrink-0"><rect x="1" y="5" width="18" height="12" rx="2" stroke="currentColor" strokeWidth="1.6"/><path d="M1 9h18" stroke="currentColor" strokeWidth="1.6"/></svg>
-                <span className="text-[12px] font-bold text-indigo-500 uppercase tracking-wide">입금 계좌 정보</span>
+                <span className="text-[12px] font-bold text-indigo-500 uppercase tracking-wide">{getLabel("field_bank", urgentLang)}</span>
               </div>
               <div className="px-4 pb-4 space-y-2.5 mt-2">
                 <div>
@@ -1339,11 +1339,11 @@ function UrgentPage({ onBack, initialType = DEFAULT_TYPE }: { onBack: () => void
             <div className="rounded-2xl border border-slate-200 bg-slate-50/60 overflow-hidden">
               <div className="px-4 pt-3.5 pb-1 flex items-center gap-2">
                 <svg width="14" height="14" viewBox="0 0 20 20" fill="none" className="text-slate-400 flex-shrink-0"><rect x="3" y="8" width="14" height="10" rx="2" stroke="currentColor" strokeWidth="1.6"/><path d="M7 8V6a3 3 0 0 1 6 0v2" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round"/></svg>
-                <span className="text-[12px] font-bold text-slate-500 uppercase tracking-wide">예약 비밀번호 설정</span>
+                <span className="text-[12px] font-bold text-slate-500 uppercase tracking-wide">{getLabel("field_pin_title", urgentLang)}</span>
                 <span className="text-[11px] text-slate-400">(선택)</span>
               </div>
               <div className="px-4 pb-4 space-y-2.5 mt-2">
-                <p className="text-[12px] text-slate-400">예약 확인 시 사용할 숫자 4자리 비밀번호를 설정하세요.</p>
+                <p className="text-[12px] text-slate-400">{getLabel("field_pin_desc", urgentLang)}</p>
                 <input
                   type="password"
                   inputMode="numeric"
@@ -1363,7 +1363,7 @@ function UrgentPage({ onBack, initialType = DEFAULT_TYPE }: { onBack: () => void
                     autoComplete="new-password"
                     value={customerPinConfirm}
                     onChange={(e) => { setCustomerPinConfirm(e.target.value.replace(/\D/g, "").slice(0, 4)); setFieldErrors((p) => ({ ...p, pin: "" })); }}
-                    placeholder="비밀번호 확인"
+                    placeholder={getLabel("field_pin_confirm", urgentLang)}
                     className={`w-full px-3 py-2.5 rounded-xl border text-[14px] text-slate-800 outline-none transition-all bg-white placeholder:text-slate-300 tracking-[0.3em]
                       ${fieldErrors.pin
                         ? "border-rose-300 focus:border-rose-400 focus:ring-2 focus:ring-rose-100"
