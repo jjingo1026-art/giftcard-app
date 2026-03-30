@@ -121,7 +121,7 @@ export default function GiftCertTypeSelect() {
               <p className="text-[17px] font-black text-white leading-tight">모바일</p>
               <p className="text-[17px] font-black text-white leading-tight">상품권</p>
               <p className="text-[11px] text-pink-200 mt-2 leading-snug">
-                신세계·롯데·현대<br/>네이버페이·컬쳐랜드<br/>북앤라이프·문화·구글
+                신세계·롯데·현대<br/>네이버페이·컬쳐랜드<br/>북앤라이프·문화·구글<br/>스타벅스
               </p>
             </div>
           </button>
@@ -159,7 +159,7 @@ export default function GiftCertTypeSelect() {
           <div className="w-px h-9 bg-slate-200" />
           <div className="flex flex-col items-center gap-1.5">
             <div className="text-[26px]">🔒</div>
-            <p className="text-[12px] text-slate-400 font-semibold">안전거래</p>
+            <p className="text-[12px] text-slate-400 font-semibold">안전한거래</p>
           </div>
         </div>
 
