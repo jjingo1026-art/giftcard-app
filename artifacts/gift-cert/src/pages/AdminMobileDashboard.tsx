@@ -197,6 +197,8 @@ export default function AdminMobileDashboard() {
     setTimeout(() => setSettingsToast(""), 2000);
   }
 
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  // intentionally run once on mount (token is stable)
   useEffect(() => {
     if (!token) return;
     loadEntries();

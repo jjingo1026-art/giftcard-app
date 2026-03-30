@@ -277,6 +277,8 @@ export default function AdminStaffView() {
 
   const token = getAdminToken();
 
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  // intentionally run once on mount (token is stable)
   useEffect(() => {
     if (!token) return;
     Promise.all([

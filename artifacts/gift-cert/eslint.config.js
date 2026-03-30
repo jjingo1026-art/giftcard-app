@@ -9,6 +9,9 @@ export default [
   { ignores: ["dist", "node_modules"] },
   {
     files: ["**/*.{ts,tsx}"],
+    linterOptions: {
+      reportUnusedDisableDirectives: false,
+    },
     languageOptions: {
       ecmaVersion: 2020,
       globals: globals.browser,

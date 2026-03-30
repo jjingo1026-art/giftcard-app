@@ -118,6 +118,8 @@ export default function AdminChatList() {
 
   const token = getAdminToken();
 
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  // intentionally run once on mount (token is stable)
   useEffect(() => {
     if (!token) return;
     adminFetch("/api/admin/chat-list")

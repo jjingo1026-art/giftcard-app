@@ -20,6 +20,8 @@ export default function AdminStaffOverview() {
 
   const token = getAdminToken();
 
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  // intentionally run once on mount (token is stable)
   useEffect(() => {
     if (!token) return;
     adminFetch("/api/admin/staff-overview")

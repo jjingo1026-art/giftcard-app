@@ -155,6 +155,8 @@ export default function AdminChat() {
     }, 50);
   }
 
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  // intentionally run once on mount (token is stable)
   useEffect(() => {
     if (!token || !reservationId) return;
 

@@ -103,6 +103,8 @@ export default function AdminDetail() {
     }
   }
 
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  // intentionally run once on mount (token is stable)
   useEffect(() => {
     if (!token) return;
     load();

@@ -96,6 +96,8 @@ export default function AdminDashboard() {
   const token = getAdminToken();
   const unassignedListRef = useRef<HTMLDivElement>(null);
 
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  // intentionally run once on mount (token is stable)
   useEffect(() => {
     if (!token) return;
     setLoading(true);

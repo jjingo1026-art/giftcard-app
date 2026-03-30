@@ -21,6 +21,8 @@ export default function StaffApprove() {
     setLoading(false);
   }
 
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  // intentionally run once on mount (token is stable)
   useEffect(() => {
     if (!token) return;
     // eslint-disable-next-line react-hooks/set-state-in-effect
