@@ -122,6 +122,21 @@ export default defineConfig({
     outDir: path.resolve(import.meta.dirname, "dist/public"),
     emptyOutDir: true,
     target: "es2015",
+    rollupOptions: {
+      output: {
+        manualChunks: {
+          "vendor-react": ["react", "react-dom"],
+          "vendor-router": ["wouter"],
+          "vendor-socket": ["socket.io-client"],
+          "vendor-calendar": [
+            "@fullcalendar/core",
+            "@fullcalendar/daygrid",
+            "@fullcalendar/interaction",
+            "@fullcalendar/react",
+          ],
+        },
+      },
+    },
   },
   server: {
     port,
