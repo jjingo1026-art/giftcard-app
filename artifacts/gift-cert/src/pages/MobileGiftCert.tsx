@@ -11,6 +11,7 @@ const MOBILE_RATES = [
   { label: "북앤라이프", selectType: "북앤라이프 도서문화상품권", subs: ["상품권", "교환권"], icon: "📖", color: "#8b5cf6", rate: 90 },
   { label: "문화상품권(18핀)", icon: "🎫", color: "#ec4899", rate: 90 },
   { label: "구글 카카오톡 교환권", selectType: "구글 카카오톡 교환권", sub: "카카오톡 구매 숫자 12자리", icon: "🎮", color: "#4ade80", rate: 90 },
+  { label: "스타벅스 e카드", selectType: "스타벅스 e카드 교환권", sub: "e카드 교환권", icon: "☕", color: "#00704A", rate: 90 },
 ];
 
 const base = import.meta.env.BASE_URL.replace(/\/$/, "");
@@ -102,24 +103,24 @@ export default function MobileGiftCert() {
             </div>
             <div className="w-8 h-8 bg-pink-50 rounded-xl flex items-center justify-center">📱</div>
           </div>
-          <div className="px-4 pb-4 grid grid-cols-2 gap-3">
+          <div className="px-4 pb-4 grid grid-cols-3 gap-2">
             {MOBILE_RATES.map((g) => (
               <div
                 key={g.label}
                 onClick={() => { window.location.href = `/mobile/terms?type=${encodeURIComponent((g as any).selectType ?? g.label)}`; }}
-                className="flex flex-col items-center justify-center px-3 py-3 rounded-2xl cursor-pointer active:scale-[0.97] transition-all text-center"
+                className="flex flex-col items-center justify-center px-2 py-4 rounded-2xl cursor-pointer active:scale-[0.97] transition-all text-center min-h-[148px]"
                 style={{ backgroundColor: g.color + "12" }}
               >
-                <span className="text-[28px] leading-none">{g.icon}</span>
-                <span className="text-[13px] font-bold text-slate-700 leading-snug text-center mt-2">{g.label}</span>
-                <span className="text-[26px] font-black tabular-nums leading-none mt-1.5" style={{ color: g.color }}>{getRate((g as any).selectType ?? g.label, g.rate)}%</span>
+                <span className="text-[24px] leading-none">{g.icon}</span>
+                <span className="text-[11px] font-bold text-slate-700 leading-snug text-center mt-1.5">{g.label}</span>
+                <span className="text-[22px] font-black tabular-nums leading-none mt-1" style={{ color: g.color }}>{getRate((g as any).selectType ?? g.label, g.rate)}%</span>
                 {"subs" in g && (g as any).subs ? (
-                  <span className="text-[11px] font-medium leading-snug mt-1.5 px-2 py-0.5 rounded-full"
+                  <span className="text-[9px] font-medium leading-snug mt-1.5 px-1.5 py-0.5 rounded-full"
                     style={{ color: g.color, backgroundColor: g.color + "18" }}>
                     {(g as any).subs.join(" · ")}
                   </span>
                 ) : "sub" in g && (g as any).sub ? (
-                  <span className="text-[11px] font-medium leading-snug mt-1.5 px-2 py-0.5 rounded-full"
+                  <span className="text-[9px] font-medium leading-snug mt-1.5 px-1.5 py-0.5 rounded-full"
                     style={{ color: g.color, backgroundColor: g.color + "18" }}>
                     {(g as any).sub}
                   </span>
