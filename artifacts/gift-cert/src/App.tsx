@@ -684,7 +684,7 @@ function HomePage({ onGoUrgent, initialType = DEFAULT_TYPE, onTypeChange, rateGr
                 </select>
               </Field>
             </div>
-            <Field label="거래 장소" required error={fieldErrors.locationMain}>
+            <Field label={getLabel("field_location", userLang)} required error={fieldErrors.locationMain}>
               <LocationPicker
                 value={locationMain}
                 onChange={(v) => { setLocationMain(v); setFieldErrors((p) => ({ ...p, locationMain: "" })); }}
@@ -1224,7 +1224,7 @@ function UrgentPage({ onBack, initialType = DEFAULT_TYPE }: { onBack: () => void
             <Field label={`판매자 ${getLabel("field_phone", urgentLang)}`} required error={fieldErrors.phone}>
               <input type="tel" value={phone} autoComplete="new-password" onChange={(e) => { setPhone(formatPhoneInput(e.target.value)); setFieldErrors((p) => ({ ...p, phone: "" })); }} placeholder="010-0000-0000" className={inputCls(!!fieldErrors.phone, "rose")} />
             </Field>
-            <Field label="거래 장소" required error={fieldErrors.locationMain}>
+            <Field label={getLabel("field_location", urgentLang)} required error={fieldErrors.locationMain}>
               <LocationPicker
                 value={locationMain}
                 onChange={(v) => { setLocationMain(v); setFieldErrors((p) => ({ ...p, locationMain: "" })); }}
