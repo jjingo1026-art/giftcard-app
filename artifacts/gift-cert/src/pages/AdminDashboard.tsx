@@ -460,59 +460,63 @@ export default function AdminDashboard() {
             <SoundBell role="admin" />
           </div>
           {/* 2행: 버튼들 */}
-          <div className="flex items-center gap-1.5">
-            <div className="flex-1 flex items-center gap-1">
-              {/* 모바일 */}
-              <button
-                onClick={() => { window.location.href = "/admin/mobile"; }}
-                className="flex-1 flex items-center justify-center gap-1 text-[11px] font-bold text-violet-600 hover:text-violet-800 px-1.5 py-1.5 rounded-xl bg-violet-50 hover:bg-violet-100 border border-violet-200 transition-all"
-                title="모바일상품권 관리"
-              >
-                📱 모바일
-              </button>
-              {/* 채팅 */}
-              <button
-                onClick={() => { window.location.href = "/admin/chats"; }}
-                className="relative flex-1 flex items-center justify-center gap-1 text-[11px] font-bold text-indigo-600 hover:text-indigo-800 px-1.5 py-1.5 rounded-xl bg-indigo-50 hover:bg-indigo-100 border border-indigo-200 transition-all"
-                title="채팅 전체 목록"
-              >
-                💬 채팅
-                {chatInbox.reduce((s, c) => s + c.unreadCount, 0) > 0 && (
-                  <span className="absolute -top-1.5 -right-1 min-w-[17px] h-[17px] rounded-full bg-rose-500 text-white text-[9px] font-black flex items-center justify-center px-0.5 leading-none">
-                    {chatInbox.reduce((s, c) => s + c.unreadCount, 0)}
-                  </span>
-                )}
-              </button>
-              {/* 노쇼 */}
-              <button
-                onClick={() => { window.location.href = "/admin/noshow"; }}
-                className="flex-1 flex items-center justify-center gap-1 text-[11px] font-bold text-rose-500 hover:text-rose-700 px-1.5 py-1.5 rounded-xl bg-rose-50 hover:bg-rose-100 border border-rose-200 transition-all"
-                title="노쇼 관리"
-              >
-                🚫 노쇼
-              </button>
-              {/* 매출 */}
-              <button
-                onClick={() => { window.location.href = "/admin/revenue.html"; }}
-                className="flex-1 flex items-center justify-center gap-1 text-[11px] font-bold text-emerald-600 hover:text-emerald-800 px-1.5 py-1.5 rounded-xl bg-emerald-50 hover:bg-emerald-100 border border-emerald-200 transition-all"
-              >
-                💰 매출
-              </button>
-              {/* 담당자별 */}
-              <button
-                onClick={() => { location.href = "/admin/staff/view.html"; }}
-                className="flex-1 flex items-center justify-center gap-1 text-[11px] font-bold text-indigo-500 hover:text-indigo-700 px-1.5 py-1.5 rounded-xl bg-indigo-50 hover:bg-indigo-100 border border-indigo-200 transition-all"
-              >
-                👨‍🔧 담당자별
-              </button>
-              {/* 로그아웃 */}
-              <button
-                onClick={() => { clearAdminToken(); navigate("/admin/login"); }}
-                className="flex-1 flex items-center justify-center gap-1 text-[11px] font-semibold text-slate-400 hover:text-rose-500 px-1.5 py-1.5 rounded-xl hover:bg-rose-50 transition-all"
-              >
-                🚪 로그아웃
-              </button>
-            </div>
+          <div className="flex items-stretch gap-1">
+            {/* 모바일 */}
+            <button
+              onClick={() => { window.location.href = "/admin/mobile"; }}
+              className="flex-1 flex flex-col items-center justify-center gap-0.5 py-1.5 px-1 rounded-xl bg-violet-50 hover:bg-violet-100 border border-violet-200 transition-all"
+              title="모바일상품권 관리"
+            >
+              <span className="text-[15px] leading-none">📱</span>
+              <span className="text-[10px] font-bold text-violet-600 leading-tight whitespace-nowrap">모바일</span>
+            </button>
+            {/* 채팅 */}
+            <button
+              onClick={() => { window.location.href = "/admin/chats"; }}
+              className="relative flex-1 flex flex-col items-center justify-center gap-0.5 py-1.5 px-1 rounded-xl bg-indigo-50 hover:bg-indigo-100 border border-indigo-200 transition-all"
+              title="채팅 전체 목록"
+            >
+              <span className="text-[15px] leading-none">💬</span>
+              <span className="text-[10px] font-bold text-indigo-600 leading-tight whitespace-nowrap">채팅</span>
+              {chatInbox.reduce((s, c) => s + c.unreadCount, 0) > 0 && (
+                <span className="absolute -top-1 -right-1 min-w-[16px] h-[16px] rounded-full bg-rose-500 text-white text-[9px] font-black flex items-center justify-center px-0.5 leading-none">
+                  {chatInbox.reduce((s, c) => s + c.unreadCount, 0)}
+                </span>
+              )}
+            </button>
+            {/* 노쇼 */}
+            <button
+              onClick={() => { window.location.href = "/admin/noshow"; }}
+              className="flex-1 flex flex-col items-center justify-center gap-0.5 py-1.5 px-1 rounded-xl bg-rose-50 hover:bg-rose-100 border border-rose-200 transition-all"
+              title="노쇼 관리"
+            >
+              <span className="text-[15px] leading-none">🚫</span>
+              <span className="text-[10px] font-bold text-rose-500 leading-tight whitespace-nowrap">노쇼</span>
+            </button>
+            {/* 매출 */}
+            <button
+              onClick={() => { window.location.href = "/admin/revenue.html"; }}
+              className="flex-1 flex flex-col items-center justify-center gap-0.5 py-1.5 px-1 rounded-xl bg-emerald-50 hover:bg-emerald-100 border border-emerald-200 transition-all"
+            >
+              <span className="text-[15px] leading-none">💰</span>
+              <span className="text-[10px] font-bold text-emerald-600 leading-tight whitespace-nowrap">매출</span>
+            </button>
+            {/* 담당자별 */}
+            <button
+              onClick={() => { location.href = "/admin/staff/view.html"; }}
+              className="flex-1 flex flex-col items-center justify-center gap-0.5 py-1.5 px-1 rounded-xl bg-indigo-50 hover:bg-indigo-100 border border-indigo-200 transition-all"
+            >
+              <span className="text-[15px] leading-none">👥</span>
+              <span className="text-[10px] font-bold text-indigo-500 leading-tight whitespace-nowrap">담당자별</span>
+            </button>
+            {/* 로그아웃 */}
+            <button
+              onClick={() => { clearAdminToken(); navigate("/admin/login"); }}
+              className="flex-1 flex flex-col items-center justify-center gap-0.5 py-1.5 px-1 rounded-xl hover:bg-rose-50 transition-all"
+            >
+              <span className="text-[15px] leading-none">🚪</span>
+              <span className="text-[10px] font-semibold text-slate-400 hover:text-rose-500 leading-tight whitespace-nowrap">로그아웃</span>
+            </button>
           </div>
         </div>
       </header>
